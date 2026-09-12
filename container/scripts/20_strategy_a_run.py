@@ -4,7 +4,7 @@
 Entry point for ONE pre-registered attempt.  Reads the immutable run-spec from
 /results (the only source of parameters), builds the Qlib .bin store from the
 READ-ONLY canonical raw store into /qlib/work, then runs the pre-registered
-full-backtest contract (Contract v1.3.0 section 7.2):
+full-backtest contract (Contract v1.3.2 sections 7.2 / 7.3):
 
     symbols x timeframes x STRATEGY parameter domain x DCA parameter domain x
     (historical / OOS / robustness)
@@ -376,6 +376,29 @@ def rolling_sma(close, w):
     return sma
 
 
+def exit_price_pnl(proceeds, basis):
+    """Pure price PnL of one closing fill: exit proceeds minus cost basis.
+
+    Contract 7.2 (v1.3.2, independent gross accounting): `gross_pnl` accumulates this
+    value only - no fee, no funding - and is never reverse-derived from the net ledger.
+    The gross path and the net ledger are deliberately two code paths over the same
+    fills; `pnl_decomposition_ok` is the cross-check that binds them.
+    """
+    return proceeds - basis
+
+
+def pnl_decomposition_ok(m, tol=1e-3):
+    """Fail-closed cross-check of the two independent accounting sources (contract 7.2).
+
+    Left: the gross accumulator (sum of `exit_price_pnl` over every exit/flatten).
+    Right: the net realised ledger plus the per-fill fee ledger plus the funding ledger.
+    A regressed or tampered fee/gross path makes this False - the engine test ships the
+    negative controls that prove the check is not vacuous.  Asserted on every
+    `full`-window row by `summarize`.
+    """
+    return abs(m["gross_pnl"] - m["fees"] - m["funding"] - m["net_pnl"]) <= tol
+
+
 def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
     """One pre-registered parameter case over one window slice (i0, i1)."""
     i0, i1 = window
@@ -417,6 +440,10 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
 
     layers = [0] * 12
     realized = funding_paid = 0.0
+    # Independent gross / price-PnL accumulator (contract 7.2, v1.3.2): fed ONLY by
+    # `exit_price_pnl` at an exit/flatten, so it never reads the fee or funding ledger
+    # and `gross_pnl` can never be reverse-derived from the net figure.
+    gross_pnl = 0.0
     fees_total = 0.0
     episodes = tp_hits = stop_hits = open_at_end = margin_calls = 0
     bars_in_market = 0
@@ -494,6 +521,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             if killed_at is None and ueq <= cohort.margin_maint * qty * C[t]:
                 xpx = C[t] - slip_ticks * tick  # capital-exhaustion backstop
                 realized += qty * xpx - cost
+                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
                 charge_fee(qty * xpx * taf)
                 exit_bar, broke, margin_calls = t, True, margin_calls + 1
                 break
@@ -508,6 +536,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             if killed_at is not None:
                 xpx = killed_at - slip_ticks * tick
                 realized += qty * xpx - cost
+                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
                 charge_fee(qty * xpx * taf)
                 exit_bar, broke, stop_hits = t, True, stop_hits + 1
                 break
@@ -515,6 +544,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             if h >= tpx:
                 xpx = tpx - slip_ticks * tick
                 realized += qty * xpx - cost
+                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
                 charge_fee(qty * xpx * taf)
                 exit_bar, broke, tp_hits = t, True, tp_hits + 1
                 break
@@ -522,6 +552,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
         if not broke:
             xpx = C[-1] - slip_ticks * tick
             realized += qty * xpx - cost
+            gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
             charge_fee(qty * xpx * taf)
             open_at_end += 1
         funding_paid += ep_fund
@@ -556,7 +587,8 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
     end_eq = START_EQUITY + realized
     return {
         "net_pnl": realized, "fees": fees_total, "funding": funding_paid,
-        "gross_pnl": realized + fees_total + funding_paid,
+        # gross comes straight from the independent accumulator, never from reversing net
+        "gross_pnl": gross_pnl,
         "episodes": episodes, "tp_hits": tp_hits, "stop_hits": stop_hits,
         "open_at_end": open_at_end, "margin_calls": margin_calls,
         "halted": halted, "min_entry_equity": min_entry_equity,
@@ -900,8 +932,7 @@ def summarize(spec, grid_rows, layers):
     assertions = {
         "episodes_partition": all(r["episodes"] == r["tp_hits"] + r["stop_hits"]
                                   + r["open_at_end"] + r["margin_calls"] for r in full),
-        "pnl_decomposition": all(abs(r["gross_pnl"] - r["fees"] - r["funding"]
-                                     - r["net_pnl"]) <= 1e-3 for r in full),
+        "pnl_decomposition": all(pnl_decomposition_ok(r) for r in full),
         "coverage_complete": coverage_complete,
         "cohort_count_20": len(cohorts) == spec["expected"]["cohorts"],
         "strategy_grid_is_registered_product": strategy_cells == strategy_product,

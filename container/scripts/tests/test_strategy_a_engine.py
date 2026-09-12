@@ -7,9 +7,11 @@ ladder walk / resting invalidation / TP / fee accounting fails loudly instead of
 changing the science.  stdlib unittest only; no market data, no container state.
 """
 import importlib.util
+import inspect
 import json
 import os
 import unittest
+from unittest import mock
 
 import numpy as np
 
@@ -545,6 +547,106 @@ class TestV13CohortGate(unittest.TestCase):
         row = sa.record(cohort, p, dca, "historical", m)
         self.assertEqual(sa.cell_key(row), (5, 0.01, 0.04, 1.1, 0.03, 0.1))
         self.assertEqual(row["window_kind"], "historical")
+
+
+# ---------------------------------------------------------------------------
+# audit F3 (v1.3.2): gross PnL is accumulated independently of the net ledger
+# (never reverse-derived as net + fees + funding), and the decomposition
+# cross-check is proven non-vacuous by negative controls.
+# ---------------------------------------------------------------------------
+
+def load_engine_source(text, name):
+    """Compile an in-memory engine variant; negative controls only, never shipped."""
+    spec = importlib.util.spec_from_loader(name, loader=None)
+    mod = importlib.util.module_from_spec(spec)
+    exec(compile(text, "%s#%s" % (ENGINE, name), "exec"), mod.__dict__)
+    return mod
+
+
+class TestGrossPnlAccounting(unittest.TestCase):
+
+    def test_single_take_profit_gross_is_the_pure_price_pnl(self):
+        # hand-calc: 10x on the 1000 USDT base = 10,000 notional at 98.5; the
+        # breakeven-anchored TP is +1.2% of the cost basis -> proceeds 10,000 x 1.012
+        m = run(mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005))
+        self.assertEqual(m["tp_hits"], 1)
+        gross = 10000.0 * RAIL["tp"]
+        fees = 10000.0 * 0.0005 + (10000.0 * (1.0 + RAIL["tp"])) * 0.0005
+        self.assertAlmostEqual(m["gross_pnl"], gross, places=6)
+        self.assertAlmostEqual(m["fees"], fees, places=6)
+        self.assertAlmostEqual(m["net_pnl"], gross - fees, places=6)
+        self.assertTrue(sa.pnl_decomposition_ok(m))
+        # a real second figure: the fee moves net and leaves gross untouched
+        self.assertNotAlmostEqual(m["gross_pnl"], m["net_pnl"], places=6)
+
+    def test_ladder_stop_gross_is_the_pure_price_pnl(self):
+        # same ladder-walk fixture as the fee test: entry (level 0) + level 1..4 adds, then
+        # the resting invalidation exit.  Gross is the price PnL of that closed book only.
+        m = run(mk([(98.5, 93.0, 85.0, 86.0)], taf=0.0005))
+        fills, kill = walk_expect(85.0, 98.5)
+        self.assertEqual(m["stop_hits"], 1)
+        self.assertEqual(fills, 4)
+        qty = 10000.0 / P0
+        cost = 10000.0
+        fees = 10000.0 * 0.0005
+        for k in range(1, fills + 1):
+            amt = RAIL["base_quote"] * (RAIL["size_multiplier"] ** k) * LEV
+            fees += amt * 0.0005
+            qty += amt / (P0 * (1.0 - RAIL["spacing_d0"] * k))
+            cost += amt
+        fees += qty * kill * 0.0005
+        self.assertAlmostEqual(m["gross_pnl"], qty * kill - cost, places=6)
+        self.assertAlmostEqual(m["fees"], fees, places=6)
+        self.assertAlmostEqual(m["net_pnl"], qty * kill - cost - fees, places=6)
+        self.assertTrue(sa.pnl_decomposition_ok(m))
+        self.assertLess(m["gross_pnl"], 0.0)
+        self.assertLess(m["net_pnl"], m["gross_pnl"])
+
+    def test_cost_stress_moves_net_but_not_gross(self):
+        f = mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005)
+        base = sa.simulate(f, (0, f.n), RAIL, PARAMS, {}, 0.0, "full")
+        x2 = sa.simulate(f, (0, f.n), RAIL, PARAMS, {"fee_mult": 2.0}, 0.0, "fee_2x")
+        self.assertAlmostEqual(x2["gross_pnl"], base["gross_pnl"], places=6)
+        self.assertAlmostEqual(x2["fees"], 2.0 * base["fees"], places=6)
+        self.assertLess(x2["net_pnl"], base["net_pnl"])
+
+    def test_gross_pnl_is_never_reverse_derived_from_the_net_ledger(self):
+        # structural guard on the shipped engine: the accumulator must be fed by its own
+        # exit statement, and the retired `realized + fees_total + funding_paid` must not return
+        src = inspect.getsource(sa.simulate)
+        self.assertIn("gross_pnl = 0.0", src)
+        self.assertIn("gross_pnl += exit_price_pnl(", src)
+        self.assertNotIn('"gross_pnl": realized', src)
+        self.assertNotIn("+ fees_total + funding_paid", src)
+        self.assertEqual(src.count("gross_pnl += exit_price_pnl("), 4)  # every exit/flatten path
+
+    def test_decomposition_fails_when_the_gross_path_is_tampered(self):
+        # negative control: the cross-check must be able to fail.  Monkeypatching the gross
+        # path moves only the accumulator, so decomposition (not a shared expression) catches it.
+        fixture = mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005)
+        clean = sa.simulate(fixture, (0, fixture.n), RAIL, PARAMS, {}, 0.0, "historical")
+        self.assertTrue(sa.pnl_decomposition_ok(clean))
+        with mock.patch.object(sa, "exit_price_pnl",
+                               lambda proceeds, basis: proceeds - basis + 5.0):
+            tampered = sa.simulate(mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005),
+                                   (0, 10), RAIL, PARAMS, {}, 0.0, "historical")
+        self.assertAlmostEqual(tampered["net_pnl"], clean["net_pnl"], places=6)
+        self.assertAlmostEqual(tampered["gross_pnl"], clean["gross_pnl"] + 5.0, places=6)
+        self.assertFalse(sa.pnl_decomposition_ok(tampered))
+
+    def test_decomposition_fails_when_the_fee_path_stops_booking_the_fee(self):
+        # negative control on the fee path: an engine that deducts a fill fee from the net
+        # ledger without booking it into `fees` must be caught by the same cross-check
+        with open(ENGINE) as fh:
+            src = fh.read()
+        marker = "        fees_total += amount\n"
+        self.assertEqual(src.count(marker), 1)
+        tampered = load_engine_source(src.replace(marker, ""), "sa_engine_fee_tampered")
+        fixture = FakeCohort(FLAT + [ENTRY, (98.5, 100.0, 98.4, 99.5)], taf=0.0005)
+        m = tampered.simulate(fixture, (0, fixture.n), RAIL, PARAMS, {}, 0.0, "historical")
+        self.assertAlmostEqual(m["net_pnl"], 120.0 - 10.06, places=6)  # the deduction still happens
+        self.assertEqual(m["fees"], 0.0)                               # ... but is not booked
+        self.assertFalse(tampered.pnl_decomposition_ok(m))
 
 
 if __name__ == "__main__":

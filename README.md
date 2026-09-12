@@ -19,10 +19,23 @@ audited implementation contract 與其變化歷史。
 
 ## 2. Current status（2026-09-13）
 
-- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.3.1，AWAITING AUDIT**（卡片 `t_6c83c9fb`，依 auditor `t_246c62d7` 對 v1.3.0 的 FAIL）；
+- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.3.2，AWAITING AUDIT**（卡片 `t_33457313`，依 auditor `t_23f4c3ef` 對 v1.3.1 的 FAIL）；
   上一個 AUDITED PASS / FROZEN 的版本是 **v1.2.0**（auditor `t_7b979fe8`，2026-09-13；audited content commit `068d6f7`），
   更前為 **v1.1.1**（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`）與 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
-- **v1.3.1（2026-09-13，AWAITING AUDIT；audit `t_246c62d7` 的最小 remediation）**：三項。
+- **v1.3.2（2026-09-13，AWAITING AUDIT；audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）**：兩項。
+  **F3 獨立 gross PnL 會計**——`gross_pnl` 不再由 net 反向回推（`realized + fees_total + funding_paid` 已刪除），
+  改由**獨立的 price-PnL accumulator**：`simulate()` 的 4 個 exit／flatten 路徑各自只累加該 episode 的
+  `exit proceeds − cost basis`（不含 fee、不含 funding），`summarize()` 的 `pnl_decomposition` 改以
+  `pnl_decomposition_ok()` 比對兩個獨立來源；engine 新增 `TestGrossPnlAccounting` 6 個檢定（`test_strategy_a_engine.py` 由 29 → **35/35**，
+  含單次 TP 與 ladder stop 的獨立手算 gross/net、`fee_2x` 只動 net 不動 gross、gross 路徑 monkeypatch 與
+  fee「只扣不入帳」兩個負向控制）。實測：同一組檢定在 v1.3.1 bytes 上 5/6 失敗；同一 fee-tamper 下 v1.3.1 的
+  `gross − fees − funding − net` gap 恆為 0（斷言恆真），v1.3.2 為 10.06（斷言 FAIL）——證明檢查非恆真。
+  **F4 audit-only staging**——契約 §23 新增 checklist item 11、§25 新增禁令；v1.3.2 engine bytes 以
+  host `qlib-apple-container/staging/v1.3.2/**` ＋ container `/qlib/work/staging/v1.3.2/**`（自身 `SHA256SUMS`／`README`）
+  供 auditor 在 `qlib-run` 內以 `/opt/venv/bin/python` 執行，sha256 與 repo commit bytes 逐位元一致。
+  staging 只服務稽核：不新增 daemon/service、**不覆蓋 host `/scripts` 的 frozen A v1 部署副本**、不對 `/results` 產生任何 production artifact，
+  亦未建立任何 Strategy A v2 family／card／result（counts 仍 103,680、handoff cron 仍 paused）。詳見契約 §7.2/§22 A25/§23/§25 與附錄 C。
+- **v1.3.1（2026-09-13，FAIL audit `t_23f4c3ef`；audit `t_246c62d7` 的最小 remediation）**：三項。
   **F1 per-fill 成本會計**——`container/scripts/20_strategy_a_run.py` 的每個 entry／DCA add／exit fill 現在於 fill 時點
   把 taker fee 扣入 realised equity（單一 `charge_fee()` choke point），`net_pnl`/`ending_equity`/每日 equity marks/Sharpe/margin 判定
   全為 net-of-fee，`fee_2x` 不再是 no-op；engine 新增 free／costly／`fee_2x` 迴歸（`test_strategy_a_engine.py` 由 25 → **29/29**）。
@@ -90,9 +103,9 @@ host reconciler (deterministic, no-agent)  →  Kanban unblock  →  Hermes
 
 | 路徑 | 內容 |
 |---|---|
-| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.3.1 / AWAITING AUDIT**，依 `t_6c83c9fb`（audit `t_246c62d7` 的 F1/F2/M1 最小 remediation）；前版 **v1.3.0** = FAIL audit `t_246c62d7`；上一個 FROZEN 版本 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；再前為 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
+| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.3.2 / AWAITING AUDIT**，依 `t_33457313`（audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）；前版 **v1.3.1** = FAIL audit `t_23f4c3ef`；再前版 **v1.3.0** = FAIL audit `t_246c62d7`；上一個 FROZEN 版本 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；再前為 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
 | `container/Containerfile` | **唯一** image 定義：`python:3.12-slim` + Qlib `v0.9.7`（build 內 `rev-parse HEAD` 守衛，upstream 移動 tag 即 build 失敗） |
-| `container/scripts/` | **現行** runtime 的 canonical rebuild / verify / engine 定義：`20_strategy_a_run.py`（v1.3.0/v1.3.1 Strategy A 全量回測 engine）、`00_env_baseline.py`、`03_qlib_smoke.py`、`verify_final.sh`、`run_phase4.sh`、`fetch_kernel.sh`、`tests/test_strategy_a_engine.py`。v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同（見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`）。**已 operator-stopped 的 Strategy B runner 與其 test 不在這裡**：它們逐位元存檔於 `evidence/strategy-b-operator-stopped/runtime/`（archive-only，不得執行），host `/scripts` 部署副本亦已移除（Contract §13 archive hygiene，卡 `t_6c83c9fb`） |
+| `container/scripts/` | **現行** runtime 的 canonical rebuild / verify / engine 定義：`20_strategy_a_run.py`（v1.3.0/v1.3.1/v1.3.2 Strategy A 全量回測 engine）、`00_env_baseline.py`、`03_qlib_smoke.py`、`verify_final.sh`、`run_phase4.sh`、`fetch_kernel.sh`、`tests/test_strategy_a_engine.py`。v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同（見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`）。**已 operator-stopped 的 Strategy B runner 與其 test 不在這裡**：它們逐位元存檔於 `evidence/strategy-b-operator-stopped/runtime/`（archive-only，不得執行），host `/scripts` 部署副本亦已移除（Contract §13 archive hygiene，卡 `t_6c83c9fb`） |
 | `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`production_handoff.py`（§14.4 automatic handoff：每輪檢查並最多 append 1 張 family 卡，v1.3.0 起另檢 candidate body 的 DCA domain／cohort survivor 標記）、`strategy_a_v2_counts.py`（v1.3.0 pre-registration 計數器／驗證器）、`templates/strategy_a_v2_{round,run}_spec.template.json`、`tests/test_reconcile.py`、`tests/test_preflight_p10.py`、`tests/test_production_handoff.py`、`tests/test_strategy_a_v2_counts.py`（皆 stdlib unittest）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
 | `evidence/` | 支撐 `[V]` 的精簡證據**快照**（不是 runtime state；主機專屬絕對路徑已以 `<PLACEHOLDER>` 取代） |
 
@@ -154,6 +167,16 @@ v1.3.x 的 runner 只在 Strategy A v2 啟動時才部署到 host（屆時 `runt
 equity path 皆為 net-of-fee，`fee_2x` 不再是 no-op。此修正**尚未部署到 host**：host 部署目錄
 `qlib-apple-container/scripts/20_strategy_a_run.py` 仍刻意為 Strategy A v1 保持 v1 版本不變（見上段），
 v1.3.x 的 runner 只在 Strategy A v2 啟動時才部署，屆時 P10 會逐位元重算新 run-spec 的 `script.sha256`。
+
+**v1.3.2 的 runner 修正與 audit-only staging（重要）**：`container/scripts/20_strategy_a_run.py` 的 gross 會計已依 audit
+`t_23f4c3ef` F3 修正——`gross_pnl` 由獨立的 price-PnL accumulator（每個 exit／flatten 只累加 `exit proceeds − cost basis`）
+供給，不再由 net 反向回推，`pnl_decomposition` 因此成為兩個獨立來源的交叉比對（負向控制見 `test_strategy_a_engine.py`
+的 `TestGrossPnlAccounting`）。此修正**同樣尚未部署到 host**：host `qlib-apple-container/scripts/20_strategy_a_run.py`
+仍為 Strategy A v1（sha256 `8f3ce89d…`）。為了讓 auditor 不必覆蓋該 frozen 部署副本就能實際執行 v1.3.2 engine，
+新增**只服務稽核**的 staging 副本：host `qlib-apple-container/staging/v1.3.2/**`（`20_strategy_a_run.py`、`tests/`、
+`SHA256SUMS`、`README.md`）與 container `/qlib/work/staging/v1.3.2/**`，其 bytes 與 repo commit 逐位元一致；
+auditor 在 `qlib-run` 內以 `SA_ENGINE_PATH=<staging runner> /opt/venv/bin/python <staging test>` 執行即可（35/35 OK）。
+staging 不新增 daemon/service、不改動 active `/scripts` mount、不寫 `/results`、不產生任何 A v2 結果。
 
 **host `/scripts` 的 B 清理（v1.3.1 M1）**：`qlib-apple-container/scripts/30_strategy_b_run.py` 與
 `qlib-apple-container/scripts/tests/test_strategy_b_engine.py` 已從 host 部署目錄移除（container 內 `/scripts` 同步消失）；
