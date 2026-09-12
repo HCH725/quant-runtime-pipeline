@@ -52,6 +52,31 @@ def card_status(board, task_id):
     return task.get("status"), "kanban show ok (status=%s)" % task.get("status")
 
 
+def terminal_identity(attempt):
+    """(task_id, board) taken from the attempt's terminal evidence, else (None, None).
+
+    Contract 9.4 scan scope: consumption is decided *before* anything is validated, so this must be
+    cheap and unambiguous. Every terminal file must parse, carry a non-empty `task_id`, and they must
+    all agree on it; anything else is undecidable here and stays fail-closed (validate() records it).
+    """
+    ids, boards = set(), set()
+    for name in TERMINALS:
+        path = attempt / name
+        if not path.exists():
+            continue
+        try:
+            doc = json.loads(path.read_text())
+        except ValueError:
+            return None, None
+        if not doc.get("task_id"):
+            return None, None
+        ids.add(doc["task_id"])
+        boards.add(doc.get("kanban_board") or "")
+    if len(ids) != 1:
+        return None, None
+    return ids.pop(), (boards.pop() if len(boards) == 1 else None)
+
+
 def append_incident(results_root, record, dry_run):
     if dry_run:
         return None
@@ -168,17 +193,35 @@ def validate(res, results_root, board, dry_run, detector):
         fail(res, results_root, "sentinel_ambiguous", detector, dry_run, [str(attempt / name)], board)
         return None
 
-    # mapping: sentinel <-> path <-> family.json <-> round-spec.json
+    # mapping (contract 9.4 item 1, 10.1, 10.2, 10.6): path <-> sentinel <-> family.json <->
+    # round-spec.json <-> run-spec.json must all carry the same identity - string equality, no
+    # normalisation. family.json owns family_id, round-spec owns family_id/round_id, run-spec owns
+    # the full family/round/run/task identity, and the container identity is cross-checked where the
+    # existing schema carries it (live `container ls` identity stays preflight P5/P6's job).
     problems = []
+    task_id = sentinel.get("task_id")
     if sentinel.get("family_id") != res.family_id:
         problems.append("family_id sentinel=%r path=%r" % (sentinel.get("family_id"), res.family_id))
     if sentinel.get("round_id") != res.round_id:
         problems.append("round_id sentinel=%r path=%r" % (sentinel.get("round_id"), res.round_id))
     if sentinel.get("run_id") != res.run_id:
         problems.append("run_id sentinel=%r path=%r" % (sentinel.get("run_id"), res.run_id))
+    if not sentinel.get("container_id"):
+        problems.append("container_id missing in sentinel (contract 9.4 item 4)")
+
+    expected = {"family_id": res.family_id, "round_id": res.round_id, "run_id": res.run_id,
+                "task_id": task_id, "kanban_task_id": task_id,
+                "kanban_board": sentinel.get("kanban_board")}
     family_json = Path(results_root) / res.family_id / "family.json"
     round_spec = Path(results_root) / res.family_id / "rounds" / res.round_id / "round-spec.json"
-    for label, path in (("family.json", family_json), ("round-spec.json", round_spec)):
+    artifacts = (
+        (family_json, "family.json", ("family_id", "kanban_task_id", "kanban_board")),
+        (round_spec, "round-spec.json", ("family_id", "round_id", "kanban_task_id", "kanban_board")),
+        (attempt / "run-spec.json", "run-spec.json",
+         ("family_id", "round_id", "run_id", "task_id", "kanban_board")),
+    )
+    evidence = [str(attempt / name), str(family_json), str(round_spec), str(attempt / "run-spec.json")]
+    for path, label, keys in artifacts:
         if not path.is_file():
             problems.append("missing %s" % path)
             continue
@@ -187,13 +230,16 @@ def validate(res, results_root, board, dry_run, detector):
         except ValueError as exc:
             problems.append("%s not valid JSON: %s" % (label, exc))
             continue
-        if doc.get("kanban_task_id") != sentinel.get("task_id"):
-            problems.append("%s kanban_task_id=%r != sentinel task_id=%r"
-                            % (label, doc.get("kanban_task_id"), sentinel.get("task_id")))
+        for key in keys:
+            if doc.get(key) != expected[key]:
+                problems.append("%s %s=%r != expected %r" % (label, key, doc.get(key), expected[key]))
+        if label == "run-spec.json":
+            for key in ("container_id", "image_id"):
+                if key in doc and doc[key] != sentinel.get(key):
+                    problems.append("run-spec.json %s=%r != sentinel %r" % (key, doc[key], sentinel.get(key)))
     if problems:
         res.detail["mapping_problems"] = problems
-        fail(res, results_root, "mapping_mismatch", detector, dry_run,
-             [str(attempt / name), str(family_json), str(round_spec)], board)
+        fail(res, results_root, "mapping_mismatch", detector, dry_run, evidence, board)
         return None
 
     # checksums of required artifacts
@@ -252,6 +298,23 @@ def handle(res, results_root, board, dry_run, detector):
         res.reason = ("no terminal sentinel; stage=%s -> contract 12.2: host/default publishes "
                       "INCOMPLETE via runtime/terminal_evidence.py, then reconcile again" % stage)
         return res
+
+    # Consumption FIRST (contract 9.4 scan scope): a sentinel whose card is no longer `scheduled` is
+    # consumed -> no action, no incident, no comment. Validation/incident generation must not run for
+    # it, otherwise every historical sentinel turns into a stale_sentinel incident after a host reboot
+    # (and re-appends on every run). An undecidable task_id is not consumed here and stays fail-closed.
+    task_id, sentinel_board = terminal_identity(attempt)
+    if task_id:
+        status, why = card_status(sentinel_board or board, task_id)
+        res.task_id = task_id
+        if status is not None:
+            res.status_before = status
+            if status != "scheduled":
+                res.action = "consumed"
+                res.reason = "sentinel already consumed (card status=%s); no action, idempotent" % status
+                return res
+        else:
+            res.detail["kanban_readback"] = why
 
     sentinel = validate(res, results_root, board, dry_run, detector)
     if sentinel is None:

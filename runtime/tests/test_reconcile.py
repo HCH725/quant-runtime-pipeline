@@ -41,31 +41,38 @@ class Harness(unittest.TestCase):
 
     # --- fixture helpers -------------------------------------------------
     def fixture(self, family="fam-a", terminals=("DONE",), status_field=None, tamper=False,
-                boot=None, task=TASK, sentinel_task=None):
+                boot=None, task=TASK, sentinel_task=None, container="qlib-run",
+                family_over=None, round_over=None, run_over=None, sentinel_over=None):
         run_id = "%s-r1-u1" % family
-        attempt = Path(self.root) / family / "rounds" / ("%s-r1" % family) / "attempts" / run_id
+        round_id = "%s-r1" % family
+        attempt = Path(self.root) / family / "rounds" / round_id / "attempts" / run_id
         attempt.mkdir(parents=True)
         sentinel_task = sentinel_task or task
-        (Path(self.root) / family / "family.json").write_text(json.dumps(
-            {"schema_version": 1, "family_id": family, "kanban_task_id": task, "kanban_board": BOARD}))
-        (Path(self.root) / family / "rounds" / ("%s-r1" % family) / "round-spec.json").write_text(json.dumps(
-            {"schema_version": 1, "family_id": family, "round_id": "%s-r1" % family, "kanban_task_id": task,
-             "kanban_board": BOARD}))
+        family_doc = {"schema_version": 1, "family_id": family, "kanban_task_id": task, "kanban_board": BOARD}
+        round_doc = {"schema_version": 1, "family_id": family, "round_id": round_id,
+                     "kanban_task_id": task, "kanban_board": BOARD}
+        run_doc = {"schema_version": 1, "family_id": family, "round_id": round_id, "run_id": run_id,
+                   "task_id": task, "kanban_board": BOARD, "container_id": container,
+                   "image_id": "qlib:0.9.7-arm64"}
+        for doc, over in ((family_doc, family_over), (round_doc, round_over), (run_doc, run_over)):
+            doc.update(over or {})
+        (Path(self.root) / family / "family.json").write_text(json.dumps(family_doc))
+        (Path(self.root) / family / "rounds" / round_id / "round-spec.json").write_text(json.dumps(round_doc))
         payload = (Path(self.root) / family / "family.json").read_text()
         (attempt / "result.json").write_text(payload)
         checksum = "sha256:" + hashlib.sha256(payload.encode()).hexdigest()
         if tamper:
             (attempt / "result.json").write_text(payload + "tampered")
-        (attempt / "run-spec.json").write_text(json.dumps(
-            {"schema_version": 1, "family_id": family, "round_id": "%s-r1" % family, "run_id": run_id,
-             "task_id": task, "kanban_board": BOARD}))
+        (attempt / "run-spec.json").write_text(json.dumps(run_doc))
         sentinel = {
             "schema_version": 1, "status": status_field or terminals[0], "family_id": family,
-            "round_id": "%s-r1" % family, "run_id": run_id, "task_id": sentinel_task, "kanban_board": BOARD,
+            "round_id": round_id, "run_id": run_id, "task_id": sentinel_task, "kanban_board": BOARD,
             "created_at_utc": "2026-09-13T00:00:00Z", "host_boot_id": boot or reconcile.host_boot_id(),
+            "container_id": container, "image_id": "qlib:0.9.7-arm64",
             "artifact_manifest": ["result.json"], "artifact_checksums": {"result.json": checksum},
             "verdict_hint": "CANDIDATE_PASS",
         }
+        sentinel.update(sentinel_over or {})
         for term in terminals:
             (attempt / term).write_text(json.dumps(dict(sentinel, status=status_field or term)))
         return attempt, run_id
@@ -100,6 +107,15 @@ class Harness(unittest.TestCase):
 
     def unblock_calls(self):
         return [c for c in self.calls if c[0] == "sh" and "unblock" in c[1]]
+
+    def incident_lines(self):
+        path = Path(self.root) / "_incidents" / "reconciliation_incident.jsonl"
+        return path.read_text().strip().splitlines() if path.exists() else []
+
+    def assert_no_incident_no_comment(self):
+        self.assertEqual(self.incident_lines(), [], "consumed sentinel must not write an incident")
+        comments = [c for c in self.calls if c[0] == "sh" and "comment" in c[1]]
+        self.assertEqual(comments, [], "consumed sentinel must not comment on the card")
 
     # --- cases -----------------------------------------------------------
     def test_verified_terminal_releases_scheduled_card(self):
@@ -180,7 +196,8 @@ class Harness(unittest.TestCase):
     def test_release_without_readback_confirmation_is_reported(self):
         self.install_fakes()
         attempt, _ = self.fixture()
-        statuses = iter(["scheduled", "scheduled"])  # kernel did not move the card
+        # consumption read + pre-unblock read + post-unblock read: kernel never moves the card
+        statuses = iter(["scheduled"] * 3)
 
         def fake_card_status(board, task_id):
             return next(statuses), "fake read-back"
@@ -210,6 +227,97 @@ class Harness(unittest.TestCase):
         os.makedirs(Path(self.root) / "legacy-smoke-name")   # no rounds/attempts layout (old naming)
         found = reconcile.discover_attempts(self.root)
         self.assertEqual(found, [])
+
+    # --- F1 (audit v2): consumption is decided before validation/incident ---
+    def test_consumed_with_stale_boot_is_noop(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        attempt, _ = self.fixture(boot="boot-0")     # would be stale_sentinel if validated first
+        res = self.run_one(attempt)
+        self.assertEqual(res.action, "consumed")
+        self.assertEqual(res.status_before, "done")
+        self.assert_no_incident_no_comment()
+
+    def test_consumed_with_checksum_conflict_is_noop(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        attempt, _ = self.fixture(tamper=True)
+        res = self.run_one(attempt)
+        self.assertEqual(res.action, "consumed")
+        self.assert_no_incident_no_comment()
+
+    def test_consumed_with_mapping_conflict_is_noop(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        attempt, _ = self.fixture(sentinel_task="t_OTHER", container="other-container")
+        res = self.run_one(attempt)
+        self.assertEqual(res.action, "consumed")
+        self.assert_no_incident_no_comment()
+
+    def test_repeated_consumed_runs_never_accumulate_incidents(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        attempt, _ = self.fixture(tamper=True, boot="boot-0", sentinel_task="t_OTHER")
+        first = self.run_one(attempt)
+        second = self.run_one(attempt)
+        self.assertEqual((first.action, second.action), ("consumed", "consumed"))
+        self.assert_no_incident_no_comment()
+        self.assertEqual(self.unblock_calls(), [])
+
+    def test_unparsable_sentinel_stays_fail_closed(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        attempt, _ = self.fixture()
+        (attempt / "DONE").write_text("{not json")
+        res = self.run_one(attempt)
+        self.assertEqual(res.action, "incident")
+        self.assertEqual(res.reason, "sentinel_ambiguous")
+        self.assertEqual(len(self.incident_lines()), 1)
+
+    # --- F2 (audit v2): full identity mapping, not just task_id ---
+    def assert_mapping_fail_closed(self, attempt):
+        res = self.run_one(attempt)
+        self.assertEqual(res.action, "incident")
+        self.assertEqual(res.reason, "mapping_mismatch")
+        self.assertTrue(res.detail.get("mapping_problems"))
+        self.assertEqual(self.unblock_calls(), [])
+        return res
+
+    def test_family_json_family_id_mismatch_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture(family_over={"family_id": "fam-other"})
+        res = self.assert_mapping_fail_closed(attempt)
+        self.assertTrue(any("family.json" in p for p in res.detail["mapping_problems"]))
+
+    def test_round_spec_family_and_round_id_mismatch_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture(round_over={"family_id": "fam-other", "round_id": "fam-a-r9"})
+        res = self.assert_mapping_fail_closed(attempt)
+        self.assertTrue(any("round-spec.json" in p for p in res.detail["mapping_problems"]))
+
+    def test_run_spec_identity_mismatch_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture(run_over={"run_id": "fam-a-r1-u9", "task_id": "t_OTHER"})
+        res = self.assert_mapping_fail_closed(attempt)
+        self.assertTrue(any("run-spec.json" in p for p in res.detail["mapping_problems"]))
+
+    def test_container_identity_mismatch_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture(container="qlib-run", run_over={"container_id": "other-container"})
+        res = self.assert_mapping_fail_closed(attempt)
+        self.assertTrue(any("container_id" in p for p in res.detail["mapping_problems"]))
+
+    def test_missing_container_id_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture(sentinel_over={"container_id": ""})
+        res = self.assert_mapping_fail_closed(attempt)
+        self.assertTrue(any("container_id" in p for p in res.detail["mapping_problems"]))
+
+    def test_missing_run_spec_is_fail_closed(self):
+        self.install_fakes()
+        attempt, _ = self.fixture()
+        (attempt / "run-spec.json").unlink()
+        self.assert_mapping_fail_closed(attempt)
 
 
 if __name__ == "__main__":

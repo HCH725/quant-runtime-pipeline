@@ -21,6 +21,7 @@ DEFAULT_EXPANSION = "/Volumes/ExpansionDrive"
 DEFAULT_CONTAINER = "qlib-run"
 DEFAULT_IMAGE = "qlib:0.9.7-arm64"
 DEFAULT_QLIB_VERSION = "0.9.7"
+DEFAULT_HOST_SCRIPTS = "/Users/hong/workspace/qlib-apple-container/scripts"  # host source of the container's ro /scripts mount
 VENV_PYTHON = "/opt/venv/bin/python"  # the interpreter that actually has qlib (see contract P8)
 TERMINALS = ("DONE", "FAILED", "INCOMPLETE")
 
@@ -170,7 +171,25 @@ def p7_p8(checks, name, qlib_version):
               "" if ok else " | stderr: %s" % (err.strip().splitlines()[-1] if err.strip() else "none")))
 
 
-def p9_p10(checks, attempt_dir):
+def script_host_path(path, host_scripts):
+    """Host-side location of a run-spec `script.path` (contract 16.2 P10), or None.
+
+    The container's `/scripts` is a ro mount of the host scripts directory (runbook step 5 /
+    container/scripts/run_phase4.sh), so a `/scripts/<name>` path is resolved through that existing
+    mapping; an absolute host path is taken as-is. No resolver layer - one documented mapping.
+    """
+    if not path:
+        return None
+    if os.path.isfile(path):
+        return path
+    if host_scripts and path.startswith("/scripts/"):
+        mapped = os.path.join(host_scripts, path[len("/scripts/"):])
+        if os.path.isfile(mapped):
+            return mapped
+    return None
+
+
+def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     if not attempt_dir:
         check(checks, "P9", "NA", "-", "no --attempt-dir; launch gate NOT evaluated")
         check(checks, "P10", "NA", "-", "no --attempt-dir; launch gate NOT evaluated")
@@ -198,20 +217,25 @@ def p9_p10(checks, attempt_dir):
     script = spec.get("script") or {}
     sha = script.get("sha256")
     path = script.get("path")
-    detail = "run-spec present; script.sha256=%s" % sha
-    ok = bool(sha)
-    if ok and path and os.path.isfile(str(path)):
-        import hashlib
-        h = hashlib.sha256()
-        with open(str(path), "rb") as fh:
-            for chunk in iter(lambda: fh.read(1 << 20), b""):
-                h.update(chunk)
-        got = h.hexdigest()
-        ok = ("sha256:" + got) == sha or got == sha
-        detail += "; recomputed=%s" % got if not ok else "; recomputed matches"
-    elif ok:
-        detail += "; script path not readable from host (%s) - sha not recomputed" % path
-    check(checks, "P10", "PASS" if ok else "FAIL", "card-local", detail)
+    if not sha:
+        check(checks, "P10", "FAIL", "card-local", "run-spec present; script.sha256 missing")
+        return
+    resolved = script_host_path(path, host_scripts)
+    if not resolved:
+        check(checks, "P10", "FAIL", "card-local",
+              "run-spec present; script.sha256=%s NOT VERIFIED - script.path %r not readable from host "
+              "and not resolvable via /scripts -> %s; launch gate must not pass unverified" % (sha, path, host_scripts))
+        return
+    import hashlib
+    h = hashlib.sha256()
+    with open(resolved, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    got = h.hexdigest()
+    ok = ("sha256:" + got) == sha or got == sha
+    check(checks, "P10", "PASS" if ok else "FAIL", "card-local",
+          "run-spec present; script.sha256=%s recomputed=%s (%s)%s"
+          % (sha, got, resolved, "" if ok else " MISMATCH"))
 
 
 def main():
@@ -221,6 +245,8 @@ def main():
     ap.add_argument("--image", default=DEFAULT_IMAGE)
     ap.add_argument("--qlib-version", default=DEFAULT_QLIB_VERSION)
     ap.add_argument("--attempt-dir", default=None, help="attempt dir for P9/P10")
+    ap.add_argument("--host-scripts", default=os.environ.get("QLIB_HOST_SCRIPTS", DEFAULT_HOST_SCRIPTS),
+                    help="host directory mounted read-only as the container's /scripts (P10 sha resolution)")
     ap.add_argument("--launch", action="store_true", help="require --attempt-dir (full launch gate)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
@@ -235,7 +261,7 @@ def main():
     p2_raw(checks, args.container, raw)          # needs the container running
     p6_image(checks, info, args.image)
     p7_p8(checks, args.container, args.qlib_version)
-    p9_p10(checks, args.attempt_dir)
+    p9_p10(checks, args.attempt_dir, args.host_scripts)
     checks.sort(key=lambda c: int(c["id"][1:]))
 
     evaluated = [c for c in checks if c["status"] != "NA"]

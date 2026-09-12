@@ -1,8 +1,8 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：AWAITING AUDIT（v1.1.0；最後 AUDITED PASS / FROZEN 的版本是 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
-版本：v1.1.0（2026-09-13）
-作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）
+文件狀態：AWAITING AUDIT（v1.1.1；最後 AUDITED PASS / FROZEN 的版本是 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
+版本：v1.1.1（2026-09-13）
+作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）；v1.1.1 依 t_4d6c5cd5（audit t_d7f48c7a 的 F1–F3 最小 remediation 與文件精度修正）
 適用範圍：quant-strategy-research board 之 Qlib 研究 runtime 與 Kanban 交接
 變更控制：見 §26；本文件為長期 implementation contract，不是高階摘要
 
@@ -255,17 +255,17 @@ family F
 - `[C]` **入口 = 未消費的 terminal sentinel**：掃描 `/results/<family_id>/rounds/<round_id>/attempts/<run_id>/` 下的 `DONE`/`FAILED`/`INCOMPLETE`，從 sentinel 讀 `family_id`/`round_id`/`run_id`/`task_id`，再以 `/results/<family_id>/family.json` 與 `round-spec.json` 交叉確認 ownership。**不查、也不要求任何 task-level metadata**（`[V]` kernel 無此欄）。
 - `[C]` 掃描範圍：**只**處理「sentinel 未消費」且「DB 讀回的卡狀態為 `scheduled`」的卡。未消費的定義：sentinel 的 `kanban_task_id`（= sentinel `task_id`）指向的卡當前仍是 `scheduled`；若該卡已非 `scheduled`，此 sentinel 視為已消費（consumed），不動作。
 - `[C]` 放行前必須逐項驗證（全部以檔案系統 + DB 讀回為準）：
-  1. `kanban_task_id`（= sentinel `task_id`）/ `family_id` / `round_id` / `run_id` mapping 一致（`family.json` ↔ `round-spec.json` ↔ attempt 目錄路徑 ↔ sentinel 內容）。
+  1. `kanban_task_id`（= sentinel `task_id`）/ `family_id` / `round_id` / `run_id` mapping 一致（`family.json` ↔ `round-spec.json` ↔ attempt 目錄路徑 ↔ attempt `run-spec.json` ↔ sentinel 內容）。
   2. sentinel 為合法終態且 JSON 可解析。
   3. `artifact_manifest` 中每個 required artifact 存在、可讀、checksum 相符。
-  4. `host_boot_id` / `container_id` 可對照（stale sentinel 檢測，§12.3）。
+  4. `host_boot_id` / `container_id` 可對照（stale sentinel 檢測，§12.3；sentinel `container_id` 為必填，且 attempt `run-spec.json` 有載明時必須相符。與**現役**容器 identity 的比對屬 preflight P5/P6，不在 reconciler 內再引入 container 查詢）。
   5. 該 attempt 目錄不存在多個 terminal 檔（§12.3）。
 - `[C]` 驗證 PASS → `unblock`（→ `ready`，或父卡未完成時自動 `todo`）。
 - `[C]` 驗證 FAIL 或證據衝突（multiple terminal / checksum 不符 / sentinel 歧義 / mapping 不一致）→ **絕對不 unblock，也絕對不對 `scheduled` 卡直接 `block`**；改走 §12.6 incident（保持 `scheduled`、寫 incident artifact、告警人工介入）。
 - `[C]` duplicate reconciliation 必須無害：以 sentinel 為唯一判準，重複執行不會二次 unblock（`[V]` kernel 對非 `blocked`/`scheduled` 的 unblock 回 False，天然冪等）。
 - `[C]` **comments 不得當唯一 state**：reconciler 只讀 DB 欄位 + 檔案系統；人工排除以 DB 讀回為準。
-- `[V]` reconciler 已以最小版落地並實測（2026-09-13）：`runtime/reconcile.py`（純 stdlib、no-agent、支援 `--dry-run`）＝ 本節驗證清單的機械化；偵測到 terminal sentinel 後才 `unblock`，衝突一律走 §12.6、不 unblock、不 block。
-- `[V]` 邏輯層檢查：`python3 runtime/tests/test_reconcile.py`（stdlib unittest，注入 kernel 讀回與 `unblock` 回應）12/12 OK，涵蓋唯一放行條件、dry-run 不變更、consumed 冪等、以及五種 fail-closed 分支（multiple_terminal / checksum_mismatch / sentinel_ambiguous / mapping_mismatch / stale_sentinel / unblock 後讀回未確認）。
+- `[V]` reconciler 已以最小版落地並實測（2026-09-13）：`runtime/reconcile.py`（純 stdlib、no-agent、支援 `--dry-run`）＝ 本節驗證清單的機械化；**掃描範圍判定（consumed → 不動作）先於驗證清單**（卡片非 `scheduled` 即 no-op，不產生 incident/comment）；偵測到 terminal sentinel 後才 `unblock`，衝突一律走 §12.6、不 unblock、不 block。
+- `[V]` 邏輯層檢查：`python3 runtime/tests/test_reconcile.py`（stdlib unittest，注入 kernel 讀回與 `unblock` 回應）23/23 OK，涵蓋唯一放行條件、dry-run 不變更、**consumed 判定先於驗證清單**（consumed + stale boot / checksum 衝突 / mapping 衝突一律 no-op，重跑不累加 incident 或 comment；無法解析 `task_id` 才維持 fail-closed）、以及六項 fail-closed 分支（multiple_terminal / checksum_mismatch / sentinel_ambiguous / mapping_mismatch / stale_sentinel / unblock 後讀回未確認）。
 - `[V]` **執行環境限制（2026-09-13 實測）**：`unblock`/`comment` 等 board 變更走 `hermes kanban` CLI，而 Hermes 對 `HERMES_DELEGATED_CHILD_CONTEXT=1` 的 context（delegate_task 子行程、kanban worker session，以及**由該 session 建立/觸發的 cron job**）一律拒絕 board 變更。因此 reconciler 的 apply 必須在**無此標記的 host context**（operator 的一般 shell，或由該 shell 建立/啟動的 cron/服務）執行；否則 sentinel 驗證會照常通過，但放行會被 CLI 擋下 → 卡片會停在 `scheduled`（§25 禁止事項）。dry-run 不受影響，可用來確認「只剩放行這一步」。
 
 ### 9.5 為何不用 HTTP / webhook / Redis / Celery / queue
@@ -580,7 +580,7 @@ family F
 | P7 | `/qlib/work` 存在且可寫 | 容器內可寫；不存在/不可寫/損毀則重建 volume（INV-5） | card-local（可機械修復；**不 freeze**，§12.5） |
 | P8 | Qlib import/version 相符 | `container exec qlib-run /opt/venv/bin/python -c "import qlib; print(qlib.__version__)"` = `0.9.7`。**必須用 venv 絕對路徑**：`/usr/local/bin/python` 沒有 qlib，且登入 shell（`sh -lc`）會把 PATH 還原成非 venv，用裸 `python` 會誤判 FAIL | shared-layer |
 | P9 | 目標 attempt 未終結 | attempt 目錄無 terminal sentinel | — （存在即禁止重跑，INV-15） |
-| P10 | run-spec 已 immutable publish | `run-spec.json` 存在且欄位合法；`script.sha256` 相符 | card-local |
+| P10 | run-spec 已 immutable publish | `run-spec.json` 存在且欄位合法；`script.sha256` 由 host 端**實際重算**後相符（`/scripts/<name>` 以既有 host scripts mapping 解析，見 §16.4）。無法解析或無法重算 → `FAIL`／NOT VERIFIED，**不得 PASS**（launch gate 不通過） | card-local |
 
 - `[V]` P1–P10 已包成單一腳本 `runtime/preflight.py`（見 §16.4）。`[V]` 實測 2026-09-13：`python3 runtime/preflight.py` → P1–P8 全 PASS（P9/P10 在未給 `--attempt-dir` 時為 `N/A`）；`container exec qlib-run /opt/venv/bin/python -c "import qlib; print(qlib.__version__)"` → `0.9.7`；`container exec qlib-run /usr/local/bin/python -c "import qlib"` → `ModuleNotFoundError: No module named 'qlib'`（此即裸 `python` 誤判的來源）。`container ls` → `qlib-run  qlib:0.9.7-arm64  linux  arm64  running  6 CPU / 4096 MB`；`container --version` → `1.4.1`；`/Volumes/ExpansionDrive/{market-data-raw,qlib-results}` 皆存在。
 - `[C]` P7 可機械修復：`/qlib/work` 可重建（INV-5），因此不屬於 shared-layer freeze 條件。
@@ -597,6 +597,8 @@ family F
 - `[V]` 位置：repo `runtime/preflight.py`（純 stdlib、Python 3.9+）。P1–P8 為環境面（mount / runtime / container / image / work volume / Qlib import），P9/P10 為 attempt 面（未終結、run-spec 合法且 `script.sha256` 相符）。
 - `[V]` 環境面與 attempt 面可分開跑：不帶 `--attempt-dir` 只做環境檢查（`overall_env`）；帶 `--launch` 則強制要求 `--attempt-dir`，避免把「只驗環境」誤當成放行 gate。
 - `[C]` 腳本的判定只依檔案系統與 `container` 查詢結果，不依賴卡片 metadata、不寫入任何狀態、不啟動 Qlib 計算。
+- `[V]` P10 的 sha256 重算是**真的重算**（2026-09-13 實測）：`script.path` 為 `/scripts/<name>` 時以 host scripts directory 解析（`--host-scripts`；預設 host 上作為 container `/scripts` ro mount 來源的目錄，亦可用 `QLIB_HOST_SCRIPTS` 覆寫），其餘視為 host 絕對路徑；兩者皆不可讀 → P10 `FAIL`（`NOT VERIFIED`），launch gate 不通過。
+- `[V]` P9/P10 邏輯層檢查：`python3 runtime/tests/test_preflight_p10.py`（stdlib unittest，真實檔案系統 + 注入 host scripts 目錄，不需 container）10/10 OK，涵蓋 mapped/絕對路徑重算相符、sha 不符、不可讀路徑 `NOT VERIFIED`、缺 `script.sha256`、缺 `run-spec.json`、terminal sentinel 使 launch gate FAIL、未給 `--attempt-dir` 的 `NA`。
 
 ## 17. FINALIST 之後：下游 authoritative acceptance（future / out-of-scope / non-blocking）
 
@@ -665,7 +667,7 @@ family F
 ## 21. Rollout / smoke tests / failure drills
 
 ### 21.1 Rollout 階段
-1. `[V]` R0：文件凍結 → audit → operator 核准（v1.0.1 = AUDITED PASS / FROZEN，auditor t_e35c39c0；v1.1.0 = AWAITING AUDIT）。
+1. `[V]` R0：文件凍結 → audit → operator 核准（v1.0.1 = AUDITED PASS / FROZEN，auditor t_e35c39c0；v1.1.1 = AWAITING AUDIT，前次 v1.1.0 = AUDITED FAIL @ audit t_d7f48c7a）。
 2. `[V]` R1：preflight 腳本化（P1–P10），只讀，不投遞 → `runtime/preflight.py`（2026-09-13 實測）。
 3. `[T]` R2：單一 smoke run（非策略）走完 `ready→running→scheduled→sentinel→unblock→ready`。**部分已驗證**：sentinel 產生/驗證、fail-closed 分支、以及 `scheduled→ready` 的判定邏輯已實測（fixture + `runtime/tests/test_reconcile.py`）；**真的放行一次**尚未執行，因為放行需要 `scheduled` 卡 + 無 fence 的 host context（§9.4），而本卡執行環境（kanban worker session）被 Hermes 拒絕 board 變更。`container exec` 投遞段的真實 Qlib smoke 計算同樣尚未執行（不在 t_ec039d5f 範圍）。
 4. `[T]` R3：reconciler 腳本化（no_agent cron），以既有 sentinel 做 dry-run 對帳 → `runtime/reconcile.py --dry-run` 已可執行（2026-09-13 實測）；但 cron 的正式掛載（以及 apply 的第一次真實放行）仍待 operator 在**無 fence 的 host context**完成，見 §9.4 的執行環境限制。
@@ -841,8 +843,8 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 
 | # | 項目 | 卡在哪 | 第一張 production card | 驗證方式 |
 |---|---|---|---|---|
-| T1 | reconciler 腳本（no-agent） | **已落地（最小版）** `runtime/reconcile.py` | — | R3 dry-run 對既有 sentinel 對帳 + `runtime/tests/test_reconcile.py` 12/12（2026-09-13 實測） |
-| T2 | preflight 腳本 P1–P10 | **已落地（最小版）** `runtime/preflight.py` | — | R1 全綠輸出可重現（2026-09-13 實測，P1–P8 PASS） |
+| T1 | reconciler 腳本（no-agent） | **已落地（最小版）** `runtime/reconcile.py` | — | R3 dry-run 對既有 sentinel 對帳 + `runtime/tests/test_reconcile.py` 23/23（2026-09-13 實測；v1.1.1 追加 consumed-first 與 family/round/run/container identity 覆蓋） |
+| T2 | preflight 腳本 P1–P10 | **已落地（最小版）** `runtime/preflight.py` | — | R1 全綠輸出可重現（2026-09-13 實測，P1–P8 PASS；P9/P10 與 P10 sha 重算之邏輯層檢查 `runtime/tests/test_preflight_p10.py` 10/10） |
 | T3 | sentinel/checksum 產生器 | **已落地（最小版）** `runtime/terminal_evidence.py` | — | fixture 產出、`check` 重算相符、重複 publish 被拒（INV-15）（2026-09-13 實測） |
 | T4 | artifact 目錄 schema 實際落地 | 尚無正式 family 目錄 | `BLOCKER`（隨第一張卡產生） | R4 第一張 strategy card |
 | T5 | fingerprint 計算腳本 | 未實作 | `DEFERRED`（§14.3 允許手算 + auditor 重算） | `family.json` 的 `fingerprint_input` 由 auditor 唯讀重算比對 |
@@ -860,8 +862,11 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 |---|---|---|---|
 | v1.0 | 2026-09-12 | 初版定版（本卡 t_5b5b38d6） | ChatGPT 規劃；新增 Family Yield（§15）與 Execution Preflight（§16）兩條正式護欄 |
 | v1.0.1 | 2026-09-12 | **B1**：廢除 task-level metadata 作為 durable state，ownership/lineage/verdict 改落 `/results`（新增 §10.6 `family.json`、§10.7 `verdict.json`；改寫 §9.4 reconciler 入口、§14、§18.1、INV-4/9/10/17）。**B2**：新增 §12.6 conflict/incident 流程（`scheduled` 不得直接 block），統一 §6.3/§7.1/§12.3/§12.4/§12.5。**B3**：`/qlib/work` 單一 volume 故障一律 card-local，統一 §12.5/§13/§16 | auditor t_a3dc355d 三個 blocking findings 的最小 remediation（本卡 t_bcedaf65） |
-| v1.1.0 | 2026-09-13 | **A 語意校正**：§1.2 改寫（Nautilus 為 future/out-of-scope/non-blocking，非 authoritative gate）；新增 §7.2「全量回測定義與 production 模式」；§9.6 移除「未有下游 acceptance 只能 research-only」的降級條款；§17 全面改寫為 out-of-scope 備忘（不得反向改寫 verdict、不得當 gate）；§21.2 新增 blocker/deferred 分級；§22 新增 A19/A20、改寫 A13；§24.5 標 future；§25 新增兩條硬規則；附錄 B 新增「第一張 production card」分級欄。**B 修正**：§16.2 P8 與等價檢查一律改用 `/opt/venv/bin/python`（`/usr/local/bin/python` 無 qlib；登入 shell 會還原 PATH）；`container/scripts/verify_final.sh` 兩處 `container exec … python` 同步改為 venv 絕對路徑。**C 最小 readiness**：新增 `runtime/preflight.py`（§16.4 的 P1–P10 單一腳本）、`runtime/reconcile.py`（§9.4 no-agent reconciler，含 §12.6 incident 寫入）、`runtime/terminal_evidence.py`（§10.3/§10.4 sentinel + checksum 產生器，host 端 orphan `INCOMPLETE` 補寫用）；§3/§9.4/§10.4/§21.1 的 `[T]` 對應轉為 `[V]` | ChatGPT（GPT-5.6 Sol）卡片 t_ec039d5f：修正契約語意與第一張正式 strategy card 前的最小 runtime 缺口的 remediation；不新增任何 Manager/Service/Factory/Registry/Orchestrator、daemon、queue 或第二套 runtime |
+| v1.1.0 | 2026-09-13 | **A 語意校正**：§1.2 改寫（Nautilus 為 future/out-of-scope/non-blocking，非 authoritative gate）；新增 §7.2「全量回測定義與 production 模式」；§9.6 移除「未有下游 acceptance 只能 research-only」的降級條款；§17 全面改寫為 out-of-scope 備忘（不得反向改寫 verdict、不得當 gate）；§21.2 新增 blocker/deferred 分級；§22 新增 A19/A20、改寫 A13；§24.5 標 future；§25 新增兩條硬規則；附錄 B 新增「第一張 production card」分級欄；§16.2 P2 語意校正（raw 唯讀判定改以 **container 內寫入探針**為準：host 使用者擁有該 export，host 端 `test -w` 必然為真而會誤判，故明文禁用；此校正僅記載於本表與 `evidence/`）。**B 修正**：§16.2 P8 與等價檢查一律改用 `/opt/venv/bin/python`（`/usr/local/bin/python` 無 qlib；登入 shell 會還原 PATH）；`container/scripts/verify_final.sh` 兩處 `container exec … python` 同步改為 venv 絕對路徑。**C 最小 readiness**：新增 `runtime/preflight.py`（§16.4 的 P1–P10 單一腳本）、`runtime/reconcile.py`（§9.4 no-agent reconciler，含 §12.6 incident 寫入）、`runtime/terminal_evidence.py`（§10.3/§10.4 sentinel + checksum 產生器，host 端 orphan `INCOMPLETE` 補寫用）；§3/§9.4/§10.4/§21.1 的 `[T]` 對應轉為 `[V]` | ChatGPT（GPT-5.6 Sol）卡片 t_ec039d5f：修正契約語意與第一張正式 strategy card 前的最小 runtime 缺口的 remediation；不新增任何 Manager/Service/Factory/Registry/Orchestrator、daemon、queue 或第二套 runtime |
+| v1.1.1 | 2026-09-13 | **F1（blocking）**：`runtime/reconcile.py` 的 consumed 判定移到 §9.4 驗證清單**之前**（sentinel 可解析出 `task_id` 且 DB 讀回非 `scheduled` → consumed/no-op：不寫 incident、不留 comment、重跑不累加；無法解析 `task_id` 才維持 fail-closed），對齊 §9.4 掃描範圍與 INV-16。**F2**：§9.4 item 1 補上 attempt `run-spec.json`，並補足 identity 對照（`family.json.family_id`、`round-spec.json.family_id/round_id`、`run-spec.json` 的 family/round/run/task、`container_id`（sentinel 必填、run-spec 有載明即須相符）、path/sentinel）；§9.4 item 4 載明現役容器 identity 比對屬 preflight P5/P6、不在 reconciler 內再引入 container 查詢。**F3**：§16.2 P10 改為「`script.sha256` 必須由 host 端**實際重算**相符」，不可讀／不可解析 → `FAIL`（NOT VERIFIED）且 launch gate 不通過；`runtime/preflight.py` 以既有 `/scripts` ro mount mapping 解析（`--host-scripts`，可用 `QLIB_HOST_SCRIPTS` 覆寫），並新增 `runtime/tests/test_preflight_p10.py`。**文件精度**：README／§21.1／附錄 C 的 audit 指針改為 `t_d7f48c7a`；附錄 C 補記 v1.1.0 的 §16.2-P2 語意校正；§9.4 的 fail-closed 分支計數修正為六項；README Provenance 措辭改為「除附錄 C 記載之變更外」。**語意不變**：Nautilus 仍為 future/out-of-scope/non-blocking；production 仍為 sequential A→B→C；§7.2 full-backtest 定義不變 | auditor t_d7f48c7a（v1.1.0，FAIL）的 F1 blocking、F2/F3 同批 conformance gap、M1–M4 文件精度，本卡 t_4d6c5cd5 之最小 remediation；不新增 Manager/Service/Factory/Registry/Orchestrator、daemon、queue、resolver 或第二套 runtime |
 
 驗證方式（v1.0.1）：全文 cross-reference 掃描（`metadata`/`scheduled`→`blocked`/`/qlib/work` shared-layer 三組字串逐條核對）+ §22 A1–A18 自檢；文件狀態：AUDITED PASS / FROZEN（auditor re-audit t_e35c39c0，2026-09-12）。
 
-驗證方式（v1.1.0）：全文 cross-reference 掃描（Nautilus 相關句逐條核對是否仍暗示 mandatory / authoritative gate、`research-only` 降級條款是否已移除、裸 `python` 檢查是否已改為 `/opt/venv/bin/python`）+ §22 A1–A20 自檢 + `runtime/` 三支腳本實跑輸出（`evidence/runtime-readiness-20260913.json`）；文件狀態：AWAITING AUDIT（audit 子卡 t_2cd35888）。
+驗證方式（v1.1.0）：全文 cross-reference 掃描（Nautilus 相關句逐條核對是否仍暗示 mandatory / authoritative gate、`research-only` 降級條款是否已移除、裸 `python` 檢查是否已改為 `/opt/venv/bin/python`）+ §22 A1–A20 自檢 + `runtime/` 三支腳本實跑輸出（`evidence/runtime-readiness-20260913.json`）；文件狀態：AUDITED FAIL（audit t_d7f48c7a，2026-09-13）。
+
+驗證方式（v1.1.1）：§26 change control 檢查（版本／日期／條號／理由／驗證方式）+ §22 A1–A20 自檢；§9.4 邏輯層 `python3 runtime/tests/test_reconcile.py` 23/23、§16.2 P9/P10 `python3 runtime/tests/test_preflight_p10.py` 10/10（stdlib unittest，真實檔案系統 + 注入 kernel 讀回）；`python3 runtime/preflight.py` → P1–P8 PASS、rc=0（未給 `--attempt-dir` 時 P9/P10 = `NA`）；`python3 runtime/reconcile.py --dry-run` → rc=0。另以**真實** board 讀回與**真實** host `/scripts` mapping 對抗性實測：consumed（card status=running）+ stale boot + checksum 衝突 + mapping 衝突 → 兩次執行皆 `consumed`、0 incident、0 comment、rc=0；identity 衝突且 DB 讀回不可判定 → `mapping_mismatch` incident（rc=3）；`script.sha256` 相符 → P10 PASS（recomputed 相符）、bogus sha → P10 FAIL + `--launch` rc=1。文件狀態：AWAITING AUDIT（re-audit t_83682069；前次 FAIL audit t_d7f48c7a）。
