@@ -1,0 +1,46 @@
+{
+  "python": "3.12.14 (main, Aug 31 2026, 23:47:53) [GCC 14.2.0]",
+  "python_version": "3.12.14",
+  "executable": "/opt/venv/bin/python",
+  "machine": "aarch64",
+  "system": "Linux",
+  "libc": [
+    "glibc",
+    "2.41"
+  ],
+  "platform": "Linux-6.18.35-aarch64-with-glibc2.41",
+  "modules": {
+    "qlib": {
+      "import": "PASS",
+      "version": "0.9.7"
+    },
+    "numpy": {
+      "import": "PASS",
+      "version": "2.5.3"
+    },
+    "pandas": {
+      "import": "PASS",
+      "version": "3.0.5"
+    },
+    "pyarrow": {
+      "import": "PASS",
+      "version": "25.0.1"
+    },
+    "lightgbm": {
+      "import": "PASS",
+      "version": "4.7.0"
+    },
+    "scipy": {
+      "import": "PASS",
+      "version": "1.18.1"
+    },
+    "sklearn": {
+      "import": "PASS",
+      "version": "1.9.1"
+    },
+    "mlflow": {
+      "import": "PASS",
+      "version": "3.16.0"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+[
+  {
+    "configuration" : {
+      "creationDate" : "2026-09-12T04:42:34Z",
+      "driver" : "local",
+      "format" : "ext4",
+      "labels" : {
+
+      },
+      "name" : "qlib-work",
+      "options" : {
+        "size" : "30g"
+      },
+      "sizeInBytes" : 32212254720,
+      "source" : "<CONTAINER_APP_ROOT>/volumes/qlib-work/volume.img"
+    },
+    "id" : "qlib-work"
+  }
+]

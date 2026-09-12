@@ -1,0 +1,21 @@
+{
+  "name": "qlib:0.9.7-arm64",
+  "id": "c1d6e9f6058f5016314a1966277541aa0043e48abc56ac897384d0da57f57b9f",
+  "indexDigest": "sha256:c1d6e9f6058f5016314a1966277541aa0043e48abc56ac897384d0da57f57b9f",
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "creationDate": "2026-09-12T04:49:58Z",
+  "variants": [
+    {
+      "platform": {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      "digest": "sha256:1b021c27e67ca4910432e76c471a6b5ee5e0804b84c1181481c1fa040fd3b740",
+      "manifestSizeBytes": 388594293,
+      "architecture": "arm64",
+      "pythonVersion": "3.12.14",
+      "workingDir": "/qlib/work",
+      "historySteps": 16
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+# --- secrets / credentials (never versioned) ---
+.env
+.env.*
+*.pem
+*.key
+credentials*
+*token*.json
+
+# --- Kanban / runtime state churn ---
+kanban.db
+kanban.db-wal
+kanban.db-shm
+*.pid
+*.heartbeat
+
+# --- data + run artifacts (raw data and results live elsewhere) ---
+data/
+results/
+qlib-work/
+work/
+*.parquet
+*.img
+*.ckpt
+*.pth
+*.safetensors
+checkpoints/
+logs/
+*.log
+
+# --- host permission diagnostics / privacy ---
+tcc-*.txt
+raw-*-files.txt
+
+# --- legacy runtimes: must never be carried in ---
+lean/
+nautilus/
+nautilus_trader/
+
+# --- local noise ---
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/

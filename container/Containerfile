@@ -1,0 +1,59 @@
+# Qlib 0.9.7 on Apple Container — native linux/arm64, local-only.
+#
+# Provenance:
+#   source repo : https://github.com/microsoft/qlib
+#   release tag : v0.9.7  ==  commit da920b7f954f48ab1bb64117c976710de198373e
+#   (verified inside the build: the clone's HEAD must equal QLIB_COMMIT, otherwise the
+#    build fails — a moved/re-tagged upstream cannot silently change the image)
+#
+# Why a source build: PyPI pyqlib 0.9.7 ships only linux-x86_64 wheels and no sdist, so a
+# native arm64 image has to compile the two Cython/C++ extensions itself.
+#
+# Deliberately NOT included (scope of this task): Jupyter server, Redis, database,
+# scheduler, API server, RD-Agent, any backtest engine. Only upstream pyqlib runtime deps
+# plus the import-verified extras (pyarrow, lightgbm) and the upstream CSV->bin tool.
+
+FROM docker.io/library/python:3.12-slim AS builder
+
+ARG QLIB_TAG=v0.9.7
+ARG QLIB_COMMIT=da920b7f954f48ab1bb64117c976710de198373e
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+
+# cython + numpy must already be importable because qlib is built with --no-build-isolation
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel "cython>=3.0" "numpy>=1.24"
+
+RUN git clone --depth 1 --branch "${QLIB_TAG}" https://github.com/microsoft/qlib /tmp/qlib \
+ && git -C /tmp/qlib rev-parse HEAD \
+ && test "$(git -C /tmp/qlib rev-parse HEAD)" = "${QLIB_COMMIT}"
+
+RUN pip install --no-cache-dir --no-build-isolation /tmp/qlib \
+ && pip install --no-cache-dir pyarrow lightgbm loguru
+
+# Keep the pinned upstream CSV -> qlib .bin converter, drop the rest of the source tree.
+# (qlib's own FileFeatureStorage layout is what makes the data readable by the qlib data layer)
+RUN mkdir -p /opt/qlib-tools \
+ && cp /tmp/qlib/scripts/dump_bin.py /opt/qlib-tools/dump_bin.py \
+ && rm -rf /tmp/qlib
+
+FROM docker.io/library/python:3.12-slim AS runtime
+
+# libgomp1 is the OpenMP runtime lightgbm's manylinux aarch64 wheel links against
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/qlib-tools /opt/qlib-tools
+
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /qlib/work
+CMD ["sleep", "infinity"]

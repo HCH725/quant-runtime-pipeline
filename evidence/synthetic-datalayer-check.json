@@ -1,0 +1,33 @@
+{
+  "LABEL": "SYNTHETIC data-layer check \u2014 research/smoke only, not the BTCUSDT raw smoke",
+  "synthetic_bars": 720,
+  "dump_bin": {
+    "exit": 0,
+    "bins": [
+      "features/btcusdt/close.60min.bin",
+      "features/btcusdt/high.60min.bin",
+      "features/btcusdt/low.60min.bin",
+      "features/btcusdt/open.60min.bin",
+      "features/btcusdt/volume.60min.bin"
+    ],
+    "calendars": [
+      "calendars/60min.txt",
+      "instruments/all.txt"
+    ],
+    "stderr_tail": [
+      "100%|\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588| 1/1 [00:00<00:00, 66.58it/s]",
+      "2026-09-12 05:29:06.681 | INFO     | __main__:_dump_features:347 - end of features dump."
+    ]
+  },
+  "qlib_init": "ok",
+  "rows_via_qlib_data_layer": 720,
+  "first_index": "('BTCUSDT', Timestamp('2024-01-01 00:00:00'))",
+  "last_index": "('BTCUSDT', Timestamp('2024-01-30 23:00:00'))",
+  "index_monotonic": true,
+  "null_cells": 1,
+  "signal_stats": {
+    "n": 695,
+    "corr_sig_vs_next_return": 0.05655859888299331,
+    "mean_next_return": 0.00011536877718754113
+  }
+}
