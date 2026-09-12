@@ -14,6 +14,12 @@
 4. **Local-only raw evidence 不在此。** 完整 per-phase 執行輸出（`build.log`、`phase*.log`、
    `housekeeping*.log`、raw 檔案清單、主機權限診斷輸出、臨時 GitHub API helper）
    刻意不公開，僅存在於來源主機；本目錄是其可公開的精簡摘要。
+5. **唯一例外：operator-stopped 的 exact-bytes archive。** `strategy-b-operator-stopped/runtime/`
+   放的是**逐位元未修改**的 Strategy B runner 與其 engine test，屬 archive-only evidence
+   （理由與 checksum 見該目錄的 `README.md` 與
+   `strategy-b-operator-stop-record-20260913.json` 的 `archive_relocation`）。
+   它們既不是 runtime 路徑、也不是可執行驗證，只是「當時被 operator 中止的那份實作」的證據；
+   這是規則 1–4 之外**唯一**允許 non-snapshot bytes 存在的情況。
 
 ## `container/scripts/` 的分類（ACTIVE_CANONICAL vs HISTORICAL_INSTALL_ONLY）
 
@@ -53,3 +59,4 @@
 | `image-summary.json` | image `qlib:0.9.7-arm64` 的 digest / variant / size |
 | `synthetic-datalayer-check.json` | synthetic bars 上的 data layer + 運算式引擎檢查（明確標示 synthetic） |
 | `runtime-readiness-20260913.json` | `RUNTIME-2026-09-13`：Contract v1.1.0 的最小 runtime readiness 實跑證據（preflight P1–P8 PASS、reconciler 12/12 邏輯檢查、fixture 的 sentinel/checksum/incident 實測、`/results` 空掃描、以及 delegate-child fence 與 P2/P8 兩個發現）。主機路徑已 redact。**快照界線**：v1.1.1（audit `t_d7f48c7a` remediation）後測試檔已擴充（`test_reconcile.py` 23/23、新增 `test_preflight_p10.py`），本檔為當時輸出、不再重跑更新 |
+| `strategy-b-operator-stopped/` | **archive-only**：被 operator 中止的 Strategy B 之 exact-bytes runner 與 engine test（`runtime/30_strategy_b_run.py`、`runtime/tests/test_strategy_b_engine.py`，checksums 見該目錄 `README.md`）。不是 runtime 路徑、不得執行；理由見 `strategy-b-operator-stop-record-20260913.json` 的 `archive_relocation`（audit `t_246c62d7` M1，卡片 `t_6c83c9fb`） |

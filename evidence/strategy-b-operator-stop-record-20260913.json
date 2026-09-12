@@ -63,8 +63,8 @@
   },
   "repo_disposition_of_uncommitted_b_files": {
     "files": [
-      "container/scripts/30_strategy_b_run.py",
-      "container/scripts/tests/test_strategy_b_engine.py",
+      "evidence/strategy-b-operator-stopped/runtime/30_strategy_b_run.py",
+      "evidence/strategy-b-operator-stopped/runtime/tests/test_strategy_b_engine.py",
       "evidence/strategy-b-launch-record-20260913.json",
       "evidence/strategy-b-preflight-20260913.json",
       "evidence/strategy-b-preflight-u2-20260913.json",
@@ -72,11 +72,28 @@
     ],
     "decision": "commit, not delete: they are the only surviving record of what was launched and how. They carry no verdict, and the B card is not a production path any more (superseded by contract v1.3.0 semantics).",
     "evidence_redaction": "The launch record and the two preflight snapshots were produced by the B worker and contained host-specific absolute paths and a PID. Per evidence/README rule 1-2 they were redacted before commit: user-home paths and /tmp launch logs -> <PLACEHOLDER>, host_bg_pid -> null. Nothing else was modified (JSON fields, statuses and checksums are byte-identical otherwise). The bare mount point string '/Volumes/ExpansionDrive' is kept because contract section 3 already publishes that mount path; this matches the evidence snapshots committed for Strategy A.",
+    "archive_relocation": {
+      "reason": "audit t_246c62d7 finding M1 (card t_6c83c9fb): the operator-stopped runner and its engine test were still directly runnable from the active runtime path (repo container/scripts/ and the host /scripts deploy directory). That contradicts the README description of container/scripts/ as the canonical current runtime and makes an operator-stopped implementation look like a live production one. The two files were relocated byte-identically to an explicitly archive-only evidence path.",
+      "moved_at_utc": "2026-09-12T23:29:26Z",
+      "exact_bytes_preserved": true,
+      "archive_paths": {
+        "evidence/strategy-b-operator-stopped/runtime/30_strategy_b_run.py": "sha256:f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
+        "evidence/strategy-b-operator-stopped/runtime/tests/test_strategy_b_engine.py": "sha256:574ce5c6e62d42f051dc00162ab0255c94be6e47080e23336cf95eb7182d040f"
+      },
+      "active_paths_removed": [
+        "container/scripts/30_strategy_b_run.py",
+        "container/scripts/tests/test_strategy_b_engine.py",
+        "host qlib-apple-container/scripts/30_strategy_b_run.py (the /scripts ro deploy source)",
+        "host qlib-apple-container/scripts/tests/test_strategy_b_engine.py"
+      ],
+      "archive_is_not_a_runtime_path": "the archived test still defaults to /scripts/30_strategy_b_run.py and the archived runner still writes under /result*; both are kept byte-identical as evidence only. They are NOT a deploy source, are not mounted into qlib-run and must not be executed against the live runtime.",
+      "unchanged": "/results was not touched: family.json, round-spec.json, the attempt artifacts and the FAILED/INCOMPLETE sentinels are byte-identical; no verdict.json exists and none was written."
+    },
     "sha256_repo_vs_host_deploy": {
-      "container/scripts/30_strategy_b_run.py": "f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
-      "host_deploy_copy": "f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
-      "match": true,
-      "note": "this sha is exactly the one pinned by the u2 run-spec, so the surviving script is the script that produced the preserved artifacts."
+      "evidence/strategy-b-operator-stopped/runtime/30_strategy_b_run.py": "f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
+      "host_deploy_copy": null,
+      "match": null,
+      "note": "the archived sha is exactly the one pinned by the u2 run-spec, so the surviving script is the script that produced the preserved artifacts. The host deploy copy was removed by the M1 relocation (card t_6c83c9fb) and the repo copy moved to the archive path, so there is no active-copy sha to compare any more."
     },
     "repo_clean": true
   },

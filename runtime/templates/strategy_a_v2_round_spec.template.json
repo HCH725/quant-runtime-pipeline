@@ -75,9 +75,10 @@
   "dca_domain": {
     "kind": "DCA parameter domain (the execution rail), four axes - v1.3.0 requirement of contract 7.2 item 4",
     "base_quote": 1000,
-    "base_quote_status": "user-fixed invariant, held constant across the whole domain (it is not searched)",
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis), and NOT a user-fixed invariant: no operator evidence fixes it at 1000.  It is a project pre-registration choice, frozen here before any computation (provenance class PROJECT_PRE_REGISTERED_CONSTANT).",
     "spacing_pct": [0.01, 0.02, 0.03, 0.04],
     "size_multiplier": [1.0, 1.1],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values {1.0, 1.1}.  1.1 is the project's historical progression value and therefore a pre-registered search CANDIDATE, not an immutable user-fixed invariant (see the registered round-spec domain_provenance).",
     "breakeven_tp_pct": [0.01, 0.02, 0.03],
     "invalidation_pct": [0.05, 0.10],
     "config_count": 48,
@@ -136,7 +137,7 @@
       "finding": "Those records register the DCA/scale-in BOUNDEDNESS requirements (finite n_safety, C_max, invalidation, max loss at invalidation), the price/size/breakeven arithmetic and synthetic sweep demonstrations (d0 0.01-0.03 on synthetic bars, k 0.8-2.0). None of them publishes an audited DCA parameter SEARCH DOMAIN, and none registers a domain for this ladder/TP/invalidation family. There is therefore no stronger existing evidence to inherit, and the minimal bounded domain of the card is adopted verbatim (not widened, not narrowed).",
       "declared_differences_from_those_records": [
         "the reviewed records describe invalidation as a boundary 'beyond the last safety order'; Strategy A's inherited engine anchors the resting stop on the running average cost (v1 round r2 semantics, kept verbatim here). This is a declared, non-negotiable inheritance of the existing engine, not a new choice made after seeing results.",
-        "the reviewed records allow size multipliers k up to 1.5-2.0 on synthetic bars; the user-fixed invariant for this production rail is 1.1 (1.0 for flat sizing), so the domain is {1.0, 1.1}."
+        "the reviewed records allow size multipliers k up to 1.5-2.0 on synthetic bars; this round searches {1.0, 1.1}, where 1.1 is the project's historical progression value.  Both values are PROJECT_PRE_REGISTERED_SEARCH_DOMAIN candidates of this round - the search domain itself is the pre-registered quantity, and no operator evidence fixes 1.1 as an invariant of this rail (see dca_domain.size_multiplier_status)."
       ],
       "no_post_hoc_resizing": "The domain was fixed before any v2 computation and must not be narrowed or widened afterwards (contract 7.2; the card forbids shrinking the DCA domain after seeing results)."
     }
@@ -202,6 +203,7 @@
     "trigger_anchoring_resolution": "PROVISIONAL_INHERITED_POLICY - the LADDER is anchored on the INITIAL ENTRY FILL PRICE.",
     "invalidation_anchoring": "The rail names the take profit 'breakeven-anchored', i.e. anchored on the average cost of the open book. The invalidation is anchored on the SAME reference (running average cost).",
     "user_fixed_invariants": {
+      "provenance_class": "USER_FIXED - only items with explicit operator evidence (the operator's stated rail definition).  A searched axis or a project pre-registration constant must NOT be listed here (see dca_domain.base_quote_status / size_multiplier_status).",
       "starting_equity_usdt": 30000,
       "numeraire": "USDT (sole)",
       "venue": "BINANCE USD-M linear perpetual",
@@ -212,7 +214,10 @@
       "side": "LONG-side mirror/application to this LONG/FLAT alpha",
       "exit": "reduce-only",
       "no_add_after_flat_or_kill": true,
-      "same_bar_multi_level_ordering": "deterministic and conservative - see engine_semantics.intrabar_ordering",
+      "same_bar_multi_level_ordering": "deterministic and conservative - see engine_semantics.intrabar_ordering"
+    },
+    "project_pre_registered_constants": {
+      "provenance_class": "PROJECT_PRE_REGISTERED_CONSTANT - chosen by this project and frozen in the pre-registration, with no operator evidence fixing the value.  Not searched, but also not user-fixed.",
       "base_quote_usdt": 1000
     },
     "dca_axis_role": {

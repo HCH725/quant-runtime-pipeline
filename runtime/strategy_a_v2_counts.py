@@ -56,6 +56,15 @@ CANONICAL = {
 PHASE_GRIDS = ["historical", "oos", "full", "fee_2x", "funding_2x", "entry_delay_1_bar",
                "slippage_2ticks", "no_funding", "no_funding_full"]
 DCA_AXES = ("spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct")
+# Provenance classes (audit F2).  The search domain is the pre-registered scientific
+# quantity, so a searched axis may never be declared a user-fixed invariant, and a value
+# that no operator evidence fixes is a project pre-registration constant.
+PROJECT_CONSTANT = "PROJECT_PRE_REGISTERED_CONSTANT"
+PROJECT_SEARCH = "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+USER_FIXED_FORBIDDEN_KEYS = ("base_quote", "base_quote_usdt", "size_multiplier", "spacing_pct",
+                             "breakeven_tp_pct", "invalidation_pct")
+USER_FIXED_REQUIRED_KEYS = ("starting_equity_usdt", "numeraire", "leverage", "tranches",
+                            "tranche_12", "exit", "no_add_after_flat_or_kill")
 
 
 def now_utc():
@@ -72,6 +81,45 @@ def product(axes):
 
 def fingerprint(fingerprint_input):
     return "sha256:" + hashlib.sha256(fingerprint_input.encode()).hexdigest()
+
+
+def provenance_class(status):
+    """The leading classification token of a provenance status string."""
+    return str(status or "").split(" ")[0].strip(":-")
+
+
+def check_provenance(spec):
+    """DCA provenance classes must agree with what the registered domain actually does (F2).
+
+    The template used to call base_quote=1000 a 'user-fixed invariant' with no operator
+    evidence and to call the searched size_multiplier value 1.1 an 'invariant', contradicting
+    its own declared search domain.  A label is science here: it decides whether a value is a
+    pre-registered search candidate or a frozen constant, so it is asserted, not narrated.
+    """
+    problems = []
+    dca = spec.get("dca_domain") or {}
+    status = str(dca.get("base_quote_status") or "")
+    if not status.startswith(PROJECT_CONSTANT):
+        problems.append("dca_domain.base_quote_status must be classified %s (no operator "
+                        "evidence fixes base_quote at %r; got %r)"
+                        % (PROJECT_CONSTANT, dca.get("base_quote"), status))
+    if len(dca.get("size_multiplier") or []) > 1:
+        sm_status = str(dca.get("size_multiplier_status") or "")
+        if not sm_status.startswith(PROJECT_SEARCH):
+            problems.append("dca_domain.size_multiplier_status must be classified %s (the axis "
+                            "is searched over %r; got %r)"
+                            % (PROJECT_SEARCH, dca.get("size_multiplier"), sm_status))
+    invariants = ((spec.get("dca_execution_semantics") or {}).get("user_fixed_invariants") or {})
+    for key in USER_FIXED_FORBIDDEN_KEYS:
+        if key in invariants:
+            problems.append("dca_execution_semantics.user_fixed_invariants.%s contradicts the "
+                            "registered search domain: a searched axis or a project "
+                            "pre-registration constant is never USER_FIXED" % key)
+    for key in USER_FIXED_REQUIRED_KEYS:
+        if key not in invariants:
+            problems.append("dca_execution_semantics.user_fixed_invariants.%s missing: the "
+                            "operator-evidenced invariants must stay registered" % key)
+    return problems
 
 
 def validate(spec, run_spec=None):
@@ -115,6 +163,7 @@ def validate(spec, run_spec=None):
     if base_quotes != {dca.get("base_quote")}:
         problems.append("dca_domain.grid base_quote is not the registered constant %r"
                         % dca.get("base_quote"))
+    problems.extend(check_provenance(spec))
 
     strategy_cases = len(strategy_cells)
     dca_configs = len(dca_cells)
@@ -209,6 +258,9 @@ def validate(spec, run_spec=None):
                 and rs_dca.get("grid") == dca.get("grid")
                 and all(rs_dca.get(a) == dca.get(a) for a in DCA_AXES)
                 and rs_dca.get("base_quote") == dca.get("base_quote"))
+        rs_provenance_ok = all(
+            provenance_class(rs_dca.get(k)) == provenance_class(dca.get(k))
+            for k in ("base_quote_status", "size_multiplier_status"))
         rs_expected = run_spec.get("expected") or {}
         rs_counts_ok = all(rs_expected.get(k) == computed[k] for k in
                            ("cohorts", "strategy_cases_per_cohort", "dca_configs_per_cohort",
@@ -228,11 +280,15 @@ def validate(spec, run_spec=None):
             "counts_agree": bool(rs_counts_ok),
             "split_agrees": bool(rs_split_ok),
             "versions_agree": bool(rs_versions_ok),
+            "provenance_agrees": bool(rs_provenance_ok),
             "script_sha256_is_placeholder": bool(rs_script and "{{" in str(rs_script)),
             "expected_outputs": len(run_spec.get("expected_outputs") or []),
         }
         if not same:
             problems.append("run-spec domains disagree with the round-spec domains")
+        if not rs_provenance_ok:
+            problems.append("run-spec DCA provenance classes disagree with the round-spec "
+                            "(the two registered documents must carry the same classification)")
         if not rs_counts_ok:
             problems.append("run-spec expected counts disagree with the computed counts")
         if not rs_split_ok:

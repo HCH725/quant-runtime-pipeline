@@ -224,6 +224,80 @@ class TestEngine(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# audit F1: every fill (entry / DCA add / exit) charges its own taker fee into
+# the realised equity, so fee_2x is a real stress track and every reported
+# "net" figure is net of fees
+# ---------------------------------------------------------------------------
+
+class TestFeeAccounting(unittest.TestCase):
+
+    def test_single_take_profit_charges_the_entry_and_the_exit_fee(self):
+        # the same 5 bps single-TP fixture the archived Strategy B regression uses:
+        # 10x on the 1000 USDT base = 10,000 notional, TP = +1.2% of the cost basis
+        free = run(mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0))
+        costly = run(mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005))
+        self.assertAlmostEqual(free["net_pnl"], 120.0, places=6)
+        self.assertEqual(costly["tp_hits"], 1)
+        entry_fee = 10000.0 * 0.0005                        # notional at the entry fill
+        exit_fee = (10000.0 * 1.012) * 0.0005               # notional at the TP exit fill
+        self.assertAlmostEqual(costly["fees"], entry_fee + exit_fee, places=6)
+        self.assertAlmostEqual(costly["net_pnl"], 120.0 - entry_fee - exit_fee, places=6)
+        self.assertAlmostEqual(costly["ending_equity"], 30000.0 + costly["net_pnl"], places=6)
+        self.assertAlmostEqual(costly["gross_pnl"] - costly["fees"] - costly["funding"],
+                               costly["net_pnl"], places=6)
+
+    def test_ladder_adds_and_the_stop_exit_are_charged_their_own_fee(self):
+        tail = [(98.5, 93.0, 85.0, 86.0)]
+        free = run(mk(tail, taf=0.0))
+        costly = run(mk(tail, taf=0.0005))
+        fills, kill = walk_expect(85.0, 98.5)
+        self.assertEqual(fills, 4)
+        self.assertIsNotNone(kill)
+        self.assertEqual(costly["stop_hits"], 1)
+        # independent replay of the same ladder: the entry fill (level 0) plus the level 1..4
+        # adds, then the resting-stop exit.  Fees do not move the walk (the trigger walk reads
+        # cost/qty, never the realised equity), so the same fills and the same exit price apply.
+        qty = 10000.0 / P0
+        cost = 10000.0
+        fees = 10000.0 * 0.0005
+        for k in range(1, fills + 1):
+            trig = P0 * (1.0 - RAIL["spacing_d0"] * k)
+            amt = RAIL["base_quote"] * (RAIL["size_multiplier"] ** k) * LEV
+            fees += amt * 0.0005
+            qty += amt / trig
+            cost += amt
+        fees += qty * kill * 0.0005                         # the stop exit fill
+        self.assertAlmostEqual(costly["fees"], fees, places=6)
+        self.assertAlmostEqual(free["net_pnl"] - costly["net_pnl"], fees, places=6)
+        self.assertAlmostEqual(costly["net_pnl"], qty * kill - cost - fees, places=6)
+        self.assertAlmostEqual(costly["ending_equity"], 30000.0 + costly["net_pnl"], places=6)
+
+    def test_fee_stress_multiplier_moves_net_and_ending_equity(self):
+        # fee_2x must change the science: doubling the taker fee doubles the fee statistic and
+        # lowers net PnL / ending equity (it used to be a no-op on every reported number)
+        self.assertIn(("fee_2x", {"fee_mult": 2.0}), sa.STRESS)
+        f = mk([(98.5, 100.0, 98.4, 99.5)], taf=0.0005)
+        base = sa.simulate(f, (0, f.n), RAIL, PARAMS, {}, 0.0, "full")
+        x2 = sa.simulate(f, (0, f.n), RAIL, PARAMS, {"fee_mult": 2.0}, 0.0, "fee_2x")
+        self.assertAlmostEqual(x2["fees"], 2.0 * base["fees"], places=6)
+        self.assertLess(x2["net_pnl"], base["net_pnl"])
+        self.assertLess(x2["ending_equity"], base["ending_equity"])
+        self.assertAlmostEqual(base["net_pnl"], 120.0 - 10.06, places=6)
+        self.assertAlmostEqual(x2["net_pnl"], 120.0 - 20.12, places=6)
+
+    def test_the_fee_reaches_the_intra_episode_equity_marks(self):
+        # capital_utilization is mean(deployed margin / unrealised equity) over in-market bars,
+        # so it can only move if the entry fee was already deducted when the bar was marked
+        # (a fee charged only at episode end would leave the equity path gross-of-fee).
+        tail = [(98.5, 98.45, 98.30, 98.4)]                 # neither TP nor invalidation
+        free = run(mk(tail, taf=0.0))
+        costly = run(mk(tail, taf=0.0005))
+        self.assertGreater(costly["bars_in_market"], 0)
+        self.assertGreater(costly["capital_utilization"], free["capital_utilization"])
+        self.assertLess(costly["ending_equity"], free["ending_equity"])
+
+
+# ---------------------------------------------------------------------------
 # v1.3.0: cohort selector / cohort survivor / disposition (contract 7.2 / 7.3)
 # ---------------------------------------------------------------------------
 

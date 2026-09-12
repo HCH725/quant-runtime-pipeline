@@ -423,6 +423,19 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
     max_lev = 0.0
     util_sum = 0.0
 
+    def charge_fee(amount):
+        """A fee is paid at the instant of the fill and must reduce the realised equity there.
+
+        Accumulating fees in a side ledger (which v1.3.0 shipped) left `realized` gross of
+        fees, so `fee_2x` could not move net PnL / equity / Sharpe and the daily-equity marks
+        and the margin/leverage decisions all read a gross-of-fee equity.  The registered
+        metric is the equity net of fees and funding, and every fill (entry, DCA add, exit)
+        is a market order, so the deduction is a single choke point here.
+        """
+        nonlocal realized, fees_total
+        fees_total += amount
+        realized -= amount
+
     n_edges = len(edge)
     pos = 0
     halted = False
@@ -439,7 +452,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
         p0 = px
         qty = base * lev / px
         cost = qty * px
-        ep_fees = qty * px * taf
+        charge_fee(qty * px * taf)
         ep_fund = 0.0
         levels = [p0 * (1.0 - d0 * k) for k in range(12)]
         layers[0] += 1
@@ -473,7 +486,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
                 q = base * (mult ** k) * lev / fpx
                 qty += q
                 cost += q * fpx
-                ep_fees += q * fpx * taf
+                charge_fee(q * fpx * taf)
                 layers[k] += 1
                 k += 1
             eq = START_EQUITY + realized
@@ -481,7 +494,7 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             if killed_at is None and ueq <= cohort.margin_maint * qty * C[t]:
                 xpx = C[t] - slip_ticks * tick  # capital-exhaustion backstop
                 realized += qty * xpx - cost
-                ep_fees += qty * xpx * taf
+                charge_fee(qty * xpx * taf)
                 exit_bar, broke, margin_calls = t, True, margin_calls + 1
                 break
             if ueq > 0:
@@ -495,23 +508,22 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             if killed_at is not None:
                 xpx = killed_at - slip_ticks * tick
                 realized += qty * xpx - cost
-                ep_fees += qty * xpx * taf
+                charge_fee(qty * xpx * taf)
                 exit_bar, broke, stop_hits = t, True, stop_hits + 1
                 break
             tpx = (cost / qty) * (1.0 + tp_pct)  # reduce-only breakeven-anchored TP
             if h >= tpx:
                 xpx = tpx - slip_ticks * tick
                 realized += qty * xpx - cost
-                ep_fees += qty * xpx * taf
+                charge_fee(qty * xpx * taf)
                 exit_bar, broke, tp_hits = t, True, tp_hits + 1
                 break
         exit_kind = "CLOSED" if broke else "EOD_OPEN"
         if not broke:
             xpx = C[-1] - slip_ticks * tick
             realized += qty * xpx - cost
-            ep_fees += qty * xpx * taf
+            charge_fee(qty * xpx * taf)
             open_at_end += 1
-        fees_total += ep_fees
         funding_paid += ep_fund
         realized -= ep_fund
         episodes += 1

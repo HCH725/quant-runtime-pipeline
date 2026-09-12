@@ -2,7 +2,7 @@
   "schema_version": 1,
   "kind": "strategy_a_v2_pre_registration_counts",
   "contract_section": "7.2 / 7.3 (Contract v1.3.0)",
-  "checked_at_utc": "2026-09-12T19:16:10Z",
+  "checked_at_utc": "2026-09-12T23:27:37Z",
   "round_spec": "<REPO>/runtime/templates/strategy_a_v2_round_spec.template.json",
   "run_spec": "<REPO>/runtime/templates/strategy_a_v2_run_spec.template.json",
   "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
@@ -62,6 +62,7 @@
     "counts_agree": true,
     "split_agrees": true,
     "versions_agree": true,
+    "provenance_agrees": true,
     "script_sha256_is_placeholder": true,
     "expected_outputs": 17
   },

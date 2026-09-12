@@ -45,8 +45,10 @@
   },
   "dca_domain": {
     "base_quote": 1000,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis), and NOT a user-fixed invariant: no operator evidence fixes it at 1000.  It is a project pre-registration choice, frozen here before any computation (provenance class PROJECT_PRE_REGISTERED_CONSTANT).",
     "spacing_pct": [0.01, 0.02, 0.03, 0.04],
     "size_multiplier": [1.0, 1.1],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values {1.0, 1.1}.  1.1 is the project's historical progression value and therefore a pre-registered search CANDIDATE, not an immutable user-fixed invariant (see the registered round-spec domain_provenance).",
     "breakeven_tp_pct": [0.01, 0.02, 0.03],
     "invalidation_pct": [0.05, 0.1],
     "grid": [

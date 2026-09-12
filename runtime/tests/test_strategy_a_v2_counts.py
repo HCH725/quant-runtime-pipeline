@@ -109,6 +109,60 @@ class TestCounts(unittest.TestCase):
         self.assertTrue("{{script_sha256}}" in self.run_spec["script"]["sha256"])
         self.assertEqual(self.run_spec["expected"]["expected_case_evaluations"], 103680)
 
+    # ------------------------------------------------------------------
+    # audit F2: DCA provenance labels must match the declared search domain
+    # ------------------------------------------------------------------
+
+    def test_dca_provenance_classes_match_the_declared_search_domain(self):
+        dca = self.round_spec["dca_domain"]
+        self.assertTrue(dca["base_quote_status"].startswith(sa.PROJECT_CONSTANT))
+        self.assertTrue(dca["size_multiplier_status"].startswith(sa.PROJECT_SEARCH))
+        invariants = self.round_spec["dca_execution_semantics"]["user_fixed_invariants"]
+        for key in sa.USER_FIXED_FORBIDDEN_KEYS:
+            self.assertNotIn(key, invariants, "a searched axis/project constant is not user-fixed")
+        for key in sa.USER_FIXED_REQUIRED_KEYS:
+            self.assertIn(key, invariants, "operator-evidenced invariants must stay registered")
+        # the two registered documents must carry the same classification
+        res = sa.validate(self.round_spec, self.run_spec)
+        self.assertEqual(res["problems"], [])
+        self.assertTrue(res["run_spec_check"]["provenance_agrees"])
+
+    def test_base_quote_labelled_user_fixed_is_rejected(self):
+        spec = copy.deepcopy(self.round_spec)
+        spec["dca_domain"]["base_quote_status"] = \
+            "user-fixed invariant, held constant across the whole domain (it is not searched)"
+        spec["dca_execution_semantics"]["user_fixed_invariants"]["base_quote_usdt"] = 1000
+        res = sa.validate(spec, None)
+        self.assertTrue(any("base_quote_status" in p for p in res["problems"]), res["problems"])
+        self.assertTrue(any("user_fixed_invariants.base_quote_usdt" in p
+                            for p in res["problems"]), res["problems"])
+
+    def test_searchable_multiplier_labelled_user_fixed_is_rejected(self):
+        spec = copy.deepcopy(self.round_spec)
+        spec["dca_domain"]["size_multiplier_status"] = \
+            "user-fixed invariant for this production rail (1.0 for flat sizing)"
+        spec["dca_execution_semantics"]["user_fixed_invariants"]["size_multiplier"] = 1.1
+        res = sa.validate(spec, None)
+        self.assertTrue(any("size_multiplier_status" in p for p in res["problems"]),
+                        res["problems"])
+        self.assertTrue(any("user_fixed_invariants.size_multiplier" in p
+                            for p in res["problems"]), res["problems"])
+
+    def test_stripping_the_operator_evidenced_invariants_is_rejected(self):
+        spec = copy.deepcopy(self.round_spec)
+        for key in ("leverage", "tranches", "no_add_after_flat_or_kill"):
+            spec["dca_execution_semantics"]["user_fixed_invariants"].pop(key)
+        res = sa.validate(spec, None)
+        self.assertEqual(len([p for p in res["problems"] if "user_fixed_invariants" in p]), 3)
+
+    def test_run_spec_provenance_disagreement_is_rejected(self):
+        run_spec = copy.deepcopy(self.run_spec)
+        run_spec["dca_domain"]["base_quote_status"] = "user-fixed invariant (not searched)"
+        res = sa.validate(self.round_spec, run_spec)
+        self.assertFalse(res["run_spec_check"]["provenance_agrees"])
+        self.assertTrue(any("provenance classes disagree" in p for p in res["problems"]),
+                        res["problems"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
