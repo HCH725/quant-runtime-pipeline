@@ -19,7 +19,7 @@ container exec qlib-run uname -m
 container exec qlib-run uname -a | cut -c1-80
 
 echo "-- B: qlib version / python arch (fresh process) --"
-container exec qlib-run python -c 'import qlib,sys,platform;print("qlib",qlib.__version__,"| python",platform.python_version(),"| machine",platform.machine(),"| exe",sys.executable)'
+container exec qlib-run /opt/venv/bin/python -c 'import qlib,sys,platform;print("qlib",qlib.__version__,"| python",platform.python_version(),"| machine",platform.machine(),"| exe",sys.executable)'
 
 echo "-- C: raw mount ro + readable --"
 container exec qlib-run sh -c 'grep " /data/raw " /proc/mounts'
@@ -31,7 +31,7 @@ container exec qlib-run sh -c 'df -h /qlib/work | tail -1'
 container volume inspect qlib-work | grep -E '"(size|sizeInBytes|format|source)"'
 
 echo "-- E/F: BTCUSDT 1h sample really read through the qlib data layer --"
-container exec qlib-run python /scripts/03_qlib_smoke.py /qlib/work/qlib-data-btcusdt-2024Q1 \
+container exec qlib-run /opt/venv/bin/python /scripts/03_qlib_smoke.py /qlib/work/qlib-data-btcusdt-2024Q1 \
   "2024-01-01 00:00:00" "2024-04-01 00:00:00" /qlib/work/final-qlib-read.json | grep -E '"(rows|calendar_len|monotonic_increasing|calendar_duplicates|null_cells)"'
 
 echo "-- G/H: results store on ExpansionDrive --"

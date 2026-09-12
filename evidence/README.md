@@ -52,3 +52,4 @@
 | `env-baseline.json` | container 內 import / 版本基線 |
 | `image-summary.json` | image `qlib:0.9.7-arm64` 的 digest / variant / size |
 | `synthetic-datalayer-check.json` | synthetic bars 上的 data layer + 運算式引擎檢查（明確標示 synthetic） |
+| `runtime-readiness-20260913.json` | `RUNTIME-2026-09-13`：Contract v1.1.0 的最小 runtime readiness 實跑證據（preflight P1–P8 PASS、reconciler 12/12 邏輯檢查、fixture 的 sentinel/checksum/incident 實測、`/results` 空掃描、以及 delegate-child fence 與 P2/P8 兩個發現）。主機路徑已 redact |

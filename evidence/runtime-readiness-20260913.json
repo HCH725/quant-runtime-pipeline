@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "kind": "runtime-readiness-verification",
+  "recorded_at_utc": "2026-09-12T16:49:00Z",
+  "kanban_task": "t_ec039d5f",
+  "contract_version": "v1.1.0",
+  "note": "Real command output captured on the source host; host-specific absolute paths are redacted (<HOME>/<EXPANSION>/<TMP>) exactly as evidence/README.md requires. Snapshot, not runtime state.",
+  "preflight": {
+    "cmd": "python3 runtime/preflight.py --json",
+    "rc": 0,
+    "host_boot_id": "boot-1789203998",
+    "launch_gate": "not_evaluated",
+    "overall": "PASS",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "mounted+readable: <EXPANSION> (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+      },
+      {
+        "id": "P2",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+      },
+      {
+        "id": "P3",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "results writable: wrote+removed <EXPANSION>/qlib-results/.preflight-probe-7662.tmp"
+      },
+      {
+        "id": "P4",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "container system status=running (rc=0)"
+      },
+      {
+        "id": "P5",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "qlib-run state=running"
+      },
+      {
+        "id": "P6",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+      },
+      {
+        "id": "P7",
+        "status": "PASS",
+        "layer": "card-local",
+        "detail": "/qlib/work writable: work_ok"
+      },
+      {
+        "id": "P8",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+      },
+      {
+        "id": "P9",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      },
+      {
+        "id": "P10",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      }
+    ]
+  },
+  "reconcile_unit_tests": {
+    "cmd": "python3 runtime/tests/test_reconcile.py",
+    "rc": 0,
+    "summary_lines": [
+      "test_checksum_mismatch_is_fail_closed (__main__.Harness) ... ok",
+      "test_consumed_sentinel_is_noop (__main__.Harness) ... ok",
+      "test_dry_run_never_mutates (__main__.Harness) ... ok",
+      "test_mapping_mismatch_is_fail_closed (__main__.Harness) ... ok",
+      "test_multiple_terminal_is_fail_closed (__main__.Harness) ... ok",
+      "test_orphan_without_terminal_is_report_only (__main__.Harness) ... ok",
+      "test_release_without_readback_confirmation_is_reported (__main__.Harness) ... ok",
+      "test_scanner_ignores_incidents_dir_and_foreign_layout (__main__.Harness) ... ok",
+      "test_sentinel_status_mismatch_is_fail_closed (__main__.Harness) ... ok",
+      "test_stale_boot_is_fail_closed (__main__.Harness) ... ok",
+      "test_unblock_failure_is_reported (__main__.Harness) ... ok",
+      "test_verified_terminal_releases_scheduled_card (__main__.Harness) ... ok",
+      "Ran 12 tests in 0.240s",
+      "OK"
+    ],
+    "cases": [],
+    "scope": "logic level: kernel read-back and the unblock call are injected, so the release/fail-closed state machine is exercised without mutating a real board"
+  },
+  "fixture_smoke": {
+    "note": "real filesystem + real kanban DB read-back; no board mutation (see environment_findings)",
+    "fixture_root": "<TMP>/qrp-smoke-6379",
+    "card_used_for_readback": "t_ec039d5f",
+    "verifying_card_status_after": "running",
+    "terminal_evidence_check": {
+      "ok": true,
+      "attempt_dir": "/tmp/qrp-smoke-6379/smoke-reconcile-verify-20260913/rounds/smoke-reconcile-verify-20260913-r1/attempts/smoke-reconcile-verify-20260913-r1-u1",
+      "terminal": "DONE",
+      "status": "DONE",
+      "family_id": "smoke-reconcile-verify-20260913",
+      "round_id": "smoke-reconcile-verify-20260913-r1",
+      "run_id": "smoke-reconcile-verify-20260913-r1-u1",
+      "task_id": "t_ec039d5f",
+      "verdict_hint": "CANDIDATE_PASS",
+      "artifact_manifest": [
+        "result.json",
+        "artifacts/summary.csv"
+      ],
+      "host_boot_id": "boot-1789203998",
+      "current_host_boot_id": "boot-1789203998",
+      "problems": []
+    },
+    "publish_overwrite_refused": {
+      "rc": 1,
+      "msg": "refused: terminal evidence already exists in <TMP>/qrp-smoke-6379/smoke-reconcile-verify-20260913/rounds/smoke-reconcile-verify-20260913-r1/attempts/smoke-reconcile-verify-20260913-r1-u1: ['DONE'] (INV-15 forbids re-run)"
+    },
+    "dry_run": {
+      "rc": 0,
+      "actions": [
+        [
+          "smoke-reconcile-verify-20260913",
+          "consumed",
+          "sentinel already consumed (card status=running); no action, "
+        ]
+      ],
+      "incident_file_written": false,
+      "wrote_nothing_on_second_pass": true
+    },
+    "apply": {
+      "rc": 3,
+      "unblocked": [],
+      "incidents": 3,
+      "actions": [
+        [
+          "smoke-reconcile-checksum-mismatch",
+          "incident",
+          "checksum_mismatch"
+        ],
+        [
+          "smoke-reconcile-multi-terminal",
+          "incident",
+          "multiple_terminal"
+        ],
+        [
+          "smoke-reconcile-orphan",
+          "orphan_candidate",
+          "no terminal sentinel; stage=RUNNING_QLIB -> contract 12.2: host/default publishes INCOMPLETE via runtime/terminal_evidence.py, then reconcile again"
+        ],
+        [
+          "smoke-reconcile-stale-boot",
+          "incident",
+          "stale_sentinel"
+        ],
+        [
+          "smoke-reconcile-verify-20260913",
+          "consumed",
+          "sentinel already consumed (card status=running); no action, idempotent"
+        ]
+      ]
+    },
+    "incident_lines": [
+      {
+        "kind": "checksum_mismatch",
+        "task": "t_ec039d5f",
+        "detector": "reconciler",
+        "run_id": "smoke-reconcile-checksum-mismatch-r1-u1",
+        "incident_id": "inc-20260912T164553Z-9df4255d",
+        "evidence_paths": [
+          "/tmp/qrp-smoke-6379/smoke-reconcile-checksum-mismatch/rounds/smoke-reconcile-checksum-mismatch-r1/attempts/smoke-reconcile-checksum-mismatch-r1-u1/DONE"
+        ]
+      },
+      {
+        "kind": "multiple_terminal",
+        "task": null,
+        "detector": "reconciler",
+        "run_id": "smoke-reconcile-multi-terminal-r1-u1",
+        "incident_id": "inc-20260912T164554Z-ac82d5b1",
+        "evidence_paths": [
+          "/tmp/qrp-smoke-6379/smoke-reconcile-multi-terminal/rounds/smoke-reconcile-multi-terminal-r1/attempts/smoke-reconcile-multi-terminal-r1-u1/DONE",
+          "/tmp/qrp-smoke-6379/smoke-reconcile-multi-terminal/rounds/smoke-reconcile-multi-terminal-r1/attempts/smoke-reconcile-multi-terminal-r1-u1/FAILED"
+        ]
+      },
+      {
+        "kind": "stale_sentinel",
+        "task": "t_ec039d5f",
+        "detector": "reconciler",
+        "run_id": "smoke-reconcile-stale-boot-r1-u1",
+        "incident_id": "inc-20260912T164554Z-6ac98540",
+        "evidence_paths": [
+          "/tmp/qrp-smoke-6379/smoke-reconcile-stale-boot/rounds/smoke-reconcile-stale-boot-r1/attempts/smoke-reconcile-stale-boot-r1-u1/DONE"
+        ]
+      }
+    ],
+    "real_results_root_dry_run": {
+      "rc": 0,
+      "attempts_scanned": 0,
+      "results": [],
+      "incident_file_created": false
+    }
+  },
+  "environment_findings": {
+    "delegate_child_fence": {
+      "what": "Hermes refuses kanban board mutations from HERMES_DELEGATED_CHILD_CONTEXT=1 contexts: delegate_task children, kanban worker sessions, and cron jobs created/fired from them.",
+      "code": "<HOME>/.hermes/hermes-agent/hermes_cli/kanban.py:_DELEGATED_CHILD_DENIED_ACTIONS",
+      "observed_in_worker_session": "hermes kanban create/schedule/unblock/comment/archive -> refused",
+      "observed_in_cron_job_created_from_that_session": {
+        "env_fence_marker": "1",
+        "env_session_source": "kanban",
+        "kanban_show_rc": 0,
+        "kanban_ls_rc": 1,
+        "kanban_ls_head": "kanban: delegate_task child contexts cannot mutate Kanban tasks or boards",
+        "reconcile_dry_run_rc": 0
+      },
+      "consequence": "reconcile.py apply (the single scheduled->ready unblock) must run from a host context without that marker (operator shell, or cron/service started from it); dry-run and all fail-closed paths work anywhere. Until then a verified terminal sentinel is detected but not released - the exact 'stuck in scheduled' failure the contract forbids.",
+      "verification_left": "R2/R3: one real scheduled->ready release, then the cron wiring, from a fence-free host context (operator step)."
+    },
+    "p2_host_vs_container": {
+      "what": "P2 (raw read-only) cannot be decided with a host-side `test -w`: the host user owns the export, so a host check reports writable and misjudges FAIL.",
+      "fix": "runtime/preflight.py probes /data/raw from inside qlib-run and requires READ_ONLY; contract 16.2 P2 updated accordingly."
+    },
+    "p8_interpreter": {
+      "what": "P8 must call /opt/venv/bin/python explicitly: /usr/local/bin/python has no qlib, and a login shell resets PATH to a non-venv one, so a bare `python` check can misjudge FAIL.",
+      "evidence": "container exec qlib-run /usr/local/bin/python -c 'import qlib' -> ModuleNotFoundError"
+    }
+  },
+  "not_verified_here": [
+    "one real scheduled->ready release on the production board (needs a scheduled card + fence-free host context)",
+    "container exec submission of a real Qlib smoke computation (R2 compute leg; out of t_ec039d5f scope)",
+    "D1-D13 failure drills (contract 21.2: deferred hardening, not a gate for the first production card)",
+    "fingerprint/yield/chain-head automation (contract appendix B: DEFERRED)",
+    "the first production strategy card itself (contract 21.1 R4; deliberately not started)"
+  ]
+}

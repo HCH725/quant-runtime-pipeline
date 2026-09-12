@@ -1,8 +1,8 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：FROZEN（v1.0.1，AUDITED PASS — auditor re-audit t_e35c39c0，2026-09-12）
-版本：v1.0.1（2026-09-12）
-作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）
+文件狀態：AWAITING AUDIT（v1.1.0；最後 AUDITED PASS / FROZEN 的版本是 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
+版本：v1.1.0（2026-09-13）
+作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）
 適用範圍：quant-strategy-research board 之 Qlib 研究 runtime 與 Kanban 交接
 變更控制：見 §26；本文件為長期 implementation contract，不是高階摘要
 
@@ -40,7 +40,7 @@
 - `[C]` 不建立 HTTP server / webhook / Redis / Celery / RabbitMQ / 任何 queue manager 作為完成橋。
 - `[C]` 不新增 Manager / Service / Factory / Registry / Orchestrator 類抽象層；不新增 daemon。
 - `[C]` 不讓 Qlib container 取得 Hermes credentials、Kanban DB 寫入能力或 host control socket。
-- `[C]` 不以 Qlib 取代下游 authoritative acceptance；不讓 Nautilus 變成第二套全量參數搜尋引擎。
+- `[C]` 現行 production 的計算面與效能真值來源只有 Qlib container 的 full-backtest（§7.2）。Nautilus（或任何第二套 backtester）為 **future / out-of-scope / non-blocking optional integration**（§17）：它不是已建立、必經、authoritative gate，也不是 performance claim gate；它不存在**不得**使現行 Qlib full-backtest 降級為 `research-only`，也不得成為第二套全量參數搜尋引擎。
 - `[C]` 不把「done」當成「PASS」（§6.4）。
 
 ## 2. Roles / RACI
@@ -75,7 +75,7 @@
 - `[C]` container 對外唯一 communication surface 是 `/results` 檔案系統（單向、host-readable）。反方向（host → container）只用 `container exec`，由 host 主動發起。
 - `[C]` 資料流單向：raw(ro) → 容器計算 → `/results`(rw) → host 讀回。任何需要 host 寫入 raw 的行為都不屬於本 pipeline。
 - `[C]` reconciler 不信任 container 的任何「自述」（exit code、log line、comment）；只信任 `/results` 上的 durable terminal evidence 與自身對 Kanban DB 的讀回。
-- `[T]` `/results` 的 checksum 驗證機制（§10.4）尚未有實作；在落地前，缺失 checksum 一律 fail-closed。
+- `[V]` `/results` 的 checksum 產生與驗證機制已以最小版落地並實測（2026-09-13）：`runtime/terminal_evidence.py` 產生 manifest checksums 與 atomic sentinel，`runtime/reconcile.py` 對 manifest 逐項重算比對。缺失或不符合的 checksum 一律 fail-closed。
 
 ## 4. 術語
 
@@ -195,6 +195,19 @@ PREREGISTER → LAUNCH_PENDING → RUNNING_QLIB → ARTIFACT_READY → VERDICT �
 - `[C]` 若某張 `ready` 卡尚無對應 `family.json`（tail append 同一輪進行中）：不得投遞 Qlib；claim 後必須先確認 `family.json` 已落地，否則走 §12.6 incident。
 - `[T]` 上述判定尚未有腳本化查詢；落地前由 default 每輪以 DB 讀回 + `/results/*/family.json` 掃描人工確認。
 
+### 7.2 全量回測（full-backtest）定義與 production 模式
+
+- `[C]` **全量回測**：一張 strategy card 在其**預先定義的 eligible universe** 內完整覆蓋下列五個維度，才可宣稱完成一次 full-backtest：
+  1. `symbols`：該卡事先註冊的合格 symbol 集合（不得事後擴張或挑選）。
+  2. `timeframes`：事先註冊的全部頻率。
+  3. `parameter domain`：事先註冊的完整參數域（§10.2 `params`），不是單點試算。
+  4. `DCA execution`：以該卡註冊的 DCA（定期定額／分批進場）執行語意實算，不是事後推估。
+  5. `historical / OOS / robustness`：in-sample 歷史段、明確 out-of-sample 段、robustness（參數鄰域／敏感度）三者皆完成。
+- `[C]` eligible universe 的註冊位置是 `/results/<family_id>/rounds/<round_id>/round-spec.json`（immutable）；該卡的完成判定以 §15 yield policy 與該 round 的 `verdict.json` 為準。
+- `[C]` 現行 production 計算面就是 Qlib container（§3/§9）；full-backtest 的完成與可宣稱性**不依賴** Nautilus 或任何下游 acceptance 階段（§9.6/§17）。
+- `[C]` **production 序列是 sequential A→B→C**：A 卡完整結案（`done`，任何 verdict）後才進 B，B 完整結案後才進 C；同一時刻只有一張 active strategy card（§7）。
+- `[C]` 多 family 一次全 universe 混跑**不是** production 模式，也不得作為 production 效能證據；若要探索，必須是獨立研究卡，並在該 family 的 `family.json` 的 `lineage_note` 載明其非 production 身分。
+
 ## 8. Round / Run lifecycle
 
 ```
@@ -227,7 +240,7 @@ family F
 3. `[C]` 以 `container exec qlib-run` 投遞計算（單次、非互動；`nohup`/背景非必要，但不得建立長時間 host 等待 turn）。
 4. `[C]` 立刻 `kanban_comment` 記錄 `run_id`、artifact 路徑、投遞時間（comment 只是可讀紀錄，不是 state；machine-readable ownership 以 `/results/<family_id>/family.json` + attempt `run-spec.json` 為準）。
 5. `[C]` 呼叫 `schedule_task` 把卡片 park 到 `scheduled`；worker 合法退出。
-6. `[T]` 步驟 3–5 尚未有腳本化包裝；目前必須由 default 依序手動完成，ownership 證據留在 `/results` durable artifact（`family.json`/`run-spec.json`/sentinel），卡片只留可讀 comment。
+6. `[T]` 步驟 3（`container exec` 投遞計算）仍需由 default 手動執行，尚未有腳本化包裝；步驟 4–6 所需的 terminal evidence 寫入器與 no-agent reconciler 已於 v1.1.0 落地（`runtime/terminal_evidence.py`、`runtime/reconcile.py`）。ownership 證據留在 `/results` durable artifact（`family.json`/`run-spec.json`/sentinel），卡片只留可讀 comment。
 
 ### 9.3 Sentinel 契約
 - `[C]` sentinel 檔名固定為 `DONE` / `FAILED` / `INCOMPLETE`，置於 attempt 目錄。
@@ -251,15 +264,18 @@ family F
 - `[C]` 驗證 FAIL 或證據衝突（multiple terminal / checksum 不符 / sentinel 歧義 / mapping 不一致）→ **絕對不 unblock，也絕對不對 `scheduled` 卡直接 `block`**；改走 §12.6 incident（保持 `scheduled`、寫 incident artifact、告警人工介入）。
 - `[C]` duplicate reconciliation 必須無害：以 sentinel 為唯一判準，重複執行不會二次 unblock（`[V]` kernel 對非 `blocked`/`scheduled` 的 unblock 回 False，天然冪等）。
 - `[C]` **comments 不得當唯一 state**：reconciler 只讀 DB 欄位 + 檔案系統；人工排除以 DB 讀回為準。
-- `[T]` reconciler 腳本尚未存在；以上為拍板契約。實作落地前，`scheduled` 卡必須由 operator/default 手動 unblock，且必須逐項通過本節驗證清單。
+- `[V]` reconciler 已以最小版落地並實測（2026-09-13）：`runtime/reconcile.py`（純 stdlib、no-agent、支援 `--dry-run`）＝ 本節驗證清單的機械化；偵測到 terminal sentinel 後才 `unblock`，衝突一律走 §12.6、不 unblock、不 block。
+- `[V]` 邏輯層檢查：`python3 runtime/tests/test_reconcile.py`（stdlib unittest，注入 kernel 讀回與 `unblock` 回應）12/12 OK，涵蓋唯一放行條件、dry-run 不變更、consumed 冪等、以及五種 fail-closed 分支（multiple_terminal / checksum_mismatch / sentinel_ambiguous / mapping_mismatch / stale_sentinel / unblock 後讀回未確認）。
+- `[V]` **執行環境限制（2026-09-13 實測）**：`unblock`/`comment` 等 board 變更走 `hermes kanban` CLI，而 Hermes 對 `HERMES_DELEGATED_CHILD_CONTEXT=1` 的 context（delegate_task 子行程、kanban worker session，以及**由該 session 建立/觸發的 cron job**）一律拒絕 board 變更。因此 reconciler 的 apply 必須在**無此標記的 host context**（operator 的一般 shell，或由該 shell 建立/啟動的 cron/服務）執行；否則 sentinel 驗證會照常通過，但放行會被 CLI 擋下 → 卡片會停在 `scheduled`（§25 禁止事項）。dry-run 不受影響，可用來確認「只剩放行這一步」。
 
 ### 9.5 為何不用 HTTP / webhook / Redis / Celery / queue
 - `[C]` 這些都需要常駐服務或網路信任面，會引入：新 daemon、新 failure mode、新 secret、新 port、新 restart 邏輯；而本 pipeline 的 completion 訊號本質是一個「至少一次、可重讀」的檔案事件。
 - `[C]` 檔案 + 冪等 unblock 已滿足需求，且符合最小設計原則。任何以此為由的擴張提案都應被駁回。
 
 ### 9.6 performance_claimable 條件（全部成立才 true）
-- `[C]` verdict = `PASS`；round 的 spec 事先註冊且未被事後修改；使用 canonical raw（非合成/非替代資料）；無 look-ahead（PIT 檢查通過）；樣本外或明確 out-of-sample 區間；成本/滑價假設已載明；且尚未經 downstream authoritative acceptance 時，最高只能標 `research-only`。
-- `[C]` 未同時滿足者，`performance_claimable=false`，並在該 round 的 `verdict.json` 的 `missing_conditions` 註明缺哪一項。
+- `[C]` verdict = `PASS`；round 的 spec 事先註冊且未被事後修改；使用 canonical raw（非合成/非替代資料）；無 look-ahead（PIT 檢查通過）；樣本外或明確 out-of-sample 區間；成本/滑價假設已載明；且 §7.2 的 eligible universe 覆蓋（symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness）已依 round artifacts 完成。
+- `[C]` 上列條件齊備即可 `performance_claimable=true`，**不以下游 authoritative acceptance（§17；Nautilus 或等價階段）為前提**：該階段目前 future/out-of-scope、non-blocking，未執行不影響現行 Qlib full-backtest 結論的可宣稱性，也不得據此把結論降級為 `research-only`。
+- `[C]` 未同時滿足者，`performance_claimable=false`，並在該 round 的 `verdict.json` 的 `missing_conditions` 註明缺哪一項。`missing_conditions` 不得以「缺下游 acceptance」為理由。
 
 ## 10. Artifact schemas
 
@@ -343,7 +359,7 @@ family F
 - `[C]` checksum 一律 `sha256`，以 `sha256:<hex>` 表達。
 - `[C]` reconciler 必須對 manifest 內每一項重算 checksum（`shasum -a 256`）。任一不符 → 不放行。
 - `[C]` sentinel 檔案本身必須最後寫入；存在 manifest 但 sentinel 缺失 → 視為 **partial write**（§12.2）。
-- `[T]` 尚未實作自動 checksum 產生器；落地前由 run 腳本以 `shasum` 產出並手動核對。
+- `[V]` 自動 checksum 產生器已以最小版落地並實測（2026-09-13）：`runtime/terminal_evidence.py publish` 會對 `--manifest` 內每個檔案算 `sha256:` 後寫入 sentinel 的 `artifact_checksums`，`check` 子命令可獨立重算核對。
 
 ### 10.5 `state.json`（atomic rewrite）
 ```json
@@ -556,19 +572,19 @@ family F
 | # | 檢查 | 通過條件 | 失敗層級 |
 |---|---|---|---|
 | P1 | ExpansionDrive 已掛載 | `/Volumes/ExpansionDrive` 存在且可讀 | shared-layer |
-| P2 | raw 存在且唯讀 | `market-data-raw` 存在；`test -w` 為假（`[V]` ro mount） | shared-layer |
+| P2 | raw 存在且唯讀 | `market-data-raw` 存在且可讀；**在 container 內**寫入探針必須失敗（`touch /data/raw/__probe__` → `Read-only file system`）。**不可用 host 端 `test -w` 判定**：host 使用者擁有該 export，host 端永遠可寫，會誤判 FAIL（`[V]` 2026-09-13 實測） | shared-layer |
 | P3 | results 存在且可寫 | `/Volumes/ExpansionDrive/qlib-results` 存在且可寫 | shared-layer |
 | P4 | Apple Container runtime 存活 | `container system status` = running | shared-layer |
 | P5 | `qlib-run` 存在 | `container ls` 可見；STATE=running；若 stopped 且可安全 start → 啟動並重查 | shared-layer |
 | P6 | image/runtime identity 相符 | image = `qlib:0.9.7-arm64`；platform = linux/arm64；非 rosetta | shared-layer |
 | P7 | `/qlib/work` 存在且可寫 | 容器內可寫；不存在/不可寫/損毀則重建 volume（INV-5） | card-local（可機械修復；**不 freeze**，§12.5） |
-| P8 | Qlib import/version 相符 | `python -c "import qlib; print(qlib.__version__)"` = `0.9.7` | shared-layer |
+| P8 | Qlib import/version 相符 | `container exec qlib-run /opt/venv/bin/python -c "import qlib; print(qlib.__version__)"` = `0.9.7`。**必須用 venv 絕對路徑**：`/usr/local/bin/python` 沒有 qlib，且登入 shell（`sh -lc`）會把 PATH 還原成非 venv，用裸 `python` 會誤判 FAIL | shared-layer |
 | P9 | 目標 attempt 未終結 | attempt 目錄無 terminal sentinel | — （存在即禁止重跑，INV-15） |
 | P10 | run-spec 已 immutable publish | `run-spec.json` 存在且欄位合法；`script.sha256` 相符 | card-local |
 
-- `[V]` P1–P3、P5–P8 的觀測指令在本機已可執行（`container ls` / `container system status` / `container exec qlib-run python -c …` / 檔案存在性）。`[V]` 實測：`container ls` → `qlib-run  qlib:0.9.7-arm64  linux  arm64  running  6 CPU / 4096 MB`；`container --version` → `1.4.1`；`/Volumes/ExpansionDrive/{market-data-raw,qlib-results}` 皆存在。
+- `[V]` P1–P10 已包成單一腳本 `runtime/preflight.py`（見 §16.4）。`[V]` 實測 2026-09-13：`python3 runtime/preflight.py` → P1–P8 全 PASS（P9/P10 在未給 `--attempt-dir` 時為 `N/A`）；`container exec qlib-run /opt/venv/bin/python -c "import qlib; print(qlib.__version__)"` → `0.9.7`；`container exec qlib-run /usr/local/bin/python -c "import qlib"` → `ModuleNotFoundError: No module named 'qlib'`（此即裸 `python` 誤判的來源）。`container ls` → `qlib-run  qlib:0.9.7-arm64  linux  arm64  running  6 CPU / 4096 MB`；`container --version` → `1.4.1`；`/Volumes/ExpansionDrive/{market-data-raw,qlib-results}` 皆存在。
 - `[C]` P7 可機械修復：`/qlib/work` 可重建（INV-5），因此不屬於 shared-layer freeze 條件。
-- `[T]` preflight 尚未包成單一腳本；落地前 default 逐項手動執行並把輸出貼入卡片 comment（可稽核）。
+- `[V]` preflight 已包成單一腳本：`python3 runtime/preflight.py [--attempt-dir <dir>] [--launch] [--json]`。輸出每個 P# 的 PASS/FAIL/NA 與 `overall`，exit code 0 = 全數 evaluated 檢查 PASS，1 = 有 FAIL，2 = 使用錯誤。`--launch` 必須搭配 `--attempt-dir`（否則 P9/P10 無法評估，直接拒絕執行）。
 
 ### 16.3 結果處置
 - `[C]` 全綠 → 允許 launch（新 run_id 或首次 run）。
@@ -576,17 +592,25 @@ family F
 - `[C]` 有 shared-layer → **freeze**（§12.5），卡片 `blocked(kind=capability)`，不得重試打爆 dispatcher。
 - `[C]` 不可修復且屬 shared plane 才 freeze；不可修復但屬 card-local → `TECHNICAL_INCOMPLETE`。
 
-## 17. FINALIST → Nautilus authoritative acceptance
+### 16.4 Preflight 腳本（最小實作）
 
-- `[C]` `FINALIST` 的語意：研究鏈的科學任務結束，survivor 被凍結。**下一個 family 立即放行**（不等待 Nautilus 結果）。
+- `[V]` 位置：repo `runtime/preflight.py`（純 stdlib、Python 3.9+）。P1–P8 為環境面（mount / runtime / container / image / work volume / Qlib import），P9/P10 為 attempt 面（未終結、run-spec 合法且 `script.sha256` 相符）。
+- `[V]` 環境面與 attempt 面可分開跑：不帶 `--attempt-dir` 只做環境檢查（`overall_env`）；帶 `--launch` 則強制要求 `--attempt-dir`，避免把「只驗環境」誤當成放行 gate。
+- `[C]` 腳本的判定只依檔案系統與 `container` 查詢結果，不依賴卡片 metadata、不寫入任何狀態、不啟動 Qlib 計算。
+
+## 17. FINALIST 之後：下游 authoritative acceptance（future / out-of-scope / non-blocking）
+
+- `[C]` **本節不是現行 production 的必要階段。** 現行 production 的效能真值來源是 §7.2 的 Qlib full-backtest 及其 round `verdict.json`（§9.6）；本節描述的階段目前 **out-of-scope**，任何一張卡都不得因為它不存在而被降級、被標 `research-only`、或停在未終結狀態。
+- `[C]` `FINALIST` 的語意：研究鏈的科學任務結束，survivor 被凍結。**下一個 family 立即放行**（不等待本節階段）。
 - `[C]` frozen survivor 的定義：`PASS` 的參數集 + 其 round/run 的 immutable artifacts + `performance_claimable=true` 的研究結論，以 `frozen_at_utc` 與 checksum 釘死。
-- `[C]` Nautilus 階段（authoritative acceptance）只能：
-  1. 對**已凍結**的 survivor 做真值驗證：獨立資料源/獨立 fill model/獨立成本模型。
+- `[C]` 未來若引入此階段（例如以 Nautilus 實作），它**只能**：
+  1. 對**已凍結**的 survivor 做獨立真值驗證：獨立資料源/獨立 fill model/獨立成本模型。
   2. 回報 `ACCEPTED` / `REJECTED` / `DISPUTED` 與差異來源。
-- `[C]` Nautilus **不得**：重新搜尋參數、改 hypothesis、擴參數域、以自身流程產生新候選、成為第二套全量 search engine。
-- `[C]` Nautilus 的結論不得反向改寫 Qlib round 的 verdict：兩者並存為獨立證據。若衝突 → 以 Nautilus 為 authoritative performance 來源，Qlib 記錄保留為研究證據。
-- `[C]` 研究鏈不得因 Nautilus 未完成而停滯：acceptance 結果另開卡記錄。
-- `[T]` Nautilus 目前**未安裝**（本機零痕跡），本節為介面契約，不是現況描述。實作前不得宣稱已有 authoritative 階段。
+- `[C]` 該階段 **不得**：重新搜尋參數、改 hypothesis、擴參數域、以自身流程產生新候選、成為第二套全量 search engine；也不得成為 launch/終結/稽核的前置 gate。
+- `[C]` 該階段的結論是獨立第二意見，**不得自動反向改寫** Qlib round 的 `verdict.json`（INV-4 immutable）。若出現衝突，屬語意層決策 → 走 §26 change control，由 operator 決定採信層級；本文件不預設「以未來階段為 authoritative」。
+- `[C]` 未引入此階段完全不妨礙：full-backtest 完成、`performance_claimable`（§9.6）、family 終結、下一 family 放行、已凍結 survivor 的引用。
+- `[V]` Nautilus 目前**未安裝**（本機零痕跡）；本節是 out-of-scope 備忘，不是現況描述，也不是待辦 blocker（附錄 B T9）。
+- `[T]` 未來若要實作，屆時另立契約；本節不構成任何實作義務。
 
 ## 18. Durable state / comment conventions
 
@@ -641,12 +665,12 @@ family F
 ## 21. Rollout / smoke tests / failure drills
 
 ### 21.1 Rollout 階段
-1. `[T]` R0：文件凍結（本卡）→ audit → operator 核准。
-2. `[T]` R1：preflight 腳本化（P1–P10），只讀，不投遞。
-3. `[T]` R2：單一 smoke run（非策略）走完 `ready→running→scheduled→sentinel→unblock→ready`。
-4. `[T]` R3：reconciler 腳本化（no_agent cron），以 R2 的既有 sentinel 做 dry-run 對帳。
+1. `[V]` R0：文件凍結 → audit → operator 核准（v1.0.1 = AUDITED PASS / FROZEN，auditor t_e35c39c0；v1.1.0 = AWAITING AUDIT）。
+2. `[V]` R1：preflight 腳本化（P1–P10），只讀，不投遞 → `runtime/preflight.py`（2026-09-13 實測）。
+3. `[T]` R2：單一 smoke run（非策略）走完 `ready→running→scheduled→sentinel→unblock→ready`。**部分已驗證**：sentinel 產生/驗證、fail-closed 分支、以及 `scheduled→ready` 的判定邏輯已實測（fixture + `runtime/tests/test_reconcile.py`）；**真的放行一次**尚未執行，因為放行需要 `scheduled` 卡 + 無 fence 的 host context（§9.4），而本卡執行環境（kanban worker session）被 Hermes 拒絕 board 變更。`container exec` 投遞段的真實 Qlib smoke 計算同樣尚未執行（不在 t_ec039d5f 範圍）。
+4. `[T]` R3：reconciler 腳本化（no_agent cron），以既有 sentinel 做 dry-run 對帳 → `runtime/reconcile.py --dry-run` 已可執行（2026-09-13 實測）；但 cron 的正式掛載（以及 apply 的第一次真實放行）仍待 operator 在**無 fence 的 host context**完成，見 §9.4 的執行環境限制。
 5. `[T]` R4：第一張正式 strategy card（family A）全流程；觀察 yield policy 紀錄。
-6. `[T]` 每階段完成後必須有 DB 讀回證據；階段未過不得前進。
+6. `[C]` 每階段完成後必須有 DB 讀回證據；階段未過不得前進。
 
 ### 21.2 必要 smoke / failure drills（每項都要有可重現證據）
 
@@ -666,6 +690,8 @@ family F
 | D12 | shared-layer freeze（例如卸載 ExpansionDrive） | 全鏈凍結、無重試風暴；解除後 preflight 全綠才放行 |
 | D13 | 多個 terminal evidence 並存（`DONE` + `FAILED`） | fail-closed：卡片保持 `scheduled`、不 unblock、不 block；寫 `reconciliation_incident.jsonl`；人工介入後才處理 |
 
+- `[C]` **D1–D13 不是第一張正式 strategy card 的前置 gate**。第一張只需要「沒有它就無法可靠 launch / 終結 / 稽核」的最小集合（附錄 B 標 `BLOCKER` 者：preflight、terminal evidence + checksum、reconcile 放行）。其餘 drills 一律 `DEFERRED` hardening，不阻擋 Strategy A。
+- `[C]` reboot / resume 核心路徑（D6/D7/D8 對應 §12.1–§12.2）在 contract 層**不被阻擋**：orphan attempt（無 sentinel）由 host/default 依 §12.2 以 `runtime/terminal_evidence.py` 補寫 `INCOMPLETE`，再由 reconciler 放行；此路徑不需要新服務、不需要 daemon。drill 本身（真的 reboot 一次）仍屬 `DEFERRED`。
 - `[C]` drill 一律不得對 `/data/raw` 做任何寫入嘗試（唯讀前提下以「卸載/模擬路徑不可用」方式驗證）。
 - `[C]` drill 若需要中斷真實計算，必須使用非策略 smoke family，不得動研究鏈上的正式卡。
 - `[T]` 上述 13 項 drill 全部尚未執行；本節是驗收要求。
@@ -684,12 +710,14 @@ family F
 - **A10** Family Yield 有客觀 stop gate（max_rounds / max_no_progress_rounds / 可稽核 no-progress 判準）且明寫不是新 scheduler。`[C]`
 - **A11** Preflight P1–P10 完整，且 `/qlib/work` 標為可重建（card-local，非 shared-layer freeze 條件）、`/results` 為 durable evidence、raw 為 ro。`[V]`+`[C]`
 - **A12** card-local 與 shared-layer freeze gate 分離，並說明各自處置；單一 work volume 故障一律 card-local。`[C]`
-- **A13** FINALIST 後下一 family 立即放行；Nautilus 限制明文（不得重新搜尋/改 hypothesis/成第二套 search engine）。`[C]`
+- **A13** FINALIST 後下一 family 立即放行；下游 authoritative acceptance（Nautilus）明文為 future/out-of-scope/non-blocking，其不存在不得使現行 Qlib full-backtest 降級為 `research-only`。`[C]`
 - **A14** 未新增 Manager/Service/Factory/Registry 類抽象；未新增 daemon/service/queue（`family.json`/`verdict.json` 為檔案契約，非 Registry service）。`[C]`
 - **A15** 文件同時含：狀態機（卡內/卡間）、lifecycle、schemas、idempotency、reboot/orphan recovery、failure taxonomy、NEW_FAMILY、yield、preflight、durable state/comment conventions、observability/security、audit checkpoints、rollout/drills、acceptance、auditor checklist、worked examples、禁止事項、change control。`[C]`
 - **A16** 文件不存在任何「以 task-level metadata 作 durable state」的要求；ownership/lineage/verdict 落點為 `/results` artifact（`family.json`/`round-spec.json`/`verdict.json`）。`[C]`
 - **A17** 文件不存在對 `scheduled` 卡直接 `block` 的要求；衝突一律走 §12.6 incident（保持 `scheduled`、不 unblock、寫 incident artifact、人工介入）。`[C]`
 - **A18** 單一 `/qlib/work` volume 故障一律 card-local（可重建、同 round 新 run_id、不 freeze）；只有系統性 shared-layer 故障才 freeze。`[C]`
+- **A19** 「全量回測」有明確定義（單一 strategy card 的 eligible universe 覆蓋 symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness），且 production 模式明寫 sequential A→B→C、多 family 混跑不是 production。`[C]`
+- **A20** production blocker 與 deferred hardening 已分級（附錄 B / §21.2）：D1–D13 與 T5–T8 等不得被當成第一張 strategy card 的前置 gate；只有 launch/終結/稽核不可缺的最小項才算 blocker。`[C]`
 
 ## 23. Auditor checklist（唯讀，逐項打勾）
 
@@ -750,12 +778,13 @@ boot id 與 sentinel（無）不符
 - `[C]` freeze：chain head 卡 `blocked(kind=capability)`；其餘 `ready` 卡回 `todo`；不新增 family。
 - `[C]` 解除：掛載回來 → P1–P10 全綠 → `unblock` 放行；不得用 promote。
 
-### 24.5 例：Nautilus acceptance
+### 24.5 例：下游 authoritative acceptance（future／out-of-scope，非現行 production 路徑）
 ```
 FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立即 ready
-                                        ↘ 另開 acceptance 卡（assignee 依屆時契約）
+                                        ↘ （future，可選）另開 acceptance 卡（assignee 依屆時契約）
 ```
-- `[C]` acceptance 卡只能驗證 frozen survivor；若其結果 `DISPUTED`，不得回頭改 F-r* 的 artifacts。
+- `[C]` 現行 production 在 FINALIST 之後**只需要**放行下一個 family；acceptance 階段不存在也不影響任何 verdict 或 claim。
+- `[C]` 未來若真的開卡：acceptance 卡只能驗證 frozen survivor；若其結果 `DISPUTED`，不得回頭改 F-r* 的 artifacts（走 §26 / §17）。
 
 ## 25. 禁止事項（硬規則）
 
@@ -773,8 +802,9 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 - `[C]` 禁止在鏈中插卡、禁止 live rewiring 既有 parent edge。
 - `[C]` 禁止 card-local failure freeze 全鏈；禁止 shared-layer failure 只影響單卡。
 - `[C]` 禁止無界 REFINE（必須適用 §15 停止政策）。
-- `[C]` 禁止 Nautilus 重新搜尋參數/改 hypothesis/成為第二套全量 search engine。
+- `[C]` 禁止 Nautilus（或任何下游階段）重新搜尋參數/改 hypothesis/成為第二套全量 search engine；亦禁止把它當成現行 production 的 gate（§17）。
 - `[C]` 禁止新增 Manager / Service / Factory / Registry 類抽象。
+- `[C]` 禁止以「缺下游 authoritative acceptance」為由把現行 Qlib full-backtest 降級為 `research-only`，或把它列為第一張 production card 的 gate。
 - `[C]` 禁止把 comment 當唯一 state。
 - `[C]` 禁止把 task-level metadata 當 state（`[V]` kernel 的 `tasks` schema / `Task` model 無 `metadata`；`task_runs.metadata` 屬 closing run，不是 card runtime state）。
 - `[C]` 禁止對 `scheduled` 卡直接 `block`（`[V]` kernel 亦拒絕）；衝突一律走 §12.6 incident。
@@ -807,20 +837,22 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 
 ## 附錄 B：仍需實測（TO-BE-VALIDATED 總表）
 
-| # | 項目 | 卡在哪 | 驗證方式 |
-|---|---|---|---|
-| T1 | reconciler 腳本（no-agent） | 未實作 | R3 dry-run 對既有 sentinel 對帳 |
-| T2 | preflight 腳本 P1–P10 | 未實作 | R1 全綠輸出可重現 |
-| T3 | sentinel/checksum 產生器 | 未實作 | smoke run 產出可核對 checksum |
-| T4 | artifact 目錄 schema 實際落地 | 無正式 family 目錄 | R4 第一張 strategy card |
-| T5 | fingerprint 計算腳本 | 未實作 | `family.json` 的 `fingerprint_input` 由 auditor 唯讀重算比對 |
-| T6 | yield 判定自動化 | 未實作 | 以 round 數與 artifacts 人工判定後核對 |
-| T7 | chain head 判定查詢 | 未實作 | DB 讀回人工確認 |
-| T8 | 13 項 failure drills（D1–D13） | 未執行 | §21.2 |
-| T9 | Nautilus authoritative 階段 | 未安裝 | 屆時另立契約 |
-| T10 | 多筆 terminal evidence / checksum 衝突的仲裁 | 契約已定（§12.6 fail-closed incident）但未實戰 | D3/D4/D5 變體 + D13；驗證 incident artifact 落地 |
-| T11 | `/results/*/family.json` ownership/lineage 落地 | 尚無正式 family | R4 第一張 strategy card 時檔案落地，auditor 可唯讀重算 fingerprint |
-| T12 | round `verdict.json` 與 incident artifact 寫入器 | 未實作 | 事後以檔案讀回驗證（欄位齊備、JSON 可解析） |
+`第一張 production card` 欄 = 開跑第一張正式 strategy card 前是否必須具備（`BLOCKER`）或可延後（`DEFERRED`／`OUT-OF-SCOPE`）；判準見 §21.2。
+
+| # | 項目 | 卡在哪 | 第一張 production card | 驗證方式 |
+|---|---|---|---|---|
+| T1 | reconciler 腳本（no-agent） | **已落地（最小版）** `runtime/reconcile.py` | — | R3 dry-run 對既有 sentinel 對帳 + `runtime/tests/test_reconcile.py` 12/12（2026-09-13 實測） |
+| T2 | preflight 腳本 P1–P10 | **已落地（最小版）** `runtime/preflight.py` | — | R1 全綠輸出可重現（2026-09-13 實測，P1–P8 PASS） |
+| T3 | sentinel/checksum 產生器 | **已落地（最小版）** `runtime/terminal_evidence.py` | — | fixture 產出、`check` 重算相符、重複 publish 被拒（INV-15）（2026-09-13 實測） |
+| T4 | artifact 目錄 schema 實際落地 | 尚無正式 family 目錄 | `BLOCKER`（隨第一張卡產生） | R4 第一張 strategy card |
+| T5 | fingerprint 計算腳本 | 未實作 | `DEFERRED`（§14.3 允許手算 + auditor 重算） | `family.json` 的 `fingerprint_input` 由 auditor 唯讀重算比對 |
+| T6 | yield 判定自動化 | 未實作 | `DEFERRED`（§15.4 明訂人工判定可稽核） | 以 round 數與 artifacts 人工判定後核對 |
+| T7 | chain head 判定查詢 | 未實作 | `DEFERRED`（§7.1 明訂人工 DB 讀回） | DB 讀回人工確認 |
+| T8 | 13 項 failure drills（D1–D13） | 未執行（reboot/resume 核心路徑已於 §12/§21.2 語意確認不被阻擋） | `DEFERRED`（不是第一張的 gate，§21.2） | §21.2 |
+| T9 | Nautilus authoritative 階段 | 未安裝 | `OUT-OF-SCOPE`（非 blocker，§17） | 屆時另立契約 |
+| T10 | 多筆 terminal evidence / checksum 衝突的仲裁 | 契約已定（§12.6）+ fail-closed 路徑已實作於 `runtime/reconcile.py`（含 incident JSONL 寫入）；未實戰 | `DEFERRED`（fail-closed 已可執行） | D3/D4/D5 變體 + D13；驗證 incident artifact 落地 |
+| T11 | `/results/*/family.json` ownership/lineage 落地 | 尚無正式 family | `BLOCKER`（隨第一張卡產生） | R4 第一張 strategy card 時檔案落地，auditor 可唯讀重算 fingerprint |
+| T12 | round `verdict.json` 與 incident artifact 寫入器 | incident 寫入器**已落地（最小版）**於 `runtime/reconcile.py`；`verdict.json` 仍由 default 人工寫入（維持最小設計） | `DEFERRED`（verdict.json 為 default 的判斷動作，不是自動化缺口） | 事後以檔案讀回驗證（欄位齊備、JSON 可解析） |
 
 ## 附錄 C：變更記錄
 
@@ -828,5 +860,8 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 |---|---|---|---|
 | v1.0 | 2026-09-12 | 初版定版（本卡 t_5b5b38d6） | ChatGPT 規劃；新增 Family Yield（§15）與 Execution Preflight（§16）兩條正式護欄 |
 | v1.0.1 | 2026-09-12 | **B1**：廢除 task-level metadata 作為 durable state，ownership/lineage/verdict 改落 `/results`（新增 §10.6 `family.json`、§10.7 `verdict.json`；改寫 §9.4 reconciler 入口、§14、§18.1、INV-4/9/10/17）。**B2**：新增 §12.6 conflict/incident 流程（`scheduled` 不得直接 block），統一 §6.3/§7.1/§12.3/§12.4/§12.5。**B3**：`/qlib/work` 單一 volume 故障一律 card-local，統一 §12.5/§13/§16 | auditor t_a3dc355d 三個 blocking findings 的最小 remediation（本卡 t_bcedaf65） |
+| v1.1.0 | 2026-09-13 | **A 語意校正**：§1.2 改寫（Nautilus 為 future/out-of-scope/non-blocking，非 authoritative gate）；新增 §7.2「全量回測定義與 production 模式」；§9.6 移除「未有下游 acceptance 只能 research-only」的降級條款；§17 全面改寫為 out-of-scope 備忘（不得反向改寫 verdict、不得當 gate）；§21.2 新增 blocker/deferred 分級；§22 新增 A19/A20、改寫 A13；§24.5 標 future；§25 新增兩條硬規則；附錄 B 新增「第一張 production card」分級欄。**B 修正**：§16.2 P8 與等價檢查一律改用 `/opt/venv/bin/python`（`/usr/local/bin/python` 無 qlib；登入 shell 會還原 PATH）；`container/scripts/verify_final.sh` 兩處 `container exec … python` 同步改為 venv 絕對路徑。**C 最小 readiness**：新增 `runtime/preflight.py`（§16.4 的 P1–P10 單一腳本）、`runtime/reconcile.py`（§9.4 no-agent reconciler，含 §12.6 incident 寫入）、`runtime/terminal_evidence.py`（§10.3/§10.4 sentinel + checksum 產生器，host 端 orphan `INCOMPLETE` 補寫用）；§3/§9.4/§10.4/§21.1 的 `[T]` 對應轉為 `[V]` | ChatGPT（GPT-5.6 Sol）卡片 t_ec039d5f：修正契約語意與第一張正式 strategy card 前的最小 runtime 缺口的 remediation；不新增任何 Manager/Service/Factory/Registry/Orchestrator、daemon、queue 或第二套 runtime |
 
 驗證方式（v1.0.1）：全文 cross-reference 掃描（`metadata`/`scheduled`→`blocked`/`/qlib/work` shared-layer 三組字串逐條核對）+ §22 A1–A18 自檢；文件狀態：AUDITED PASS / FROZEN（auditor re-audit t_e35c39c0，2026-09-12）。
+
+驗證方式（v1.1.0）：全文 cross-reference 掃描（Nautilus 相關句逐條核對是否仍暗示 mandatory / authoritative gate、`research-only` 降級條款是否已移除、裸 `python` 檢查是否已改為 `/opt/venv/bin/python`）+ §22 A1–A20 自檢 + `runtime/` 三支腳本實跑輸出（`evidence/runtime-readiness-20260913.json`）；文件狀態：AWAITING AUDIT（audit 子卡 t_2cd35888）。
