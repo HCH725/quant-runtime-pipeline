@@ -86,6 +86,16 @@ def board_tasks(board):
     return tasks, None
 
 
+def fenced_context(reason):
+    """A `hermes kanban` refusal caused by HERMES_DELEGATED_CHILD_CONTEXT is not a board problem.
+
+    The contract 9.4 fence means "this invocation ran in a delegate_task/worker child context"
+    (e.g. a manual `hermes cron run` from a worker session). Reporting it as `board_unreadable`
+    would look like a broken board; keep it a distinct, self-describing kind.
+    """
+    return "delegate_task child contexts cannot mutate" in (reason or "")
+
+
 def board_card(board, task_id):
     """(show_doc, error) - show_doc carries `task` and `parents`."""
     rc, out, err = sh(["hermes", "kanban", "--board", board, "show", task_id, "--json"])
@@ -316,7 +326,7 @@ def round_once(args):
     pool_path = Path(args.pool) if args.pool else root / HANDOFF_DIRNAME / POOL_FILENAME
     tasks, why = board_tasks(args.board)
     if tasks is None:
-        return res.finding("board_unreadable", why)
+        return res.finding("fenced_context" if fenced_context(why) else "board_unreadable", why)
 
     families = read_families(args.results_root)
     res.detail["families_scanned"] = len(families)
@@ -429,6 +439,8 @@ def main():
         previous = last_finding_key(args.results_root)
         append_log(args.results_root, record, args.dry_run)
         emit = args.dry_run or res.finding_key != previous
+    elif res.action == "appended":
+        append_log(args.results_root, record, args.dry_run)
 
     if args.json:
         print(json.dumps(record, indent=2, ensure_ascii=False))

@@ -166,6 +166,13 @@ class TestFailClosed(Base):
         self.assertEqual((res.action, res.finding_key), ("finding", "tail_not_terminal"))
         self.assertNotIn("create", self.fake.actions())
 
+    def test_fenced_invocation_is_reported_as_its_own_kind(self):
+        """`hermes kanban` refusing because of HERMES_DELEGATED_CHILD_CONTEXT is not a broken board."""
+        h.sh = lambda cmd, timeout=0: (1, "", "kanban: delegate_task child contexts cannot mutate "
+                                             "Kanban tasks or boards")
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "fenced_context"))
+
     def test_blocked_card_blocks_the_append(self):
         self.tasks[TAIL]["status"] = "done"
         self.tasks["t_BLOCKED"] = {"status": "blocked", "created_at": 2, "title": "freeze"}
@@ -237,6 +244,35 @@ class TestFailClosed(Base):
 
 
 class TestDryRunAndReporting(Base):
+    def test_append_is_logged_by_main(self):
+        argv, out = sys.argv, sys.stdout
+        sys.argv = ["production_handoff.py", "--results-root", str(self.root), "--board", BOARD, "--json"]
+        try:
+            import io
+            sys.stdout = io.StringIO()
+            rc = h.main()
+            printed = sys.stdout.getvalue()
+        finally:
+            sys.argv, sys.stdout = argv, out
+        self.assertEqual(rc, 0)
+        record = json.loads(printed)
+        self.assertEqual(record["action"], "appended")
+        log = (Path(self.root) / h.HANDOFF_DIRNAME / h.LOG_FILENAME).read_text().strip().splitlines()
+        self.assertEqual(json.loads(log[-1])["action"], "appended")
+
+    def test_noop_round_stays_silent(self):
+        self.run_round()
+        argv, out = sys.argv, sys.stdout
+        sys.argv = ["production_handoff.py", "--results-root", str(self.root), "--board", BOARD]
+        try:
+            import io
+            sys.stdout = io.StringIO()
+            rc = h.main()
+            printed = sys.stdout.getvalue()
+        finally:
+            sys.argv, sys.stdout = argv, out
+        self.assertEqual((rc, printed), (0, ""))
+
     def test_dry_run_mutates_nothing(self):
         res = self.run_round(dry_run=True)
         self.assertEqual(res.action, "would_append")
