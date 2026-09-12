@@ -1,6 +1,6 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：AWAITING AUDIT（v1.1.1；最後 AUDITED PASS / FROZEN 的版本是 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
+文件狀態：AUDITED PASS / FROZEN（v1.1.1；audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；前一個 AUDITED PASS / FROZEN 的版本是 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
 版本：v1.1.1（2026-09-13）
 作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）；v1.1.1 依 t_4d6c5cd5（audit t_d7f48c7a 的 F1–F3 最小 remediation 與文件精度修正）
 適用範圍：quant-strategy-research board 之 Qlib 研究 runtime 與 Kanban 交接
@@ -667,7 +667,7 @@ family F
 ## 21. Rollout / smoke tests / failure drills
 
 ### 21.1 Rollout 階段
-1. `[V]` R0：文件凍結 → audit → operator 核准（v1.0.1 = AUDITED PASS / FROZEN，auditor t_e35c39c0；v1.1.1 = AWAITING AUDIT，前次 v1.1.0 = AUDITED FAIL @ audit t_d7f48c7a）。
+1. `[V]` R0：文件凍結 → audit → operator 核准（v1.0.1 = AUDITED PASS / FROZEN，auditor t_e35c39c0；v1.1.1 = AUDITED PASS / FROZEN，audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；前次 v1.1.0 = AUDITED FAIL @ audit t_d7f48c7a）。
 2. `[V]` R1：preflight 腳本化（P1–P10），只讀，不投遞 → `runtime/preflight.py`（2026-09-13 實測）。
 3. `[T]` R2：單一 smoke run（非策略）走完 `ready→running→scheduled→sentinel→unblock→ready`。**部分已驗證**：sentinel 產生/驗證、fail-closed 分支、以及 `scheduled→ready` 的判定邏輯已實測（fixture + `runtime/tests/test_reconcile.py`）；**真的放行一次**尚未執行，因為放行需要 `scheduled` 卡 + 無 fence 的 host context（§9.4），而本卡執行環境（kanban worker session）被 Hermes 拒絕 board 變更。`container exec` 投遞段的真實 Qlib smoke 計算同樣尚未執行（不在 t_ec039d5f 範圍）。
 4. `[T]` R3：reconciler 腳本化（no_agent cron），以既有 sentinel 做 dry-run 對帳 → `runtime/reconcile.py --dry-run` 已可執行（2026-09-13 實測）；但 cron 的正式掛載（以及 apply 的第一次真實放行）仍待 operator 在**無 fence 的 host context**完成，見 §9.4 的執行環境限制。
@@ -869,4 +869,4 @@ FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立�
 
 驗證方式（v1.1.0）：全文 cross-reference 掃描（Nautilus 相關句逐條核對是否仍暗示 mandatory / authoritative gate、`research-only` 降級條款是否已移除、裸 `python` 檢查是否已改為 `/opt/venv/bin/python`）+ §22 A1–A20 自檢 + `runtime/` 三支腳本實跑輸出（`evidence/runtime-readiness-20260913.json`）；文件狀態：AUDITED FAIL（audit t_d7f48c7a，2026-09-13）。
 
-驗證方式（v1.1.1）：§26 change control 檢查（版本／日期／條號／理由／驗證方式）+ §22 A1–A20 自檢；§9.4 邏輯層 `python3 runtime/tests/test_reconcile.py` 23/23、§16.2 P9/P10 `python3 runtime/tests/test_preflight_p10.py` 10/10（stdlib unittest，真實檔案系統 + 注入 kernel 讀回）；`python3 runtime/preflight.py` → P1–P8 PASS、rc=0（未給 `--attempt-dir` 時 P9/P10 = `NA`）；`python3 runtime/reconcile.py --dry-run` → rc=0。另以**真實** board 讀回與**真實** host `/scripts` mapping 對抗性實測：consumed（card status=running）+ stale boot + checksum 衝突 + mapping 衝突 → 兩次執行皆 `consumed`、0 incident、0 comment、rc=0；identity 衝突且 DB 讀回不可判定 → `mapping_mismatch` incident（rc=3）；`script.sha256` 相符 → P10 PASS（recomputed 相符）、bogus sha → P10 FAIL + `--launch` rc=1。文件狀態：AWAITING AUDIT（re-audit t_83682069；前次 FAIL audit t_d7f48c7a）。
+驗證方式（v1.1.1）：§26 change control 檢查（版本／日期／條號／理由／驗證方式）+ §22 A1–A20 自檢；§9.4 邏輯層 `python3 runtime/tests/test_reconcile.py` 23/23、§16.2 P9/P10 `python3 runtime/tests/test_preflight_p10.py` 10/10（stdlib unittest，真實檔案系統 + 注入 kernel 讀回）；`python3 runtime/preflight.py` → P1–P8 PASS、rc=0（未給 `--attempt-dir` 時 P9/P10 = `NA`）；`python3 runtime/reconcile.py --dry-run` → rc=0。另以**真實** board 讀回與**真實** host `/scripts` mapping 對抗性實測：consumed（card status=running）+ stale boot + checksum 衝突 + mapping 衝突 → 兩次執行皆 `consumed`、0 incident、0 comment、rc=0；identity 衝突且 DB 讀回不可判定 → `mapping_mismatch` incident（rc=3）；`script.sha256` 相符 → P10 PASS（recomputed 相符）、bogus sha → P10 FAIL + `--launch` rc=1。文件狀態：AUDITED PASS / FROZEN（auditor re-audit t_83682069，2026-09-13；audited content commit 18d6c3f；前次 FAIL audit t_d7f48c7a）。此狀態由 attestation-only metadata finalization 記錄（t_d99fbc51）：不改語意、不改 runtime 程式，亦不 bump 版本。

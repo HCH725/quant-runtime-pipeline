@@ -19,8 +19,8 @@ audited implementation contract 與其變化歷史。
 
 ## 2. Current status（2026-09-13）
 
-- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.1.1，AWAITING AUDIT（re-audit `t_83682069`；前次 FAIL audit `t_d7f48c7a`）**；
-  最後 AUDITED PASS / FROZEN 的版本是 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
+- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.1.1，AUDITED PASS / FROZEN（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`）**；
+  前一個 AUDITED PASS / FROZEN 的版本是 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
 - **v1.1.1（2026-09-13）**：audit `t_d7f48c7a` 的最小 remediation——`reconcile.py` 先判 consumed（非 `scheduled` 即 no-op，不寫 incident／不留 comment）、mapping 補足 family/round/run/container identity、preflight P10 必須由 host 端實際重算 `script.sha256`（不可讀即 `FAIL`／NOT VERIFIED），**語意不變**（Nautilus 仍 out-of-scope、production 仍 sequential A→B→C）。變更記錄見契約附錄 C。
 - Runtime `[V]`：Apple Container **1.4.1**（client/server commit `9a8917ca…`）＋ Qlib **0.9.7** native linux/arm64
   image `qlib:0.9.7-arm64` 已建置；mount 契約（Contract §3）與 ro/rw 語意已實測。
@@ -61,7 +61,7 @@ host reconciler (deterministic, no-agent)  →  Kanban unblock  →  Hermes
 
 | 路徑 | 內容 |
 |---|---|
-| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（v1.1.1 / AWAITING AUDIT；最後 FROZEN 版本 v1.0.1），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
+| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（v1.1.1 / AUDITED PASS / FROZEN，audited content commit `18d6c3f`，auditor re-audit `t_83682069`；前一個 FROZEN 版本 v1.0.1），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
 | `container/Containerfile` | **唯一** image 定義：`python:3.12-slim` + Qlib `v0.9.7`（build 內 `rev-parse HEAD` 守衛，upstream 移動 tag 即 build 失敗） |
 | `container/scripts/` | 只保留目前功能仍屬 canonical rebuild / verify / runtime 的腳本（v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同；見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`） |
 | `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`tests/test_reconcile.py`（stdlib unittest，reconciler 的 consumed-first 與 fail-closed 狀態機檢查）、`tests/test_preflight_p10.py`（P9/P10 與 `script.sha256` 重算的邏輯層檢查）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
