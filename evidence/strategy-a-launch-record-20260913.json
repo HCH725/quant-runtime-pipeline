@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "launch_record",
+  "contract_section": "9.2",
+  "family_id": "close-vs-sma-mean-reversion-long-flat-v1",
+  "round_id": "close-vs-sma-mean-reversion-long-flat-v1-r1",
+  "run_id": "close-vs-sma-mean-reversion-long-flat-v1-r1-u1",
+  "kanban_task_id": "t_97208408",
+  "kanban_board": "quant-strategy-research",
+  "launched_at_utc": "2026-09-12T18:01:00Z",
+  "exact_once": true,
+  "launch_command": "container exec qlib-run /opt/venv/bin/python /scripts/20_strategy_a_run.py /results/close-vs-sma-mean-reversion-long-flat-v1/rounds/close-vs-sma-mean-reversion-long-flat-v1-r1/attempts/close-vs-sma-mean-reversion-long-flat-v1-r1-u1/run-spec.json",
+  "host_bg_pid": 33182,
+  "host_log": "/tmp/sa_probe/run1.log",
+  "preflight": "evidence/strategy-a-preflight-20260913.json — P1-P10 all PASS, launch_gate=evaluated, rc=0 (2026-09-12T18:00:56Z)",
+  "script": {"path": "/scripts/20_strategy_a_run.py", "sha256": "sha256:64212753eac1f581c7ebd9f164f05e9180761cd174283c15bbf975f7681353d1"},
+  "container": {"id": "qlib-run", "image": "qlib:0.9.7-arm64", "qlib_version": "0.9.7"},
+  "note": "Container writes result.json + artifacts/ + state.json only; the terminal sentinel (DONE/FAILED/INCOMPLETE) is published host-side afterwards via runtime/terminal_evidence.py."
+}
