@@ -27,14 +27,24 @@ FAMILY_A = "fam-a-v1"
 FAMILY_B = "fam-b-v1"
 
 
-def candidate(family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short"):
+def candidate(family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short", body=None):
     return {
         "family_id": family,
         "title": "Production Strategy B",
         "fingerprint_input": fingerprint_input,
-        "card_body": "seed body",
+        "card_body": body if body is not None else V13_BODY,
         "provenance": {"reviewed_source": "wiki:quant/example.md", "review_status": "PASS"},
     }
+
+
+# A v1.3.0-compliant card body: the automation refuses to append a card that does not register
+# the DCA parameter domain and the cohort survivor rules (contract 14.4 / 7.2 / 7.3).
+V13_BODY = ("## DCA PARAMETER DOMAIN\n"
+            "spacing_pct {0.01,0.02,0.03,0.04} x size_multiplier {1.0,1.1} x "
+            "breakeven_tp_pct {0.01,0.02,0.03} x invalidation_pct {0.05,0.10} = 48 configs\n"
+            "## COHORT SURVIVOR SEMANTICS\n"
+            "per (symbol, timeframe) cohort: historical-only selector, then OOS / full / "
+            "robustness / neighbourhood evidence (contract 7.3)\n")
 
 
 class FakeBoard(object):
@@ -207,6 +217,20 @@ class TestFailClosed(Base):
         self._write_pool([{"family_id": FAMILY_B}])
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "pool_invalid"))
+
+    def test_v12_era_card_body_is_refused(self):
+        """A pool entry whose body never registers the DCA domain / cohort survivor rules cannot
+        express a v1.3 full backtest -> fail-closed, no card, no family.json (contract 14.4)."""
+        self._write_pool([candidate(body="## DCA EXECUTION\nsingle PROVISIONAL rail, 2% spacing\n")])
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "candidate_body_not_v13"))
+        self.assertNotIn("create", self.fake.actions())
+        self.assertFalse((Path(self.root) / FAMILY_B).exists())
+
+    def test_v13_card_body_is_appended(self):
+        self._write_pool([candidate(body="## DCA PARAMETER DOMAIN\n48 configs\n"
+                                         "## COHORT SURVIVOR SEMANTICS\nper cohort gate\n")])
+        self.assertEqual(self.run_round().action, "appended")
 
     def test_repeated_pool_candidate_is_ambiguous(self):
         self._write_pool([candidate(), candidate(family="fam-c-v1", fingerprint_input="fam-b|w=2,4|1h|long/short")])

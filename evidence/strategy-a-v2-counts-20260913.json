@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_a_v2_pre_registration_counts",
+  "contract_section": "7.2 / 7.3 (Contract v1.3.0)",
+  "checked_at_utc": "2026-09-12T19:16:10Z",
+  "round_spec": "<REPO>/runtime/templates/strategy_a_v2_round_spec.template.json",
+  "run_spec": "<REPO>/runtime/templates/strategy_a_v2_run_spec.template.json",
+  "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+  "ok": true,
+  "computed": {
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "SOLUSDT"
+    ],
+    "timeframes": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "4h"
+    ],
+    "cohorts": 20,
+    "strategy_cases_per_cohort": 12,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 576,
+    "phase_grids": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full"
+    ],
+    "phase_grid_count": 9,
+    "case_evaluations_per_grid": 11520,
+    "case_evaluations_per_cohort_all_grids": 5184,
+    "expected_case_evaluations": 103680
+  },
+  "canonical": {
+    "cohorts": 20,
+    "strategy_cases_per_cohort": 12,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 576,
+    "phase_grid_count": 9,
+    "case_evaluations_per_grid": 11520,
+    "case_evaluations_per_cohort_all_grids": 5184,
+    "expected_case_evaluations": 103680
+  },
+  "fingerprint": {
+    "input": "close-vs-sma-mean-reversion-long-flat-v2|discount=0.01,0.02,0.03;window=20,50,100,200|breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10;size_multiplier=1.0,1.1;spacing_pct=0.01,0.02,0.03,0.04|2022-01-01..2026-09-10|15m,1h,30m,4h,5m|long/flat|symbols=BNBUSDT,BTCUSDT,ETHUSDT,SOLUSDT|selector=cohort-selector-v1;disposition=cohort-disposition-v1",
+    "recomputed": "sha256:7087e9693382093914ecaf86aef9e3872f239c1fc4d49e52b47f0da35dd1c557",
+    "declared": "sha256:7087e9693382093914ecaf86aef9e3872f239c1fc4d49e52b47f0da35dd1c557",
+    "status": "MATCH"
+  },
+  "run_spec_check": {
+    "domains_agree": true,
+    "counts_agree": true,
+    "split_agrees": true,
+    "versions_agree": true,
+    "script_sha256_is_placeholder": true,
+    "expected_outputs": 17
+  },
+  "problems": []
+}

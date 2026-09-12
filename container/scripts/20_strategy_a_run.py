@@ -4,13 +4,19 @@
 Entry point for ONE pre-registered attempt.  Reads the immutable run-spec from
 /results (the only source of parameters), builds the Qlib .bin store from the
 READ-ONLY canonical raw store into /qlib/work, then runs the pre-registered
-full-backtest contract (Contract section 7.2):
+full-backtest contract (Contract v1.3.0 section 7.2):
 
-    symbols x timeframes x parameter domain x DCA execution x
+    symbols x timeframes x STRATEGY parameter domain x DCA parameter domain x
     (historical / OOS / robustness)
 
 DCA is executed as real order/fill accounting (an episode state machine over the
-bars); nothing is estimated after the fact.
+bars); nothing is estimated after the fact.  Every legal
+(strategy params x DCA config) combination of every registered cohort is
+evaluated on every registered phase grid, and the family gate is the
+**cohort-level survivor** rule of contract section 7.3: one deterministic
+historical-only winner per cohort, then OOS / full / robustness / parameter
+neighbourhood evidence for that same winner.  Cross-cohort medians are
+descriptive diagnostics only - they are NOT a gate (v1.3.0).
 
 Writes only:
   * /qlib/work/**      (rebuildable derived/cache area, INV-5)
@@ -50,6 +56,20 @@ STRESS = [
     ("entry_delay_1_bar", {"entry_delay_1_bar": True}),
     ("slippage_2ticks", {"slip_ticks": 2}),
 ]
+# Registered phase grids (v1.3.0: every one of them covers the FULL
+# strategy-domain x DCA-domain product of every cohort - contract 7.2).
+COHORT_GRID_KINDS = ("historical", "oos", "full", "fee_2x", "funding_2x",
+                     "entry_delay_1_bar", "slippage_2ticks", "no_funding",
+                     "no_funding_full")
+# Joint parameter space axes, in the one registered order used for the
+# deterministic lexical tie-break (contract 7.3).  Order is part of the gate.
+AXES = ("window", "discount", "spacing_pct", "size_multiplier",
+        "breakeven_tp_pct", "invalidation_pct")
+SELECTOR_VERSION = "cohort-selector-v1"
+DISPOSITION_VERSION = "cohort-disposition-v1"
+WINNER_METRIC_KEYS = ("net_pnl", "sharpe", "episodes", "ending_equity", "fees", "funding",
+                      "max_dd_usdt", "max_dd_pct", "max_effective_leverage",
+                      "capital_utilization")
 LAYER_TOTALS = {}
 
 
@@ -542,9 +562,25 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
     }
 
 
-def record(cohort, p, kind, m):
+def rail_for(dca):
+    """One registered DCA configuration -> the engine rail.
+
+    Only the four registered DCA axes are mapped (plus the registered capital
+    basis).  The engine itself (`simulate`) is unchanged: the ladder geometry,
+    breakeven-anchored TP and resting invalidation semantics of v1 are inherited
+    verbatim - this release parametrises them, it does not re-interpret them.
+    """
+    return {"base_quote": dca["base_quote"], "spacing_d0": dca["spacing_pct"],
+            "size_multiplier": dca["size_multiplier"], "tp": dca["breakeven_tp_pct"],
+            "invalidation": dca["invalidation_pct"]}
+
+
+def record(cohort, p, dca, kind, m):
     return {"symbol": cohort.symbol, "timeframe": cohort.timeframe, "window_kind": kind,
             "window": p["window"], "discount": p["discount"],
+            "spacing_pct": dca["spacing_pct"], "size_multiplier": dca["size_multiplier"],
+            "breakeven_tp_pct": dca["breakeven_tp_pct"],
+            "invalidation_pct": dca["invalidation_pct"],
             "net_pnl": round(m["net_pnl"], 6), "fees": round(m["fees"], 6),
             "funding": round(m["funding"], 6), "gross_pnl": round(m["gross_pnl"], 6),
             "ending_equity": round(m["ending_equity"], 6),
@@ -562,129 +598,289 @@ def record(cohort, p, kind, m):
 
 
 def run_cohort(spec, cohort, run_log):
-    rail = spec["dca_rail"]
+    """Every legal (strategy params x DCA config) case of one cohort, on every registered grid."""
     grid = spec["params"]["grid"]
+    dca_grid = spec["dca_domain"]["grid"]
     slip = spec["costs"]["baseline_slippage_ticks"]
     windows = {"historical": (spec["data"]["historical_start"], spec["data"]["historical_end"]),
                "oos": (spec["data"]["oos_start"], spec["data"]["oos_end"]),
                "full": (spec["data"]["start"], spec["data"]["end"])}
-    rows = {k: [] for k in ("historical", "oos", "full", "no_funding", "no_funding_full")}
-    for sname, _ in STRESS:
-        rows[sname] = []
+    rows = {k: [] for k in COHORT_GRID_KINDS}
 
     slices = {k: cohort.slice(*v) for k, v in windows.items()}
     for kind in ("historical", "oos", "full"):
         sl = slices[kind]
-        run_log("window %s %s/%s bars=[%d,%d)" % (kind, cohort.symbol, cohort.timeframe, sl[0], sl[1]))
+        run_log("window %s %s/%s bars=[%d,%d) cases=%d"
+                % (kind, cohort.symbol, cohort.timeframe, sl[0], sl[1],
+                   len(grid) * len(dca_grid)))
         for p in grid:
-            rows[kind].append(record(cohort, p, kind, simulate(cohort, sl, rail, p, {}, slip, kind)))
+            for dca in dca_grid:
+                rows[kind].append(record(cohort, p, dca, kind,
+                                         simulate(cohort, sl, rail_for(dca), p, {}, slip, kind)))
 
     sl = slices["full"]
     for sname, stress in STRESS:
         for p in grid:
-            rows[sname].append(record(cohort, p, sname,
-                                      simulate(cohort, sl, rail, p, stress,
-                                               stress.get("slip_ticks", slip), sname)))
+            for dca in dca_grid:
+                rows[sname].append(record(cohort, p, dca, sname,
+                                          simulate(cohort, sl, rail_for(dca), p, stress,
+                                                   stress.get("slip_ticks", slip), sname)))
     # official-funding baseline check runs on the SAME window as the historical gate
     for p in grid:
-        rows["no_funding"].append(record(cohort, p, "no_funding",
-                                         simulate(cohort, slices["historical"], rail, p,
-                                                  {"no_funding": True}, slip, "no_funding")))
-        rows["no_funding_full"].append(record(cohort, p, "no_funding_full",
-                                              simulate(cohort, sl, rail, p,
-                                                       {"no_funding": True}, slip,
-                                                       "no_funding_full")))
+        for dca in dca_grid:
+            rows["no_funding"].append(record(cohort, p, dca, "no_funding",
+                                             simulate(cohort, slices["historical"],
+                                                      rail_for(dca), p,
+                                                      {"no_funding": True}, slip, "no_funding")))
+            rows["no_funding_full"].append(record(cohort, p, dca, "no_funding_full",
+                                                  simulate(cohort, sl, rail_for(dca), p,
+                                                           {"no_funding": True}, slip,
+                                                           "no_funding_full")))
     return rows
 
 
 # ---------------------------------------------------------------------------
-# phase 3: pre-registered gate (applied to the measured grid; no post-hoc tuning)
+# phase 3: pre-registered cohort-selector / cohort-survivor gate
+#          (contract v1.3.0 sections 7.2 and 7.3; no post-hoc tuning)
 # ---------------------------------------------------------------------------
 
-def summarize(spec, grid_rows, layers):
-    import statistics as st
-    hist, oos, full = grid_rows["historical"], grid_rows["oos"], grid_rows["full"]
-    need = {k: spec["expected_legal_base_cases"] for k in
-            ("historical", "oos", "full", "fee_2x", "funding_2x", "entry_delay_1_bar",
-             "slippage_2ticks", "no_funding", "no_funding_full")}
-    coverage = {k: len(grid_rows.get(k, [])) for k in need}
-    coverage_complete = all(coverage[k] == need[k] for k in need)
+def axis_values(spec):
+    """The registered value list of every joint-space axis, in the registered order."""
+    return {"window": list(spec["params"]["grid_windows"]),
+            "discount": list(spec["params"]["grid_discounts"]),
+            "spacing_pct": list(spec["dca_domain"]["spacing_pct"]),
+            "size_multiplier": list(spec["dca_domain"]["size_multiplier"]),
+            "breakeven_tp_pct": list(spec["dca_domain"]["breakeven_tp_pct"]),
+            "invalidation_pct": list(spec["dca_domain"]["invalidation_pct"])}
 
-    cohorts = sorted({(r["symbol"], r["timeframe"]) for r in full})
-    min_is_episodes = {}
-    for c in cohorts:
-        rs = [r["episodes"] for r in hist if (r["symbol"], r["timeframe"]) == c]
-        min_is_episodes["%s/%s" % c] = min(rs) if rs else 0
-    thin = sorted(k for k, v in min_is_episodes.items()
-                  if v < spec["gates"]["min_episodes_is"])
-    insufficient_trades = len(thin) >= spec["gates"]["min_thin_cohorts_reject"]
 
-    representatives = []
-    for c in cohorts:
-        rs = [r for r in hist if (r["symbol"], r["timeframe"]) == c]
-        if not rs:
-            continue
-        best = max(rs, key=lambda r: (r["sharpe"], r["net_pnl"]))
-        pick = lambda rows: next((r for r in rows if (r["symbol"], r["timeframe"]) == c
-                                  and r["window"] == best["window"]
-                                  and r["discount"] == best["discount"]), None)
-        o = pick(oos)
-        f = pick(full)
-        representatives.append({
-            "cohort": "%s/%s" % c, "window": best["window"], "discount": best["discount"],
-            "is_sharpe": best["sharpe"], "is_net_pnl": best["net_pnl"],
-            "oos_sharpe": o["sharpe"] if o else None,
-            "oos_net_pnl": o["net_pnl"] if o else None,
-            "full_sharpe": f["sharpe"] if f else None,
-            "full_net_pnl": f["net_pnl"] if f else None})
+def cell_key(r):
+    return tuple(r[a] for a in AXES)
 
-    def med(rows, key):
-        vals = [r[key] for r in rows if r.get(key) is not None]
-        return st.median(vals) if vals else None
-    med_is_pnl = med(hist, "net_pnl") or 0.0
-    med_is_sharpe = med(hist, "sharpe") or 0.0
-    med_oos_pnl = st.median([r["oos_net_pnl"] for r in representatives
-                             if r["oos_net_pnl"] is not None] or [0.0])
-    med_oos_sharpe = st.median([r["oos_sharpe"] for r in representatives
-                                if r["oos_sharpe"] is not None] or [0.0])
-    med_nofund = med(grid_rows["no_funding"], "net_pnl") or 0.0
 
-    wl, dl = spec["params"]["grid_windows"], spec["params"]["grid_discounts"]
-    neigh_detail, neigh_ok = [], 0
-    for rep in representatives:
-        sym, tf = rep["cohort"].split("/")
-        rows = [r for r in hist if r["symbol"] == sym and r["timeframe"] == tf]
-        idx = {(r["window"], r["discount"]): r for r in rows}
-        wi, di = wl.index(rep["window"]), dl.index(rep["discount"])
-        rep_pnl = idx[(rep["window"], rep["discount"])]["net_pnl"]
-        nb = [idx[(wl[wi + a], dl[di + b])] for a, b in ((-1, 0), (1, 0), (0, -1), (0, 1))
-              if 0 <= wi + a < len(wl) and 0 <= di + b < len(dl)]
-        frac = (sum(1 for x in nb if (x["net_pnl"] > 0) == (rep_pnl > 0)) / len(nb)) if nb else 0.0
-        neigh_detail.append({"cohort": rep["cohort"], "neighbours": len(nb),
-                             "rep_net_pnl": rep_pnl, "same_sign_fraction": round(frac, 4)})
-        if frac >= spec["gates"]["neighborhood_min_same_sign_fraction"]:
-            neigh_ok += 1
-    neighborhood_ok = neigh_ok >= spec["gates"]["neighborhood_min_cohorts"]
+def tie_break_key(r, axes):
+    """Registered-index lexical key: deterministic and free of float formatting."""
+    return tuple(axes[a].index(r[a]) for a in AXES)
 
-    stress_summary, stress_ok = {}, True
-    for sname, _ in STRESS:
-        rows = grid_rows[sname]
-        mp, ms = med(rows, "net_pnl"), med(rows, "sharpe")
-        stress_summary[sname] = {"median_net_pnl": mp, "median_sharpe": ms, "cases": len(rows)}
-        if mp <= 0 or ms <= 0:
-            stress_ok = False
 
-    checks = {
-        "coverage_complete": coverage_complete,
-        "sufficient_trades": not insufficient_trades,
-        "historical_economic": med_is_pnl > 0 and med_is_sharpe > 0,
-        "oos_economic": med_oos_pnl > 0 and med_oos_sharpe > 0,
-        "funding_stability": (med_is_pnl > 0) == (med_nofund > 0),
-        "parameter_neighborhood": neighborhood_ok,
-        "robustness_economic": stress_ok,
+def require_historical(rows, where):
+    """Selection and neighbourhood judgement may never read OOS (contract 7.3).
+
+    Made executable: the two functions that decide a cohort winner take rows and
+    refuse anything that was not measured on the historical window.
+    """
+    bad = [r for r in rows if r.get("window_kind") != "historical"]
+    if bad:
+        raise ValueError("%s must be given historical rows only (contract 7.3): %d violation(s)"
+                         % (where, len(bad)))
+
+
+def select_cohort_winner(hist_rows, spec):
+    """One deterministic winner per cohort, historical window only.
+
+    Requirements, in order: (1) the cohort's best case must reach
+    `min_episodes_is` historical episodes, otherwise the whole cohort is culled
+    for insufficient trades; (2) a candidate needs net_pnl > 0 AND sharpe > 0;
+    (3) ranking is Sharpe desc, net_pnl desc, then the registered-index lexical
+    key of the joint parameter cell.  Returns (row_or_None, reason).
+    """
+    require_historical(hist_rows, "select_cohort_winner")
+    min_ep = spec["gates"]["min_episodes_is"]
+    if not hist_rows or max(r["episodes"] for r in hist_rows) < min_ep:
+        return None, "insufficient_trades"
+    ok = [r for r in hist_rows
+          if r["net_pnl"] > 0.0 and r["sharpe"] > 0.0 and r["episodes"] >= min_ep]
+    if not ok:
+        return None, "no_qualifying_candidate"
+    axes = axis_values(spec)
+    ok.sort(key=lambda r: (-r["sharpe"], -r["net_pnl"], tie_break_key(r, axes)))
+    return ok[0], "selected"
+
+
+def same_cell(rows, key):
+    """The one row of another phase grid carrying the winner's exact joint cell."""
+    hits = [r for r in rows if cell_key(r) == key]
+    if len(hits) != 1:
+        raise ValueError("expected exactly one row for cell %s, found %d" % (str(key), len(hits)))
+    return hits[0]
+
+
+def cohort_neighbourhood(hist_rows, winner, spec):
+    """Face-adjacent (+-1 step on exactly one registered axis) sign agreement.
+
+    Historical window only, by construction (`require_historical`) and by the
+    caller passing the historical grid.
+    """
+    require_historical(hist_rows, "cohort_neighbourhood")
+    axes = axis_values(spec)
+    idx = {cell_key(r): r for r in hist_rows}
+    wkey = cell_key(winner)
+    wsign = winner["net_pnl"] > 0.0
+    neighbours, missing = [], []
+    for ai, axis in enumerate(AXES):
+        vals = axes[axis]
+        pos = vals.index(wkey[ai])
+        for step in (-1, 1):
+            npos = pos + step
+            if not (0 <= npos < len(vals)):
+                continue
+            nkey = list(wkey)
+            nkey[ai] = vals[npos]
+            row = idx.get(tuple(nkey))
+            if row is None:
+                missing.append(tuple(nkey))
+            else:
+                neighbours.append(row)
+    if missing:
+        raise ValueError("registered joint grid is not the full product: missing neighbours %s"
+                         % str(missing[:3]))
+    agree = sum(1 for r in neighbours if (r["net_pnl"] > 0.0) == wsign)
+    frac = (agree / float(len(neighbours))) if neighbours else 0.0
+    return {"neighbours": len(neighbours), "agreeing": agree,
+            "same_sign_fraction": round(frac, 6),
+            "winner_net_pnl_positive": wsign,
+            "threshold": spec["gates"]["neighborhood_min_same_sign_fraction"],
+            "passed": frac >= spec["gates"]["neighborhood_min_same_sign_fraction"]}
+
+
+def _pick(row, keys):
+    return {k: row[k] for k in keys if k in row}
+
+
+def evaluate_cohort(spec, cohort_label, rows):
+    """The whole v1.3 cohort decision for one (symbol, timeframe) cohort.
+
+    `rows` maps every registered phase grid to that cohort's rows only.
+    """
+    hist = rows["historical"]
+    winner, reason = select_cohort_winner(hist, spec)
+    out = {"cohort": cohort_label, "outcome": "CULLED", "no_winner_reason": None,
+           "cull_reasons": [], "winner": None, "neighbourhood": None, "metrics": {}}
+    if winner is None:
+        out["no_winner_reason"] = reason
+        out["cull_reasons"].append(reason)
+        return out
+    key = cell_key(winner)
+    nb = cohort_neighbourhood(hist, winner, spec)
+    oos = same_cell(rows["oos"], key)
+    full = same_cell(rows["full"], key)
+    stress = {s: same_cell(rows[s], key) for s, _ in STRESS}
+    out["winner"] = _pick(winner, AXES)
+    out["metrics"] = {
+        "historical": _pick(winner, WINNER_METRIC_KEYS),
+        "oos": _pick(oos, WINNER_METRIC_KEYS),
+        "full": _pick(full, WINNER_METRIC_KEYS),
+        "robustness": {s: _pick(stress[s], WINNER_METRIC_KEYS) for s in stress},
+        "no_funding_reference": _pick(same_cell(rows["no_funding"], key), WINNER_METRIC_KEYS),
     }
-    verdict = ("TECHNICAL_INCOMPLETE" if not coverage_complete
-               else "PASS" if all(checks.values()) else "REJECT")
+    out["neighbourhood"] = nb
+    reasons = []
+    if not (oos["net_pnl"] > 0.0 and oos["sharpe"] > 0.0):
+        reasons.append("oos_economic")
+    if not (full["net_pnl"] > 0.0):
+        reasons.append("full_economic")
+    failing_stress = [s for s, _ in STRESS if not (stress[s]["net_pnl"] > 0.0)]
+    if failing_stress:
+        reasons.append("robustness_economic:" + ",".join(failing_stress))
+    if not nb["passed"]:
+        reasons.append("parameter_neighbourhood")
+    out["cull_reasons"] = reasons
+    out["outcome"] = "CULLED" if reasons else "SURVIVOR"
+    return out
+
+
+def family_disposition(survivors, coverage_complete):
+    """Contract 7.2/7.3 family disposition.  Coverage/technical incompleteness wins.
+
+    0 survivor -> REJECT / NO_SURVIVOR; exactly 1 -> SURVIVOR_FOUND (PASS);
+    more than 1 -> MULTIPLE_SURVIVORS (FINALIST: the research threshold is met,
+    but picking among survivors is a downstream/operator decision, so
+    performance_claimable stays false).
+    """
+    if not coverage_complete:
+        return {"disposition": "TECHNICAL_INCOMPLETE", "verdict_recommendation": "TECHNICAL_INCOMPLETE",
+                "performance_claimable_recommendation": False}
+    if not survivors:
+        return {"disposition": "REJECT / NO_SURVIVOR", "verdict_recommendation": "REJECT",
+                "performance_claimable_recommendation": False}
+    if len(survivors) == 1:
+        return {"disposition": "SURVIVOR_FOUND", "verdict_recommendation": "PASS",
+                "performance_claimable_recommendation": True}
+    return {"disposition": "MULTIPLE_SURVIVORS", "verdict_recommendation": "FINALIST",
+            "performance_claimable_recommendation": False}
+
+
+def summarize(spec, grid_rows, layers):
+    import random
+    import statistics as st
+    hist, full = grid_rows["historical"], grid_rows["full"]
+    need = {k: spec["expected"]["case_evaluations_per_grid"] for k in COHORT_GRID_KINDS}
+    coverage = {k: len(grid_rows.get(k, [])) for k in need}
+    cohorts = sorted({(r["symbol"], r["timeframe"]) for r in full})
+    cohort_labels = ["%s/%s" % c for c in cohorts]
+
+    per_cohort = {}
+    for label in cohort_labels:
+        per_cohort[label] = {k: [r for r in grid_rows[k] if "%s/%s" % (r["symbol"], r["timeframe"]) == label]
+                             for k in COHORT_GRID_KINDS}
+
+    expected_axes = axis_values(spec)
+    dca_axes = ("spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct")
+    strategy_product = set((w, d) for w in expected_axes["window"] for d in expected_axes["discount"])
+    dca_product = set((a, b, c, d) for a in expected_axes["spacing_pct"]
+                      for b in expected_axes["size_multiplier"]
+                      for c in expected_axes["breakeven_tp_pct"]
+                      for d in expected_axes["invalidation_pct"])
+    strategy_cells, dca_cells = set(), set()
+    for r in full:
+        strategy_cells.add((r["window"], r["discount"]))
+        dca_cells.add(tuple(r[a] for a in dca_axes))
+    cells_per_cohort_ok = all(len(per_cohort[c][k]) == spec["expected"]["base_combinations_per_cohort"]
+                              for c in cohort_labels for k in COHORT_GRID_KINDS) if cohort_labels else False
+    coverage_complete = (all(coverage[k] == need[k] for k in need)
+                         and len(cohorts) == spec["expected"]["cohorts"]
+                         and strategy_cells == strategy_product
+                         and dca_cells == dca_product
+                         and cells_per_cohort_ok)
+
+    # An incomplete measurement is never judged: if any registered grid or cohort cell is
+    # missing, no cohort is evaluated at all and the family lands on TECHNICAL_INCOMPLETE
+    # (contract 7.2/7.3 - the same fail-closed shape as the v1 coverage gate).
+    cohort_results = ([evaluate_cohort(spec, label, per_cohort[label]) for label in cohort_labels]
+                      if coverage_complete else [])
+    survivors = [c for c in cohort_results if c["outcome"] == "SURVIVOR"]
+    disposition = family_disposition(survivors, coverage_complete)
+
+    # deterministic selector: a shuffled copy of the same rows must elect the same cell
+    rng = random.Random(20260913)
+    selector_stable = True
+    for c in cohort_results:
+        if c["no_winner_reason"] is not None:
+            continue
+        shuffled = list(per_cohort[c["cohort"]]["historical"])
+        rng.shuffle(shuffled)
+        again, _ = select_cohort_winner(shuffled, spec)
+        if again is None or cell_key(again) != tuple(c["winner"][a] for a in AXES):
+            selector_stable = False
+            break
+
+    med = lambda rows, key: st.median([r[key] for r in rows if r.get(key) is not None] or [0.0])
+    # Descriptive diagnostics only: cross-cohort medians are NOT a gate in v1.3.0.
+    descriptive = {
+        "non_gating": True,
+        "note": "cross-cohort medians are descriptive diagnostics only; they are never a gate "
+                "(contract 7.2, v1.3.0)",
+        "median_historical_net_pnl": med(hist, "net_pnl"),
+        "median_historical_sharpe": med(hist, "sharpe"),
+        "median_full_net_pnl": med(full, "net_pnl"),
+        "median_full_sharpe": med(full, "sharpe"),
+        "median_no_funding_historical_net_pnl": med(grid_rows["no_funding"], "net_pnl"),
+        "positive_case_share_historical": sum(1 for r in hist if r["net_pnl"] > 0) / float(len(hist)),
+    }
+    stress_summary = {s: {"median_net_pnl": med(grid_rows[s], "net_pnl"),
+                          "median_sharpe": med(grid_rows[s], "sharpe"),
+                          "cases": len(grid_rows[s]),
+                          "non_gating": True} for s, _ in STRESS}
 
     keys = ("net_pnl", "fees", "funding", "gross_pnl", "ending_equity", "sharpe",
             "max_dd_pct", "max_dd_usdt", "max_effective_leverage", "capital_utilization",
@@ -694,34 +890,44 @@ def summarize(spec, grid_rows, layers):
                                   + r["open_at_end"] + r["margin_calls"] for r in full),
         "pnl_decomposition": all(abs(r["gross_pnl"] - r["fees"] - r["funding"]
                                      - r["net_pnl"]) <= 1e-3 for r in full),
-        "coverage_all_240": coverage_complete,
-        "cohort_count_20": len(cohorts) == spec["expected_cohorts"],
-        "grid_complete": all(g["window"] in wl and g["discount"] in dl
-                             for g in spec["params"]["grid"]),
+        "coverage_complete": coverage_complete,
+        "cohort_count_20": len(cohorts) == spec["expected"]["cohorts"],
+        "strategy_grid_is_registered_product": strategy_cells == strategy_product,
+        "dca_grid_is_registered_product": dca_cells == dca_product,
+        "base_combinations_per_cohort_per_grid": cells_per_cohort_ok,
+        "expected_case_evaluations": sum(coverage.values()) == spec["expected"]["expected_case_evaluations"],
         "layer0_equals_episodes": layers[0] == sum(r["episodes"] for r in full) and layers[0] > 0,
         "layer_histogram_nonempty": sum(layers) > 0,
         "no_entry_after_exhaustion": all(r["min_entry_equity"] > 0.0 for r in full),
         "ending_equity_floor": all(r["ending_equity"] > -1.5 * 30000.0 for r in full),
+        "selector_deterministic": selector_stable,
+        "selector_historical_only": True,
     }
     return {
         "family_id": spec["family_id"], "round_id": spec["round_id"], "run_id": spec["run_id"],
+        "selector_version": SELECTOR_VERSION, "disposition_version": DISPOSITION_VERSION,
+        "registered_domains": {
+            "strategy": {"window": expected_axes["window"], "discount": expected_axes["discount"]},
+            "dca": {a: expected_axes[a] for a in dca_axes},
+            "dca_base_quote": spec["dca_domain"]["base_quote"]},
         "coverage": coverage, "coverage_required": need, "coverage_complete": coverage_complete,
-        "cohorts": ["%s/%s" % c for c in cohorts], "cohort_count": len(cohorts),
-        "legal_base_cases_full": len(full), "legal_base_cases_historical": len(hist),
-        "legal_base_cases_oos": len(oos),
-        "gate_checks": checks, "verdict_recommendation": verdict,
-        "median_historical": {k: med(hist, k) for k in keys},
-        "median_full": {k: med(full, k) for k in keys},
-        "median_net_pnl_no_funding": med_nofund,
-        "median_oos_net_pnl": med_oos_pnl, "median_oos_sharpe": med_oos_sharpe,
-        "representatives": representatives,
-        "cross_cohort_positive_representatives":
-            sum(1 for r in representatives if (r["full_net_pnl"] or 0) > 0),
-        "cross_cohort_total": len(representatives),
-        "min_is_episodes_per_cohort": min_is_episodes, "thin_cohorts": thin,
-        "neighborhood": neigh_detail, "neighborhood_cohorts_ok": neigh_ok,
+        "cohorts": cohort_labels, "cohort_count": len(cohorts),
+        "case_evaluations_per_cohort_per_grid": spec["expected"]["base_combinations_per_cohort"],
+        "case_evaluations_per_grid": spec["expected"]["case_evaluations_per_grid"],
+        "case_evaluations_total": sum(coverage.values()),
+        "expected_case_evaluations": spec["expected"]["expected_case_evaluations"],
+        "cohort_results": cohort_results,
+        "cohort_survivors": [c["cohort"] for c in survivors],
+        "cohort_survivor_count": len(survivors),
+        "cohort_outcome_counts": {"SURVIVOR": len(survivors),
+                                  "CULLED": len(cohort_results) - len(survivors)},
+        "disposition": disposition["disposition"],
+        "verdict_recommendation": disposition["verdict_recommendation"],
+        "performance_claimable_recommendation": disposition["performance_claimable_recommendation"],
+        "survivor_evidence": survivors,
+        "descriptive_diagnostics": descriptive,
+        "descriptive_medians_all_base_cases": {k: med(full, k) for k in keys},
         "stress_summary": stress_summary,
-        "best_full_case": max(full, key=lambda r: r["sharpe"]) if full else None,
         "dca_layer_histogram": {"level_%02d" % k: layers[k] for k in range(12)},
         "assertions": assertions,
     }
@@ -748,6 +954,13 @@ def main():
         if self_sha != spec["script"]["sha256"]:
             raise SystemExit("script sha256 mismatch: running %s spec %s"
                              % (self_sha, spec["script"]["sha256"]))
+        for key in ("dca_domain", "expected", "selector_version", "disposition_version"):
+            if key not in spec:
+                raise SystemExit("run-spec is not a v1.3.0 spec: missing %r (contract 7.2/7.3)" % key)
+        if spec["selector_version"] != SELECTOR_VERSION or spec["disposition_version"] != DISPOSITION_VERSION:
+            raise SystemExit("run-spec selector/disposition version %r/%r != engine %r/%r"
+                             % (spec["selector_version"], spec["disposition_version"],
+                                SELECTOR_VERSION, DISPOSITION_VERSION))
         atomic_write_json(os.path.join(attempt_dir, "state.json"), {
             "schema_version": 1, "family_id": spec["family_id"], "round_id": spec["round_id"],
             "run_id": spec["run_id"], "stage": "RUNNING_QLIB",
@@ -821,6 +1034,14 @@ def main():
                           summary["dca_layer_histogram"])
         atomic_write_json(os.path.join(attempt_dir, "artifacts", "assertions.json"),
                           summary["assertions"])
+        atomic_write_json(os.path.join(attempt_dir, "artifacts", "cohort_results.json"),
+                          summary["cohort_results"])
+        atomic_write_json(os.path.join(attempt_dir, "artifacts", "cohort_survivors.json"),
+                          summary["survivor_evidence"])
+        run_log("disposition=%s verdict_recommendation=%s survivors=%d/%d cases=%d"
+                % (summary["disposition"], summary["verdict_recommendation"],
+                   summary["cohort_survivor_count"], summary["cohort_count"],
+                   summary["case_evaluations_total"]))
         atomic_write_json(os.path.join(attempt_dir, "state.json"), {
             "schema_version": 1, "family_id": spec["family_id"], "round_id": spec["round_id"],
             "run_id": spec["run_id"], "stage": "ARTIFACT_READY",

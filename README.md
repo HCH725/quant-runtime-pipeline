@@ -19,9 +19,26 @@ audited implementation contract 與其變化歷史。
 
 ## 2. Current status（2026-09-13）
 
-- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.2.0，AUDITED PASS / FROZEN（auditor `t_7b979fe8`，2026-09-13；audited content commit `068d6f7`）**；
-  前一個 AUDITED PASS / FROZEN 的版本是 **v1.1.1**（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`），更前為 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
-- **v1.2.0（2026-09-13，AUDITED PASS / FROZEN）**：新增 Contract **§14.4 automatic production handoff trigger**——正式 strategy card terminal 後，由 default 的單一 no-agent cron 自動 append 下一張 family（`runtime/production_handoff.py`，候選來自已 review 的 pool `/results/_handoff/candidates.json`）。**語意不變**：production 仍 sequential A→B→C、無新服務、auditor 不是每張 strategy card 的 stage。第一次真實 handoff 已 append Strategy B（卡 `t_3e696dce`，`parents=[t_97208408]`），並由 dispatcher 自動 claim。詳見契約 §14.4 與附錄 C。
+- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.3.0，AWAITING AUDIT**（卡片 `t_ad2e119e`）；
+  上一個 AUDITED PASS / FROZEN 的版本是 **v1.2.0**（auditor `t_7b979fe8`，2026-09-13；audited content commit `068d6f7`），
+  更前為 **v1.1.1**（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`）與 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
+- **v1.3.0（2026-09-13，AWAITING AUDIT）**：**DCA parameter domain 全量納入 full-backtest**——full-backtest 改為
+  `symbols × timeframes × strategy parameter domain × DCA parameter domain × historical/OOS/robustness`，且每個
+  `(symbol, timeframe)` cohort 都必須跑完整的 `strategy × DCA` 乘積（單一固定 DCA rail 不再合格，§7.2）；
+  **cohort-level survivor disposition**（新增 §7.3）——每個 cohort 以 deterministic、**historical-only** 的 selector 選出唯一
+  winner，再要求 OOS / full / 四個 execution stress / 歷史參數鄰域（≥60%）全部成立；family 判定改為「0 個 survivor → REJECT、
+  恰 1 個 → PASS、>1 個 → FINALIST、coverage 不完整 → TECHNICAL_INCOMPLETE」，**跨 cohort median 不得再作 family gate**
+  （只能 `non_gating` diagnostic）。§14.4 handoff 新增 candidate body 必須帶 DCA domain 與 cohort survivor rules
+  （`candidate_body_not_v13` fail-closed）；§13 新增 `operator_stopped`。**語意不變**：production 仍 sequential A→B→C、
+  §9.4 reconciler、§11/§12/§15/§16、無新服務、auditor 不是每張 strategy card 的 stage。詳見契約 §7.2/§7.3/§14.4 與附錄 C。
+- **Strategy A v2（語意重跑，尚未啟動）**：v1.3.0 的 A v2 = 新 family `close-vs-sma-mean-reversion-long-flat-v2`
+  （舊 `...-v1` 與其 REJECT artifacts 保持 immutable），pre-registration 模板在 `runtime/templates/`，計數由
+  `runtime/strategy_a_v2_counts.py` 驗證：20 cohorts × 12 strategy × 48 DCA = 576 / cohort / grid，
+  9 phase grids → **103,680 case evaluations**。**不得在 v1.3.0 audit PASS 前啟動**。
+- **Strategy B（operator-stopped）**：卡 `t_3e696dce` 在任何 verdict 產生前被 operator 中止並保持 `blocked`；B 的
+  `/results` artifacts 全部保留，未終結的 attempt 已於 host 端補發 `INCOMPLETE`（`failure.class=operator_stopped`）。
+  **B 沒有 PASS/REJECT**。handoff cron `624d0be5b23c` 依 operator 決定**保持 paused**，直到 v1.3.0 audit PASS 且 A v2 就緒。
+- **v1.2.0（2026-09-13，AUDITED PASS / FROZEN）**：新增 Contract **§14.4 automatic production handoff trigger**——正式 strategy card terminal 後，由 default 的單一 no-agent cron 自動 append 下一張 family（`runtime/production_handoff.py`，候選來自已 review 的 pool `/results/_handoff/candidates.json`）。第一次真實 handoff 已 append Strategy B（卡 `t_3e696dce`，`parents=[t_97208408]`），並由 dispatcher 自動 claim；該 family 隨後被 operator 依 v1.3.0 決策中止（見上）。詳見契約 §14.4 與附錄 C。
 - **v1.1.1（2026-09-13）**：audit `t_d7f48c7a` 的最小 remediation——`reconcile.py` 先判 consumed（非 `scheduled` 即 no-op，不寫 incident／不留 comment）、mapping 補足 family/round/run/container identity、preflight P10 必須由 host 端實際重算 `script.sha256`（不可讀即 `FAIL`／NOT VERIFIED），**語意不變**（Nautilus 仍 out-of-scope、production 仍 sequential A→B→C）。變更記錄見契約附錄 C。
 - Runtime `[V]`：Apple Container **1.4.1**（client/server commit `9a8917ca…`）＋ Qlib **0.9.7** native linux/arm64
   image `qlib:0.9.7-arm64` 已建置；mount 契約（Contract §3）與 ro/rw 語意已實測。
@@ -62,10 +79,10 @@ host reconciler (deterministic, no-agent)  →  Kanban unblock  →  Hermes
 
 | 路徑 | 內容 |
 |---|---|
-| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；前一個 FROZEN 版本 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`；更前為 v1.0.1），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
+| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.3.0 / AWAITING AUDIT**，依 `t_ad2e119e`；上一個 FROZEN 版本 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；再前為 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
 | `container/Containerfile` | **唯一** image 定義：`python:3.12-slim` + Qlib `v0.9.7`（build 內 `rev-parse HEAD` 守衛，upstream 移動 tag 即 build 失敗） |
 | `container/scripts/` | 只保留目前功能仍屬 canonical rebuild / verify / runtime 的腳本（v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同；見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`） |
-| `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`production_handoff.py`（§14.4 automatic handoff：每輪檢查並最多 append 1 張 family 卡）、`tests/test_reconcile.py`、`tests/test_preflight_p10.py`、`tests/test_production_handoff.py`（皆 stdlib unittest）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
+| `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`production_handoff.py`（§14.4 automatic handoff：每輪檢查並最多 append 1 張 family 卡，v1.3.0 起另檢 candidate body 的 DCA domain／cohort survivor 標記）、`strategy_a_v2_counts.py`（v1.3.0 pre-registration 計數器／驗證器）、`templates/strategy_a_v2_{round,run}_spec.template.json`、`tests/test_reconcile.py`、`tests/test_preflight_p10.py`、`tests/test_production_handoff.py`、`tests/test_strategy_a_v2_counts.py`（皆 stdlib unittest）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
 | `evidence/` | 支撐 `[V]` 的精簡證據**快照**（不是 runtime state；主機專屬絕對路徑已以 `<PLACEHOLDER>` 取代） |
 
 ## 5. 重建 runbook（最小步驟）
@@ -112,6 +129,14 @@ Contract §3 的 `[V]` 表與 `container/scripts/` 會出現來源主機的主�
 變更外，未改動其他已稽核腳本或既有契約段落；契約段落之變更一律追加於對應段落尾端／新章節，並以附錄 C 為準
 （v1.1.1 另含 audit `t_d7f48c7a` 的 F1–F3 最小 remediation）。同一個 venv 路徑修正也已套用到 host 上
 `qlib-apple-container/scripts/verify_final.sh`（container 內 `/scripts` 的來源），避免部署副本與 repo 漂移。
+
+**v1.3.0 的 runner 演進與部署狀態（重要）**：`container/scripts/20_strategy_a_run.py` 已由 v1.2.0 的「單一 DCA rail」
+版本演進為 v1.3.0 的「DCA parameter domain + cohort survivor」版本（見契約附錄 C v1.3.0）。舊 v1 版本完整保存在 git 歷史
+（commit `4859051`），而 **host 部署目錄 `qlib-apple-container/scripts/20_strategy_a_run.py` 刻意保持 v1 不變**
+（sha256 `8f3ce89deebc14902f940d677cf5e3fef209e3f3a78d5dc10d0974964961df16`）：那正是 Strategy A v1 attempt run-spec 所 pin
+的腳本，保持不動才能讓已稽核的 A v1 artifacts 持續可被 P10 逐位元重算驗證。因此 repo 與 host 在這一支檔案上**暫時不同步**——
+v1.3.0 的 runner 只在 Strategy A v2 啟動時才部署到 host，屆時 `runtime/preflight.py --launch` 的 P10 會以新版 run-spec 的
+`script.sha256` 重新計算並要求逐位元相符（不符即 launch gate 直接 FAIL，不會放行）。
 
 ## 7. Security / data exclusions（永不進入本 repo）
 

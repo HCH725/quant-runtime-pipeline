@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "kind": "launch_record",
+  "contract_section": "9.2",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v1",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v1-r1",
+  "run_id": "ema-crossover-walkforward-momentum-long-short-v1-r1-u1",
+  "kanban_task_id": "t_3e696dce",
+  "kanban_board": "quant-strategy-research",
+  "launched_at_utc": "2026-09-12T18:40:16Z",
+  "exact_once": true,
+  "launch_command": "container exec qlib-run /opt/venv/bin/python /scripts/30_strategy_b_run.py /results/ema-crossover-walkforward-momentum-long-short-v1/rounds/ema-crossover-walkforward-momentum-long-short-v1-r1/attempts/ema-crossover-walkforward-momentum-long-short-v1-r1-u1/run-spec.json",
+  "host_bg_pid": null,
+  "host_log": "<PLACEHOLDER>",
+  "preflight": "evidence/strategy-b-preflight-20260913.json - P1-P10 all PASS, launch_gate=evaluated, rc=0 (2026-09-12T18:40:0xZ)",
+  "engine_check": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py -> 23/23 OK (2026-09-12T18:39Z)",
+  "script": {
+    "path": "/scripts/30_strategy_b_run.py",
+    "sha256": "sha256:56ae7bb9b50ad301de462f03583526b6211b39bdd7c8dcb3611dc6e1e48d9d16",
+    "repo_path": "container/scripts/30_strategy_b_run.py",
+    "host_path": "<PLACEHOLDER>",
+    "sha256_match_repo_host": true
+  },
+  "container": {
+    "id": "qlib-run",
+    "image": "qlib:0.9.7-arm64",
+    "qlib_version": "0.9.7"
+  },
+  "note": "Container writes result.json + artifacts/ + state.json only; the terminal sentinel (DONE/FAILED/INCOMPLETE) is published host-side afterwards via runtime/terminal_evidence.py."
+}

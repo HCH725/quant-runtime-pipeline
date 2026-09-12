@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "kind": "operator_stop_record",
+  "contract_section": "13 (operator_stopped) / 8 (terminal evidence) / 12.2 (orphan handling)",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v1",
+  "family_title": "Production Strategy B - EMA-crossover walk-forward momentum (long/short) full backtest",
+  "kanban_task_id": "t_3e696dce",
+  "kanban_board": "quant-strategy-research",
+  "kanban_status_at_record": "blocked",
+  "recorded_at_utc": "2026-09-12T19:12:24Z",
+  "recorded_by": "Hermes default (Xiaoqian) under card t_ad2e119e",
+  "operator_decision": {
+    "decided_by": "operator (Hanqin-ge), relayed by ChatGPT (GPT-5.6 Sol) card t_ad2e119e",
+    "decided_at_utc": "2026-09-12T18:59:37Z",
+    "text": "Stop Strategy B immediately: the full-backtest semantics require the DCA parameter domain and the cohort-level survivor disposition before any further production. Preserve all B evidence; do not continue calculation and do not issue a scientific verdict.",
+    "reason": "Contract v1.3.0 changes two semantic layers of a full backtest: the DCA parameter domain (a single PROVISIONAL rail is no longer a full backtest) and the family gate (per-cohort survivor evidence replaces cross-cohort median gates). A Strategy B round run under v1.2.0 semantics cannot be finished into a v1.3.0 verdict without changing what was pre-registered, which INV-4 forbids."
+  },
+  "verdict": {
+    "scientific_verdict": null,
+    "verdict_json_written": false,
+    "performance_claimable": null,
+    "explanation": "No PASS and no REJECT exists for Strategy B. Its only terminal records are one technical FAILED attempt and one operator-stopped INCOMPLETE attempt. Nothing in this record may be cited as a performance statement about the EMA-crossover hypothesis."
+  },
+  "attempts": [
+    {
+      "run_id": "ema-crossover-walkforward-momentum-long-short-v1-r1-u1",
+      "terminal": "FAILED",
+      "failure": {
+        "layer": "card-local",
+        "class": "script_bug"
+      },
+      "summary": "engine defect in the B runner (fee not deducted from realised equity; entry_delay_1_bar lag dead). Fixed inside the same round, new run_id.",
+      "script_sha256_pinned": "sha256:56ae7bb9b50ad301de462f03583526b6211b39bdd7c8dcb3611dc6e1e48d9d16",
+      "script_recoverable": false,
+      "script_recoverability_note": "the pre-fix script bytes were never committed to the repo and no copy survives on the host (measured 2026-09-13: only sha256:f10a64cd... exists in the repo, in the host /scripts deploy directory, and in the u2 run-spec). The u1 FAILED sentinel therefore documents a technical failure whose script cannot be recomputed; it is not a scientific record and is not re-run (INV-15)."
+    },
+    {
+      "run_id": "ema-crossover-walkforward-momentum-long-short-v1-r1-u2",
+      "terminal": "INCOMPLETE",
+      "failure": {
+        "layer": "card-local",
+        "class": "operator_stopped"
+      },
+      "published_host_side_at_utc": "2026-09-12T19:12:24Z",
+      "publisher": "runtime/terminal_evidence.py publish --status INCOMPLETE",
+      "sha256_check": "runtime/terminal_evidence.py check -> ok=true, problems=[]",
+      "summary": "all phases had completed (state.json stage=ARTIFACT_READY, result.json + artifacts/ present), but no terminal sentinel had been published when the operator stopped the round. The host-side INCOMPLETE sentinel makes the attempt terminal so it can never be re-run (INV-15) and keeps the computed artifact an operator-stopped record rather than a verdict."
+    }
+  ],
+  "artifacts_preserved": {
+    "results_root": "<PLACEHOLDER>",
+    "family_dir": "<PLACEHOLDER>",
+    "round_dir": "<PLACEHOLDER>",
+    "kept": [
+      "family.json (ownership + fingerprint)",
+      "round-spec.json (immutable pre-registration)",
+      "attempts/<run>/run-spec.json, result.json, artifacts/, logs/, state.json",
+      "FAILED sentinel (u1) and INCOMPLETE sentinel (u2)"
+    ],
+    "not_kept": [
+      "no verdict.json (none was ever written for this round)"
+    ]
+  },
+  "repo_disposition_of_uncommitted_b_files": {
+    "files": [
+      "container/scripts/30_strategy_b_run.py",
+      "container/scripts/tests/test_strategy_b_engine.py",
+      "evidence/strategy-b-launch-record-20260913.json",
+      "evidence/strategy-b-preflight-20260913.json",
+      "evidence/strategy-b-preflight-u2-20260913.json",
+      "evidence/strategy-b-operator-stop-record-20260913.json"
+    ],
+    "decision": "commit, not delete: they are the only surviving record of what was launched and how. They carry no verdict, and the B card is not a production path any more (superseded by contract v1.3.0 semantics).",
+    "evidence_redaction": "The launch record and the two preflight snapshots were produced by the B worker and contained host-specific absolute paths and a PID. Per evidence/README rule 1-2 they were redacted before commit: user-home paths and /tmp launch logs -> <PLACEHOLDER>, host_bg_pid -> null. Nothing else was modified (JSON fields, statuses and checksums are byte-identical otherwise). The bare mount point string '/Volumes/ExpansionDrive' is kept because contract section 3 already publishes that mount path; this matches the evidence snapshots committed for Strategy A.",
+    "sha256_repo_vs_host_deploy": {
+      "container/scripts/30_strategy_b_run.py": "f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
+      "host_deploy_copy": "f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4",
+      "match": true,
+      "note": "this sha is exactly the one pinned by the u2 run-spec, so the surviving script is the script that produced the preserved artifacts."
+    },
+    "repo_clean": true
+  },
+  "handoff_consequences": {
+    "handoff_cron": "624d0be5b23c - stays PAUSED (operator decision); it must not be re-enabled until contract v1.3.0 passes its audit and Strategy A v2 is ready",
+    "tail_append_blocked_by": "the B card is blocked, which is one of the section 14.4 append gates (blocked_card_present); no Strategy C card can be appended while this card stays blocked",
+    "required_before_resuming_the_chain": [
+      "contract v1.3.0 audit PASS",
+      "Strategy A v2 pre-registration instantiated (family close-vs-sma-mean-reversion-long-flat-v2) and launched",
+      "explicit operator decision on the B card (archive it as operator-stopped, or keep it blocked as the standing record); the chain tail can only advance from a done/archived card (contract 14.1/14.2 step 2)"
+    ]
+  },
+  "no_secrets_note": "This record contains no credentials, tokens or PII; only board ids, family ids and filesystem paths already used throughout the contract."
+}

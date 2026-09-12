@@ -11,7 +11,9 @@ Not a daemon, service, factory, queue or registry. Every input is either a read-
 Legal action: append at most ONE new family card at the chain tail
 (`parents=[tail_id]`, `idempotency_key=<family_id>`) and land its `family.json` in the same round.
 Duplicate / ambiguous / ineligible / incident / freeze -> fail-closed: no card, ONE finding line,
-no retry storm.
+no retry storm.  Since v1.3.0 a candidate whose card body does not register the DCA parameter
+domain and the cohort survivor rules is also fail-closed (`candidate_body_not_v13`): a v1.2-era
+body cannot express a v1.3 full backtest (contract 7.2/7.3/14.4).
 
 Fence note (contract 9.4): the board mutation shells out to `hermes kanban create`, which Hermes
 refuses from a delegate_task child context. Run this from a fence-free host shell - the cron entry
@@ -39,6 +41,10 @@ INCIDENT_FILENAME = "reconciliation_incident.jsonl"
 ACTIVE_STATUSES = ("ready", "running", "scheduled")
 TERMINAL_STATUSES = ("done", "archived")
 _STRATEGY_CARD_FIELDS = ("id", "status", "created_at", "title")
+# v1.3.0 candidate requirement (contract 14.4 + 7.2/7.3): a card appended by this automation
+# must register the DCA parameter domain and the cohort survivor rules, otherwise it cannot
+# express a v1.3 full backtest. Compared case-insensitively against the resolved card body.
+CANDIDATE_BODY_MARKERS = ("DCA PARAMETER DOMAIN", "COHORT SURVIVOR")
 
 
 def sh(cmd, timeout=180):
@@ -400,6 +406,14 @@ def round_once(args):
                            % (pool_path, len(cands)), pool=str(pool_path))
     chosen = dict(eligible[0])
     chosen["_body"] = card_body(pool_path, chosen)
+    body = (chosen["_body"] or "").upper()
+    missing = [m for m in CANDIDATE_BODY_MARKERS if m not in body]
+    if missing:
+        return res.finding("candidate_body_not_v13",
+                           "candidate %s card body is not a v1.3.0 card body: missing %s "
+                           "(contract 14.4 requires the DCA parameter domain and the cohort "
+                           "survivor rules in every appended card)" % (chosen["family_id"], missing),
+                           pool_entry=chosen["family_id"], missing=missing)
     return append_one(args.results_root, args.board, tail["id"], chosen, args, res)
 
 
