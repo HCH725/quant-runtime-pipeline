@@ -21,6 +21,7 @@ audited implementation contract 與其變化歷史。
 
 - `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.1.1，AUDITED PASS / FROZEN（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`）**；
   前一個 AUDITED PASS / FROZEN 的版本是 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
+- **v1.2.0（2026-09-13，AWAITING AUDIT）**：新增 Contract **§14.4 automatic production handoff trigger**——正式 strategy card terminal 後，由 default 的單一 no-agent cron 自動 append 下一張 family（`runtime/production_handoff.py`，候選來自已 review 的 pool `/results/_handoff/candidates.json`）。**語意不變**：production 仍 sequential A→B→C、無新服務、auditor 不是每張 strategy card 的 stage。第一次真實 handoff 已 append Strategy B（卡 `t_3e696dce`，`parents=[t_97208408]`），並由 dispatcher 自動 claim。詳見契約 §14.4 與附錄 C。
 - **v1.1.1（2026-09-13）**：audit `t_d7f48c7a` 的最小 remediation——`reconcile.py` 先判 consumed（非 `scheduled` 即 no-op，不寫 incident／不留 comment）、mapping 補足 family/round/run/container identity、preflight P10 必須由 host 端實際重算 `script.sha256`（不可讀即 `FAIL`／NOT VERIFIED），**語意不變**（Nautilus 仍 out-of-scope、production 仍 sequential A→B→C）。變更記錄見契約附錄 C。
 - Runtime `[V]`：Apple Container **1.4.1**（client/server commit `9a8917ca…`）＋ Qlib **0.9.7** native linux/arm64
   image `qlib:0.9.7-arm64` 已建置；mount 契約（Contract §3）與 ro/rw 語意已實測。
@@ -61,10 +62,10 @@ host reconciler (deterministic, no-agent)  →  Kanban unblock  →  Hermes
 
 | 路徑 | 內容 |
 |---|---|
-| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（v1.1.1 / AUDITED PASS / FROZEN，audited content commit `18d6c3f`，auditor re-audit `t_83682069`；前一個 FROZEN 版本 v1.0.1），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
+| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.2.0 / AWAITING AUDIT**，含 §14.4 automatic handoff；前一個 FROZEN 版本 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`；更前為 v1.0.1），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
 | `container/Containerfile` | **唯一** image 定義：`python:3.12-slim` + Qlib `v0.9.7`（build 內 `rev-parse HEAD` 守衛，upstream 移動 tag 即 build 失敗） |
 | `container/scripts/` | 只保留目前功能仍屬 canonical rebuild / verify / runtime 的腳本（v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同；見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`） |
-| `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`tests/test_reconcile.py`（stdlib unittest，reconciler 的 consumed-first 與 fail-closed 狀態機檢查）、`tests/test_preflight_p10.py`（P9/P10 與 `script.sha256` 重算的邏輯層檢查）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
+| `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`production_handoff.py`（§14.4 automatic handoff：每輪檢查並最多 append 1 張 family 卡）、`tests/test_reconcile.py`、`tests/test_preflight_p10.py`、`tests/test_production_handoff.py`（皆 stdlib unittest）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
 | `evidence/` | 支撐 `[V]` 的精簡證據**快照**（不是 runtime state；主機專屬絕對路徑已以 `<PLACEHOLDER>` 取代） |
 
 ## 5. 重建 runbook（最小步驟）
@@ -125,5 +126,5 @@ market-data raw 內容、`/results` 實際 run artifacts、`/qlib/work`、parque
 
 - 不加 GitHub Actions / CI / Dependabot / CodeQL / Pages / release automation / submodule / LFS。
 - 不新增 framework、service、daemon、registry、queue 或第二套 runtime。
-- 不新增任何可自動觸發的排程；本 repo 只做版本控管。
+- 不新增任何**在 repo 內**可自動觸發的排程（無 CI、無 hook）；本 repo 只提供 deterministic 腳本與版本控管。production 的 automatic handoff 觸發是 **Hermes cron**（Contract §14.4，default profile job `624d0be5b23c`，no-agent script-only），不是 repo 內的排程，也不因此新增服務或狀態儲存。
 - 本 repo 與 `HCH725/nautilus-quant-system` 無關，不觸及、不取代它。
