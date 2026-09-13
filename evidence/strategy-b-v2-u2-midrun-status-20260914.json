@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_b_v2_u2_midrun_status",
+  "contract_section": "9.2 / 9.3 / 9.4 / 13",
+  "card": "t_35b3e5da",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "run_id": "ema-crossover-walkforward-momentum-long-short-v2-r1-u2",
+  "recorded_at_utc": "2026-09-13T22:13:43Z",
+  "recorded_by": "Hermes default (Xiaoqian), card run 148",
+  "git_head_at_record": "4569a6d",
+  "host_boot_id": "boot-1789331149",
+  "summary": "Card t_35b3e5da (run 148) was released by the no-agent reconciler cron f6b9aa5e9034 on the superseded attempt u1's FAILED sentinel while u2 is still computing. The release is contract-conformant (9.3: FAILED is a legal terminal state and the reconciler always releases; 9.4: consumption is card-status-based) but premature relative to the launch intent (wait for u2's sentinel). Run 148 verified u2 health, re-parked the card to scheduled (9.2 step 5), and changed nothing else.",
+  "reconciler_event": {
+    "job_id": "f6b9aa5e9034",
+    "job_name": "Quant runtime reconciler (completion bridge, paused until audit PASS)",
+    "schedule": "every 15m (no_agent, wrapper ~/.hermes/scripts/quant_runtime_reconcile.py)",
+    "runs_observed": [
+      {"at_utc": "2026-09-13T21:35:48Z", "output": "silent (no-op: card was running -> u1 sentinel treated as consumed)"},
+      {"at_utc": "2026-09-13T21:51:50Z", "output": "silent (no-op: card was running)"},
+      {"at_utc": "2026-09-13T22:06:54Z", "output": "reconciler: unblocked t_35b3e5da (delivered to discord:1519163199117721650)", "output_file": "/Users/hong/.hermes/cron/output/f6b9aa5e9034/2026-09-14_06-06-53.md"}
+    ],
+    "unblock_trigger": "u1 FAILED sentinel (attempt ...-r1-u1; superseded - its failure was detected live by run 147 ~2 min after launch, recorded host-side with failure.class=script_bug, and remediated in the same round as u2)",
+    "card_event": "scheduled -> ready -> claimed (run 148 at 2026-09-13T22:07:00Z); run 148 re-parks to scheduled per 9.2 step 5",
+    "post_event_cron_state": "readback 2026-09-14T06:08:56+08:00 (~2 min after the unblock): job f6b9aa5e9034 enabled=false / state=paused. Handoff cron 624d0be5b23c remains enabled (hourly at :05; 06:05 run silent, no C card created).",
+    "hazard": "While this card waits in scheduled and u2 has no sentinel, any active reconciler tick would keep releasing the card on u1's stale FAILED (one worker spawn per 15m tick; each spawn only re-parks). Keep the reconciler paused until u2's terminal sentinel exists - a single release then is correct (idempotent afterwards because the card leaves scheduled). The superseded-attempt sentinel re-arm is a multi-attempt consumption edge not modelled by 9.4 (its consumption rule is card-status-based, and 9.3 mandates release on any terminal). Changing runtime/reconcile.py would be a contract code change (9.4 item 4; 26: version bump + tests + audit) and is out of scope for this card - flagged for operator/ChatGPT."
+  },
+  "u2_state": {
+    "state_json_stage": "RUNNING_QLIB",
+    "container_id": "qlib-run",
+    "image_id": "qlib:0.9.7-arm64",
+    "process": "sh -c nice -n 10 /opt/venv/bin/python /scripts/30_strategy_b_run.py <run-spec> (pid 493, alive at 2026-09-13T22:12:22Z readback)",
+    "launched_at_utc": "2026-09-13T21:50:34Z",
+    "run_log_errors": 0,
+    "completed_cohort_grids": [
+      "historical BTCUSDT/5m rows=5760 in 543.1s",
+      "oos BTCUSDT/5m rows=5760 in 152.6s"
+    ],
+    "in_flight_at_record": "full BTCUSDT/5m (~85% at 22:12Z)",
+    "csv_sanity": "completed grids: 100% n_steps>0 and 100% pnl_decomp_ok=true (5744 / 5749 flushed data rows; the runner log is authoritative for counts, 5760 rows per cohort per grid, the CSV tail is buffered)",
+    "pace_note": "BTCUSDT/5m is the slowest cohort (493,632 bars); historical/full-length grids dominate cost. The launch-time projection ('~38 rows/s -> 8-9h') was measured on an oos grid and is optimistic.",
+    "model_estimate": "linear per-bar-year scaling from the measured BTCUSDT/5m grids (about 106 min per 5m cohort, 35 / 18 / 9 / 2 min for 15m / 30m / 1h / 4h) gives about 11h total wall time; projected terminal window 2026-09-14 07:00Z..12:00Z (15:00..20:00 CST), central ~09:10Z. To be refined as further cohorts complete.",
+    "disk": "ExpansionDrive 1.7Ti available (no space pressure)"
+  },
+  "readback_checks": {
+    "family_json_sha256": "63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc (matches launch record)",
+    "round_spec_sha256": "a3dd33a95e3fb307c91f5e07f5b486b3c51e8be4bbc214ae85d654a169bcaf22 (matches launch record)",
+    "u2_run_spec_sha256": "b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356 (matches launch record)",
+    "engine_sha256": "940768c3d5bed836a16a006170771f36a21644fec8e59ade1e2b44aca68edd85 (host deploy == repo container/scripts == launch record / P10)",
+    "counts_validator": "runtime/strategy_b_v2_counts.py -> cohorts=20 strategy=120 dca=48 base_per_cohort=5760 per_grid=115200 total=1152000 fingerprint=MATCH ok=True",
+    "host_boot_id_matches_preflight": true,
+    "terminal_sentinels_in_round": {"u1": "FAILED (immutable, already handled; must not be rewritten)", "u2": "none yet"}
+  },
+  "completion_requirements": {
+    "sentinel": "Host-side only: the container writes result.json + artifacts/ + state.json(stage=ARTIFACT_READY) and exits; it does NOT publish a sentinel. Publish via `python3 runtime/terminal_evidence.py publish --status DONE ...` with the manifest checksums (A v2 precedent, evidence/strategy-a-v2-terminal-20260913.json).",
+    "release": "Operator releases the card once u2 completes (the reconciler is paused and cannot fire without an existing sentinel). If the auto-bridge is preferred: publish the DONE sentinel first, then resume the reconciler / run reconcile.py once - the release then fires on an existing terminal sentinel.",
+    "then_this_card": "terminal readback + verdict.json (v1.4.0 mapping: 0 survivors => REJECT; >=1 => PASS, band SURVIVOR_FOUND / MULTIPLE_SURVIVORS) + survivor-bundle.json (all survivors, 10.8) + 28 evidence preservation (leaderboard entry is the only trigger) + README/contract status columns.",
+    "u1": "stays immutable; round processing keys off u2's terminal evidence only"
+  },
+  "guards": {
+    "immutable_specs_modified": false,
+    "cron_changed_by_this_card": false,
+    "new_cards_created": 0,
+    "auditor_child_created": false,
+    "second_engine": false,
+    "u2_attempt_dir_written": false,
+    "strategy_c_generated": false,
+    "strategy_a_and_b_v1_artifacts_touched": false
+  }
+}
