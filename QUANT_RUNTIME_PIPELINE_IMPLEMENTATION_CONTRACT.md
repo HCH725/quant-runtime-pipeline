@@ -1,8 +1,9 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：**AUDITED PASS / FROZEN**（v1.5.2；audited content commit 0a361258，auditor t_3691bfb4，2026-09-13；依 ChatGPT（GPT-5.6 Sol）卡片 t_d19618e1（auditor t_346bcc04 對 v1.5.1 的 FAIL（F1/F2/F3）之最小 remediation）：reserved `_survivors` root **自身不得為 symlink**，且其 resolved 路徑必須恰為 resolved results root 之下的 **literal `_survivors` 子目錄**（root／ancestor escape 一律 rc=1、在任何寫入前即拒寫，`--out`／`--out-dir`／`forward` append 皆適用）；forward slice 的 `source_run.attempt_dir` 必須是 **absolute path**，realpath 後位於 results root 之**非** `_survivors` 的 attempt 目錄（relative 一律 fail-closed）；`kanban_task_id` 於 bundle 與 `family.json` **兩側皆須存在、皆為 non-empty string 且逐字相等**（int／bool／list／null／空字串一律 fail-closed，即使兩側同值）；前一版 v1.5.1 = **AUDITED FAIL**（auditor t_346bcc04，2026-09-13）：post-survivor 寫入邊界在工具層強制為 `_survivors/**`、forward evidence 必須可由 hash 釘住的真實 run artifact（terminal `DONE` ＋ sentinel 記錄的 `result.json` checksum ＋ 逐欄相等的 `forward_slice`）驗證、ownership id 缺漏一律 fail-closed；前一版 v1.5.0 = **AUDITED FAIL**（auditor t_57357d4c，2026-09-13；新增 Post-Survivor Lifecycle（§27）——frozen survivors 持續累積 post-freeze unseen evidence，形成可重算的 file-only survivor index 與 Top-10 leaderboard；唯一 blocking findings 為 F1（未受約束的 `--out`／`--out-dir` 可覆寫 frozen bundle／verdict）、F2（完全自述的 forward slice 可變成 `FORWARD_POSITIVE`／`champion_candidate`／rank 1）、F3（缺 `kanban_task_id` 的 bundle 放行））；更前一版 v1.4.2 = **AUDITED PASS / FROZEN**（audited content commit d699527，auditor t_dedbe003，2026-09-13；依 ChatGPT（GPT-5.6 Sol）卡片 t_670a86af（auditor t_3edafbb9 對 v1.4.1 的 F2 最小 remediation）；前一版 v1.4.1 = FAIL audit t_3edafbb9，2026-09-13；更前一版 v1.4.0 = FAIL audit t_0bd01630，2026-09-13；更前一版 v1.3.2 = AUDITED PASS / FROZEN，audited content commit 0363011，auditor t_3ffaeeb8，2026-09-13；更前一版 v1.3.1 = FAIL audit t_23f4c3ef，2026-09-13；更前一版 v1.3.0 = FAIL audit t_246c62d7，2026-09-13；更前一版 v1.2.0 = AUDITED PASS / FROZEN，audited content commit 068d6f7，auditor t_7b979fe8，2026-09-13；更前一版 v1.1.1 = AUDITED PASS / FROZEN，audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；更前一版 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12））
-版本：v1.5.2（2026-09-13）
+文件狀態：**AWAITING AUDIT**（v1.6.0；依 ChatGPT（GPT-5.6 Sol）卡片 t_68954a45 與唯讀研究卡 t_2382f20b（Operator 決策）：新增 §28 **Survivor Evidence Preservation**——「正式出現在 `leaderboard.json` entries 的 survivor」即為 evidence preservation 觸發點（不是 Top-10、不是 PASS gate），只有它升級成完整 execution evidence package（fills／episodes／equity 逐筆 ledger），而大量 rejected／candidate cell **明文不保留逐筆 execution**（維持 `artifacts/grid_*.csv` 摘要）；新增 `container/scripts/21_strategy_a_survivor_replay.py`（同一顆 engine 的 inert trace hook ＋ 只 replay promoted winner cells）與 `runtime/survivor_evidence.py`（host 純 stdlib：materialize／check／coverage）；寫入邊界再收窄為 `_survivors/evidence/**`，且 package 只能由 staging 原子 rename 發佈；leaderboard 增加**不參與排序**的 evidence drill-back 欄位；前一版 v1.5.2 = **AUDITED PASS / FROZEN**（audited content commit 0a361258，auditor t_3691bfb4，2026-09-13；依 ChatGPT（GPT-5.6 Sol）卡片 t_d19618e1（auditor t_346bcc04 對 v1.5.1 的 FAIL（F1/F2/F3）之最小 remediation）：reserved `_survivors` root **自身不得為 symlink**，且其 resolved 路徑必須恰為 resolved results root 之下的 **literal `_survivors` 子目錄**（root／ancestor escape 一律 rc=1、在任何寫入前即拒寫，`--out`／`--out-dir`／`forward` append 皆適用）；forward slice 的 `source_run.attempt_dir` 必須是 **absolute path**，realpath 後位於 results root 之**非** `_survivors` 的 attempt 目錄（relative 一律 fail-closed）；`kanban_task_id` 於 bundle 與 `family.json` **兩側皆須存在、皆為 non-empty string 且逐字相等**（int／bool／list／null／空字串一律 fail-closed，即使兩側同值）；前一版 v1.5.1 = **AUDITED FAIL**（auditor t_346bcc04，2026-09-13）：post-survivor 寫入邊界在工具層強制為 `_survivors/**`、forward evidence 必須可由 hash 釘住的真實 run artifact（terminal `DONE` ＋ sentinel 記錄的 `result.json` checksum ＋ 逐欄相等的 `forward_slice`）驗證、ownership id 缺漏一律 fail-closed；前一版 v1.5.0 = **AUDITED FAIL**（auditor t_57357d4c，2026-09-13；新增 Post-Survivor Lifecycle（§27）——frozen survivors 持續累積 post-freeze unseen evidence，形成可重算的 file-only survivor index 與 Top-10 leaderboard；唯一 blocking findings 為 F1（未受約束的 `--out`／`--out-dir` 可覆寫 frozen bundle／verdict）、F2（完全自述的 forward slice 可變成 `FORWARD_POSITIVE`／`champion_candidate`／rank 1）、F3（缺 `kanban_task_id` 的 bundle 放行））；更前一版 v1.4.2 = **AUDITED PASS / FROZEN**（audited content commit d699527，auditor t_dedbe003，2026-09-13；依 ChatGPT（GPT-5.6 Sol）卡片 t_670a86af（auditor t_3edafbb9 對 v1.4.1 的 F2 最小 remediation）；前一版 v1.4.1 = FAIL audit t_3edafbb9，2026-09-13；更前一版 v1.4.0 = FAIL audit t_0bd01630，2026-09-13；更前一版 v1.3.2 = AUDITED PASS / FROZEN，audited content commit 0363011，auditor t_3ffaeeb8，2026-09-13；更前一版 v1.3.1 = FAIL audit t_23f4c3ef，2026-09-13；更前一版 v1.3.0 = FAIL audit t_246c62d7，2026-09-13；更前一版 v1.2.0 = AUDITED PASS / FROZEN，audited content commit 068d6f7，auditor t_7b979fe8，2026-09-13；更前一版 v1.1.1 = AUDITED PASS / FROZEN，audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；更前一版 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12））
+版本：v1.6.0（2026-09-13）
 作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）；v1.1.1 依 t_4d6c5cd5（audit t_d7f48c7a 的 F1–F3 最小 remediation 與文件精度修正）；v1.2.0 依 t_0626a619（新增 §14.4 automatic production handoff trigger）；v1.3.0 依 t_ad2e119e（DCA parameter domain 全量納入 full-backtest、cohort-level survivor disposition 取代跨 timeframe median gate、Strategy A 以新 family v2 重跑、Strategy B operator-stopped cleanup）；v1.3.1 依 t_6c83c9fb（audit t_246c62d7 的 F1/F2 最小 remediation：per-fill 費用會計、DCA provenance classification、M1 operator-stopped runner archive hygiene）；v1.3.2 依 t_33457313（audit t_23f4c3ef 對 v1.3.1 的 F3/F4 最小 remediation：獨立 gross/price-PnL accumulator、audit-only staging bytes）；v1.4.0 依 t_24cc6167（operator 決策：family 只要有 >=1 個 cohort survivor 即通過基本研究 gate、多個 survivors 不二選一而是全部保留並前進、新增 frozen survivor bundle、Strategy B v1 維持 operator-stopped 並備妥 B v2 preregistration）；v1.4.1 依 t_58166acc（audit t_0bd01630 對 v1.4.0 的 F1 最小 remediation：明確定義 frozen survivor bundle 的 canonical identity recipe，使公開的 `bundle_identity_sha256` 可由 auditor 以純 stdlib 自持久化檔案獨立重算）；v1.4.2 依 t_670a86af（audit t_3edafbb9 對 v1.4.1 的 F2 最小 remediation：重跑比對**逐鍵**只排除頂層 `contract` 與巢狀 `generator.sha256` 這兩個產生者身分欄位，`generator.path` 與其他所有欄位仍納入比對，非 dict 的 `generator` 不得被正規化掉）；v1.5.0 依 t_a7cfcdfd（operator 要求完善 Runtime SOP：新增 §27 post-survivor lifecycle——frozen survivors 持續累積 post-freeze unseen evidence、file-only survivor index、append-only forward evidence、可重算 Top-10 leaderboard、challenger rule 與 champion／live-candidate 邊界；不 launch B v2、不啟用 cron、不新增 service／daemon／queue／Registry／Orchestrator）；v1.5.1 依 t_171ba94f（audit t_57357d4c 對 v1.5.0 的 F1/F2/F3 最小 remediation：§27.1 的 `_survivors/**` 寫入邊界改為**工具層強制**（`--out`／`--out-dir` 兩側 realpath 邊界檢查，含 symlink 與 `..`，越界即 rc=1 且不寫入）、§27.3 新增 slice **`source_run` 出處契約**（必須指向結果樹內、非 `_survivors` 的 attempt 目錄；該目錄必須有 `terminal_evidence.py` 發佈的 terminal `DONE` sentinel、sentinel 記錄的 `result.json` checksum 必須等於 slice 宣告值與磁碟實際值、且 `result.json.forward_slice` 必須與 slice 逐欄相等；寫入與排名時都重新驗證，任一不符即 fail-closed）、§27.2 fail-closed 清單第 4 項與 A28 明定 `kanban_task_id` **缺漏**即來源不一致；語意不變：identity recipe、family gate、all-survivors mapping、B v2 preregistration 與未 launch、cron paused、不新增 service／daemon／queue／Registry／Orchestrator、不改任何既有 PASS/REJECT 或 frozen artifact）；v1.5.2 依 t_d19618e1（audit t_346bcc04 對 v1.5.1 的 F1/F2/F3 最小 remediation：§27.1 reserved root 自身不得為 symlink、resolved 後必須是 resolved results root 之下的 literal `_survivors`，root／ancestor escape 一律在任何寫入前拒寫（新增 `reserved_root_problem()`，並套用到 index `--out`、leaderboard `--out-dir` 與 `forward` append）；§27.3 `source_run.attempt_dir` 必須為 absolute path（relative 會以 reader cwd 解析）；§27.2 第 4 項 ownership id 必須兩側皆為 non-empty string 且逐字相等，任何非字串值即使兩側同值亦 fail-closed）
+作者補註（v1.6.0）：v1.6.0 依 t_68954a45（同一卡內含唯讀研究 t_2382f20b 的最小方案）：「survivor promotion → evidence preservation」入 §28；leaderboard entry 為唯一觸發點；ledger 只由同一顆 `simulate()` 的 inert 旁路產生（不建第二套 backtester、不重跑 103,680 次evaluation、只 replay 18 個 promoted winner cell）；provider 與 evidence 都不改寫任何既有 PASS／REJECT／ranking；B v2 未 launch、cron `624d0be5b23c` 仍 paused、Strategy B v1 仍 blocked。
 適用範圍：quant-strategy-research board 之 Qlib 研究 runtime 與 Kanban 交接
 變更控制：見 §26；本文件為長期 implementation contract，不是高階摘要
 
@@ -856,6 +857,29 @@ family F
 - **A25** gross PnL 有獨立的 price-PnL accumulator（每個 exit／flatten 只累加 exit proceeds − cost basis，不含 fee／funding；entry／add 不動 gross），`result`/grid 的 `gross_pnl` 直接來自該 accumulator，且 `pnl_decomposition` 是兩個獨立來源的交叉比對並有**負向控制**證明非恆真（`TestGrossPnlAccounting` 在未修版本上失敗）。`[C]`
 - **A28** post-survivor lifecycle（v1.5.0，§27）為**檔案層**且不改寫既有判定：①file-only survivor index（`/results/_survivors/survivor-index.json`）是 derived/rebuildable，**不是** source of truth、也**不是** Registry service；②`survivor_id` deterministic 且至少釘住 family_id／round_id／run_id／`bundle_identity_sha256`／cohort／strategy params／DCA params；③缺 checksum、bundle invalid、來源不一致（目錄名／`kanban_task_id`／`round-spec.json` checksum；v1.5.1 起 `kanban_task_id` 於 bundle 或 `family.json` **任一方缺漏**亦屬來源不一致，不得只在兩側皆 truthy 時才比對；v1.5.2 起該 id 於任一方為**非 non-empty string**（int／bool／list／null／空字串）亦屬來源不一致，即使兩側同值）、param cell 非註冊軸、duplicate survivor_id 一律 fail-closed；③之二**本層對 `/results` 的寫入邊界為工具層強制**（v1.5.1）：`survivor_index.py --out` 與 `survivor_leaderboard.py leaderboard --out-dir` 必須把候選路徑與 `<results-root>/_survivors` **兩側 realpath 解析後**比對前綴，界外即 rc=1 且不寫入任何檔案（symlink 與 `..` 段皆無法導向 frozen bundle／verdict／result），界內子路徑仍允許；④forward evidence 落點 `_survivors/forward/<survivor_id>.jsonl`、**append-only** 且寫入後讀回，`data_start` 必須嚴格晚於該 survivor 的 `research_data_cutoff`、不得與已記錄 slice 重疊、params／bundle identity 必須是 incumbent 的（改參數者是 challenger）；④之二**slice 必須有可重新驗證的 `source_run` 出處**（v1.5.1）：`attempt_dir`（結果樹內、非 `_survivors/**`、目錄名等於 `run_id`）＋ terminal `DONE` sentinel（sha256 相符、`status=DONE`、`run_id`／`task_id`／`family_id` 相符、非 frozen research run）＋ sentinel 記錄且與磁碟相符的 `result.json` checksum ＋ 與 slice 逐欄相等的 `result.json.forward_slice`；寫入與排名時都重新驗證，任一不符即拒收、拒排名；⑤無真實 post-freeze 計算時正確狀態是 zero-forward（`FROZEN_ONLY`），**不得**偽造任何 forward metric；⑥challenger 不得覆寫 incumbent，且其 OOS 起點必須晚於自身 preregistration cutoff；⑦leaderboard 用透明 deterministic ordering（`has_forward` → forward sharpe／return／max_dd_pct 絕對值 → oos_sharpe → robustness stress floor → neighbourhood → `survivor_id`），提供 Top-10，`evidence_state` ∈ {`FROZEN_ONLY`,`ACCUMULATING`,`FORWARD_POSITIVE`,`FORWARD_DEGRADED`} 僅為描述、**永不回寫 PASS**，掉出 Top-10 不等於 REJECT；⑧可執行檢查 `runtime/tests/test_post_survivor.py`（**30 檢定**：index deterministic／duplicate／invalid bundle／來源不一致／ownership id 缺漏／param 軸、`--out`／`--out-dir` 越界與 symlink／`..` 逃逸、forward post-freeze／overlap／params mismatch／readback／無 `source_run` 與偽造出處／數字與 pinned `result.json` 不符、retune 不覆寫、leaderboard deterministic／tie-break／forward 優先／fallback／Top-10 cap／A seed 恰兩人／no fake forward；其中 F1／F2／F3 三組 regression 在 v1.5.0 的 bytes 上實測 FAIL），並以既有 A v2 bundle seed 出恰 2 survivors、兩者 `FROZEN_ONLY`。`[C]`
 
+- **A29** survivor evidence preservation（v1.6.0，§28）為**檔案層**且不改寫任何判定：①**觸發點是 leaderboard
+  entry**（`leaderboard.json` 的 `entries` 成員；不是 Top-10、不是 PASS gate），且**大量 rejected／candidate
+  cell 明文不保留逐筆 execution**（103,680 次 research evaluation 與所有未 promoted cell 維持
+  `artifacts/grid_*.csv` 摘要）；②evidence package 存在與否**不得**回寫 verdict／`performance_claimable`／
+  `evidence_state`／`champion_candidate`／ranking，`coverage` 可 rc=1 但 leaderboard 仍合法（package missing
+  時 rc=0）；③落點唯一為 `/results/_survivors/evidence/<survivor_id>/{manifest.json,aggregate.csv,grids/<grid>/
+  {episodes,fills,equity}.csv,summary.json}`，不複製整個 frozen round、不複製 103,680 列；④寫入邊界比 §27 更窄
+  （只 `_survivors/evidence/**`，沿用 reserved-root／symlink／realpath fail-closed），final package 只能由
+  `.staging-*` 原子 rename 產生，identity 相同 → `already_identical`、不同 → refuse overwrite；⑤instrumentation
+  只對既有 `simulate()` 加 **inert trace hook**（`TRACE=None` ＋ `if TRACE is not None` 守衛），trace 關閉時
+  aggregate／計算順序／語意不得改變（以 trace off／on 逐欄相等強制），tracing 值**永不**反向參與決策；
+  ⑥只 replay **promoted winner cell**（9 grid × survivor；禁止重跑 103,680、禁止呼叫 `summarize()`、禁止寫
+  verdict／bundle），且每個 replay aggregate 必須與 frozen terminal-`DONE`-sentinel-pinned
+  `artifacts/grid_<grid>.csv` 的 winner row **逐欄相等**，任一欄不符即 fail-closed、不 materialize；⑦ledger
+  自身驗證（Σepisode gross／fees／funding／net、episode partition、equity ledger 純 stdlib 重算 Sharpe／MaxDD）
+  必須對回 aggregate；⑧`manifest.json` pin 全部引用檔 sha 並以 canonical sha（僅排除 identity 自身與
+  `generated_at_utc`）為 `package_identity_sha256`（禁 hash-chain／Merkle），且**必須誠實揭露** ledger 是
+  deterministic replay materialization 而非原始 run 保存的 bytes；⑨leaderboard 增加**不參與排序**的
+  `evidence_package_status`／`evidence_manifest_path`／`evidence_manifest_sha256`；⑩可執行檢查
+  `runtime/tests/test_survivor_evidence.py` 與 `container/scripts/tests/test_survivor_trace.py`（trace
+  off／on 相等、ledger reconcile、boundary／symlink／refuse-overwrite、only-leaderboard-entries、coverage
+  non-gating、pointer non-ranking、package tamper detection、no fake original-run claim）。`[C]`
+
 ## 23. Auditor checklist（唯讀，逐項打勾）
 
 1. `[C]` 檔案 path 與 A1 相符；無其他檔案被本卡改動（`git status` 或 mtime 核對）。
@@ -885,6 +909,34 @@ family F
 - **不得**宣稱有任何 forward evidence 或 `champion_candidate`：`/results/_survivors/forward/`（若存在）必須為空或不存在，`leaderboard.json` 內每一列的 forward metrics 必須為 `null` 且 `evidence_state=FROZEN_ONLY`。證據快照：`evidence/v1.5.0-post-survivor-lifecycle-20260913.json`（v1.5.0 seed）與 `evidence/v1.5.1-post-survivor-boundary-remediation-20260913.json`（v1.5.1 remediation 與 F1／F2／F3 regression 實跑）。**注意**：index／leaderboard 是 derived artifact，內含 `contract` 版本字串，因此換版後必須在 `_survivors/**` 內重建一次才會 `--check` clean（v1.5.1 已重建，`survivor-index.json`／`leaderboard.json` 的 sha256 因此與 v1.5.0 快照不同；`leaderboard.csv` 不含時間戳與版本，逐位元不變）。`[C]`
 
 16. `[C]` **v1.5.2 trust-boundary 收緊可執行驗證**（唯讀、可在 `/tmp` 複本上重跑）：①把 `<root>/_survivors` 換成指向 frozen round 目錄的 symlink → `survivor_index.py --out <root>/_survivors/verdict.json`、`survivor_leaderboard.py leaderboard --out-dir <root>/_survivors`、`survivor_leaderboard.py forward` 三者皆 **rc=1**、stderr 含 `is a symlink` 與 `outside the reserved post-survivor write boundary`，且 frozen round 內**沒有**新增 `leaderboard.json`／`leaderboard.csv`／`forward/`／`survivor-index.json`、`verdict.json` 與 `survivor-bundle.json` 的 sha256 不變；②把 `source_run.attempt_dir` 改成 relative（相對於結果樹）並以結果樹為 cwd 執行 `forward` → **rc=1**／`is not an absolute path`、不寫任何 jsonl；以同一份 slice 的 absolute `attempt_dir` 執行則仍 rc=0（對照控制）；③把 `family.json` 與 bundle 的 `kanban_task_id` 同時設成同一個 JSON number（必要時以 §10.8 recipe 重簽公開 identity 使其自洽）→ `survivor_index.py` **rc=1**／`source ownership is incomplete - kanban_task_id is not a non-empty string on both sides`；空字串／bool／list／null 同理；兩側皆為 non-empty string 且相等時仍 rc=0。全部 7 個測試檔（**130 檢定**）必須全綠。
+17. `[C]` **v1.6.0 survivor evidence preservation 可執行驗證**（唯讀；engine 變更沿用 item 11 的 audit-only
+staging 機制，bytes 與 repo commit 逐位元一致，不得改寫 host `/scripts` 的 frozen A v1 部署副本、不得對
+`/results` 產生非 `_survivors/evidence/**` 的 production artifacts）：
+- `python3 runtime/tests/test_survivor_evidence.py` → 全綠（暫存 fixtures 自建，不動真實 `/results`）；
+  `container exec qlib-run /opt/venv/bin/python /qlib/work/staging/v1.6.0/tests/test_survivor_trace.py` → 全綠。
+- 真實 materialization 重跑：把 repo 的 `20_strategy_a_run.py` ＋ `21_strategy_a_survivor_replay.py` 複製到
+  `_survivors/evidence/.staging-*/engine/`，於容器內對**每一個 leaderboard entry** 執行 replay →
+  `grid <name> matches frozen row` ×9／survivor，且 `python3 runtime/survivor_evidence.py materialize
+  --staging …` → `published`（重跑 → `already_identical`）、`survivor_evidence.py check` → rc=0、
+  `coverage` → rc=0 且 PRESENT 數等於 leaderboard entry 數。
+- **fail-closed 負向控制**（`/tmp` 複本或自建 fixture）：改動任一 frozen `artifacts/grid_<grid>.csv` 或使其
+  與 sentinel checksum 不符 → replay 拒跑（不 materialize）；只把某個 grid 的 replay aggregate 改一欄 →
+  `materialize` rc=1；改動已發佈 package 的 ledger 或 `aggregate.csv` → `check` rc=1；`staging` 指向
+  `_survivors/evidence/` 之外 → rc=1；把 `_survivors` 換成 symlink → 所有寫入者 rc=1 且 frozen 檔 sha 不變；
+  對已存在但 identity 不同的 package 再 materialize → refuse overwrite（`already_identical` 只在 identity
+  相同時出現）。
+- **non-gating 控制**：把兩個 package 移到 `_survivors/evidence/` 之外後 `leaderboard --check` 必須仍 rc=0 且
+  `rank`／`top10`／`evidence_state`／`champion_candidate`／`leaderboard.csv` 的排序欄逐位元不變（只有
+  `evidence_package_status` 由 PRESENT 變 ABSENT），而 `coverage` rc=1；移回後 `check` 與 `coverage` 皆 rc=0。
+- **only-leaderboard-entries 控制**：對非 leaderboard entry 的 survivor_id（或對一個 candidate/culled cell）
+  執行 replay／materialize → rc=1，且 `_survivors/evidence/**` 下**不得**產生任何新目錄；103,680 個 research
+  cell 仍只在 `artifacts/grid_*.csv` 有 aggregate row（無 per-cell ledger）。
+- **immutable 未改**：`survivor-bundle.json`、`verdict.json`、`result.json`、
+  `artifacts/cohort_survivors.json`、`round-spec.json` 的 sha256 在整段驗證前後逐位元不變；`forward/` 仍不存在
+  或為空、0 `champion_candidate`；`cron` job `624d0be5b23c` 仍 paused、Strategy B v1 仍 blocked。
+- **揭露檢查**：manifest 的 `materialization` 文字必須明文說明「deterministic replay materialization，不是原始
+  run 保存的 bytes」；repo 內不得出現任何宣稱原始 run 曾保存逐筆 ledger 的敘述。
+
 ## 24. Worked examples
 
 ### 24.1 例：A `REJECT` 之後放行 B
@@ -1033,6 +1085,21 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 - `[C]`（v1.5.2）禁止在 reserved root 是 symlink（或其 resolved 路徑不等於 resolved results root 之下的 literal `_survivors`）時寫入：這不是慣例而是 fail-closed 前置條件，`--out`／`--out-dir`／`forward` append 都必須在任何寫入前回 rc=1（§27.1；v1.5.1 的 F1 殘留）。
 - `[C]`（v1.5.2）禁止把 relative `source_run.attempt_dir` 當成可驗出處：出處必須是 absolute path，否則同一份 slice 的「可驗證性」取決於執行者的 cwd（§27.3；v1.5.1 的 F2 殘留）。
 - `[C]`（v1.5.2）禁止以非字串的 `kanban_task_id` 建立 ownership：bundle 與 `family.json` 兩側皆必須是 non-empty string 且逐字相等，數字／布林／list／null／空字串即使兩側同值也一律 fail-closed（§27.2 第 4 項／§22 A28；v1.5.1 的 F3 殘留）。
+- `[C]`（v1.6.0）禁止把 evidence preservation 的觸發點設成 Top-10 或 PASS gate：觸發點只能是
+  `leaderboard.json` 的 `entries` 成員（§28.1）。
+- `[C]`（v1.6.0）禁止為未 promoted 的 cell 產生逐筆 execution ledger：103,680 個 research evaluation 與所有
+  candidate／culled cell 一律只保留 aggregate 摘要（§28）；per-cell ledger 的存在必須由「是否為 leaderboard
+  entry」決定。
+- `[C]`（v1.6.0）禁止讓 evidence package 的存在與否回寫 verdict、`performance_claimable`、`evidence_state`、
+  `champion_candidate` 或 ranking，也禁止把 `evidence_package_status` 放進排序 tuple（§28.1／§28.5）。
+- `[C]`（v1.6.0）禁止讓 instrumentation 改變既有執行語意：trace 關閉時 aggregate／計算順序／語意必須逐欄不變，
+  且任何 traced 值不得反向參與策略決策或會計（§28.2）。
+- `[C]`（v1.6.0）禁止在 replay 中複製 `simulate()` 邏輯、呼叫 `summarize()`、或重跑 103,680 次 evaluation；
+  只准 replay promoted winner cell 並重用同一顆 engine（§28.3）。
+- `[C]`（v1.6.0）禁止在任一欄與 frozen `artifacts/grid_*.csv` 不符時 materialize package，或宣稱原始 research
+  run 曾保存逐筆 ledger（誠實揭露 deterministic replay materialization，§28.4）。
+- `[C]`（v1.6.0）禁止在 `_survivors/evidence/**` 之外寫入，或就地覆寫一個 identity 不同的既有 package
+  （§28.4 寫入邊界與 atomic publish）。
 - `[C]` 禁止在 comment/artifact 或任何卡片欄位寫入 secrets 或 PII。
 
 ## 26. Change control
@@ -1149,6 +1216,120 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 - `[V]` **既有 immutable artifact 未改寫**：A v2 round r1 的 `survivor-bundle.json`（`sha256:4638885f…`）、`verdict.json`（`sha256:cb470adf…`）、`result.json`（`sha256:012e6d1a…`）、`artifacts/cohort_survivors.json`（`sha256:74f250cf…`）在 seed 前後逐位元相同；bundle 公開 identity 仍為 `sha256:c051759f…`，`survivor_bundle.py --check` 仍 rc=0／`check_clean`（`CONTRACT_VERSION` 於 v1.5.0 更新，屬 §10.8 允許排除的產生者身分欄位，故不影響任何 frozen bundle 的重跑比對）。
 - `[T]` 本版**未**執行任何 post-freeze forward 計算：`/results/_survivors/forward/` 不存在、0 slices、0 `champion_candidate`。raw klines 覆蓋已越過 cutoff（最後一根 2026-09-13T00:00:00Z > cutoff 2026-09-10），因此 forward slices 在未來可由既有 engine 的一次真實 run 產生——那是一個帶 launch 的獨立任務，不是本版的一部分。**該 launch 的產出必須同時滿足 §27.3 的 `source_run` 契約**：一個 terminal `DONE` attempt（`runtime/terminal_evidence.py`），其 `result.json` 帶 `forward_slice` 區塊（欄位與 slice 逐欄相等），且該 attempt 位於結果樹內、`_survivors/**` 之外；v1.5.1 尚未實作任何 forward runner（附錄 B T18 維持未執行）。
 
+## 28. Survivor Evidence Preservation：survivor promotion → execution evidence（v1.6.0）
+
+- `[C]` **觸發語意**：正式出現在 `leaderboard.json` 的 `entries` **就是** evidence preservation 的觸發點
+  （`entries` 成員 = §27.2 index 的 survivor 成員）。它**不是** Top-10 觸發、**不是** PASS gate；Top-10 之外的
+  leaderboard entry 一樣要保存，不是 Top-10 的 leaderboard entry 也不會因此不被保存。
+- `[C]` **大量 rejected cells 不保留逐筆 execution（明文）**：研究階段的 103,680 個 cell evaluation、以及每一個
+  未進榜的 candidate／被 cull 的 cohort，一律維持既有摘要形式（`artifacts/grid_<grid>.csv` 的 aggregate row）。
+  本層**禁止**為未 promoted 的 cell 產生 per-cell ledger、逐筆 fill、逐筆 equity 或任何 equivalent：那正是本節
+  要避免的過度工程。per-cell 逐筆資料的存在與否，必須由「是否為 leaderboard entry」決定，不得由「是否跑過」決定。
+- `[C]` **非 gate**：evidence package 是否存在**不得回寫** verdict、`performance_claimable`、`evidence_state`
+  （forward）、`champion_candidate` 或 ranking。`evidence_package_status` 只描述 preservation coverage；package
+  遺失時 leaderboard 仍必須 rc=0 且 ranking 逐欄不變，`coverage` 才可報缺件並 rc=1。
+- `[C]` **落點（唯一允許）**：
+
+```
+<results-root>/_survivors/evidence/<survivor_id>/
+  manifest.json
+  aggregate.csv                # 9 個註冊 grid 的 frozen/replay matched winner rows
+  grids/<grid>/episodes.csv
+  grids/<grid>/fills.csv
+  grids/<grid>/equity.csv
+  grids/<grid>/summary.json    # optional compact header/aggregate
+```
+
+  不複製整個 frozen round、不複製 103,680 列 grid 資料、不新增 service／daemon／queue／Registry／UI／DB。
+- `[C]` **寫入邊界比 §27 更窄**：本層只寫 `<results-root>/_survivors/evidence/**`（沿用 §27.1 的 reserved-root／
+  symlink／realpath fail-closed，任何 root／ancestor escape 在任何寫入前即拒），且 final package 只能由
+  `.staging-*` 目錄**原子 rename** 產生：final 不存在才建立；已存在且 identity 相同 → `already_identical`
+  （no-op）；identity 不同 → **refuse overwrite**（憑證永不就地覆寫）。
+
+### 28.1 觸發集合的來源（durable readback）
+
+- `[C]` survivor_id 與其 params／cohort／bundle identity 一律由 durable 的 `survivor-index.json` ＋
+  `leaderboard.json` **讀回**取得，不得由 prompt 或呼叫端硬編碼。
+- `[C]` replay driver 在動工前必須確認該 survivor_id 同時（a）存在於 index 且（b）是 leaderboard entry；
+  否則 rc=1（「evidence is preserved for promoted leaders only, never per candidate/culled cell」）。
+
+### 28.2 A v2 同引擎 instrumentation（inert trace hook）
+
+- `[C]` **不建立第二套 backtester**：對既有 `container/scripts/20_strategy_a_run.py` 的 `simulate()` 增加一個
+  optional inert trace hook（module-level `TRACE = None` ＋ `_trace()`），emit 點一律位於
+  `if TRACE is not None` 之後。**trace 關閉時既有的 aggregate return、計算順序與語意不得改變**，且必須以
+  「同一 cell trace off／on 的 aggregate 逐欄相等」強制（driver 每次 replay 都跑，並且 engine 層有
+  `container/scripts/tests/test_survivor_trace.py`）。
+- `[C]` **tracing 只被觀察**：不得有任何 traced 值反向參與策略決策、會計或回傳值；MAE／MFE 取既有 `eq`／`ueq`
+  的 min／max，不進 `record()` 的回傳 dict。
+- `[C]` **不動既有部署**：不碰 `/Users/hong/workspace/qlib-apple-container/scripts` 的原始 `/scripts` runner、
+  也不修它與 repo 的 disposition mapping drift；只記錄 provenance。`source_runner` pin 以 frozen run-spec
+  `script.sha256`、terminal `DONE` sentinel 與**實際 `/scripts` readback** 為準，不硬信任何 prompt 文字；
+  `replay_runner` pin 實際被 import 的 instrumented runner SHA，兩者在 manifest 內同時揭露。
+- `[C]` **trace 至少保存**：
+  - fills：`episode_id`、`event_type` ∈ ENTRY／DCA_ADD／EXIT／FLATTEN、`bar_index`／`open_time_ms`、`price`、
+    `qty`、DCA level、trigger／ref price、`fee`、`slip_ticks`；
+  - episodes：entry／exit timestamps、`exit_reason` ∈ TP／STOP／MARGIN_CALL／EOD_FLATTEN、`gross_pnl`、`fees`、
+    `funding`、`net_pnl`、holding bars／hours、`layers_used`、MAE／MFE；
+  - equity：`day_index`、`date`、`equity`、`peak`、`drawdown_usdt`、`drawdown_pct`、`in_window`；
+  - aggregate／header：cohort、6 軸 winner params、grid、window／bar slice、stress／cost model、engine SHA。
+- `[C]` **不保存**：逐 bar raw engine state、orderbook／depth、raw klines 複本、每 bar funding event
+  （episode funding 總額已足夠）。
+
+### 28.3 只 replay promoted winner cells
+
+- `[C]` 每個 survivor 只重跑 **已註冊 grid 的 winner cell**（現況 9 個 grid × 2 survivors = **18** 次 winner-cell
+  simulate）；**禁止**重跑 103,680 次 research evaluation，也禁止做參數搜尋。
+- `[C]` 註冊 grid 名稱以 frozen terminal `DONE` sentinel 的 `artifact_manifest` 與 run-spec `expected_outputs`
+  **兩者一致**的 `artifacts/grid_<grid>.csv` 清單為準（不一致即拒）。
+- `[C]` 每個 replay aggregate 必須與 frozen `artifacts/grid_<grid>.csv` 中該 (symbol, timeframe, 6 軸 winner cell)
+  row 的**全部欄位**逐欄相等（現況 32 欄）；frozen CSV 自身的 sha256 必須等於該 attempt terminal sentinel
+  `artifact_checksums` 所記值。任一欄不符 → fail-closed，**不 materialize package**。
+- `[C]` `container/scripts/21_strategy_a_survivor_replay.py` 必須 import／load **同一個** `20_strategy_a_run.py`
+  module，只呼叫既有 `Cohort`／data loaders／`rail_for`／`simulate`／`record`；**禁止**複製 `simulate()` 邏輯、
+  **禁止**呼叫 `summarize()`、**禁止**寫 verdict／bundle／任何 frozen 目錄（`/qlib/work` 為可重建區）。
+- `[C]` **ledger 自身驗證**：Σepisode gross／fees／funding／net 對回 aggregate；episode partition
+  （TP／STOP／MARGIN_CALL／EOD_FLATTEN）等於 aggregate 的 `tp_hits`／`stop_hits`／`margin_calls`／`open_at_end`；
+  equity ledger 以**純 stdlib** 重算 Sharpe 與 MaxDD 對回 aggregate。日 equity 序列是 cohort 完整
+  1714-day carry-forward（historical／oos／full 都是同一條日曆），故必須記 `day_index` ＋ `in_window` 才可重算。
+
+### 28.4 Evidence package（保存 ledger 本體，不只引用）
+
+- `[C]` `manifest.json` 至少 pin：`survivor_id`／family／round／run／cohort／`kanban_task_id`、bundle path＋sha＋
+  `bundle_identity_sha256`、params＋`params_sha256`、research cutoff、source data（input manifest／bins build／
+  data windows）、`source_runner` SHA、`replay_runner` SHA、contract 版本、每個 grid 的 frozen csv path＋sentinel
+  sha＋row identity、ledger paths＋sha、aggregate comparison 結果、`generated_at_utc`。
+- `[C]` `package_identity_sha256` = canonical JSON（僅排除 `package_identity_sha256` 自身與 `generated_at_utc`）
+  的 sha256；**不得**使用 hash-chain／Merkle／任何隱含欄位排除。
+- `[C]` **誠實揭露**：ledger 是 **deterministic replay materialization**——以同一顆 engine 在同一批 frozen 輸入上
+  重跑而得，**不是**原始 research run 當時保存的 bytes（原 run 只保留 aggregate）。manifest 必須具名此揭露，
+  任何文案或 artifact 都**不得**宣稱原始 run 存過逐筆 ledger。
+
+### 28.5 Leaderboard drill-back（不參與排序）
+
+- `[C]` `leaderboard.json` 的 derived entries 與 `leaderboard.csv` 增加 `evidence_package_status`
+  （PRESENT／ABSENT）、`evidence_manifest_path`、`evidence_manifest_sha256`。
+- `[C]` 這三欄**不進入** ORDERING_RULE／sort key：package 出現或消失不得移動 rank、不得改變 Top-10 成員、不得
+  影響 `evidence_state`／`champion_candidate`／任何 verdict。
+- `[C]` `leaderboard --check` 必須仍 deterministic；package missing 時 leaderboard 仍 rc=0；`coverage` 可 rc=1。
+- `[C]` PRESENT 的判定至少要該 manifest 的 `survivor_id`／`params_sha256`／`bundle_identity_sha256` 與該 entry
+  一致，否則視為 ABSENT（描述性覆蓋率，不是 gate）。
+
+### 28.6 實作與可執行驗證
+
+- `[V]` 工具：`container/scripts/21_strategy_a_survivor_replay.py`（容器內以 `/opt/venv/bin/python` 執行，
+  import 同一顆 engine；只寫入 `--staging`，且要求該路徑位於 `_survivors/evidence/` 之下）、
+  `runtime/survivor_evidence.py`（host 純 stdlib：`materialize`／`check`／`coverage`）、
+  `container/scripts/tests/test_survivor_trace.py`、`runtime/tests/test_survivor_evidence.py`。
+- `[V]` 任何新增檔皆為 stdlib／既有依賴（CSV／JSON／stdlib；容器內只用既有 numpy／qlib），**未**新增任何第三方
+  依賴。
+- `[V]` **現況 materialization**：由 durable index／leaderboard 讀回現有兩名 A v2 survivors
+  （`sv-f762a1da8909a5bf` SOLUSDT/4h、`sv-904822905a811669` BTCUSDT/1h），各 replay 9 個註冊 grid，
+  **18/18 winner cell 逐欄相符**、trace off／on 一致；`coverage` = **2/2 PRESENT**；leaderboard 仍
+  `FROZEN_ONLY`、`champion_candidate=false`、`forward` 仍 0 slices、排名仍 SOLUSDT/4h #1、BTCUSDT/1h #2。
+- `[V]` **未變動項**：`contract 28` 不新增任何 service／daemon／queue／Registry／UI／DB；B v2 未 launch；
+  cron `624d0be5b23c` 仍 paused；Strategy B v1 仍 blocked；§27 的 forward evidence 語意與 `forward/` 目錄狀態不變。
+
 ## 附錄 A：本文件引用的既有證據
 
 | 項 | 來源 | 內容 |
@@ -1186,6 +1367,7 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 | T16 | Strategy B v2 preregistration | **已備妥、未實作、未 launch**：`runtime/templates/strategy_b_v2_{round,run}_spec.template.json` ＋ `runtime/tests/test_strategy_b_v2_templates.py`（8 檢定）；B v2 engine 不存在（B v1 runner 為 archive-only）；handoff cron 保持 paused | — | `python3 runtime/tests/test_strategy_b_v2_templates.py` rc=0 |
 | T17 | v1.5.0 post-survivor lifecycle（§27：file-only survivor index／append-only forward evidence／Top-10 leaderboard；v1.5.1 收緊寫入邊界與出處契約） | **已落地（最小版）**：`runtime/survivor_index.py`（index 重建／`--check`／`--out` 受 `_survivors/**` realpath 邊界強制）＋ `runtime/survivor_leaderboard.py`（`forward` ingestion（含 `source_run` 出處驗證）＋ `leaderboard`／`--check`／`--out-dir` 同一邊界強制）＋ `runtime/tests/test_post_survivor.py`（**30 檢定**；含 F1／F2／F3 三組 v1.5.0 攻擊的 regression）；以既有 A v2 frozen bundle seed → index 恰 2 survivors（`BTCUSDT/1h`、`SOLUSDT/4h`）、`leaderboard.json`／`leaderboard.csv` 兩列皆 `FROZEN_ONLY`、0 forward slices、0 `champion_candidate` | — | `python3 runtime/survivor_index.py --check` rc=0；`python3 runtime/survivor_leaderboard.py leaderboard --check` rc=0；`python3 runtime/tests/test_post_survivor.py` 30/30 OK；負向控制（缺 checksum／duplicate survivor_id／invalid bundle／來源不一致／ownership id 缺漏／`data_start ≤ cutoff`／slice 重疊／params mismatch／`--out`／`--out-dir` 越界與 symlink／`..` 逃逸／無 `source_run` 或數字與 pinned `result.json` 不符）皆 rc=1 且不寫入，且這些 regression 在 v1.5.0 的 bytes 上實測 FAIL |
 | T18 | post-freeze forward evaluation（真實 slice 產生） | **未執行**（本版刻意不 launch 任何計算）：`/results/_survivors/forward/` 不存在、0 slices；raw klines 已覆蓋到 2026-09-13T00:00:00Z（> cutoff 2026-09-10），因此 slices 可由既有 engine 的一次真實 run 產生 | `DEFERRED`（需 operator 明確放行的 launch-bearing 任務） | 由既有 strategy／Qlib execution semantics 跑出一個 terminal `DONE` attempt（結果樹內、`_survivors/**` 之外），其 `result.json` 帶 `forward_slice` 區塊 → `survivor_leaderboard.py forward` 收件（`source_run` 出處驗證通過 ＋ readback 相符）→ `leaderboard --check` rc=0 且該列不再是 `FROZEN_ONLY` |
+| T19 | v1.6.0 survivor evidence preservation（§28：leaderboard-entry 觸發、inert trace hook、只 replay promoted winner cells、evidence package＋manifest、非排序 drill-back） | **已落地（最小版）**：`container/scripts/21_strategy_a_survivor_replay.py`（同一顆 engine 的 inert trace hook，只 replay 9 個註冊 grid 的 winner cell 並逐欄比對 frozen CSV）＋ `runtime/survivor_evidence.py`（host 純 stdlib：`materialize`／`check`／`coverage`）＋ `container/scripts/tests/test_survivor_trace.py` ＋ `runtime/tests/test_survivor_evidence.py`；現況 2 名 A v2 survivors 皆已 materialize（18/18 winner cell逐欄相符、`coverage` 2/2 PRESENT、ranking 不變） | — | `python3 runtime/survivor_evidence.py check` rc=0；`coverage` rc=0／2-2 PRESENT；`materialize` 重跑為 `already_identical`；負向控制（frozen CSV 被動、replay 欄位不符、package tamper、staging 越界、`_survivors` symlink、non-leaderboard entry）皆 rc=1 且不產生 package；把 package 移出後 leaderboard 仍 rc=0 且排序逐位元不變 |
 
 ## 附錄 C：變更記錄
 
@@ -1292,3 +1474,35 @@ v1.3.2 bytes：`gross=120.0000 fees=0.0000 net=109.9400 gap=10.060000`（gross �
 **re-seed 與 fail-closed**：`python3 runtime/survivor_index.py --json` → `written`、`bundle_count=1`、`survivor_count=2`（`sv-904822905a811669` BTCUSDT/1h、`sv-f762a1da8909a5bf` SOLUSDT/4h，與 v1.5.0／v1.5.1 完全一致）、`index_sha256=sha256:23fd3970c50a2abd993651e38e12ca2e1d57ec88b07608f617b64f8d02f3260f`；`leaderboard --json` → `written`、2 列皆 `FROZEN_ONLY`、`top10_count=2`、forward metrics 全 `null`、`champion_candidate=false`；兩者 `--check` rc=0／`check_clean`；`/results/_survivors/forward/` **不存在**、0 slices。
 **immutable 未動（前後逐位元相同）**：`survivor-bundle.json` `sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53`、`verdict.json` `sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3`、`result.json` `sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8`、`artifacts/cohort_survivors.json` `sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081`、`round-spec.json` `sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4`；bundle 公開 identity 仍為 `sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363`；`python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check --json` → rc=0／`check_clean`／`identity_recipe_matches=true`（`runtime/survivor_bundle.py` 本版未改動）。**derived artifact 重建**：`_survivors/survivor-index.json` 與 `leaderboard.json` 因內含 `contract` 版本字串而重建（`leaderboard.csv` 不含時間戳與版本，逐位元不變）。
 **未變動項**：`test_survivor_bundle.py` 18/18、`test_strategy_b_v2_templates.py` 8/8、`test_strategy_a_v2_counts.py` 14/14、`test_reconcile.py` 23/23、`test_preflight_p10.py` 10/10、`test_production_handoff.py` 24/24（7 個測試檔合計 **130 檢定**全綠，同一 Python 3.9.6 host interpreter）；`hermes cron list --all` 讀回 job `624d0be5b23c` = **paused**；`/qlib-results` 無 `strategy-b-v2` 目錄（未 launch）；Strategy B v1 卡 `t_3e696dce` 仍 `blocked`；本卡未建立任何 family／strategy 卡，亦未新增任何 service／daemon／queue／Registry／Orchestrator。文件狀態：**AUDITED PASS / FROZEN**（v1.5.2；audited content commit 0a361258，auditor t_3691bfb4，2026-09-13；卡片 t_d19618e1 為 auditor t_346bcc04 對 v1.5.1 的 F1/F2/F3 之最小 remediation；獨立 re-audit（t_3691bfb4，2026-09-13，verdict APPROVED）在 `/tmp` 隔離複本上重現 F1／F2／F3 全數在寫入前拒寫（F1 48 攻擊全 rc=1 且零殘留、F2 三種 cwd 皆拒且出處鏈 11/11 fail-closed、F3 五種非字串值全 rc=1）、130 檢定全綠、frozen 五 artifact 與 bundle identity 逐位元不變；另有 3 個非阻斷 minor 殘留（R1 reserved node 可被 `--out` 建成檔案、R2 `--out` 指向既有目錄時以 traceback 結束、R3 relocated copy 的 `--check` 依設計失敗），operator（卡片 t_cbf7344c）明確 **DEFER**，不開 v1.5.3）。**post-audit 觀察（finalization 期間，卡片 t_cbf7344c，2026-09-13）**：`runtime/tests/test_post_survivor.py::TestSurvivorIndex.test_index_cli_writes_checks_and_detects_drift` 為 intermittent（單一測試方法實測 5/60 失敗；rc 仍為 0、無 fail-closed 行為改變）：`survivor_index.write_index()` 以含 `generated_at_utc`（秒解析度）的**完整文字**比對決定 `unchanged`，因此第二次 CLI 跨秒時回報 `result=written`（兩份文件的 measured 內容完全相同，確定性重現時僅 `generated_at_utc` 一鍵不同）；`--check` 走 `measured()`（已排除時間戳）故不受影響，frozen artifacts 亦未動。此觀察**不在** auditor 的 R1–R3 之內、本 finalization 未對其作判定，已另立卡片 t_720406f2 交 default 追蹤（本版不改任何 runtime 檔、不開 v1.5.3）。
+
+| v1.6.0 | 2026-09-13 | 新增 §28 Survivor Evidence Preservation（`[C]` 條文）：**survivor promotion → evidence
+preservation**——正式出現在 `leaderboard.json` `entries` 的 **survivor** 才是觸發點（不是 Top-10、不是 PASS
+gate），只有它升級為完整 execution evidence package（fills／episodes／equity 逐筆 ledger）；**大量 rejected／
+candidate cell 明文不保留逐筆 execution**（103,680 次 research evaluation 與所有未 promoted cell 維持
+`artifacts/grid_*.csv` 摘要）。落點唯一 `_survivors/evidence/<survivor_id>/`，寫入邊界比 §27 更窄（只
+`_survivors/evidence/**`）且只能 staging→原子 rename 發佈（identity 相同 → `already_identical`，不同 →
+refuse overwrite）。實作：①`container/scripts/20_strategy_a_run.py` 的既有 `simulate()` 加 **optional inert
+trace hook**（`TRACE=None` ＋ `if TRACE is not None` 守衛，trace 關閉時 aggregate／計算順序／語意逐欄不變，以
+trace off／on 相等強制）；②新增 `container/scripts/21_strategy_a_survivor_replay.py`（import 同一顆 engine，
+只 replay `DONE`-sentinel-pinned 註冊 grid 的 winner cell，逐欄比對 frozen `artifacts/grid_*.csv`，不符即
+fail-closed 不 materialize）；③新增 `runtime/survivor_evidence.py`（host 純 stdlib：`materialize`／`check`／
+`coverage`；ledger 自身驗證＝Σepisode 恆等式＋episode partition＋equity 純 stdlib 重算 Sharpe／MaxDD）；
+④`leaderboard` 增加**不參與排序**的 `evidence_package_status`／`evidence_manifest_path`／
+`evidence_manifest_sha256`；⑤新增 §22 A29、§23 item 17、§25 六條 v1.6.0 硬規則、附錄 B T19。
+**現況驗證**：以 durable index／leaderboard 讀回現有兩名 A v2 survivors（`sv-f762a1da8909a5bf` SOLUSDT/4h、
+`sv-904822905a811669` BTCUSDT/1h），各 replay 9 個註冊 grid → **18/18 winner cell 逐欄相符**（frozen CSV 均
+先與 terminal `DONE` sentinel `artifact_checksums` 比對）、trace off／on 一致；`coverage` = **2/2 PRESENT**；
+materialize 重跑 → `already_identical`（refuse overwrite）；`survivor_evidence.py check` rc=0。**未變動**：
+`forward/` 仍 0 slices、兩者仍 `FROZEN_ONLY`、`champion_candidate=false`、排名仍 SOLUSDT/4h #1、BTCUSDT/1h #2，
+frozen `survivor-bundle.json`／`verdict.json`／`result.json`／`cohort_survivors.json`／`round-spec.json` sha256
+逐位元不變；**未** launch B v2、**未**動 cron `624d0be5b23c`（仍 paused）、Strategy B v1 仍 blocked；
+**未**新增 service／daemon／queue／Registry／UI／DB／第三方依賴。**明文 DEFER**：UI、DB、compression／retention、
+Merkle／hash-chain、通用 family plugin／registry、forward ledger 合併、v1.5.2 `generated_at` flake、
+`/scripts`↔repo disposition drift remediation。 | t_68954a45（ChatGPT GPT-5.6 Sol 卡片，依 Operator 決策與唯讀
+研究卡 t_2382f20b 的最小方案）：把「survivor promotion → evidence preservation」寫成明確條文，並讓大量
+rejected cells 只保留摘要，避免為未 promoted cell 建帳的過度工程；同時把 leaderboard 的 drill-back 指標做成
+非排序欄位，使 evidence 的存否永不成為 gate | 見 §28.6／§22 A29／§23 item 17：`survivor_evidence.py check`
+rc=0、`coverage` 2/2 PRESENT、18/18 winner cell 逐欄相符、`test_survivor_trace.py`（引擎層 trace off/on 與
+ledger reconcile）與 `test_survivor_evidence.py`（host 層 boundary／tamper／non-gating／no-fake-claim）全綠，
+負向控制（frozen CSV 被動／replay 欄位不符／package tamper／staging 越界／`_survivors` symlink／
+non-leaderboard entry）皆 rc=1 |
