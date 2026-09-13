@@ -53,13 +53,20 @@ audited implementation contract 與其變化歷史。
   （只能 `non_gating` diagnostic）。§14.4 handoff 新增 candidate body 必須帶 DCA domain 與 cohort survivor rules
   （`candidate_body_not_v13` fail-closed）；§13 新增 `operator_stopped`。**語意不變**：production 仍 sequential A→B→C、
   §9.4 reconciler、§11/§12/§15/§16、無新服務、auditor 不是每張 strategy card 的 stage。詳見契約 §7.2/§7.3/§14.4 與附錄 C。
-- **Strategy A v2（2026-09-13 已啟動，production run）**：family `close-vs-sma-mean-reversion-long-flat-v2`
+- **Strategy A v2（2026-09-13 production run，terminal 已完成；round verdict = FINALIST）**：family `close-vs-sma-mean-reversion-long-flat-v2`
   （舊 `...-v1` 與其 REJECT artifacts 保持 immutable），round/run = `close-vs-sma-mean-reversion-long-flat-v2-r1` /
   `...-r1-u1`，production 卡 `t_1f97bf6b`，runner sha256 `c4f9a216…`（v1.3.2，已部署到 active `/scripts`）。
   preflight P1–P10 全綠後於 2026-09-13T00:45:53Z 以 `container exec --detach` exact-once 投遞；
   20 cohorts × 12 strategy × 48 DCA = 576 / cohort / grid × 9 phase grids = **103,680 case evaluations**。
   啟動前提已滿足：Contract v1.3.2 = AUDITED PASS / FROZEN（audited content commit `0363011`，attestation commit `84b8728`，
-  auditor `t_3ffaeeb8`）。證據：`evidence/strategy-a-v2-{preflight,counts-instantiated,launch-record}-20260913.json`。
+  auditor `t_3ffaeeb8`）。
+  **terminal 結果（2026-09-13T01:07:36Z，runtime 1302 s）**：20/20 cohorts、`coverage_complete=true`、14/14 assertions true、
+  9 個 phase grid 各 11,520 筆；**2 個 cohort survivor（`BTCUSDT/1h`、`SOLUSDT/4h`）→ disposition `MULTIPLE_SURVIVORS` →
+  round `verdict.json` = FINALIST、`performance_claimable=false`**（唯一缺項：§9.6 要求 verdict == PASS；選 survivor 屬下游／
+  operator 決策，§7.3/§17）。terminal sentinel `DONE` 由 host 端 `runtime/terminal_evidence.py publish` 最後原子寫入，
+  `... check` ok（17 個 manifest checksum 全數重算相符，problems 空）；`runtime/reconcile.py --dry-run` → 本 attempt
+  `consumed`（卡片非 `scheduled`，no-op）、incidents 0。
+  證據：`evidence/strategy-a-v2-{preflight,counts-instantiated,launch-record,terminal,round-verdict}-20260913.json`。
 - **Strategy B（operator-stopped）**：卡 `t_3e696dce` 在任何 verdict 產生前被 operator 中止並保持 `blocked`；B 的
   `/results` artifacts 全部保留，未終結的 attempt 已於 host 端補發 `INCOMPLETE`（`failure.class=operator_stopped`）。
   **B 沒有 PASS/REJECT**。B 的 exact runner 與 engine test 已不再位於 active runtime 路徑：逐位元存檔於

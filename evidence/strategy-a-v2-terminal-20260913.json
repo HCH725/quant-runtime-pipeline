@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "kind": "terminal_evidence_record",
+  "contract_section": "9.3 / 10.3 / 10.4 / 9.4",
+  "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+  "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+  "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+  "kanban_task_id": "t_1f97bf6b",
+  "kanban_board": "quant-strategy-research",
+  "terminal": "DONE",
+  "sentinel_path": "/Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/DONE",
+  "sentinel_sha256": "sha256:f74e600ce29197e6556ebcaecfee24ed647ccbd9e65239d97afda28aeaca261d",
+  "sentinel_created_at_utc": "2026-09-13T01:09:23Z",
+  "host_boot_id": "boot-1789203998",
+  "current_host_boot_id": "boot-1789203998",
+  "container_id": "qlib-run",
+  "image_id": "qlib:0.9.7-arm64",
+  "qlib_version": "0.9.7",
+  "verdict_hint": "CANDIDATE_PASS",
+  "runtime_seconds": 1302,
+  "artifact_manifest": [
+    "result.json",
+    "artifacts/bins_build.json",
+    "artifacts/input_manifest.json",
+    "artifacts/grid_historical.csv",
+    "artifacts/grid_oos.csv",
+    "artifacts/grid_full.csv",
+    "artifacts/grid_fee_2x.csv",
+    "artifacts/grid_funding_2x.csv",
+    "artifacts/grid_entry_delay_1_bar.csv",
+    "artifacts/grid_slippage_2ticks.csv",
+    "artifacts/grid_no_funding.csv",
+    "artifacts/grid_no_funding_full.csv",
+    "artifacts/dca_layer_histogram.json",
+    "artifacts/assertions.json",
+    "artifacts/cohort_results.json",
+    "artifacts/cohort_survivors.json",
+    "artifacts/progress.json"
+  ],
+  "artifact_checksums": {
+    "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "artifacts/bins_build.json": "sha256:d5200177cd02495751f3236ff883fbe6a85ee1c2b08931c280ac25471d851a6b",
+    "artifacts/input_manifest.json": "sha256:9616baf38e8b90a234157a3f20b7779fc2cdccef66a70724b784655176e8458c",
+    "artifacts/grid_historical.csv": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+    "artifacts/grid_oos.csv": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+    "artifacts/grid_full.csv": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+    "artifacts/grid_fee_2x.csv": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+    "artifacts/grid_funding_2x.csv": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+    "artifacts/grid_entry_delay_1_bar.csv": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+    "artifacts/grid_slippage_2ticks.csv": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+    "artifacts/grid_no_funding.csv": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+    "artifacts/grid_no_funding_full.csv": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08",
+    "artifacts/dca_layer_histogram.json": "sha256:12ec7fbe9e50b0d950393447d4a97c0d571bf59a287a2e0226557e940cd94c1f",
+    "artifacts/assertions.json": "sha256:539fd0e5ceba1109fd43a17f0c79fb23e1110e487d80e384eeea5410b9b4982f",
+    "artifacts/cohort_results.json": "sha256:4fedd270390c134b76fd71ef19fd1f81163555fc67998952987145474e53dfc8",
+    "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+    "artifacts/progress.json": "sha256:3d7bd8488e5c858b509e47cc256d396025d44b9c693020899176ea0a4cce20be"
+  },
+  "terminal_files_present": [
+    "DONE"
+  ],
+  "independent_check": {
+    "command": "python3 runtime/terminal_evidence.py check --attempt-dir <attempt>",
+    "rc": 0,
+    "ok": true,
+    "problems": [],
+    "recomputed_all_manifest_sha256": true
+  },
+  "runner_identity": {
+    "repo": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+    "host_deploy": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+    "container": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+  },
+  "runner_three_way_identical": true,
+  "engine_selfcheck": {
+    "command": "container exec qlib-run env SA_ENGINE_PATH=/scripts/20_strategy_a_run.py /opt/venv/bin/python /scripts/tests/test_strategy_a_engine.py",
+    "rc": 0,
+    "result": "Ran 35 tests in 0.012s | OK"
+  },
+  "run_observations": {
+    "launched_at_utc": "2026-09-13T00:45:53Z",
+    "attempt_state_stage": "ARTIFACT_READY",
+    "generated_at_utc": "2026-09-13T01:07:36Z",
+    "runtime_seconds": 1302,
+    "cohorts_done": 20,
+    "cohorts_total": 20,
+    "case_evaluations_total": 103680,
+    "expected_case_evaluations": 103680,
+    "coverage_complete": true,
+    "assertions_all_true": true,
+    "grid_csv_rows_per_phase_including_header": {
+      "grid_entry_delay_1_bar.csv": 11521,
+      "grid_fee_2x.csv": 11521,
+      "grid_full.csv": 11521,
+      "grid_funding_2x.csv": 11521,
+      "grid_historical.csv": 11521,
+      "grid_no_funding.csv": 11521,
+      "grid_no_funding_full.csv": 11521,
+      "grid_oos.csv": 11521,
+      "grid_slippage_2ticks.csv": 11521
+    }
+  },
+  "reconcile_dry_run": {
+    "command": "python3 runtime/reconcile.py --dry-run --json",
+    "rc": 0,
+    "ran_at_utc": "2026-09-13T01:10:29Z",
+    "dry_run": true,
+    "attempts_scanned": 7,
+    "unblocked": [],
+    "would_unblock": [],
+    "incidents": 0,
+    "this_attempt": [
+      {
+        "attempt_dir": "/Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+        "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+        "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+        "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+        "action": "consumed",
+        "reason": "sentinel already consumed (card status=running); no action, idempotent",
+        "task_id": "t_1f97bf6b",
+        "status_before": "running",
+        "status_after": null,
+        "detail": {
+          "terminal_files": [
+            "DONE"
+          ]
+        }
+      }
+    ],
+    "fenced_context": "HERMES_DELEGATED_CHILD_CONTEXT=1 (dry-run is read-only; no board mutation)"
+  },
+  "recorded_at_utc": "2026-09-13T01:10:28Z"
+}

@@ -1,0 +1,534 @@
+{
+  "schema_version": 1,
+  "kind": "round_verdict_record",
+  "contract_section": "10.7 / 9.6 / 15.5",
+  "verdict_path": "/Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/verdict.json",
+  "verdict_sha256": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+  "verdict": "FINALIST",
+  "performance_claimable": false,
+  "missing_conditions": [
+    "verdict != PASS: the family disposition is MULTIPLE_SURVIVORS (2 cohort survivors: BTCUSDT/1h, SOLUSDT/4h). Contract 9.6 requires verdict == PASS, and the registered round-spec disposition maps >1 cohort survivors to FINALIST: the research threshold is met, but choosing among survivors is a downstream/operator decision, so performance_claimable stays false (contract 7.3 / 17). No other 9.6 condition is missing."
+  ],
+  "yield": {
+    "rounds_used": 1,
+    "max_rounds": 3,
+    "no_progress_rounds": 0,
+    "progress_evidence": [
+      "artifacts/cohort_survivors.json - 2 cohort survivors (BTCUSDT/1h, SOLUSDT/4h) with historical/OOS/full/robustness/neighbourhood evidence",
+      "artifacts/cohort_results.json - 18/20 cohorts culled with recorded cull_reasons (pre-registered falsification conditions G2-G7 triggered)"
+    ],
+    "yield_decision": "FINALIST",
+    "decided_at_utc": "2026-09-13T01:09:44Z"
+  },
+  "disposition": "MULTIPLE_SURVIVORS",
+  "cohort_survivor_count": 2,
+  "cohort_survivors": [
+    "BTCUSDT/1h",
+    "SOLUSDT/4h"
+  ],
+  "survivor_cells": [
+    {
+      "cohort": "BTCUSDT/1h",
+      "cell": {
+        "window": 20,
+        "discount": 0.03,
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      "oos_net_pnl": 6016.344052,
+      "full_net_pnl": 14913.47311
+    },
+    {
+      "cohort": "SOLUSDT/4h",
+      "cell": {
+        "window": 100,
+        "discount": 0.03,
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      "oos_net_pnl": 8485.605171,
+      "full_net_pnl": 60695.711357
+    }
+  ],
+  "survivor_metrics": {
+    "BTCUSDT/1h": {
+      "historical": {
+        "net_pnl": 14790.093348,
+        "sharpe": 0.676463,
+        "episodes": 170,
+        "ending_equity": 44790.093348,
+        "fees": 6750.845753,
+        "funding": 150.567721,
+        "max_dd_usdt": -6522.553451,
+        "max_dd_pct": -0.199943,
+        "max_effective_leverage": 9.96216,
+        "capital_utilization": 0.171114
+      },
+      "oos": {
+        "net_pnl": 6016.344052,
+        "sharpe": 0.536464,
+        "episodes": 34,
+        "ending_equity": 36016.344052,
+        "fees": 1743.891637,
+        "funding": 23.038695,
+        "max_dd_usdt": -6124.419748,
+        "max_dd_pct": -0.150469,
+        "max_effective_leverage": 9.349163,
+        "capital_utilization": 0.160537
+      },
+      "full": {
+        "net_pnl": 14913.47311,
+        "sharpe": 0.588432,
+        "episodes": 204,
+        "ending_equity": 44913.47311,
+        "fees": 8621.873688,
+        "funding": 212.029681,
+        "max_dd_usdt": -12017.384038,
+        "max_dd_pct": -0.21656,
+        "max_effective_leverage": 9.96216,
+        "capital_utilization": 0.160526
+      },
+      "robustness": {
+        "fee_2x": {
+          "net_pnl": 11353.765787,
+          "sharpe": 0.475937,
+          "episodes": 204,
+          "ending_equity": 41353.765787,
+          "fees": 16407.905342,
+          "funding": 143.670705,
+          "max_dd_usdt": -10752.036978,
+          "max_dd_pct": -0.342882,
+          "max_effective_leverage": 9.968208,
+          "capital_utilization": 0.16452
+        },
+        "funding_2x": {
+          "net_pnl": 14701.443429,
+          "sharpe": 0.580853,
+          "episodes": 204,
+          "ending_equity": 44701.443429,
+          "fees": 8621.873688,
+          "funding": 424.059362,
+          "max_dd_usdt": -12078.115849,
+          "max_dd_pct": -0.218248,
+          "max_effective_leverage": 9.96216,
+          "capital_utilization": 0.160698
+        },
+        "entry_delay_1_bar": {
+          "net_pnl": 12210.28144,
+          "sharpe": 0.483266,
+          "episodes": 202,
+          "ending_equity": 42210.28144,
+          "fees": 9350.84375,
+          "funding": 126.374693,
+          "max_dd_usdt": -13747.178936,
+          "max_dd_pct": -0.257778,
+          "max_effective_leverage": 9.873819,
+          "capital_utilization": 0.151202
+        },
+        "slippage_2ticks": {
+          "net_pnl": 14876.072721,
+          "sharpe": 0.587101,
+          "episodes": 204,
+          "ending_equity": 44876.072721,
+          "fees": 8621.854978,
+          "funding": 212.029153,
+          "max_dd_usdt": -12019.654044,
+          "max_dd_pct": -0.216737,
+          "max_effective_leverage": 9.964811,
+          "capital_utilization": 0.160623
+        }
+      },
+      "no_funding_reference": {
+        "net_pnl": 14940.661069,
+        "sharpe": 0.68326,
+        "episodes": 170,
+        "ending_equity": 44940.661069,
+        "fees": 6750.845753,
+        "funding": 0.0,
+        "max_dd_usdt": -6522.553451,
+        "max_dd_pct": -0.199943,
+        "max_effective_leverage": 9.96216,
+        "capital_utilization": 0.171022
+      }
+    },
+    "SOLUSDT/4h": {
+      "historical": {
+        "net_pnl": 51035.16769,
+        "sharpe": 4.017045,
+        "episodes": 184,
+        "ending_equity": 81035.16769,
+        "fees": 5853.473689,
+        "funding": 65.459561,
+        "max_dd_usdt": -707.279796,
+        "max_dd_pct": -0.009704,
+        "max_effective_leverage": 7.330064,
+        "capital_utilization": 0.059173
+      },
+      "oos": {
+        "net_pnl": 8485.605171,
+        "sharpe": 2.17438,
+        "episodes": 41,
+        "ending_equity": 38485.605171,
+        "fees": 993.990418,
+        "funding": -18.758655,
+        "max_dd_usdt": -133.414358,
+        "max_dd_pct": -0.003455,
+        "max_effective_leverage": 3.400981,
+        "capital_utilization": 0.056342
+      },
+      "full": {
+        "net_pnl": 60695.711357,
+        "sharpe": 4.396559,
+        "episodes": 226,
+        "ending_equity": 90695.711357,
+        "fees": 6979.398992,
+        "funding": 46.175016,
+        "max_dd_usdt": -707.279796,
+        "max_dd_pct": -0.009704,
+        "max_effective_leverage": 7.330064,
+        "capital_utilization": 0.049641
+      },
+      "robustness": {
+        "fee_2x": {
+          "net_pnl": 53716.312365,
+          "sharpe": 4.390801,
+          "episodes": 226,
+          "ending_equity": 83716.312365,
+          "fees": 13958.797983,
+          "funding": 46.175016,
+          "max_dd_usdt": -735.984796,
+          "max_dd_pct": -0.010831,
+          "max_effective_leverage": 7.367927,
+          "capital_utilization": 0.052276
+        },
+        "funding_2x": {
+          "net_pnl": 60649.53634,
+          "sharpe": 4.399323,
+          "episodes": 226,
+          "ending_equity": 90649.53634,
+          "fees": 6979.398992,
+          "funding": 92.350033,
+          "max_dd_usdt": -707.279796,
+          "max_dd_pct": -0.009713,
+          "max_effective_leverage": 7.330064,
+          "capital_utilization": 0.049654
+        },
+        "entry_delay_1_bar": {
+          "net_pnl": 17375.485091,
+          "sharpe": 0.637267,
+          "episodes": 218,
+          "ending_equity": 47375.485091,
+          "fees": 6220.03774,
+          "funding": 66.850015,
+          "max_dd_usdt": -31843.619511,
+          "max_dd_pct": -0.412841,
+          "max_effective_leverage": 6.782704,
+          "capital_utilization": 0.051464
+        },
+        "slippage_2ticks": {
+          "net_pnl": 62226.3253,
+          "sharpe": 4.379434,
+          "episodes": 226,
+          "ending_equity": 92226.3253,
+          "fees": 7331.681937,
+          "funding": 49.169216,
+          "max_dd_usdt": -712.641807,
+          "max_dd_pct": -0.009619,
+          "max_effective_leverage": 7.337455,
+          "capital_utilization": 0.05306
+        }
+      },
+      "no_funding_reference": {
+        "net_pnl": 51100.627251,
+        "sharpe": 4.015304,
+        "episodes": 184,
+        "ending_equity": 81100.627251,
+        "fees": 5853.473689,
+        "funding": 0.0,
+        "max_dd_usdt": -707.279796,
+        "max_dd_pct": -0.009695,
+        "max_effective_leverage": 7.330064,
+        "capital_utilization": 0.059161
+      }
+    }
+  },
+  "family_level_diagnostics": {
+    "non_gating": true,
+    "cohort_outcome_counts": {
+      "SURVIVOR": 2,
+      "CULLED": 18
+    },
+    "cross_cohort_medians_full": {
+      "net_pnl": -30025.6035915,
+      "gross_pnl": -22979.3086105,
+      "fees": 6248.123214,
+      "funding": 0.0,
+      "ending_equity": -25.6035915,
+      "sharpe": -0.620951,
+      "max_dd_pct": -1.000816,
+      "max_dd_usdt": -30351.7196015,
+      "episodes": 206.0
+    },
+    "descriptive_diagnostics": {
+      "non_gating": true,
+      "note": "cross-cohort medians are descriptive diagnostics only; they are never a gate (contract 7.2, v1.3.0)",
+      "median_historical_net_pnl": -30013.1092375,
+      "median_historical_sharpe": -0.562473,
+      "median_full_net_pnl": -30025.6035915,
+      "median_full_sharpe": -0.620951,
+      "median_no_funding_historical_net_pnl": -30012.729067,
+      "positive_case_share_historical": 0.04314236111111111
+    },
+    "stress_summary": {
+      "fee_2x": {
+        "median_net_pnl": -30032.104263,
+        "median_sharpe": -0.8300019999999999,
+        "cases": 11520,
+        "non_gating": true
+      },
+      "funding_2x": {
+        "median_net_pnl": -30025.609317,
+        "median_sharpe": -0.6245175000000001,
+        "cases": 11520,
+        "non_gating": true
+      },
+      "entry_delay_1_bar": {
+        "median_net_pnl": -30001.626871,
+        "median_sharpe": -0.5466735,
+        "cases": 11520,
+        "non_gating": true
+      },
+      "slippage_2ticks": {
+        "median_net_pnl": -30025.788299,
+        "median_sharpe": -0.6408,
+        "cases": 11520,
+        "non_gating": true
+      }
+    }
+  },
+  "dca_layer_histogram": {
+    "level_00": 2869236,
+    "level_01": 4278747,
+    "level_02": 738194,
+    "level_03": 211708,
+    "level_04": 78785,
+    "level_05": 35613,
+    "level_06": 17805,
+    "level_07": 9569,
+    "level_08": 4105,
+    "level_09": 2029,
+    "level_10": 1332,
+    "level_11": 0
+  },
+  "cohort_outcomes": [
+    {
+      "cohort": "BNBUSDT/15m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "robustness_economic:fee_2x,entry_delay_1_bar",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BNBUSDT/1h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BNBUSDT/30m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BNBUSDT/4h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BNBUSDT/5m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BTCUSDT/15m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "robustness_economic:entry_delay_1_bar",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BTCUSDT/1h",
+      "outcome": "SURVIVOR",
+      "cull_reasons": [],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BTCUSDT/30m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BTCUSDT/4h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "robustness_economic:entry_delay_1_bar"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "BTCUSDT/5m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "robustness_economic:fee_2x",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "ETHUSDT/15m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "ETHUSDT/1h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "ETHUSDT/30m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "robustness_economic:fee_2x",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "ETHUSDT/4h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "ETHUSDT/5m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "SOLUSDT/15m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "no_qualifying_candidate"
+      ],
+      "no_winner_reason": "no_qualifying_candidate"
+    },
+    {
+      "cohort": "SOLUSDT/1h",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "SOLUSDT/30m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "robustness_economic:fee_2x",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "SOLUSDT/4h",
+      "outcome": "SURVIVOR",
+      "cull_reasons": [],
+      "no_winner_reason": null
+    },
+    {
+      "cohort": "SOLUSDT/5m",
+      "outcome": "CULLED",
+      "cull_reasons": [
+        "oos_economic",
+        "full_economic",
+        "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+        "parameter_neighbourhood"
+      ],
+      "no_winner_reason": null
+    }
+  ],
+  "assertions": {
+    "episodes_partition": true,
+    "pnl_decomposition": true,
+    "coverage_complete": true,
+    "cohort_count_20": true,
+    "strategy_grid_is_registered_product": true,
+    "dca_grid_is_registered_product": true,
+    "base_combinations_per_cohort_per_grid": true,
+    "expected_case_evaluations": true,
+    "layer0_equals_episodes": true,
+    "layer_histogram_nonempty": true,
+    "no_entry_after_exhaustion": true,
+    "ending_equity_floor": true,
+    "selector_deterministic": true,
+    "selector_historical_only": true
+  },
+  "assertions_all_true": true,
+  "evidence_run_ids": [
+    "close-vs-sma-mean-reversion-long-flat-v2-r1-u1"
+  ],
+  "decided_at_utc": "2026-09-13T01:09:44Z",
+  "recorded_at_utc": "2026-09-13T01:10:28Z"
+}
