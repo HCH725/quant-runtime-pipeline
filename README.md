@@ -66,7 +66,9 @@ audited implementation contract 與其變化歷史。
   operator 決策，§7.3/§17）。terminal sentinel `DONE` 由 host 端 `runtime/terminal_evidence.py publish` 最後原子寫入，
   `... check` ok（17 個 manifest checksum 全數重算相符，problems 空）；`runtime/reconcile.py --dry-run` → 本 attempt
   `consumed`（卡片非 `scheduled`，no-op）、incidents 0。
-  證據：`evidence/strategy-a-v2-{preflight,counts-instantiated,launch-record,terminal,round-verdict}-20260913.json`。
+  證據：`evidence/strategy-a-v2-{preflight,counts-instantiated,launch-record,terminal,round-verdict,verdict-crosscheck}-20260913.json`
+  （`verdict-crosscheck` 直接由 `artifacts/grid_<phase>.csv` 重導兩個 survivor 的 G4/G5/G6 與
+  `gross_pnl - fees - funding == net_pnl`，不經 summary artifacts）。
 - **Strategy B（operator-stopped）**：卡 `t_3e696dce` 在任何 verdict 產生前被 operator 中止並保持 `blocked`；B 的
   `/results` artifacts 全部保留，未終結的 attempt 已於 host 端補發 `INCOMPLETE`（`failure.class=operator_stopped`）。
   **B 沒有 PASS/REJECT**。B 的 exact runner 與 engine test 已不再位於 active runtime 路徑：逐位元存檔於
