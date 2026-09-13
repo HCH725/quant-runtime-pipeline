@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "document_kind": "round-spec template (v1.3.0 cohort-survivor semantics; instantiate to /results/<family_id>/rounds/<round_id>/round-spec.json BEFORE any computation)",
+  "document_kind": "round-spec template (v1.4.0 cohort-survivor semantics: >=1 survivor passes; all survivors advance; instantiate to /results/<family_id>/rounds/<round_id>/round-spec.json BEFORE any computation)",
   "template_instantiation": {
     "placeholders": ["{{round_id}}", "{{kanban_task_id}}", "{{created_at_utc}}"],
     "rule": "Every scientific field in this template is FROZEN before the first run. Instantiation may only substitute the three placeholders; it must not touch the domains, the split, the selector/disposition versions, the gates or the falsification list (contract INV-4).",
@@ -13,8 +13,8 @@
   "kanban_task_id": "{{kanban_task_id}}",
   "kanban_board": "quant-strategy-research",
   "created_at_utc": "{{created_at_utc}}",
-  "authored_by": "Hermes default (Xiaoqian) - Contract v1.3.0 restart semantics for Strategy A",
-  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.3.0",
+  "authored_by": "Hermes default (Xiaoqian) - Contract v1.4.0 restart semantics for Strategy A",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.0 (the already-instantiated round close-vs-sma-mean-reversion-long-flat-v2-r1 was frozen under v1.3.0 and stays immutable; this template governs any future instantiation)",
   "supersedes_semantic_family": {
     "family_id": "close-vs-sma-mean-reversion-long-flat-v1",
     "kanban_task_id": "t_97208408",
@@ -166,7 +166,7 @@
     "family_disposition": {
       "0 cohort survivors": "REJECT / NO_SURVIVOR (verdict REJECT, performance_claimable false)",
       "1 cohort survivor": "SURVIVOR_FOUND (verdict PASS; performance_claimable still requires the full contract 9.6 condition set)",
-      ">1 cohort survivors": "MULTIPLE_SURVIVORS (verdict FINALIST: the research threshold is met, but selecting among survivors is a downstream/operator decision, so performance_claimable stays false)",
+      ">1 cohort survivors": "MULTIPLE_SURVIVORS (verdict PASS as well - v1.4.0: at least one survivor passes the basic gate, and the survivor count is a disposition BAND, not a verdict. ALL survivors are kept and advance; none is ranked, discarded or picked among, and the count never forces performance_claimable false)",
       "coverage or technical incompleteness": "TECHNICAL_INCOMPLETE (no cohort is judged at all)"
     },
     "cross_cohort_medians": "descriptive diagnostics only; median historical/full PnL or Sharpe across the 20 cohorts (or across all base cases) is NOT a gate and must not be converted into one."
@@ -269,7 +269,7 @@
     "G5_cohort_full": "per cohort winner: full-window net_pnl > 0",
     "G6_cohort_robustness": "per cohort winner: net_pnl > 0 in all four execution stress reruns",
     "G7_cohort_neighbourhood": "per cohort winner: >= 60% of legal face-adjacent neighbours agree in historical net-PnL sign",
-    "verdict_rule": "TECHNICAL_INCOMPLETE if G1 fails; else the count of cohorts passing G3-G7 decides: 0 -> REJECT, 1 -> PASS, >1 -> FINALIST. No post-hoc threshold edits, no tuning to pass.",
+    "verdict_rule": "TECHNICAL_INCOMPLETE if G1 fails; else the count of cohorts passing G3-G7 decides: 0 -> REJECT, >=1 -> PASS (1 -> SURVIVOR_FOUND band, >1 -> MULTIPLE_SURVIVORS band; every survivor advances). No post-hoc threshold edits, no tuning to pass.",
     "min_episodes_is": 20,
     "neighborhood_min_same_sign_fraction": 0.6,
     "known_gate_set_limitation": "The registered gate set contains no benchmark-relative test. A long-only strategy can show positive cohort PnL purely through the sample's upward drift. This limitation is declared BEFORE the run and is NOT patched afterwards; a buy-and-hold comparison remains a non-gating diagnostic."
@@ -286,7 +286,14 @@
     "coverage incomplete in any registered phase grid (G1)"
   ],
 
-  "performance_claimable_rule": "true only when the family verdict == PASS (exactly one cohort survivor) and contract 9.6 holds (canonical raw, no look-ahead, explicit OOS, declared costs, full section 7.2 coverage including the DCA parameter domain). Downstream authoritative acceptance is out of scope and is never a precondition.",
+  "performance_claimable_rule": "true only when the family verdict == PASS (v1.4.0: at least one cohort survivor) and contract 9.6 holds (canonical raw, no look-ahead, explicit OOS, declared costs, full section 7.2 coverage including the DCA parameter domain). The NUMBER of survivors is never itself a reason to claim false - with >=1 survivors the only remaining 9.6 conditions are the material/data ones. Downstream authoritative acceptance is out of scope and is never a precondition.",
+
+  "survivor_bundle": {
+    "artifact": "rounds/<round_id>/survivor-bundle.json (round level, immutable, contract 10.8)",
+    "produced_by": "runtime/survivor_bundle.py (host-side, pure stdlib, deterministic; run once the attempt is terminally DONE)",
+    "rule": "the bundle freezes EVERY survivor of the round, in the order the run recorded them (that order is not a ranking). No survivor may be dropped, ranked, re-ordered or picked among, and the bundle is never rewritten once written. A bundle is only produced from a coverage_complete=true attempt whose assertions are all true.",
+    "annotation": "under v1.4.0 semantics every survivor listed in the bundle passes the basic research gate, so all of them advance."
+  },
 
   "expected": {
     "cohorts": 20,

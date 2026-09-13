@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "kind": "v1.4.0-readiness-verification",
+  "recorded_at_utc": "2026-09-13T02:05:46Z",
+  "kanban_task": "t_24cc6167",
+  "contract_version": "v1.4.0 (AWAITING AUDIT)",
+  "note": "Real command output captured on the source host; host-specific absolute paths are redacted exactly as evidence/README.md requires.  Snapshot, not runtime state.",
+  "tests": [
+    {
+      "cmd": "SA_ENGINE_PATH=<REPO>/container/scripts/20_strategy_a_run.py python3 container/scripts/tests/test_strategy_a_engine.py",
+      "result": "Ran 37 tests OK",
+      "note": "v1.3.2 had 35; +2 v1.4.0 mapping checks"
+    },
+    {
+      "cmd": "container exec qlib-run env SA_ENGINE_PATH=/qlib/work/staging/v1.4.0/20_strategy_a_run.py /opt/venv/bin/python /qlib/work/staging/v1.4.0/tests/test_strategy_a_engine.py",
+      "result": "Ran 37 tests OK",
+      "note": "audit-only staging bytes inside qlib-run"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_survivor_bundle.py",
+      "result": "Ran 13 tests OK"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_strategy_b_v2_templates.py",
+      "result": "Ran 8 tests OK"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_strategy_a_v2_counts.py",
+      "result": "Ran 14 tests OK (unchanged)"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_reconcile.py",
+      "result": "Ran 23 tests OK (unchanged)"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_preflight_p10.py",
+      "result": "Ran 10 tests OK (unchanged)"
+    },
+    {
+      "cmd": "python3 runtime/tests/test_production_handoff.py",
+      "result": "Ran 24 tests OK (unchanged)"
+    },
+    {
+      "cmd": "python3 runtime/strategy_a_v2_counts.py --run-spec runtime/templates/strategy_a_v2_run_spec.template.json",
+      "result": "cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680 fingerprint=MATCH ok=True"
+    }
+  ],
+  "survivor_bundle": {
+    "cmd": "python3 runtime/survivor_bundle.py --attempt-dir <EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1 --json",
+    "result": "written",
+    "survivor_count": 2,
+    "survivors": [
+      "BTCUSDT/1h",
+      "SOLUSDT/4h"
+    ],
+    "disposition_band": "MULTIPLE_SURVIVORS",
+    "verdict": "PASS",
+    "ranking": null,
+    "all_survivors_advance": true,
+    "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "check_cmd": "python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check",
+    "check_result": "check_clean rc=0",
+    "legacy_disclosure": "pre-v1.4.0 (the attempt ran under contract < v1.4.0)",
+    "source_verdict_not_rewritten": true
+  },
+  "immutability": {
+    "a_v2_verdict_json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3 (unchanged)",
+    "a_v2_result_json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "a_v2_done_sentinel": "sha256:f74e600ce29197e6556ebcaecfee24ed647ccbd9e65239d97afda28aeaca261d",
+    "a_v2_round_spec_json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4"
+  },
+  "staging": {
+    "host": "<HOME>/workspace/qlib-apple-container/staging/v1.4.0/ (20_strategy_a_run.py, tests/, SHA256SUMS, README.md)",
+    "container": "/qlib/work/staging/v1.4.0/ (same bytes; sha256sum -c SHA256SUMS -> OK)",
+    "engine_sha256": "sha256:1c42d254efeee6af357640bc76131e4d9f3352c240c5ceac99b68c0df9626a89",
+    "test_sha256": "sha256:61389308e43295533977f1bec54e1c1feb427e6493be7842931d155ac7f41f2e",
+    "active_scripts_unchanged": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f (Strategy A v2 pinned v1.3.2 bytes)"
+  },
+  "not_launched": {
+    "strategy_b_v1": "operator-stopped, card stays blocked, /results artifacts untouched, no verdict",
+    "strategy_b_v2": "preregistration templates only: no family dir, no card, no engine, no run",
+    "handoff_cron": "624d0be5b23c = paused (hermes cron list --all)",
+    "new_family_or_card_created": false
+  }
+}

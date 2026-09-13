@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "document_kind": "round-spec template (v1.4.0 cohort-survivor semantics: >=1 survivor passes; all survivors advance; instantiate to /results/<family_id>/rounds/<round_id>/round-spec.json BEFORE any computation)",
+  "template_instantiation": {
+    "placeholders": ["{{round_id}}", "{{kanban_task_id}}", "{{created_at_utc}}"],
+    "rule": "Every scientific field in this template is FROZEN before the first run. Instantiation may only substitute the three placeholders; it must not touch the domains, the split, the selector/disposition versions, the gates or the falsification list (contract INV-4).",
+    "instantiated_to": "/results/<family_id>/rounds/<round_id>/round-spec.json",
+    "validated_by": "python3 runtime/tests/test_strategy_b_v2_templates.py (structural + v1.4.0-semantics check; B has no pre-registered case-count validator of its own, deliberately: its counts are validated by this test alone until the B v2 launch card registers them)",
+    "status": "PREREGISTRATION ONLY - NOT LAUNCHED. No B v2 card exists, no B v2 artifacts exist, and the production handoff cron stays paused (operator decision of t_24cc6167)."
+  },
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "family_title": "Strategy B v2 (EMA crossover walk-forward momentum, LONG/SHORT) under v1.4.0 semantics",
+  "round_id": "{{round_id}}",
+  "kanban_task_id": "{{kanban_task_id}}",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "{{created_at_utc}}",
+  "authored_by": "Hermes default (Xiaoqian) - Contract v1.4.0 preregistration for Strategy B v2",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.0",
+  "implementation_status": {
+    "engine": "NOT IMPLEMENTED under v1.4.0. The Strategy B v1 runner (30_strategy_b_run.py) is operator-stopped and archived at evidence/strategy-b-operator-stopped/runtime/ (archive-only, must not be executed or reused). A v1.4.0 B engine - per-fill fee accounting (7.2 v1.3.1), independent gross PnL accumulator (7.2 v1.3.2), DCA parameter domain, cohort survivor semantics (7.3) and the frozen survivor bundle (10.8) - is a PREREQUISITE of the B v2 launch card.",
+    "no_launch_in_this_card": "This preregistration was authored without launching anything: no B v2 family directory, no round, no attempt, no container run."
+  },
+  "supersedes_semantic_family": {
+    "family_id": "ema-crossover-walkforward-momentum-long-short-v1",
+    "kanban_task_id": "t_3e696dce",
+    "old_status": "operator-stopped before any verdict (no PASS and no REJECT ever existed); its card stays blocked and its /results artifacts stay immutable",
+    "why_a_new_family_instead_of_editing_v1": "v1.3.0 required a DCA parameter domain and cohort survivor semantics that B v1 never registered, and v1.4.0 changed the band -> verdict mapping. Contract INV-4 forbids editing v1 artifacts, so B v2 is a NEW family_id with a NEW semantic fingerprint.",
+    "what_v1_may_be_used_for": "historical design evidence only (its EMA/walk-forward shrink and its cost-attrition falsification idea). No v1 metric may be used to narrow this universe, to fix a threshold, or as an excuse to skip a phase grid.",
+    "unchanged_from_v1": ["hypothesis statement and mechanism", "direction LONG/SHORT (both sides, no silent inversion)", "eligible symbols", "eligible timeframes", "EMA pair grid (fast x slow, fast < slow)", "no-post-hoc-selection discipline"],
+    "changed_from_v1": ["walk-forward cells shrunk from the 4x4 (16) product to 4 registered cells, declared BEFORE computation (see parameter_domain.domain_shrinkage_disclosure)", "DCA parameter domain (4 axes, 48 configs) replaces 'no DCA domain at all'", "family gate: per-cohort survivor rules + deterministic selector replaces the v1 cross-cohort median gates", "band -> verdict mapping is the v1.4.0 one: >=1 survivor passes"]
+  },
+  "semantic_fingerprint": {
+    "fingerprint_input": "ema-crossover-walkforward-momentum-long-short-v2|ema_pair=10/100,10/150,10/200,10/40,10/50,15/100,15/150,15/200,15/40,15/50,20/100,20/150,20/200,20/40,20/50,30/100,30/150,30/200,30/40,30/50,5/100,5/150,5/200,5/40,5/50,7/100,7/150,7/200,7/40,7/50;walk_forward=14/14,28/28,3/3,7/7|breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10;size_multiplier=1.0,1.1;spacing_pct=0.01,0.02,0.03,0.04|2022-01-01..2026-09-10|15m,1h,30m,4h,5m|long/short|symbols=BNBUSDT,BTCUSDT,ETHUSDT,SOLUSDT|selector=cohort-selector-v1;disposition=cohort-disposition-v1",
+    "normalisation": "family_id | strategy axes alphabetically (ema_pair as fast/slow;walk_forward as train/test) | DCA axes alphabetically (breakeven_tp_pct;invalidation_pct;size_multiplier;spacing_pct) | data window | timeframes alphabetically | direction | symbols alphabetically | selector;disposition version. No whitespace, no case folding beyond the family_id, no synonym merging (contract 14.3).",
+    "semantic_fingerprint": "TO_BE_RECOMPUTED - this preregistration is not yet registered as a family: the fingerprint is computed from fingerprint_input when (and only when) a B v2 launch card registers /results/<family_id>/family.json. The declared value must equal sha256(fingerprint_input) at that moment; the test recomputes it from the string above.",
+    "note": "the disposition VERSION string is unchanged by v1.4.0 because the cohort-judgement semantics (selector steps, the five survivor requirements, the band set) are unchanged; what v1.4.0 changed is the contract-level band -> verdict mapping quoted in selector_and_disposition.family_disposition (contract 7.3)."
+  },
+  "parent_family": null,
+  "lineage_note": "Strategy B v2 is the same hypothesis as B v1, re-registered under v1.4.0 (DCA parameter domain + cohort survivor semantics + the >=1-survivor gate). parent_family is null: the operator-stopped B v1 is not a scientific parent and produced no verdict to consume. Any Kanban parent edge of a future B v2 card is scheduling/order only (contract 7).",
+
+  "hypothesis": {
+    "statement": "A registered fast/slow EMA crossover, evaluated walk-forward on BINANCE USD-M perpetual bars, carries tradable momentum in both directions: go long after an upward crossover and short after a downward crossover, flat otherwise.",
+    "mechanism": "trend-following momentum capture via EMA crossover, with walk-forward re-selection of the EMA pair inside each cohort",
+    "direction": "LONG / SHORT. Both legs are part of the hypothesis. No silent one-sided inversion, no post-hoc dropping of the short leg.",
+    "test_statistic": "per-cohort (symbol x timeframe): the walk-forward-selected cell evaluated on OOS, full window, the registered execution/cost stress reruns and its historical parameter neighbourhood. The family statistic is the COUNT of cohort survivors, not a cross-cohort median (contract 7.2/7.3)."
+  },
+
+  "eligible_universe": {
+    "symbols": ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT"],
+    "symbol_source": "BINANCE USD-M perpetual, canonical raw store",
+    "timeframes": [
+      {"raw_interval": "5m", "qlib_freq": "5min"},
+      {"raw_interval": "15m", "qlib_freq": "15min"},
+      {"raw_interval": "30m", "qlib_freq": "30min"},
+      {"raw_interval": "1h", "qlib_freq": "60min"},
+      {"raw_interval": "4h", "qlib_freq": "240min"}
+    ],
+    "cohort_count": 20,
+    "cohort_definition": "one cohort = one (symbol, timeframe) pair; the disposition unit of contract 7.3",
+    "excluded": ["1d", "1w (present in raw, outside this family's eligible universe)"],
+    "universe_immutability": "Registered here, before computation. Must not be narrowed after seeing results (contract 7.2)."
+  },
+
+  "parameter_domain": {
+    "kind": "strategy parameter domain (the signal), two axes",
+    "ema_fast": [5, 7, 10, 15, 20, 30],
+    "ema_slow": [40, 50, 100, 150, 200],
+    "ema_pair_rule": "legal cells are the pairs with fast < slow; every (fast, slow) in the declared product satisfies it, so all 30 pairs are legal",
+    "ema_pair": [
+      {"fast": 5, "slow": 40}, {"fast": 5, "slow": 50}, {"fast": 5, "slow": 100},
+      {"fast": 5, "slow": 150}, {"fast": 5, "slow": 200},
+      {"fast": 7, "slow": 40}, {"fast": 7, "slow": 50}, {"fast": 7, "slow": 100},
+      {"fast": 7, "slow": 150}, {"fast": 7, "slow": 200},
+      {"fast": 10, "slow": 40}, {"fast": 10, "slow": 50}, {"fast": 10, "slow": 100},
+      {"fast": 10, "slow": 150}, {"fast": 10, "slow": 200},
+      {"fast": 15, "slow": 40}, {"fast": 15, "slow": 50}, {"fast": 15, "slow": 100},
+      {"fast": 15, "slow": 150}, {"fast": 15, "slow": 200},
+      {"fast": 20, "slow": 40}, {"fast": 20, "slow": 50}, {"fast": 20, "slow": 100},
+      {"fast": 20, "slow": 150}, {"fast": 20, "slow": 200},
+      {"fast": 30, "slow": 40}, {"fast": 30, "slow": 50}, {"fast": 30, "slow": 100},
+      {"fast": 30, "slow": 150}, {"fast": 30, "slow": 200}
+    ],
+    "ema_pair_count": 30,
+    "walk_forward_train_days": [3, 7, 14, 28],
+    "walk_forward_test_days": [3, 7, 14, 28],
+    "walk_forward": [
+      {"train_days": 3, "test_days": 3}, {"train_days": 7, "test_days": 7},
+      {"train_days": 14, "test_days": 14}, {"train_days": 28, "test_days": 28}
+    ],
+    "walk_forward_cells": 4,
+    "legal_cases_per_cohort": 120,
+    "grid": "the cartesian product ema_pair x walk_forward declared here = 30 x 4 = 120 strategy cases per cohort; the product is computed from the two axes above and must be instantiated verbatim (no sampling, no per-cohort subset)",
+    "domain_shrinkage_disclosure": "The registered domain is 30 EMA pairs x 4 walk-forward cells = 120 strategy cases per cohort. The source design offered 30 pairs x 16 (T_train, T_test) cells = 480; the 16 cells are shrunk to the four diagonal cells (3/3, 7/7, 14/14, 28/28) BEFORE any computation, because contract 7.2 makes every cohort run the full strategy x DCA product (48 DCA configs) and 480 x 48 x 20 cohorts x 10 phase grids = 4,608,000 case evaluations is outside the bounded compute budget of a single card. The shrinkage is registered here and is never widened or narrowed after seeing results.",
+    "domain_immutability": "The domain is complete and bounded; no post-hoc parameter additions, no selection on OOS."
+  },
+
+  "dca_domain": {
+    "kind": "DCA parameter domain (the execution rail), four axes - contract 7.2 item 4.  Reused verbatim from the registered Strategy A rail domain (a pre-registered project rail, not a value chosen after seeing results).",
+    "base_quote": 1000,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis), and NOT a user-fixed invariant: no operator evidence fixes it at 1000.  It is a project pre-registration choice, frozen here before any computation (provenance class PROJECT_PRE_REGISTERED_CONSTANT).",
+    "spacing_pct": [0.01, 0.02, 0.03, 0.04],
+    "size_multiplier": [1.0, 1.1],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values {1.0, 1.1}; 1.1 is the project's historical progression value and therefore a pre-registered search CANDIDATE, not an immutable user-fixed invariant.",
+    "breakeven_tp_pct": [0.01, 0.02, 0.03],
+    "invalidation_pct": [0.05, 0.10],
+    "config_count": 48,
+    "grid_size": 48,
+    "grid_rule": "the cartesian product of spacing_pct x size_multiplier x breakeven_tp_pct x invalidation_pct with base_quote = 1000 = 4 x 2 x 3 x 2 = 48 configs per cohort per phase grid; every config must be really simulated with per-fill accounting (no single fixed rail)",
+    "grid": [
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.01, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.03, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.02, "invalidation_pct": 0.1, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.05, "base_quote": 1000},
+      {"spacing_pct": 0.04, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03, "invalidation_pct": 0.1, "base_quote": 1000}
+    ],
+    "domain_provenance": {
+      "checked_first": "The same reviewed Hermes records consulted for the Strategy A domain: quant/dca-ladder-bounded-capital-2026-09-03, quant/dca-backtest-stress-execution-2026-09-03, quant/dca-adaptive-signal-gated-regime-2026-09-03, quant/dca-capstone-graduation-2026-09-03, quant/production-dca-p2-*-2026-09-04, quant/binance-usdm-production-dca-venue-contract-2026-09-04.",
+      "finding": "Those records register the DCA/scale-in boundedness requirements (finite n_safety, C_max, invalidation, max loss at invalidation) and the price/size/breakeven arithmetic, but no audited DCA parameter SEARCH DOMAIN for this rail shape. The minimal bounded domain already registered for the project (the Strategy A domain) is therefore adopted verbatim rather than invented again.",
+      "no_post_hoc_resizing": "The domain is fixed before any B v2 computation and must not be narrowed or widened afterwards (contract 7.2)."
+    },
+    "side_semantics": {
+      "provenance_class": "PROJECT_PRE_REGISTERED_DECISION - declared here, before any computation, and NOT inherited from B v1 (which registered no DCA domain at all)",
+      "long_leg": "verbatim Strategy A rail semantics: ladder anchored on the initial entry fill price, breakeven-anchored take profit on the running average cost, resting invalidation stop on the same reference, deterministic descending-price intrabar walk, reduce-only exits",
+      "short_leg_mirror": "the same rail mirrored around the entry price: level_k price = initial_entry_price x (1 + spacing_pct x k); take profit at running_average_cost x (1 - breakeven_tp_pct); resting invalidation at running_average_cost x (1 + invalidation_pct); a short pays funding when the rate is negative and receives it when positive (the funding sign rule of the existing engine)",
+      "intrabar_ordering": "mirrored with the same conservatism: for a short episode the bar HIGH is walked first, and the stop fills at max(stop price, bar open) so a gap through the stop cannot fill at the stop price",
+      "capital_exhaustion": "backstop only: forced full flatten at the bar close if unrealised equity <= margin_maint x notional, evaluated after the up-walk and after the resting stop"
+    }
+  },
+
+  "selector_and_disposition": {
+    "selector_version": "cohort-selector-v1",
+    "disposition_version": "cohort-disposition-v1",
+    "selection_protocol": "Deterministic, historical window ONLY; OOS must never be used to select parameters. The selector is the SAME registered selector as Strategy A's (it is defined over the joint strategy x DCA cell space and is family-agnostic); no new selector version is needed for B v2.",
+    "selection_steps": [
+      "1. Sufficiency: if the cohort's best historical case has fewer episodes than gates.min_episodes_is, the cohort is culled with reason insufficient_trades.",
+      "2. Eligibility: a case is a candidate iff historical net_pnl > 0 AND historical sharpe > 0 AND historical episodes >= gates.min_episodes_is.",
+      "3. If no case is a candidate, the cohort is culled with reason no_qualifying_candidate.",
+      "4. Ranking: Sharpe descending, then net_pnl descending, then a fixed lexical tie-break over the REGISTERED INDEX of each axis in the fixed order (ema_pair, walk_forward, spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct). The first case is the cohort winner.",
+      "5. The winner's exact strategy+DCA cell is carried unchanged into OOS, full, every robustness grid and the neighbourhood test. No cell may be swapped after OOS has been seen."
+    ],
+    "cohort_survivor_requirements": [
+      "a) a historical winner exists (steps 1-4)",
+      "b) OOS: net_pnl > 0 AND sharpe > 0 for the winner's cell",
+      "c) full window: net_pnl > 0 for the winner's cell",
+      "d) robustness: the SAME winner cell has net_pnl > 0 in each of fee_2x, funding_2x, entry_delay_1_bar, slippage_2ticks",
+      "e) parameter neighbourhood: at least 60% of the winner cell's legal face-adjacent neighbours (one +-1 step on exactly one registered axis, in-domain) agree with the winner's historical net-PnL sign. The neighbourhood judgement uses HISTORICAL rows only - never OOS."
+    ],
+    "cohort_outcomes": ["SURVIVOR", "CULLED"],
+    "cull_reasons": ["insufficient_trades", "no_qualifying_candidate", "oos_economic", "full_economic", "robustness_economic:<grids>", "parameter_neighbourhood"],
+    "family_disposition": {
+      "0 cohort survivors": "REJECT / NO_SURVIVOR (verdict REJECT, performance_claimable false)",
+      "1 cohort survivor": "SURVIVOR_FOUND (verdict PASS; performance_claimable still requires the full contract 9.6 condition set)",
+      ">1 cohort survivors": "MULTIPLE_SURVIVORS (verdict PASS as well - v1.4.0: at least one survivor passes the basic gate, and the survivor count is a disposition BAND, not a verdict. ALL survivors are kept and advance; none is ranked, discarded or picked among, and the count never forces performance_claimable false)",
+      "coverage or technical incompleteness": "TECHNICAL_INCOMPLETE (no cohort is judged at all)"
+    },
+    "cross_cohort_medians": "descriptive diagnostics only; median PnL or Sharpe across the 20 cohorts (or across all base cases) is NOT a gate and must not be converted into one. B v1's median gates (G3-G9) are NOT inherited as gates."
+  },
+
+  "data": {
+    "source": "/data/raw (host /Volumes/ExpansionDrive/market-data-raw), read-only",
+    "venue": "BINANCE USD-M perpetual",
+    "data_start": "2022-01-01",
+    "data_end": "2026-09-10",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-10",
+    "split_immutability": "The split is fixed here, before any computation, and must not be moved afterwards.",
+    "split_disclosure": "This window has already been inspected by the Strategy A family, so it is NOT a sealed holdout for B v2. The limitation is declared here, BEFORE the run, instead of being discovered afterwards; a genuinely sealed holdout would need future/prospective data (contract 2 / quant-research-loop discipline).",
+    "derived_store": "Built per attempt from raw into the rebuildable /qlib/work area; read back exclusively through the qlib data layer. Never written to /results. Bars are never resampled or gap-filled: a missing bar stays missing."
+  },
+
+  "costs": {
+    "source": "canonical instrument metadata (raw binance/usdm/instruments/usdm-perp-instruments.json), read at run time, never hard-coded",
+    "maker_fee": 0.0002,
+    "taker_fee": 0.0005,
+    "margin_init": 0.1,
+    "margin_maint": 0.1,
+    "apply_rule": "every fill is a market order: taker fee on the full traded notional, charged at the FILL time into realised equity (per-fill accounting, contract 7.2 v1.3.1), plus adverse slippage of baseline_slippage_ticks instrument ticks. No maker fills are assumed anywhere.",
+    "baseline_slippage_ticks": 1,
+    "baseline_slippage_provenance": "research assumption of this round (NOT user-specified); the robustness tracks re-measure it at 2 ticks",
+    "funding": "actual funding from /data/raw binance/usdm/funding/<SYMBOL>/<SYMBOL>-funding.jsonl.gz, filtered to truth_status == \"official\"; charged to the held quantity with the signed rule (a long pays a positive rate, a short pays a negative one). Intervals without an official observation carry zero funding cost; coverage is disclosed in the artifacts and re-measured by the no_funding diagnostics.",
+    "funding_immutability": "The official-funding baseline must not be swapped for a modelled series to improve the outcome.",
+    "cost_attrition_track": "a 40 bps-per-fill attrition grid (8x the canonical taker fee) is registered as its own phase grid, inherited from B v1's registered cost-attrition falsification; it is a cost-stress rerun, not a second engine"
+  },
+
+  "authorization_invariants": {
+    "provenance_class": "USER_FIXED - only items with explicit operator evidence (the operator's stated rail definition, inherited from the Strategy A registration).  A searched axis or a project pre-registration constant must NOT be listed here.",
+    "starting_equity_usdt": 30000,
+    "numeraire": "USDT (sole)",
+    "venue": "BINANCE USD-M linear perpetual",
+    "leverage": "10x (1 / margin_init)",
+    "tranches": 12,
+    "tranche_12": "reserve/buffer, never routinely deployed",
+    "routine_active_levels": 11,
+    "exit": "reduce-only",
+    "no_add_after_flat_or_kill": true,
+    "notes": "B v2 trades both sides, but each side runs the SAME bounded rail independently; a position episode is never long and short at the same time (concurrency: one episode at a time)."
+  },
+
+  "metrics_definitions": {
+    "equity": "30000 + cumulative realised net PnL (USDT); unrealised marked at bar closes",
+    "daily_series": "end-of-UTC-day equity marks, forward-filled across flat stretches",
+    "sharpe": "mean/std (ddof=1) of daily returns x sqrt(365); risk-free 0",
+    "max_dd": "peak-to-trough of the daily equity series, reported in % and USDT",
+    "max_effective_leverage": "max of (position notional / unrealised equity), sampled every in-market bar",
+    "capital_utilization": "mean of (deployed margin / unrealised equity) over in-market bars",
+    "gross_pnl": "independent price-PnL accumulator: at every exit/flatten only exit proceeds - cost basis of that episode is added, excluding fees and funding (contract 7.2 v1.3.2); never reverse-derived from net",
+    "pnl_decomposition": "cross-check of two independent sources: gross_pnl - fees - funding == net_pnl within 1e-3",
+    "cohort_winner": "the historical-only selector output for that (symbol, timeframe) cohort (selector_and_disposition.selection_steps)"
+  },
+
+  "robustness_plan": {
+    "declared_before_first_run": true,
+    "must_not_narrow_universe_or_lower_gates": true,
+    "items": [
+      {"id": "R1", "name": "parameter-neighbourhood robustness", "method": "for each cohort winner, compare the winner's historical net-PnL sign against its legal face-adjacent neighbours over the full registered joint space (ema_pair, walk_forward, spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct); require >= 60% sign agreement; historical rows only"},
+      {"id": "R2", "name": "execution stress reruns", "method": "full-window evaluation of every joint cell per cohort under fee_2x, funding_2x, entry_delay_1_bar, slippage_2ticks; the winner's cell must stay net_pnl > 0 in all four"},
+      {"id": "R3", "name": "funding baseline diagnostics", "method": "no_funding (historical) and no_funding_full (full window) grids for every cell per cohort; descriptive only - a cross-cohort funding median is not a gate"},
+      {"id": "R4", "name": "cost-attrition robustness", "method": "the cost_attrition_40bps phase grid; the winner's cell must stay net_pnl > 0 there as well, which is the surviving form of B v1's registered cost-attrition falsification"},
+      {"id": "R5", "name": "cross-cohort disposition", "method": "the 20 cohort verdicts are the family result; the count of survivors drives the disposition. Cross-cohort medians are reported but never gate"}
+    ]
+  },
+
+  "gates": {
+    "G1_coverage": "every one of the 10 registered phase grids must contain exactly 115,200 cases (20 cohorts x 120 strategy cases x 48 DCA configs), each cohort must contain exactly 5,760 cases per grid, and the measured strategy/DCA cell sets must equal the registered cartesian products; otherwise TECHNICAL_INCOMPLETE and no cohort is judged",
+    "G2_insufficient_trades": "per cohort only: fewer than min_episodes_is historical episodes in the cohort's best case culls THAT cohort (insufficient_trades) and never affects another cohort",
+    "G3_cohort_selector": "per cohort: historical net_pnl > 0 AND sharpe > 0 AND episodes >= min_episodes_is, ranked by Sharpe desc, net_pnl desc, registered-index lexical tie-break",
+    "G4_cohort_oos": "per cohort winner: OOS net_pnl > 0 AND OOS sharpe > 0",
+    "G5_cohort_full": "per cohort winner: full-window net_pnl > 0",
+    "G6_cohort_robustness": "per cohort winner: net_pnl > 0 in all four execution stress reruns",
+    "G7_cohort_neighbourhood": "per cohort winner: >= 60% of legal face-adjacent neighbours agree in historical net-PnL sign",
+    "G8_cohort_cost_attrition": "per cohort winner: net_pnl > 0 in the cost_attrition_40bps grid",
+    "verdict_rule": "TECHNICAL_INCOMPLETE if G1 fails; else the count of cohorts passing G3-G8 decides: 0 -> REJECT, >=1 -> PASS (1 -> SURVIVOR_FOUND band, >1 -> MULTIPLE_SURVIVORS band; every survivor advances). No post-hoc threshold edits, no tuning to pass.",
+    "min_episodes_is": 20,
+    "neighborhood_min_same_sign_fraction": 0.6,
+    "known_gate_set_limitation": "The registered gate set contains no benchmark-relative test. A momentum strategy can show positive PnL through the sample's drift, and the long leg can do so through the sample's upward drift in particular. This limitation is declared BEFORE the run and is NOT patched afterwards; a buy-and-hold comparison remains a non-gating diagnostic."
+  },
+
+  "falsification": [
+    "no signal / insufficient trades in a cohort (G2; culls that cohort only)",
+    "no qualifying historical candidate in a cohort (G3)",
+    "OOS economic rejection for a cohort winner (G4)",
+    "full-window economic rejection for a cohort winner (G5)",
+    "robustness economic failure for a cohort winner (G6)",
+    "parameter-neighbourhood fragility for a cohort winner (G7)",
+    "cost-attrition failure for a cohort winner (G8)",
+    "DCA execution incomplete or not true per-fill accounting (see assertions.json; any false assertion = TECHNICAL_INCOMPLETE)",
+    "coverage incomplete in any registered phase grid (G1)"
+  ],
+
+  "performance_claimable_rule": "true only when the family verdict == PASS (v1.4.0: at least one cohort survivor) and contract 9.6 holds (canonical raw, no look-ahead, explicit OOS, declared costs, full section 7.2 coverage including the DCA parameter domain). The NUMBER of survivors is never itself a reason to claim false. Downstream authoritative acceptance is out of scope and is never a precondition.",
+
+  "survivor_bundle": {
+    "artifact": "rounds/<round_id>/survivor-bundle.json (round level, immutable, contract 10.8)",
+    "produced_by": "runtime/survivor_bundle.py (host-side, pure stdlib, deterministic; run once the attempt is terminally DONE)",
+    "rule": "the bundle freezes EVERY survivor of the round, in the order the run recorded them (that order is not a ranking). No survivor may be dropped, ranked, re-ordered or picked among, and the bundle is never rewritten once written. A bundle is only produced from a coverage_complete=true attempt whose assertions are all true.",
+    "annotation": "under v1.4.0 semantics every survivor listed in the bundle passes the basic research gate, so all of them advance."
+  },
+
+  "expected": {
+    "cohorts": 20,
+    "strategy_cases_per_cohort": 120,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 5760,
+    "cohort_grid_kinds": ["historical", "oos", "full", "fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks", "no_funding", "no_funding_full", "cost_attrition_40bps"],
+    "phase_grid_count": 10,
+    "case_evaluations_per_cohort_per_grid": 5760,
+    "case_evaluations_per_cohort_all_grids": 57600,
+    "case_evaluations_per_grid": 115200,
+    "expected_case_evaluations": 1152000,
+    "arithmetic": "20 cohorts x 120 strategy cases x 48 DCA configs = 115,200 base combinations per phase grid; x 10 phase grids = 1,152,000 full case evaluations. A case evaluation = one engine simulation of one joint parameter cell of one cohort on one phase grid.",
+    "runtime_expectation": {
+      "basis": "Strategy A v2 (card t_1f97bf6b) measured 103,680 case evaluations in 1302 s of runtime inside qlib-run on the same host/container (about 12.6 ms per case).",
+      "estimate": "~1,152,000 / 103,680 x 1302 s ~ 14,470 s ~ 4.0 h of engine time, i.e. ~4.2 h including the bin rebuild.",
+      "status": "estimate only, extrapolated from a measured run of a different family; not a guarantee and not validated by any B v2 run. The launch card must be parked in 'scheduled' while the container computes (contract 9.2) so no worker turn is occupied, and the worker must treat this estimate, not a promise, as the basis for its max_runtime."
+    }
+  },
+
+  "non_goals": [
+    "no parameter search beyond the registered strategy grid and the registered DCA domain",
+    "no OOS-based selection of any parameter",
+    "no Paper or Live trading",
+    "no second backtester or engine",
+    "no new Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
+    "no legacy Nautilus runtime, gate or performance truth",
+    "no reuse of the archived, operator-stopped Strategy B v1 runner as a v1.4.0 engine",
+    "no launch in the card that authored this preregistration"
+  ]
+}

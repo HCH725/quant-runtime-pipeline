@@ -3,10 +3,11 @@
   "document_kind": "run-spec template (v1.4.0; instantiate to /results/<family_id>/rounds/<round_id>/attempts/<run_id>/run-spec.json BEFORE launch)",
   "template_instantiation": {
     "placeholders": ["{{round_id}}", "{{run_id}}", "{{task_id}}", "{{created_at_utc}}", "{{script_sha256}}", "{{engine_selfcheck_sha256}}", "{{round_spec_path}}"],
-    "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/20_strategy_a_run.py (contract 16.2 P10 recomputes it); the run must fail closed if the deployed script does not match.",
-    "validated_by": "python3 runtime/strategy_a_v2_counts.py --spec runtime/templates/strategy_a_v2_round_spec.template.json --run-spec runtime/templates/strategy_a_v2_run_spec.template.json"
+    "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/30_strategy_b_run.py (contract 16.2 P10 recomputes it); the run must fail closed if the deployed script does not match. That runner does not exist yet: it is a prerequisite of the launch card (see the round-spec implementation_status).",
+    "validated_by": "python3 runtime/tests/test_strategy_b_v2_templates.py",
+    "status": "PREREGISTRATION ONLY - NOT LAUNCHED (no B v2 card, no B v2 run, handoff cron paused)"
   },
-  "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
   "round_id": "{{round_id}}",
   "run_id": "{{run_id}}",
   "task_id": "{{task_id}}",
@@ -34,23 +35,40 @@
     "oos_end": "2026-09-10"
   },
   "params": {
-    "grid_windows": [20, 50, 100, 200],
-    "grid_discounts": [0.01, 0.02, 0.03],
-    "grid": [
-      {"window": 20, "discount": 0.01}, {"window": 20, "discount": 0.02}, {"window": 20, "discount": 0.03},
-      {"window": 50, "discount": 0.01}, {"window": 50, "discount": 0.02}, {"window": 50, "discount": 0.03},
-      {"window": 100, "discount": 0.01}, {"window": 100, "discount": 0.02}, {"window": 100, "discount": 0.03},
-      {"window": 200, "discount": 0.01}, {"window": 200, "discount": 0.02}, {"window": 200, "discount": 0.03}
-    ]
+    "ema_fast": [5, 7, 10, 15, 20, 30],
+    "ema_slow": [40, 50, 100, 150, 200],
+    "ema_pair": [
+      {"fast": 5, "slow": 40}, {"fast": 5, "slow": 50}, {"fast": 5, "slow": 100},
+      {"fast": 5, "slow": 150}, {"fast": 5, "slow": 200},
+      {"fast": 7, "slow": 40}, {"fast": 7, "slow": 50}, {"fast": 7, "slow": 100},
+      {"fast": 7, "slow": 150}, {"fast": 7, "slow": 200},
+      {"fast": 10, "slow": 40}, {"fast": 10, "slow": 50}, {"fast": 10, "slow": 100},
+      {"fast": 10, "slow": 150}, {"fast": 10, "slow": 200},
+      {"fast": 15, "slow": 40}, {"fast": 15, "slow": 50}, {"fast": 15, "slow": 100},
+      {"fast": 15, "slow": 150}, {"fast": 15, "slow": 200},
+      {"fast": 20, "slow": 40}, {"fast": 20, "slow": 50}, {"fast": 20, "slow": 100},
+      {"fast": 20, "slow": 150}, {"fast": 20, "slow": 200},
+      {"fast": 30, "slow": 40}, {"fast": 30, "slow": 50}, {"fast": 30, "slow": 100},
+      {"fast": 30, "slow": 150}, {"fast": 30, "slow": 200}
+    ],
+    "walk_forward_train_days": [3, 7, 14, 28],
+    "walk_forward_test_days": [3, 7, 14, 28],
+    "walk_forward": [
+      {"train_days": 3, "test_days": 3}, {"train_days": 7, "test_days": 7},
+      {"train_days": 14, "test_days": 14}, {"train_days": 28, "test_days": 28}
+    ],
+    "grid": "the cartesian product ema_pair x walk_forward declared in this file = 30 x 4 = 120 strategy cases per cohort; the instantiation must materialise the full product (no sampling, no per-cohort subset)",
+    "grid_size": 120
   },
   "dca_domain": {
     "base_quote": 1000,
     "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis), and NOT a user-fixed invariant: no operator evidence fixes it at 1000.  It is a project pre-registration choice, frozen here before any computation (provenance class PROJECT_PRE_REGISTERED_CONSTANT).",
     "spacing_pct": [0.01, 0.02, 0.03, 0.04],
     "size_multiplier": [1.0, 1.1],
-    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values {1.0, 1.1}.  1.1 is the project's historical progression value and therefore a pre-registered search CANDIDATE, not an immutable user-fixed invariant (see the registered round-spec domain_provenance).",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values {1.0, 1.1}; 1.1 is the project's historical progression value and therefore a pre-registered search CANDIDATE, not an immutable user-fixed invariant.",
     "breakeven_tp_pct": [0.01, 0.02, 0.03],
     "invalidation_pct": [0.05, 0.1],
+    "grid_size": 48,
     "grid": [
       {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05, "base_quote": 1000},
       {"spacing_pct": 0.01, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01, "invalidation_pct": 0.1, "base_quote": 1000},
@@ -107,7 +125,8 @@
     "slippage_bps": null,
     "baseline_slippage_ticks": 1,
     "fee_source": "canonical instrument metadata (taker_fee=0.0005, maker_fee=0.0002 unused)",
-    "funding_source": "/data/raw funding, truth_status == official only"
+    "funding_source": "/data/raw funding, truth_status == official only",
+    "cost_attrition_bps_per_fill": 40
   },
   "gates": {
     "min_episodes_is": 20,
@@ -116,26 +135,27 @@
   },
   "expected": {
     "cohorts": 20,
-    "strategy_cases_per_cohort": 12,
+    "strategy_cases_per_cohort": 120,
     "dca_configs_per_cohort": 48,
-    "base_combinations_per_cohort": 576,
-    "case_evaluations_per_cohort_per_grid": 576,
-    "case_evaluations_per_grid": 11520,
-    "case_evaluations_per_cohort_all_grids": 5184,
-    "expected_case_evaluations": 103680
+    "base_combinations_per_cohort": 5760,
+    "case_evaluations_per_cohort_per_grid": 5760,
+    "case_evaluations_per_grid": 115200,
+    "case_evaluations_per_cohort_all_grids": 57600,
+    "expected_case_evaluations": 1152000
   },
   "script": {
-    "path": "/scripts/20_strategy_a_run.py",
-    "sha256": "{{script_sha256}}"
+    "path": "/scripts/30_strategy_b_run.py",
+    "sha256": "{{script_sha256}}",
+    "status": "NOT IMPLEMENTED - the v1.4.0 B runner must be authored and deployed before any launch (contract 7.2/7.3/10.8 capabilities); the archived operator-stopped B v1 runner must not be reused"
   },
   "engine_selfcheck": {
-    "script": "/scripts/tests/test_strategy_a_engine.py",
+    "script": "/scripts/tests/test_strategy_b_engine.py",
     "sha256": "{{engine_selfcheck_sha256}}",
-    "must_run_before_launch": true
+    "must_run_before_launch": true,
+    "status": "NOT IMPLEMENTED under v1.4.0 (the archived v1 test is archive-only evidence)"
   },
   "expected_outputs": [
     "result.json",
-    "artifacts/bins_build.json",
     "artifacts/input_manifest.json",
     "artifacts/grid_historical.csv",
     "artifacts/grid_oos.csv",
@@ -146,12 +166,17 @@
     "artifacts/grid_slippage_2ticks.csv",
     "artifacts/grid_no_funding.csv",
     "artifacts/grid_no_funding_full.csv",
+    "artifacts/grid_cost_attrition_40bps.csv",
     "artifacts/dca_layer_histogram.json",
     "artifacts/assertions.json",
     "artifacts/cohort_results.json",
     "artifacts/cohort_survivors.json",
     "artifacts/progress.json"
   ],
+  "round_level_outputs": {
+    "written_by": "default (host side), never by the container",
+    "files": ["rounds/<round_id>/verdict.json (contract 10.7)", "rounds/<round_id>/survivor-bundle.json (contract 10.8, all survivors, no ranking)"]
+  },
   "falsification": [
     "coverage incomplete in any registered phase grid (G1)",
     "no signal / insufficient trades in a cohort (G2; culls that cohort only)",
@@ -160,7 +185,8 @@
     "full-window economic rejection for a cohort winner (G5)",
     "robustness economic failure for a cohort winner (G6)",
     "parameter-neighbourhood fragility for a cohort winner (G7)",
-    "DCA execution incomplete / not true order-fill accounting"
+    "cost-attrition failure for a cohort winner (G8)",
+    "DCA execution incomplete or not true per-fill accounting (any false assertion = TECHNICAL_INCOMPLETE)"
   ],
-  "notes": "v1.4.0 run-spec: the full backtest covers symbols x timeframes x strategy parameter domain x DCA parameter domain x historical/OOS/robustness. The family verdict comes from the cohort-survivor disposition (contract 7.3): 0 survivors -> REJECT, >=1 -> PASS, i.e. the survivor count is a disposition band and never a verdict. The round's frozen survivor bundle (all survivors, no ranking) is written host-side from this attempt's artifacts once it is terminally DONE (contract 10.8, runtime/survivor_bundle.py)."
+  "notes": "v1.4.0 run-spec for Strategy B v2 (EMA crossover walk-forward momentum, LONG/SHORT). The full backtest covers symbols x timeframes x strategy parameter domain x DCA parameter domain x historical/OOS/robustness. The family verdict comes from the cohort-survivor disposition (contract 7.3): 0 survivors -> REJECT, >=1 -> PASS, i.e. the survivor count is a disposition band and never a verdict. The round's frozen survivor bundle (all survivors, no ranking) is written host-side from this attempt's artifacts once it is terminally DONE (contract 10.8, runtime/survivor_bundle.py). PREREGISTRATION ONLY: nothing here has been launched."
 }

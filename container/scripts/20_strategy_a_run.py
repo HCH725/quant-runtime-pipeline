@@ -67,6 +67,12 @@ AXES = ("window", "discount", "spacing_pct", "size_multiplier",
         "breakeven_tp_pct", "invalidation_pct")
 SELECTOR_VERSION = "cohort-selector-v1"
 DISPOSITION_VERSION = "cohort-disposition-v1"
+# The disposition VERSION versions the cohort-judgement semantics (selector steps, the five
+# survivor requirements and the disposition band set), all unchanged by v1.4.0.  What v1.4.0
+# changed is the contract-level band -> verdict/claimability mapping (contract 7.3), so every
+# emitted record carries the mapping version it applied.  That keeps a pre-v1.4.0 artifact
+# (e.g. the frozen Strategy A v2 round) readable as exactly what it was, without re-labelling it.
+CONTRACT_SEMANTICS_VERSION = "v1.4.0"
 WINNER_METRIC_KEYS = ("net_pnl", "sharpe", "episodes", "ending_equity", "fees", "funding",
                       "max_dd_usdt", "max_dd_pct", "max_effective_leverage",
                       "capital_utilization")
@@ -834,24 +840,36 @@ def evaluate_cohort(spec, cohort_label, rows):
 
 
 def family_disposition(survivors, coverage_complete):
-    """Contract 7.2/7.3 family disposition.  Coverage/technical incompleteness wins.
+    """Contract 7.2/7.3 (v1.4.0).  Coverage/technical incompleteness wins.
 
-    0 survivor -> REJECT / NO_SURVIVOR; exactly 1 -> SURVIVOR_FOUND (PASS);
-    more than 1 -> MULTIPLE_SURVIVORS (FINALIST: the research threshold is met,
-    but picking among survivors is a downstream/operator decision, so
-    performance_claimable stays false).
+    The operator decision of v1.4.0: a strategy family passes the basic research gate
+    as soon as it has AT LEAST ONE cohort survivor.  The survivor COUNT is not a verdict:
+
+      0 survivors        -> REJECT / NO_SURVIVOR
+      1 survivor         -> SURVIVOR_FOUND     (verdict PASS)
+      2+ survivors       -> MULTIPLE_SURVIVORS (verdict PASS as well)
+
+    MULTIPLE_SURVIVORS is a disposition BAND, not a downgrade: no survivor is ranked,
+    discarded or picked among - all of them are kept and advance to downstream (contract
+    7.3), and the count never forces performance_claimable false.  Claimability follows
+    contract 9.6 only, so >=1 survivor recommends True here and default then checks the
+    remaining 9.6 conditions when writing the round verdict.json.
     """
     if not coverage_complete:
         return {"disposition": "TECHNICAL_INCOMPLETE", "verdict_recommendation": "TECHNICAL_INCOMPLETE",
-                "performance_claimable_recommendation": False}
+                "performance_claimable_recommendation": False,
+                "mapping_version": CONTRACT_SEMANTICS_VERSION}
     if not survivors:
         return {"disposition": "REJECT / NO_SURVIVOR", "verdict_recommendation": "REJECT",
-                "performance_claimable_recommendation": False}
+                "performance_claimable_recommendation": False,
+                "mapping_version": CONTRACT_SEMANTICS_VERSION}
     if len(survivors) == 1:
         return {"disposition": "SURVIVOR_FOUND", "verdict_recommendation": "PASS",
-                "performance_claimable_recommendation": True}
-    return {"disposition": "MULTIPLE_SURVIVORS", "verdict_recommendation": "FINALIST",
-            "performance_claimable_recommendation": False}
+                "performance_claimable_recommendation": True,
+                "mapping_version": CONTRACT_SEMANTICS_VERSION}
+    return {"disposition": "MULTIPLE_SURVIVORS", "verdict_recommendation": "PASS",
+            "performance_claimable_recommendation": True,
+            "mapping_version": CONTRACT_SEMANTICS_VERSION}
 
 
 def summarize(spec, grid_rows, layers):
@@ -949,6 +967,7 @@ def summarize(spec, grid_rows, layers):
     return {
         "family_id": spec["family_id"], "round_id": spec["round_id"], "run_id": spec["run_id"],
         "selector_version": SELECTOR_VERSION, "disposition_version": DISPOSITION_VERSION,
+        "contract_semantics_version": CONTRACT_SEMANTICS_VERSION,
         "registered_domains": {
             "strategy": {"window": expected_axes["window"], "discount": expected_axes["discount"]},
             "dca": {a: expected_axes[a] for a in dca_axes},
@@ -967,6 +986,7 @@ def summarize(spec, grid_rows, layers):
         "disposition": disposition["disposition"],
         "verdict_recommendation": disposition["verdict_recommendation"],
         "performance_claimable_recommendation": disposition["performance_claimable_recommendation"],
+        "disposition_mapping_version": disposition["mapping_version"],
         "survivor_evidence": survivors,
         "descriptive_diagnostics": descriptive,
         "descriptive_medians_all_base_cases": {k: med(full, k) for k in keys},

@@ -523,20 +523,61 @@ class TestV13CohortGate(unittest.TestCase):
         self.assertIsNone(res["winner"])
 
     def test_family_disposition_bands(self):
+        # v1.4.0: >=1 cohort survivor passes the basic gate; the survivor COUNT is a
+        # disposition band, never a verdict, and never forces performance_claimable false.
         surv = {"cohort": "x", "outcome": "SURVIVOR"}
         self.assertEqual(sa.family_disposition([], True),
                          {"disposition": "REJECT / NO_SURVIVOR", "verdict_recommendation": "REJECT",
-                          "performance_claimable_recommendation": False})
+                          "performance_claimable_recommendation": False,
+                          "mapping_version": sa.CONTRACT_SEMANTICS_VERSION})
         self.assertEqual(sa.family_disposition([surv], True),
                          {"disposition": "SURVIVOR_FOUND", "verdict_recommendation": "PASS",
-                          "performance_claimable_recommendation": True})
+                          "performance_claimable_recommendation": True,
+                          "mapping_version": sa.CONTRACT_SEMANTICS_VERSION})
         two = sa.family_disposition([surv, dict(surv, cohort="y")], True)
         self.assertEqual(two["disposition"], "MULTIPLE_SURVIVORS")
-        self.assertEqual(two["verdict_recommendation"], "FINALIST")
-        self.assertFalse(two["performance_claimable_recommendation"])
+        self.assertEqual(two["verdict_recommendation"], "PASS")
+        self.assertTrue(two["performance_claimable_recommendation"])
+        three = sa.family_disposition([surv, dict(surv, cohort="y"), dict(surv, cohort="z")], True)
+        self.assertEqual(three["disposition"], "MULTIPLE_SURVIVORS")
+        self.assertEqual(three["verdict_recommendation"], "PASS")
+        self.assertTrue(three["performance_claimable_recommendation"])
         incomplete = sa.family_disposition([surv], False)
         self.assertEqual(incomplete["disposition"], "TECHNICAL_INCOMPLETE")
         self.assertEqual(incomplete["verdict_recommendation"], "TECHNICAL_INCOMPLETE")
+        self.assertFalse(incomplete["performance_claimable_recommendation"])
+
+    def test_multi_survivor_band_never_ranks_or_drops_a_survivor(self):
+        # the disposition input is used as a set of survivors, not as a ranking: any
+        # permutation of the same 2 survivors must give the same band and the same PASS.
+        a, b = {"cohort": "BTCUSDT/1h"}, {"cohort": "SOLUSDT/4h"}
+        first = sa.family_disposition([a, b], True)
+        second = sa.family_disposition([b, a], True)
+        self.assertEqual(first, second)
+        self.assertEqual(first["verdict_recommendation"], "PASS")
+        self.assertNotIn("FINALIST", first["verdict_recommendation"])
+        self.assertEqual(first["mapping_version"], sa.CONTRACT_SEMANTICS_VERSION)
+
+    def test_summary_discloses_the_applied_mapping_version(self):
+        # every emitted record says which band -> verdict mapping produced it, so a pre-v1.4.0
+        # artifact stays readable as what it was instead of being silently re-labelled.
+        spec = mini_spec()
+        spec["expected"] = {"cohorts": 1, "case_evaluations_per_grid": 1,
+                            "base_combinations_per_cohort": 1, "expected_case_evaluations": 1}
+        label = "BTCUSDT/5m"
+        build = build_cohort_rows(spec, label, all_positive)
+        rows = {}
+        for kind in sa.COHORT_GRID_KINDS:
+            rows[kind] = []
+            for row in build[kind]:
+                row = dict(row)
+                row.update({"tp_hits": row["episodes"], "stop_hits": 0, "open_at_end": 0,
+                            "margin_calls": 0, "min_entry_equity": 1.0, "gross_pnl": 1.0})
+                rows[kind].append(row)
+        layers = [sum(r["episodes"] for r in rows["full"])] + [0] * 11
+        summary = sa.summarize(spec, rows, layers)
+        self.assertEqual(summary["contract_semantics_version"], sa.CONTRACT_SEMANTICS_VERSION)
+        self.assertEqual(summary["disposition_mapping_version"], sa.CONTRACT_SEMANTICS_VERSION)
 
     def test_record_carries_the_six_joint_axes(self):
         cohort = FakeCohort(FLAT + [ENTRY])

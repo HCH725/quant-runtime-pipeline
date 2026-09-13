@@ -1,8 +1,8 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：**AUDITED PASS / FROZEN**（v1.3.2；audited content commit 0363011，auditor t_3ffaeeb8，2026-09-13；前一版 v1.3.1 = FAIL audit t_23f4c3ef，2026-09-13；更前一版 v1.3.0 = FAIL audit t_246c62d7，2026-09-13；更前一版 v1.2.0 = AUDITED PASS / FROZEN，audited content commit 068d6f7，auditor t_7b979fe8，2026-09-13；更前一版 v1.1.1 = AUDITED PASS / FROZEN，audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；更前一版 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
-版本：v1.3.2（2026-09-13）
-作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）；v1.1.1 依 t_4d6c5cd5（audit t_d7f48c7a 的 F1–F3 最小 remediation 與文件精度修正）；v1.2.0 依 t_0626a619（新增 §14.4 automatic production handoff trigger）；v1.3.0 依 t_ad2e119e（DCA parameter domain 全量納入 full-backtest、cohort-level survivor disposition 取代跨 timeframe median gate、Strategy A 以新 family v2 重跑、Strategy B operator-stopped cleanup）；v1.3.1 依 t_6c83c9fb（audit t_246c62d7 的 F1/F2 最小 remediation：per-fill 費用會計、DCA provenance classification、M1 operator-stopped runner archive hygiene）；v1.3.2 依 t_33457313（audit t_23f4c3ef 對 v1.3.1 的 F3/F4 最小 remediation：獨立 gross/price-PnL accumulator、audit-only staging bytes）
+文件狀態：**AWAITING AUDIT**（v1.4.0；依 ChatGPT（GPT-5.6 Sol）卡片 t_24cc6167；前一版 v1.3.2 = AUDITED PASS / FROZEN，audited content commit 0363011，auditor t_3ffaeeb8，2026-09-13；前一版 v1.3.1 = FAIL audit t_23f4c3ef，2026-09-13；更前一版 v1.3.0 = FAIL audit t_246c62d7，2026-09-13；更前一版 v1.2.0 = AUDITED PASS / FROZEN，audited content commit 068d6f7，auditor t_7b979fe8，2026-09-13；更前一版 v1.1.1 = AUDITED PASS / FROZEN，audited content commit 18d6c3f，auditor re-audit t_83682069，2026-09-13；更前一版 v1.0.1，auditor re-audit t_e35c39c0，2026-09-12）
+版本：v1.4.0（2026-09-13）
+作者：Hermes default（小蒨），依 ChatGPT（GPT-5.6 Sol）卡片 t_5b5b38d6 定版；v1.0.1 remediation 依 t_bcedaf65（audit t_a3dc355d B1–B3）；v1.1.0 依 t_ec039d5f（Nautilus 語意校正、full-backtest 定義、P8 interpreter 修正、最小 runtime readiness 落地）；v1.1.1 依 t_4d6c5cd5（audit t_d7f48c7a 的 F1–F3 最小 remediation 與文件精度修正）；v1.2.0 依 t_0626a619（新增 §14.4 automatic production handoff trigger）；v1.3.0 依 t_ad2e119e（DCA parameter domain 全量納入 full-backtest、cohort-level survivor disposition 取代跨 timeframe median gate、Strategy A 以新 family v2 重跑、Strategy B operator-stopped cleanup）；v1.3.1 依 t_6c83c9fb（audit t_246c62d7 的 F1/F2 最小 remediation：per-fill 費用會計、DCA provenance classification、M1 operator-stopped runner archive hygiene）；v1.3.2 依 t_33457313（audit t_23f4c3ef 對 v1.3.1 的 F3/F4 最小 remediation：獨立 gross/price-PnL accumulator、audit-only staging bytes）；v1.4.0 依 t_24cc6167（operator 決策：family 只要有 >=1 個 cohort survivor 即通過基本研究 gate、多個 survivors 不二選一而是全部保留並前進、新增 frozen survivor bundle、Strategy B v1 維持 operator-stopped 並備妥 B v2 preregistration）
 適用範圍：quant-strategy-research board 之 Qlib 研究 runtime 與 Kanban 交接
 變更控制：見 §26；本文件為長期 implementation contract，不是高階摘要
 
@@ -178,6 +178,8 @@ PREREGISTER → LAUNCH_PENDING → RUNNING_QLIB → ARTIFACT_READY → VERDICT �
 
 - `[C]` `TECHNICAL_INCOMPLETE` 必須附：失敗層級（card-local vs shared-layer）、最後一次 run_id、terminal evidence 路徑、未完成原因；寫入該 round 的 `/results/…/verdict.json`，comment 只放人類摘要。
 - `[C]` 禁止用 `done` 掩蓋失敗：沒有 terminal evidence 的失敗只能 `blocked` 或 `TECHNICAL_INCOMPLETE`。
+- `[C]` **v1.4.0 family verdict 對映（cohort survivor disposition）**：0 個 cohort survivor → verdict `REJECT`；**>=1 個 → verdict `PASS`**（恰 1 個 = disposition band `SURVIVOR_FOUND`，>1 個 = band `MULTIPLE_SURVIVORS`；**band 只描述 survivor 數量，不是 verdict**）；coverage／技術不完整 → `TECHNICAL_INCOMPLETE`。`FINALIST` 仍在 verdict 列舉內（v1.3.x 已凍結的 artifacts 與其他終結原因可續用），但**v1.4.0 的 cohort-survivor disposition 永不產生 `FINALIST`**。`performance_claimable` 只由 §9.6 的客觀條件決定；survivor 數量 >1 **不**構成 false 的理由。
+- `[C]` 上表是 verdict 的語意；band → verdict 的對映屬本 contract 的版本化條文（§7.3）。disposition **版本字串**（`cohort-disposition-v1`）版本化的是 cohort 判定語意（selector 步驟、五項 survivor 要求、band 集合），v1.4.0 未更動這些；因此 engine 在每筆輸出揭露 `contract_semantics_version`／`disposition_mapping_version`，讓 v1.3.x 已凍結的 artifacts 仍可被讀成它們原本的語意，而不被重新貼標。
 
 ## 7. 卡間狀態機（A→B→C ordering chain）
 
@@ -211,7 +213,7 @@ PREREGISTER → LAUNCH_PENDING → RUNNING_QLIB → ARTIFACT_READY → VERDICT �
 - `[C]` 現行 production 計算面就是 Qlib container（§3/§9）；full-backtest 的完成與可宣稱性**不依賴** Nautilus 或任何下游 acceptance 階段（§9.6/§17）。
 - `[C]` **production 序列是 sequential A→B→C**：A 卡完整結案（`done`，任何 verdict）後才進 B，B 完整結案後才進 C；同一時刻只有一張 active strategy card（§7）。
 - `[C]` 多 family 一次全 universe 混跑**不是** production 模式，也不得作為 production 效能證據；若要探索，必須是獨立研究卡，並在該 family 的 `family.json` 的 `lineage_note` 載明其非 production 身分。
-- `[C]` **family gate（v1.3.0）＝ cohort survivor disposition**（細節 §7.3）：0 個 cohort survivor → `REJECT / NO_SURVIVOR`；恰 1 個 → `SURVIVOR_FOUND`；>1 個 → `MULTIPLE_SURVIVORS`；coverage/技術不完整 → `TECHNICAL_INCOMPLETE`（且不做任何 cohort 判定）。
+- `[C]` **family gate（v1.3.0；v1.4.0 調整對映）＝ cohort survivor disposition**（細節 §7.3）：0 個 cohort survivor → `REJECT / NO_SURVIVOR`；**>=1 個即通過基本研究 gate**（恰 1 個 → `SURVIVOR_FOUND` band，>1 個 → `MULTIPLE_SURVIVORS` band；verdict 皆為 `PASS`，且**全部 survivors 都保留並進入下游，不做排序／淘汰／二選一**）；coverage/技術不完整 → `TECHNICAL_INCOMPLETE`（且不做任何 cohort 判定）。
 - `[C]` **跨 20 個 cohort 的 median PnL / Sharpe 不得再作為 family 的 REJECT gate**：v1.2.0（含）以前的跨 timeframe median 門檻已廢除，只允許作為 descriptive diagnostic，並必須在 artifacts 中明確標示 `non_gating`。完整搜尋的意義是「每個 cohort 都被獨立判定」，不是「所有 timeframe 都要通過」。
 - `[C]` `insufficient trades` / `no-signal` 只淘汰**該 cohort**，不影響其他 cohort，也不使 family 直接失敗。
 - `[C]` survivor 證據必須逐 cohort 列出：symbol/timeframe、strategy params、DCA params、historical / OOS / full metrics、robustness（四個 stress grid）、parameter-neighbourhood 結果。落點為 attempt `artifacts/cohort_results.json` 與 `artifacts/cohort_survivors.json`，摘要寫入 `result.json`。
@@ -232,10 +234,12 @@ PREREGISTER → LAUNCH_PENDING → RUNNING_QLIB → ARTIFACT_READY → VERDICT �
   d) robustness：同一組參數在 `fee_2x`、`funding_2x`、`entry_delay_1_bar`、`slippage_2ticks` 四個 grid 全部 `net_pnl > 0`；
   e) parameter-neighbourhood stability：在**完整 joint 空間**（strategy domain × DCA domain）中，winner cell 的 legal 面鄰居（單一軸 ±1 步，且仍在註冊域內）至少 **60%** 與 winner 的 historical net-PnL 同號；**鄰域判定只准使用 historical**，不得使用 OOS。
 - `[C]` cohort 淘汰原因必須逐項記錄（`cull_reasons`），不得只寫「失敗」。
-- `[C]` **family disposition 與 verdict 對映**：0 個 survivor → `REJECT`（`performance_claimable=false`）；恰 1 個 → `SURVIVOR_FOUND`（verdict `PASS`；`performance_claimable` 仍須滿足 §9.6 全部條件）；>1 個 → `MULTIPLE_SURVIVORS`（verdict `FINALIST`：研究門檻已通過，但多個 survivor 之間的取捨屬下游/operator 決策，故 `performance_claimable=false`）；coverage 或技術不完整 → `TECHNICAL_INCOMPLETE`。
+- `[C]` **family disposition 與 verdict 對映（v1.4.0）**：0 個 survivor → `REJECT`（`performance_claimable=false`）；**>=1 個 → verdict `PASS`**（恰 1 個 → band `SURVIVOR_FOUND`；>1 個 → band `MULTIPLE_SURVIVORS`；兩者同為 `PASS`，band 只描述數量）；coverage 或技術不完整 → `TECHNICAL_INCOMPLETE`。
+- `[C]` **survivor 數量 >1 不是降級**：多個 survivor 之間**不得**做人工二選一、排序或淘汰；**全部** survivor 一律保留、一律進入下游，並由 §10.8 的 frozen survivor bundle 完整凍結。survivor 數量**不得**被當成 `performance_claimable=false` 的理由（§9.6 是唯一依據）。
+- `[C]` **band → verdict 對映的版本邊界（v1.4.0）**：`cohort-disposition-v1` 版本化的是 cohort 判定語意——selector 五個步驟、survivor 五項要求（a–e）與四個 disposition band；v1.4.0 未更動其中任何一項，只更動由 band 導出 verdict／可宣稱性的那張對映表，而該表屬本 contract 的版本化條文。因此 v1.4.0 **不**改寫 `cohort-disposition-v1` 的字串，也**不**回寫任何既有 artifacts；engine 於每筆輸出揭露其套用的對映版本（`contract_semantics_version`／`disposition_mapping_version`），使 v1.3.x 的 artifact 可被讀成它原本的語意。新的 round-spec 必須逐字引用 v1.4.0 的對映（見 §10.2 與 templates）。
 - `[C]` selector 的歷史段限定必須是**可執行**檢查（實作上對輸入列做 `window_kind == "historical"` 守衛）；不是僅靠敘述。runner 另以「同一組資料洗牌後重選必須得到同一 cell」自我檢查決定性。
-- `[C]` runner 的輸出（`disposition` / `verdict_recommendation` / `performance_claimable_recommendation`）是**建議**；final verdict 仍由 default 依 §10.7 寫入 `verdict.json`（與 v1.2.0 一致）。
-- `[T]` v1.3.0 的 cohort selector / survivor gate 已有實作與邏輯層測試（`container/scripts/tests/test_strategy_a_engine.py`），但**尚未有任何正式 family 以 v1.3.0 語意實跑**；`[T]` 的解除條件是 Strategy A v2 全量回測完成並寫入 `artifacts/cohort_results.json`。
+- `[C]` runner 的輸出（`disposition` / `verdict_recommendation` / `performance_claimable_recommendation`，v1.4.0 另含 `disposition_mapping_version`）是**建議**；final verdict 仍由 default 依 §10.7 寫入 `verdict.json`（與 v1.2.0 一致）。
+- `[V]` v1.3.0 的 cohort selector / survivor gate 已有實作與邏輯層測試（`container/scripts/tests/test_strategy_a_engine.py`）；其 `[T]`「尚未有正式 family 實跑」已於 2026-09-13 由 Strategy A v2（family `close-vs-sma-mean-reversion-long-flat-v2`，round `…-r1` / run `…-r1-u1`，卡片 `t_1f97bf6b`）解除：20/20 cohorts、`coverage_complete=true`、103,680 case evaluations、14/14 assertions true、**2 個 cohort survivor（`BTCUSDT/1h`、`SOLUSDT/4h`）**，`artifacts/cohort_results.json` 與 `artifacts/cohort_survivors.json` 已落地（證據見 `evidence/strategy-a-v2-*.json`）。該 round 的 `verdict.json` 於 v1.3.2 語意下寫為 `FINALIST`／`performance_claimable=false`，**保持 immutable、不回寫**；依 §10.8 由既有 `artifacts/cohort_survivors.json` 生成 survivor bundle，並在 bundle 內標註：在 v1.4.0 語意下**兩個 survivors 都通過基本 gate**。
 
 ## 8. Round / Run lifecycle
 
@@ -305,6 +309,7 @@ family F
 - `[C]` verdict = `PASS`；round 的 spec 事先註冊且未被事後修改；使用 canonical raw（非合成/非替代資料）；無 look-ahead（PIT 檢查通過）；樣本外或明確 out-of-sample 區間；成本/滑價假設已載明；且 §7.2 的 eligible universe 覆蓋（symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness）已依 round artifacts 完成。
 - `[C]` 上列條件齊備即可 `performance_claimable=true`，**不以下游 authoritative acceptance（§17；Nautilus 或等價階段）為前提**：該階段目前 future/out-of-scope、non-blocking，未執行不影響現行 Qlib full-backtest 結論的可宣稱性，也不得據此把結論降級為 `research-only`。
 - `[C]` 未同時滿足者，`performance_claimable=false`，並在該 round 的 `verdict.json` 的 `missing_conditions` 註明缺哪一項。`missing_conditions` 不得以「缺下游 acceptance」為理由。
+- `[C]` **本節是 `performance_claimable` 的唯一依據（v1.4.0 明文化）**：verdict == `PASS` 在 >=1 cohort survivor 時成立（§7.3），因此當 family 有 1 個、2 個或更多 survivor 時，剩下的 9.6 條件相同——都是資料／材料條件（canonical raw、無 look-ahead、明確 OOS、成本假設已載明、§7.2 覆蓋完整）。**survivor 數量本身既不是必要條件也不是拒絕理由**；`missing_conditions` 不得出現「survivor 多於一個」這種項目。
 
 ## 10. Artifact schemas
 
@@ -317,6 +322,7 @@ family F
   rounds/<round_id>/
     round-spec.json                           # immutable：預先註冊的門檻/參數域/falsification + kanban_task_id
     verdict.json                              # immutable：該 round 的 verdict / performance_claimable / yield 判定（見 §10.7）
+    survivor-bundle.json                      # immutable（v1.4.0）：該 round 全部 survivors 的凍結 bundle（見 §10.8）
     attempts/<run_id>/
       run-spec.json                           # immutable：本 attempt 的輸入契約
       result.json                             # immutable：計算結果摘要
@@ -454,6 +460,41 @@ family F
 
 - `[C]` 由 default 讀回 artifacts 後寫入，immutable（INV-4）。family 終結以**最後一個 round** 的 `verdict.json` 為準。
 - `[C]` 這裡是 verdict / `performance_claimable` / yield 判定的唯一 machine-readable 記錄；卡片與 comment 只放人類摘要。
+
+### 10.8 `survivor-bundle.json`（round 的 frozen survivor bundle，v1.4.0）
+
+```json
+{
+  "schema_version": 1,
+  "kind": "frozen_survivor_bundle",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.0",
+  "contract_section": "7.3 / 10.8",
+  "family_id": "…", "round_id": "…", "run_id": "…",
+  "kanban_task_id": "…", "kanban_board": "…",
+  "selector_version": "cohort-selector-v1", "disposition_version": "cohort-disposition-v1",
+  "source_attempt_dir": "…",
+  "survivor_count": 2,
+  "disposition_band": "MULTIPLE_SURVIVORS",
+  "verdict": "PASS",
+  "all_survivors_advance": true,
+  "ranking": null,
+  "note": "…v1.4.0：>=1 cohort survivor 即通過基本研究 gate；全部 survivors 完整凍結並前進，順序為 run 記錄順序、不是排名…",
+  "source_attempt_semantics": {"verdict_mapping": "v1.4.0 | pre-v1.4.0（legacy 揭露）", "…": "…"},
+  "source_verdict_not_rewritten": true,
+  "survivors": ["該 round 全部 survivor 記錄，逐筆照 run 原始內容與順序（含 winner／metrics／neighbourhood）"],
+  "source_artifacts": {"artifacts/cohort_survivors.json": "sha256:…", "result.json": "sha256:…", "DONE": "sha256:…"},
+  "generator": {"path": "runtime/survivor_bundle.py", "sha256": "…"},
+  "bundle_identity_sha256": "sha256:…",
+  "generated_at_utc": "…"
+}
+```
+
+- `[C]` 落點：`rounds/<round_id>/survivor-bundle.json`，immutable。**唯一產生者**是 host 端、純 stdlib、deterministic 的 `runtime/survivor_bundle.py`（與 `terminal_evidence.py` 同層級的 artifact 產生器，**不是** service／daemon／queue，也不進 container）。container 不寫本檔。
+- `[C]` **完整性**：bundle 必須包含**該 round 全部** survivor，逐筆照 `artifacts/cohort_survivors.json` 的內容與順序。**不得**排序、排名、篩選、淘汰或二選一；`ranking` 固定為 `null`、`all_survivors_advance` 固定為 `true`。survivor 數量／順序與 `result.json`、`artifacts/cohort_results.json` 不一致即 fail-closed 拒寫。
+- `[C]` **產生條件**：只允許從 terminal `DONE` 的 attempt 產生，且該 attempt 的 `coverage_complete=true`、`assertions.json` 全為 true、`case_evaluations_total == expected_case_evaluations`；否則拒寫（coverage 不完整的量測不得被凍結）。
+- `[C]` **冪等與不可改寫**：bundle 一旦寫入即不得改寫。重跑同一 attempt → 內容與 `bundle_identity_sha256` 相同時為 no-op；不同時拒寫（INV-4/§11）。`bundle_identity_sha256` 是移除 `generated_at_utc` 後的正規化 JSON sha256，auditor 可獨立重算。
+- `[C]` **legacy 揭露**：若來源 attempt 是在 v1.4.0 之前產生（>1 survivor 的 `verdict_recommendation=FINALIST` 且 `performance_claimable_recommendation=false`），bundle 必須在 `source_attempt_semantics` 逐字揭露該對映，並同時給出 v1.4.0 的 `verdict=PASS`；此揭露**不**改寫來源 artifact，也**不**改寫該 round 已凍結的 `verdict.json`。
+- `[C]` **auditor 可重現**：`python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check` 必須 rc=0（重算與現存 bundle 的 identity 相符）；`source_artifacts` 的每個 checksum 必須可由 auditor 以唯讀命令重算。
 
 ## 11. Idempotency
 
@@ -668,6 +709,9 @@ family F
 
 - `[C]` **本節不是現行 production 的必要階段。** 現行 production 的效能真值來源是 §7.2 的 Qlib full-backtest 及其 round `verdict.json`（§9.6）；本節描述的階段目前 **out-of-scope**，任何一張卡都不得因為它不存在而被降級、被標 `research-only`、或停在未終結狀態。
 - `[C]` `FINALIST` 的語意：研究鏈的科學任務結束，survivor 被凍結。**下一個 family 立即放行**（不等待本節階段）。
+- `[C]` **v1.4.0**：研究鏈科學任務結束的觸發是該 round 的 verdict = `PASS`（>=1 cohort survivor；§7.3）。v1.3.x 已凍結的 `FINALIST` round 語意與 artifacts 不變、不回寫，仍可作為本節下游階段的輸入。
+- `[C]` **v1.4.0 的凍結對象是 `survivor-bundle.json` 內的全部 survivor**（§10.8），不是「被選出的那一個」。下游 authoritative acceptance 若執行，必須對 bundle 內**每一個** survivor 分別回報 `ACCEPTED`／`REJECTED`／`DISPUTED`，並**不得**在 survivor 之間排序、取捨、挑選、只驗證其中一個，或把未選中的 survivor 當成不存在。
+- `[C]` **v1.4.0**：`performance_claimable` 只看 §9.6 的客觀條件；survivor 數量 >1 不得作為降級為 `research-only` 或 false 的理由（§9.6）。
 - `[C]` frozen survivor 的定義：`PASS` 的參數集 + 其 round/run 的 immutable artifacts + `performance_claimable=true` 的研究結論，以 `frozen_at_utc` 與 checksum 釘死。
 - `[C]` 未來若引入此階段（例如以 Nautilus 實作），它**只能**：
   1. 對**已凍結**的 survivor 做獨立真值驗證：獨立資料源/獨立 fill model/獨立成本模型。
@@ -737,8 +781,8 @@ family F
 4. `[T]` R3：reconciler 腳本化（no_agent cron），以既有 sentinel 做 dry-run 對帳 → `runtime/reconcile.py --dry-run` 已可執行（2026-09-13 實測）；但 cron 的正式掛載（以及 apply 的第一次真實放行）仍待 operator 在**無 fence 的 host context**完成，見 §9.4 的執行環境限制。
 5. `[T]` R4：第一張正式 strategy card（family A）全流程；觀察 yield policy 紀錄。
 6. `[C]` 每階段完成後必須有 DB 讀回證據；階段未過不得前進。
-7. `[T]` R5（v1.3.0）：**Strategy A v2** 以 cohort survivor 語意全量回測 —— family `close-vs-sma-mean-reversion-long-flat-v2`，20 cohorts × 12 strategy × 48 DCA × 9 phase grids = 103,680 case evaluations。前置條件：v1.3.0 audit PASS、A v2 round-spec/run-spec 由 `runtime/templates/` 實例化並落地、P1–P10 全綠、部署的 runner sha256 與 run-spec 相符。**尚未啟動**。
-8. `[T]` R6（v1.3.0）：Strategy B 卡的最終 operator 處置（archive 為 operator-stopped，或續留 `blocked`）＋ pool 候選重新 author 為 v1.3.0 body ＋ handoff cron 重新啟用；在此三者完成前，§14.4 的 append 一律不動作。
+7. `[V]` R5（v1.3.0）：**Strategy A v2 已完成** —— family `close-vs-sma-mean-reversion-long-flat-v2`，20 cohorts × 12 strategy × 48 DCA × 9 phase grids = 103,680 case evaluations，2026-09-13 以 `container exec --detach` exact-once 投遞、runtime 1302 s、terminal `DONE`（卡片 `t_1f97bf6b`）。結果：`coverage_complete=true`、14/14 assertions true、2 個 cohort survivor（`BTCUSDT/1h`、`SOLUSDT/4h`）。該 round 的 `verdict.json` 為 v1.3.2 語意下的 `FINALIST`（immutable、不回寫）；依 v1.4.0 §10.8 另生成 survivor bundle，bundle 內標註兩個 survivors 在 v1.4.0 語意下**都通過基本 gate**。
+8. `[T]` R6（v1.4.0）：Strategy B v2 —— v1.4.0 已備妥 preregistration／templates（`runtime/templates/strategy_b_v2_{round,run}_spec.template.json`：20 cohorts × 120 strategy × 48 DCA × 10 phase grids = 1,152,000 case evaluations、cohort survivor 語意與 v1.4.0 對映），但 **B v2 engine 尚未實作**（v1.4.0 的 B runner 是 launch 前置條件；已 operator-stopped 的 B v1 runner 為 archive-only，不得重用）、**未 launch**、卡面未建立。Strategy B v1 卡維持 operator-stopped（`blocked`、無 verdict）；§14.4 的 append 與 handoff cron `624d0be5b23c` 一律保持 **paused**，直到 operator 明確放行。
 
 ### 21.2 必要 smoke / failure drills（每項都要有可重現證據）
 
@@ -790,6 +834,8 @@ family F
 - **A20** production blocker 與 deferred hardening 已分級（附錄 B / §21.2）：D1–D13 與 T5–T8 等不得被當成第一張 strategy card 的前置 gate；只有 launch/終結/稽核不可缺的最小項才算 blocker。`[C]`
 - **A23** per-fill 成本會計有明確定義且可執行驗收：每個 entry／DCA add／exit fill 的 taker fee 在該 fill 時點扣入 realised equity，`net_pnl`／`ending_equity`／每日 equity marks／Sharpe／margin 判定全為 net-of-fee，且 `fee_2x` 等成本壓力軌必須實質改變 net PnL／equity／robustness verdict；engine 層有 free／costly／`fee_2x` 迴歸（`container/scripts/tests/test_strategy_a_engine.py`），且這些迴歸在未修版本上必須失敗。`[C]`
 - **A24** DCA provenance 有分類要求（`PROJECT_PRE_REGISTERED_SEARCH_DOMAIN` / `PROJECT_PRE_REGISTERED_CONSTANT` / `USER_FIXED`）與可執行強制（`runtime/strategy_a_v2_counts.py` 的 provenance 檢查 + round-spec/run-spec 分類一致），且被搜尋的軸或無 operator 證據的常數**不得**標為 user-fixed。`[C]`
+- **A26** v1.4.0 family gate 明寫「0 survivor → `REJECT`、**>=1 survivor → `PASS`**、coverage／技術不完整 → `TECHNICAL_INCOMPLETE`」，`MULTIPLE_SURVIVORS` 只是 disposition band 而非 verdict，且 survivor 數 >1 **不得**使 `performance_claimable=false`（唯一依據是 §9.6）；engine 的建議輸出與 §6.4/§7.3 一致，並有可執行迴歸（0／1／2+ 三個 band＋survivor 順序置換不變＋`disposition_mapping_version` 揭露）。`[C]`
+- **A27** round 的 frozen survivor bundle（§10.8）具備：固定落點、**全部** survivor、不得排序／淘汰／二選一、不得改寫、只從 terminal `DONE` 且 `coverage_complete=true`／assertions 全 true 的 attempt 產生、可獨立重算的 identity，以及可執行檢查（`runtime/survivor_bundle.py` ＋ `runtime/tests/test_survivor_bundle.py`，含 legacy 語意揭露與 fail-closed 負向控制）；Strategy A v2 round r1 的既有 `verdict.json` 保持 immutable 且 bundle 由既有 `cohort_survivors.json` 生成、含兩個 survivors。`[C]`
 - **A25** gross PnL 有獨立的 price-PnL accumulator（每個 exit／flatten 只累加 exit proceeds − cost basis，不含 fee／funding；entry／add 不動 gross），`result`/grid 的 `gross_pnl` 直接來自該 accumulator，且 `pnl_decomposition` 是兩個獨立來源的交叉比對並有**負向控制**證明非恆真（`TestGrossPnlAccounting` 在未修版本上失敗）。`[C]`
 
 ## 23. Auditor checklist（唯讀，逐項打勾）
@@ -805,6 +851,8 @@ family F
 9. `[C]` 只給 PASS 或 FAIL；FAIL 必須列 blocking evidence 與具體段落；不做 remediation。
 10. `[C]` 全文 cross-reference 檢查：不得殘留「以 task-level metadata 作 durable state」、「對 `scheduled` 卡直接 block」、「`/qlib/work` 必然 shared-layer freeze」三類舊敘述；有殘留即 FAIL 並指出行號。
 11. `[C]` **engine 變更的 auditor 可執行驗證（v1.3.2）**：repo commit 的 runner/test bytes 必須同時存在於一個**明確非 production** 的 audit-only staging path（例：host `/Users/hong/workspace/qlib-apple-container/staging/<version>/**` ＋ container `/qlib/work/staging/<version>/**`，自身 `SHA256SUMS` 與 `README`），其 sha256 必須與 repo commit bytes 逐位元一致；auditor 在 `qlib-run` 內以 `/opt/venv/bin/python`（`SA_ENGINE_PATH` 指 staging runner）跑 v1.3.1+ engine tests 並全數通過。staging 不得新增 daemon/service、不得改寫 host `/scripts` 的 frozen A v1 部署副本、不得對 `/results` 產生 production artifacts（§7.2 v1.3.2、§25）。
+
+12. `[C]` **v1.4.0 可執行驗證**：`python3 runtime/tests/test_survivor_bundle.py`（bundle 完整性／順序／冪等／legacy 揭露／fail-closed 負向控制）與 `python3 runtime/tests/test_strategy_b_v2_templates.py`（B v2 preregistration：20 cohorts × strategy domain × DCA domain × 10 phase grids × cohort survivor 語意 × v1.4.0 對映 × 未 launch 聲明）全綠；engine 變更以 audit-only staging（item 11 的同一機制，`staging/v1.4.0/**`，bytes 與 repo commit 逐位元一致）在 `qlib-run` 內以 `/opt/venv/bin/python` 實跑並全數通過；Strategy A v2 round 的 `verdict.json` checksum 必須仍為 `sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3`（immutable、未回寫），且 `rounds/<round_id>/survivor-bundle.json` 內含**兩個** survivors（`BTCUSDT/1h`、`SOLUSDT/4h`）並標註其在 v1.4.0 語意下皆通過基本 gate。`[C]`
 
 ## 24. Worked examples
 
@@ -854,8 +902,11 @@ boot id 與 sentinel（無）不符
 
 ### 24.5 例：下游 authoritative acceptance（future／out-of-scope，非現行 production 路徑）
 ```
-FINALIST → frozen_survivor.json (checksum 釘死) → 下一個 family B 立即 ready
-                                        ↘ （future，可選）另開 acceptance 卡（assignee 依屆時契約）
+round verdict PASS（>=1 cohort survivor；v1.3.x 已凍結的 FINALIST round 保持原語意與 checksum）
+  → rounds/<round_id>/survivor-bundle.json（§10.8：ALL survivors、identity sha256 釘死、ranking=null）
+  → 下一個 family 立即 ready
+                                        ↘ （future，可選）另開 acceptance 卡（assignee 依屆時契約；
+                                           必須逐一處理 bundle 內全部 survivor，不得挑選其中一個）
 ```
 - `[C]` 現行 production 在 FINALIST 之後**只需要**放行下一個 family；acceptance 階段不存在也不影響任何 verdict 或 claim。
 - `[C]` 未來若真的開卡：acceptance 卡只能驗證 frozen survivor；若其結果 `DISPUTED`，不得回頭改 F-r* 的 artifacts（走 §26 / §17）。
@@ -886,12 +937,20 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
   family disposition (count of SURVIVOR cohorts)
     0 => REJECT / NO_SURVIVOR       (verdict REJECT, performance_claimable false)
     1 => SURVIVOR_FOUND             (verdict PASS; performance_claimable still needs all of 9.6)
-    >1 => MULTIPLE_SURVIVORS        (verdict FINALIST; performance_claimable false)
+    >1 => MULTIPLE_SURVIVORS        (verdict PASS as well: >=1 survivor passes the basic gate;
+                                     EVERY survivor is frozen in the survivor bundle and advances;
+                                     the count never forces performance_claimable false)
     coverage incomplete => TECHNICAL_INCOMPLETE (no cohort is judged at all)
+
+  round level (v1.4.0) => rounds/<round_id>/survivor-bundle.json
+    {survivor_count: 2, disposition_band: MULTIPLE_SURVIVORS, verdict: PASS,
+     ranking: null, all_survivors_advance: true, survivors: [ALL of them, in recorded order],
+     source_artifacts: {cohort_survivors.json: sha256:…, result.json: sha256:…, DONE: sha256:…}}
 ```
 - `[C]` 過程中沒有「跨 20 cohort median 未過 → 整個 family REJECT」這條路徑；median 只出現在 `descriptive_diagnostics`（`non_gating: true`）。
 - `[C]` 沒有 OOS 選參、沒有看過 OOS 後換組、沒有因為某個 timeframe 全滅而縮小 eligible universe。
 - `[C]` `verdict.json` 由 default 依 §10.7 寫入；runner 的 `verdict_recommendation` 只是建議。
+- `[C]` v1.4.0：survivor bundle 由 default 依 §10.8 從該 attempt 的既有 artifacts 生成（`runtime/survivor_bundle.py`），**不**改寫任何既有 immutable artifact；順序即 run 的記錄順序，不是排名。
 
 ## 25. 禁止事項（硬規則）
 
@@ -926,6 +985,10 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 - `[C]` 禁止把單一 work volume（`/qlib/work`）故障當 shared-layer freeze（§12.5）。
 - `[C]` 禁止把 `[T]` 條目當作已具備能力引用。
 - `[C]` 禁止同一張卡自我審計。
+- `[C]` 禁止把「survivor 數量 >1」當成 `performance_claimable=false`（或降級為 `research-only`）的理由（§7.3/§9.6）。
+- `[C]` 禁止對 round 的 survivors 排序、排名、淘汰或二選一：全部 survivor 必須完整凍結於 `rounds/<round_id>/survivor-bundle.json` 並全部前進（§7.3/§10.8）。
+- `[C]` 禁止改寫已凍結的 `survivor-bundle.json`，或由非 terminal `DONE`／`coverage_complete≠true`／assertions 含 false 的 attempt 產生 bundle（§10.8）。
+- `[C]` 禁止把 v1.3.x 已凍結的 artifacts（含 Strategy A v2 round r1 的 `verdict.json`）回寫成 v1.4.0 語意；語意變更一律以新 round／新 family 落地，並在 bundle／verdict 內揭露來源語意（§7.3/§10.8/§26）。
 - `[C]` 禁止在 comment/artifact 或任何卡片欄位寫入 secrets 或 PII。
 
 ## 26. Change control
@@ -968,8 +1031,11 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 | T10 | 多筆 terminal evidence / checksum 衝突的仲裁 | 契約已定（§12.6）+ fail-closed 路徑已實作於 `runtime/reconcile.py`（含 incident JSONL 寫入）；未實戰 | `DEFERRED`（fail-closed 已可執行） | D3/D4/D5 變體 + D13；驗證 incident artifact 落地 |
 | T11 | `/results/*/family.json` ownership/lineage 落地 | 尚無正式 family | `BLOCKER`（隨第一張卡產生） | R4 第一張 strategy card 時檔案落地，auditor 可唯讀重算 fingerprint |
 | T12 | round `verdict.json` 與 incident artifact 寫入器 | incident 寫入器**已落地（最小版）**於 `runtime/reconcile.py`；`verdict.json` 仍由 default 人工寫入（維持最小設計） | `DEFERRED`（verdict.json 為 default 的判斷動作，不是自動化缺口） | 事後以檔案讀回驗證（欄位齊備、JSON 可解析） |
-| T13 | v1.3.0 cohort selector / survivor gate（`cohort-selector-v1` / `cohort-disposition-v1`） | **已落地（最小版）**：`container/scripts/20_strategy_a_run.py` 的 `select_cohort_winner` / `cohort_neighbourhood` / `evaluate_cohort` / `family_disposition`，含「historical-only」守衛與決定性自我檢查；邏輯層 `container/scripts/tests/test_strategy_a_engine.py` **35/35 OK**（host 端 numpy interpreter ＋ `qlib-run` 內 `/opt/venv/bin/python`，2026-09-13；v1.3.1 為 29、v1.3.2 新增 6 個獨立 gross PnL 檢定） | `BLOCKER`（隨 Strategy A v2 一起產生真實 artifacts） | Strategy A v2 attempt 的 `artifacts/cohort_results.json` + `cohort_survivors.json` + `result.json` 的 `disposition` |
-| T14 | Strategy A v2 pre-registration 計數驗證 | **已落地（最小版）**：`runtime/strategy_a_v2_counts.py`（純 stdlib，`--out` 寫 evidence）＋ `runtime/tests/test_strategy_a_v2_counts.py` **14/14 OK**（v1.3.1 provenance 負向控制後；v1.3.0 為 9/9）；2026-09-13 實跑 → `cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680`、fingerprint MATCH、`ok=True` | `BLOCKER`（隨 Strategy A v2 一起落地） | 重跑 `python3 runtime/strategy_a_v2_counts.py --run-spec <instantiated run-spec>` 為 rc 0 |
+| T13 | v1.3.0 cohort selector / survivor gate（`cohort-selector-v1` / `cohort-disposition-v1`） | **已落地（最小版）**：`container/scripts/20_strategy_a_run.py` 的 `select_cohort_winner` / `cohort_neighbourhood` / `evaluate_cohort` / `family_disposition`，含「historical-only」守衛與決定性自我檢查；邏輯層 `container/scripts/tests/test_strategy_a_engine.py` **35/35 OK**（host 端 numpy interpreter ＋ `qlib-run` 內 `/opt/venv/bin/python`，2026-09-13；v1.3.1 為 29、v1.3.2 新增 6 個獨立 gross PnL 檢定） | **已完成**（Strategy A v2 r1-u1 真實 artifacts：20/20 cohorts、`coverage_complete=true`、2 survivors `BTCUSDT/1h`＋`SOLUSDT/4h`；見 `evidence/strategy-a-v2-*.json`），v1.4.0 另生成 survivor bundle | Strategy A v2 attempt 的 `artifacts/cohort_results.json` + `cohort_survivors.json` + `result.json` 的 `disposition` |
+| T14 | Strategy A v2 pre-registration 計數驗證 | **已落地（最小版）**：`runtime/strategy_a_v2_counts.py`（純 stdlib，`--out` 寫 evidence）＋ `runtime/tests/test_strategy_a_v2_counts.py` **14/14 OK**（v1.3.1 provenance 負向控制後；v1.3.0 為 9/9）；2026-09-13 實跑 → `cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680`、fingerprint MATCH、`ok=True` | **已完成**（實例化的 r1 run-spec 已通過；counts 103,680 見 `evidence/strategy-a-v2-counts-instantiated-20260913.json`） | 重跑 `python3 runtime/strategy_a_v2_counts.py --run-spec <instantiated run-spec>` 為 rc 0 |
+
+| T15 | v1.4.0 frozen survivor bundle（§10.8） | **已落地（最小版）** `runtime/survivor_bundle.py` ＋ `runtime/tests/test_survivor_bundle.py`（13 檢定）；Strategy A v2 round r1 的真實 bundle 已生成（2 survivors、identity `sha256:c051759f…`） | — | `python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check` rc=0；bundle 內含全部 survivors |
+| T16 | Strategy B v2 preregistration | **已備妥、未實作、未 launch**：`runtime/templates/strategy_b_v2_{round,run}_spec.template.json` ＋ `runtime/tests/test_strategy_b_v2_templates.py`（8 檢定）；B v2 engine 不存在（B v1 runner 為 archive-only）；handoff cron 保持 paused | — | `python3 runtime/tests/test_strategy_b_v2_templates.py` rc=0 |
 
 ## 附錄 C：變更記錄
 
@@ -1007,6 +1073,8 @@ py3.12（container image 版本）`py_compile` 通過；container 內 engine che
 **M1（archive hygiene）**：`git mv` 後 `shasum -a 256` 顯示 `evidence/strategy-b-operator-stopped/runtime/30_strategy_b_run.py` = `f10a64cdca3daf8b409070f6e42d39015a5df65a30de6a610cedff2a1fa1b3d4`、`…/tests/test_strategy_b_engine.py` = `574ce5c6e62d42f051dc00162ab0255c94be6e47080e23336cf95eb7182d040f`（與移動前逐位元相同，runner sha 仍等於 u2 run-spec 所 pin 的值）；`container exec qlib-run ls /scripts` 與 `ls /scripts/tests` 已不含 B 檔案（host 部署副本同步移除）；存檔的 B engine test 以 `SB_ENGINE_PATH=<archive path>` 在 `qlib-run` 內重跑 → **27/27 OK**（唯讀驗證，非從 active 路徑執行）。
 **未變動項**：`python3 runtime/tests/test_production_handoff.py` 24/24、`python3 runtime/tests/test_reconcile.py` 23/23、`python3 runtime/tests/test_preflight_p10.py` 10/10、`python3 runtime/preflight.py` → P1–P8 PASS／rc=0（P9/P10 無 attempt 故 NA）、`python3 runtime/reconcile.py --dry-run` → `scanned=6 incidents=0`／rc=0；`hermes cron list --all` 讀回 job `624d0be5b23c` = **paused**；board 最新卡仍為本卡（`t_6c83c9fb`），無 Strategy A v2 卡，`/results` 無 `close-vs-sma-mean-reversion-long-flat-v2` 目錄，B 卡仍 `blocked` 且其 `/results` artifacts 未動。文件狀態：AUDITED FAIL（v1.3.1；auditor t_23f4c3ef，2026-09-13；來源為 auditor t_246c62d7 對 v1.3.0 的 FAIL）。
 
+| v1.4.0 | 2026-09-13 | **family gate：all survivors advance**：§6.4 新增 band → verdict 對映 `[C]` 與 mapping 版本揭露；§7.2/§7.3 改為「0 survivor → `REJECT`、**>=1 survivor → `PASS`**（`SURVIVOR_FOUND`／`MULTIPLE_SURVIVORS` 僅為 band）」，`FINALIST` 不再由 cohort-survivor disposition 產生；survivor 數 >1 **不得**使 `performance_claimable=false`（§9.6 為唯一依據）；新增 **§10.8 frozen survivor bundle**（`rounds/<round_id>/survivor-bundle.json`：全部 survivors、`ranking=null`、不得改寫、只由 terminal `DONE` 且 coverage／assertions 全真之 attempt 產生、identity 可獨立重算）＋ §10.1 layout ＋ `runtime/survivor_bundle.py`；§17 改寫凍結對象為 bundle 內全部 survivor 並要求下游逐一處理；§21.1 R5 由 `[T]` 轉 `[V]`（A v2 已完成）並改寫 R6（B v2 preregistration 已備、engine 未實作、未 launch、cron paused）；§22 新增 A26/A27；§23 新增 checklist item 12；§25 新增四條禁令；§24.5/§24.6 對齊；附錄 B 更新 T13/T14 並新增 T15/T16。**engine**：`container/scripts/20_strategy_a_run.py` 的 `family_disposition` 改為 >=1 → `PASS`，新增 `CONTRACT_SEMANTICS_VERSION`、`mapping_version` 與 summary 的 `contract_semantics_version`／`disposition_mapping_version`；`container/scripts/tests/test_strategy_a_engine.py` 由 35 → **37** 檢定（multi-band、順序置換不變、mapping 版本揭露）。**Strategy A v2 round r1 的 `verdict.json` 不回寫**（checksum 仍為 `sha256:cb470adf…`）；survivor bundle 由既有 `artifacts/cohort_survivors.json` 生成並揭露 legacy 來源語意。**Strategy B v1 維持 operator-stopped**（無 verdict、archive-only runner）；新增 **B v2 preregistration**（20 cohorts × 120 strategy × 48 DCA × 10 phase grids = 1,152,000 case evaluations、cohort survivor 語意、v1.4.0 對映、未 launch）。**語意不變**：sequential A→B→C、§7.3 selector／survivor 五項要求、§9.4 reconciler、§14.4 handoff、§16 preflight、§7.2 per-fill 成本會計／獨立 gross PnL／DCA provenance、INV-8/§1.2（未新增 Manager/Service/Factory/Registry/Orchestrator、daemon、queue、第二套 engine 或第二套 runtime） | ChatGPT（GPT-5.6 Sol）卡片 t_24cc6167（operator 決策：>=1 cohort survivor 即通過基本 gate、多個 survivors 全部保留並前進、新增 frozen survivor bundle、B v2 preregistration 備妥但不 launch） |
+
 驗證方式（v1.3.2）：§26 change control 檢查（版本／日期／條號／理由／驗證方式）+ §22 A1–A25 自檢 + 全文 cross-reference 掃描（新增禁語兩組：「把 `gross_pnl` 由 net 反向回推」、「覆蓋 host `/scripts` 的 frozen A v1 部署副本」；並確認 §7.2 per-fill 成本會計與 DCA provenance classification、§7.3 selector/disposition、§9.4 reconciler、§14.4 handoff、§16 preflight、§1.2 非目標未被改寫）+ 實跑證據（全部在 repo `main`；**未建立**任何 Strategy A v2 family／card／results，未寫 `/results`，未新增 daemon/service）：
 **F3（獨立 gross PnL 會計）**：`container/scripts/20_strategy_a_run.py` 新增 `exit_price_pnl()`／`pnl_decomposition_ok()`，`simulate()` 的 **4 個** exit／flatten 路徑各自餵入 `gross_pnl` accumulator（`gross_pnl += exit_price_pnl(qty * xpx, cost)`），`"gross_pnl": realized + fees_total + funding_paid` 已刪除，`summarize()` 的 `pnl_decomposition` 改呼叫同一函式。於 `qlib-run` 內以 **staging bytes** 執行：
 `container exec qlib-run env SA_ENGINE_PATH=/qlib/work/staging/v1.3.2/20_strategy_a_run.py /opt/venv/bin/python /qlib/work/staging/v1.3.2/tests/test_strategy_a_engine.py` → **`Ran 35 tests ... OK`**（v1.3.1 的 29 個全數保留 + `TestGrossPnlAccounting` 6 個：單次 TP 與 ladder stop 的獨立手算 gross/net、`fee_2x` 只動 net 不動 gross、gross 路徑 monkeypatch 負向控制、fee「只扣不入帳」負向控制、gross 不得反向回推的結構守衛）。**同一組新檢定在未修版本（`c04504c` 的 bytes，sha256 `dda304307051564f8c104b18ad4fc06887b17c4757c3ab73eb7168a1181831a0`）上 5/6 FAIL**（`FAILED (failures=1, errors=4)`）。
@@ -1015,3 +1083,9 @@ v1.3.1 bytes：`gross=109.9400 fees=0.0000 net=109.9400 gap=0.000000`（gross �
 v1.3.2 bytes：`gross=120.0000 fees=0.0000 net=109.9400 gap=10.060000`（gross 不隨 tamper 移動，`pnl_decomposition_ok` = **False**）。host 端同檔以 numpy 2.0.2 interpreter 亦為 **35/35 OK**。
 **F4（audit-only staging，不 launch）**：host `/Users/hong/workspace/qlib-apple-container/staging/v1.3.2/`（`20_strategy_a_run.py`、`tests/test_strategy_a_engine.py`、`SHA256SUMS`、`README.md`）＋ container `/qlib/work/staging/v1.3.2/`；`shasum -a 256 -c SHA256SUMS` → OK，engine sha256 `c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f`（51,775 bytes）、test sha256 `d5ddb2475e047addf5a3fe9e4c4fdccb98526e29a79d90fa3b977a8a45097b5d`（33,984 bytes），container 內 `sha256sum` 逐位元相同；與 repo commit bytes 的一致性以 `git cat-file blob HEAD:<path> | shasum -a 256` 重算比對（見該 staging `README.md` 的指令）。**frozen A v1 部署副本未動**：host `qlib-apple-container/scripts/20_strategy_a_run.py` 仍為 sha256 `8f3ce89deebc14902f940d677cf5e3fef209e3f3a78d5dc10d0974964961df16`／38,208 bytes／mtime `2026-09-13 02:16:18`，container `sha256sum /scripts/20_strategy_a_run.py` 相同、`/scripts/tests` 內容不變；staging 不改 active `/scripts` mount、不寫 `/results`、不新增 cron/daemon/service。
 **未變動項**：`python3 runtime/tests/test_production_handoff.py` 24/24、`runtime/tests/test_reconcile.py` 23/23、`runtime/tests/test_preflight_p10.py` 10/10、`runtime/tests/test_strategy_a_v2_counts.py` 14/14、`runtime/preflight.py` → P1–P8 PASS／rc=0（P9/P10 無 attempt 故 NA）、`runtime/reconcile.py --dry-run` → rc=0；`python3 runtime/strategy_a_v2_counts.py --run-spec runtime/templates/strategy_a_v2_run_spec.template.json` → `cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680 fingerprint=MATCH ok=True`（**counts 仍為 103,680**）；`hermes cron list --all` 讀回 job `624d0be5b23c` = **paused**；`/Volumes/ExpansionDrive/qlib-results/` 無 `close-vs-sma-mean-reversion-long-flat-v2` 目錄，本 run 未呼叫 `kanban_create`（無 A v2 卡）；B 卡仍 `blocked` 且其 `/results` artifacts 未動。文件狀態：**AUDITED PASS / FROZEN**（v1.3.2；audited content commit `0363011`，auditor `t_3ffaeeb8`，2026-09-13；卡片 t_33457313 為 auditor t_23f4c3ef 對 v1.3.1 的 FAIL（F3/F4）之最小 remediation）。
+
+驗證方式（v1.4.0）：§26 change control 檢查（版本／日期／條號／理由／驗證方式）＋ §22 A1–A27 自檢 ＋ 全文 cross-reference 掃描（新增禁語四組：「survivor 數 >1 作為 `performance_claimable=false` 的理由」、「對 survivors 排序／淘汰／二選一」、「改寫已凍結 `survivor-bundle.json`／由非 terminal attempt 產生 bundle」、「把 v1.3.x 已凍結 artifacts 回寫成 v1.4.0 語意」；並確認 §7.3 selector／survivor 五項要求、§9.4 reconciler、§14.4 handoff、§16 preflight、§1.2 非目標未被改寫）＋ 實跑證據（全部在 repo `main`；本次**未**建立任何新 family／卡／run；唯一寫入 `/results` 的是 A v2 round r1 的 `survivor-bundle.json`，未動任何既有 artifact）：
+**engine（v1.4.0 mapping）**：`SA_ENGINE_PATH=<repo>/container/scripts/20_strategy_a_run.py python3 container/scripts/tests/test_strategy_a_engine.py` → **37/37 OK**（v1.3.2 的 35 個全數保留 ＋ 2 個新增：multi-survivor band 的 permutation 不變、`disposition_mapping_version` 揭露）。**audit-only staging**：host `qlib-apple-container/staging/v1.4.0/**` ＋ container `/qlib/work/staging/v1.4.0/**`（`SHA256SUMS`：engine `sha256 1c42d254…`、test `sha256 61389308…`，與 repo commit bytes 逐位元一致；`sha256sum -c` OK），在 `qlib-run` 內以 `SA_ENGINE_PATH=/qlib/work/staging/v1.4.0/20_strategy_a_run.py /opt/venv/bin/python …/tests/test_strategy_a_engine.py` 實跑 → **`Ran 37 tests ... OK`**。active `/scripts/20_strategy_a_run.py` 仍為 A v2 所 pin 的 v1.3.2（`sha256 c4f9a216…`），**未被覆蓋**。
+**frozen survivor bundle**：`python3 runtime/tests/test_survivor_bundle.py` → **13/13 OK**（含 legacy 揭露、count／order 不一致拒寫、非 terminal `DONE` 拒寫、`coverage_complete`／assertions 負向控制、idempotent 不覆寫、identity 對 survivor 順序敏感）。以既有 artifacts 生成 A v2 round r1 的 bundle：`python3 runtime/survivor_bundle.py --attempt-dir …/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1` → `written`、`survivor_count=2`、`survivors=[BTCUSDT/1h, SOLUSDT/4h]`、bundle identity `sha256:c051759f…`；`--check` → `check_clean`、rc=0。**immutable 未動**：該 round `verdict.json` 仍為 `sha256:cb470adf…`（與 v1.3.2 記錄的 `verdict_sha256` 一致）、`result.json` 仍為 `sha256:012e6d1a…`；bundle 內 `source_attempt_semantics` 逐字揭露來源為 pre-v1.4.0 對映（`FINALIST` ＋ `performance_claimable=false`），同時給出 v1.4.0 的 `verdict=PASS`，`source_verdict_not_rewritten=true`。
+**B v2 preregistration**：`python3 runtime/tests/test_strategy_b_v2_templates.py` → **8/8 OK**（20 cohorts、120 strategy × 48 DCA × 10 phase grids = 1,152,000、cohort survivor 語意、v1.4.0 對映、未 launch 聲明；注入 legacy `FINALIST`、縮域、錯誤計數、搬移 split、捏造 fingerprint 皆被拒）。
+**未變動項**：`test_strategy_a_v2_counts.py` 14/14、`test_reconcile.py` 23/23、`test_preflight_p10.py` 10/10、`test_production_handoff.py` 24/24；`python3 runtime/strategy_a_v2_counts.py --run-spec runtime/templates/strategy_a_v2_run_spec.template.json` → `cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680 fingerprint=MATCH ok=True`（counts 仍為 103,680）；`hermes cron list --all` 讀回 job `624d0be5b23c` = **paused**；Strategy B v1 卡仍 `blocked`、其 `/results` artifacts 未動。文件狀態：**AWAITING AUDIT**（v1.4.0；卡片 t_24cc6167）。

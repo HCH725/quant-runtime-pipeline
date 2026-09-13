@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "kind": "strategy-a-v2-survivor-bundle-snapshot",
+  "recorded_at_utc": "2026-09-13T02:05:46Z",
+  "kanban_task": "t_24cc6167",
+  "contract_version": "v1.4.0",
+  "note": "Frozen survivor bundle of Strategy A v2 round r1, produced by runtime/survivor_bundle.py from the already-frozen attempt artifacts (contract 10.8).  The round's verdict.json was NOT rewritten; its sha256 is unchanged at sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3. Host-specific absolute paths are redacted (<EXPANSION>/<REPO>/<HOME>) exactly as evidence/README.md requires.  Snapshot, not runtime state.",
+  "bundle_path": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json",
+  "bundle_sha256": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+  "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+  "v1_4_0_semantics": "both frozen survivors (BTCUSDT/1h, SOLUSDT/4h) pass the basic research gate: >=1 cohort survivor is verdict PASS; MULTIPLE_SURVIVORS is a disposition band only, and the count never forces performance_claimable false",
+  "bundle": {
+    "schema_version": 1,
+    "kind": "frozen_survivor_bundle",
+    "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.0",
+    "contract_section": "7.3 / 10.8",
+    "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+    "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+    "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+    "kanban_task_id": "t_1f97bf6b",
+    "kanban_board": "quant-strategy-research",
+    "selector_version": "cohort-selector-v1",
+    "disposition_version": "cohort-disposition-v1",
+    "source_attempt_dir": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+    "survivor_count": 2,
+    "disposition_band": "MULTIPLE_SURVIVORS",
+    "verdict": "PASS",
+    "all_survivors_advance": true,
+    "ranking": null,
+    "note": "v1.4.0: >=1 cohort survivor passes the basic research gate, so every survivor listed here passes it. All 2 survivor(s) are frozen and advance; they are listed in the order the run recorded them, which is NOT a ranking, and no survivor is dropped, ranked or picked among. performance_claimable is decided by contract 9.6 alone.",
+    "source_attempt_semantics": {
+      "verdict_mapping": "pre-v1.4.0 (the attempt ran under contract < v1.4.0)",
+      "verdict_recommendation_recorded_in_result_json": "FINALIST",
+      "performance_claimable_recommendation_recorded_in_result_json": false,
+      "why_tolerated": "the >1-survivor FINALIST mapping plus performance_claimable=false is the semantics v1.4.0 replaces; the source attempt is immutable and is never rewritten, so the bundle records the v1.4.0 verdict (PASS) while disclosing the semantics the source artifacts were written under"
+    },
+    "source_verdict_not_rewritten": true,
+    "survivors": [
+      {
+        "cohort": "BTCUSDT/1h",
+        "outcome": "SURVIVOR",
+        "no_winner_reason": null,
+        "cull_reasons": [],
+        "winner": {
+          "window": 20,
+          "discount": 0.03,
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 5,
+          "same_sign_fraction": 0.833333,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "passed": true
+        },
+        "metrics": {
+          "historical": {
+            "net_pnl": 14790.093348,
+            "sharpe": 0.676463,
+            "episodes": 170,
+            "ending_equity": 44790.093348,
+            "fees": 6750.845753,
+            "funding": 150.567721,
+            "max_dd_usdt": -6522.553451,
+            "max_dd_pct": -0.199943,
+            "max_effective_leverage": 9.96216,
+            "capital_utilization": 0.171114
+          },
+          "oos": {
+            "net_pnl": 6016.344052,
+            "sharpe": 0.536464,
+            "episodes": 34,
+            "ending_equity": 36016.344052,
+            "fees": 1743.891637,
+            "funding": 23.038695,
+            "max_dd_usdt": -6124.419748,
+            "max_dd_pct": -0.150469,
+            "max_effective_leverage": 9.349163,
+            "capital_utilization": 0.160537
+          },
+          "full": {
+            "net_pnl": 14913.47311,
+            "sharpe": 0.588432,
+            "episodes": 204,
+            "ending_equity": 44913.47311,
+            "fees": 8621.873688,
+            "funding": 212.029681,
+            "max_dd_usdt": -12017.384038,
+            "max_dd_pct": -0.21656,
+            "max_effective_leverage": 9.96216,
+            "capital_utilization": 0.160526
+          },
+          "robustness": {
+            "fee_2x": {
+              "net_pnl": 11353.765787,
+              "sharpe": 0.475937,
+              "episodes": 204,
+              "ending_equity": 41353.765787,
+              "fees": 16407.905342,
+              "funding": 143.670705,
+              "max_dd_usdt": -10752.036978,
+              "max_dd_pct": -0.342882,
+              "max_effective_leverage": 9.968208,
+              "capital_utilization": 0.16452
+            },
+            "funding_2x": {
+              "net_pnl": 14701.443429,
+              "sharpe": 0.580853,
+              "episodes": 204,
+              "ending_equity": 44701.443429,
+              "fees": 8621.873688,
+              "funding": 424.059362,
+              "max_dd_usdt": -12078.115849,
+              "max_dd_pct": -0.218248,
+              "max_effective_leverage": 9.96216,
+              "capital_utilization": 0.160698
+            },
+            "entry_delay_1_bar": {
+              "net_pnl": 12210.28144,
+              "sharpe": 0.483266,
+              "episodes": 202,
+              "ending_equity": 42210.28144,
+              "fees": 9350.84375,
+              "funding": 126.374693,
+              "max_dd_usdt": -13747.178936,
+              "max_dd_pct": -0.257778,
+              "max_effective_leverage": 9.873819,
+              "capital_utilization": 0.151202
+            },
+            "slippage_2ticks": {
+              "net_pnl": 14876.072721,
+              "sharpe": 0.587101,
+              "episodes": 204,
+              "ending_equity": 44876.072721,
+              "fees": 8621.854978,
+              "funding": 212.029153,
+              "max_dd_usdt": -12019.654044,
+              "max_dd_pct": -0.216737,
+              "max_effective_leverage": 9.964811,
+              "capital_utilization": 0.160623
+            }
+          },
+          "no_funding_reference": {
+            "net_pnl": 14940.661069,
+            "sharpe": 0.68326,
+            "episodes": 170,
+            "ending_equity": 44940.661069,
+            "fees": 6750.845753,
+            "funding": 0.0,
+            "max_dd_usdt": -6522.553451,
+            "max_dd_pct": -0.199943,
+            "max_effective_leverage": 9.96216,
+            "capital_utilization": 0.171022
+          }
+        }
+      },
+      {
+        "cohort": "SOLUSDT/4h",
+        "outcome": "SURVIVOR",
+        "no_winner_reason": null,
+        "cull_reasons": [],
+        "winner": {
+          "window": 100,
+          "discount": 0.03,
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "neighbourhood": {
+          "neighbours": 7,
+          "agreeing": 6,
+          "same_sign_fraction": 0.857143,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "passed": true
+        },
+        "metrics": {
+          "historical": {
+            "net_pnl": 51035.16769,
+            "sharpe": 4.017045,
+            "episodes": 184,
+            "ending_equity": 81035.16769,
+            "fees": 5853.473689,
+            "funding": 65.459561,
+            "max_dd_usdt": -707.279796,
+            "max_dd_pct": -0.009704,
+            "max_effective_leverage": 7.330064,
+            "capital_utilization": 0.059173
+          },
+          "oos": {
+            "net_pnl": 8485.605171,
+            "sharpe": 2.17438,
+            "episodes": 41,
+            "ending_equity": 38485.605171,
+            "fees": 993.990418,
+            "funding": -18.758655,
+            "max_dd_usdt": -133.414358,
+            "max_dd_pct": -0.003455,
+            "max_effective_leverage": 3.400981,
+            "capital_utilization": 0.056342
+          },
+          "full": {
+            "net_pnl": 60695.711357,
+            "sharpe": 4.396559,
+            "episodes": 226,
+            "ending_equity": 90695.711357,
+            "fees": 6979.398992,
+            "funding": 46.175016,
+            "max_dd_usdt": -707.279796,
+            "max_dd_pct": -0.009704,
+            "max_effective_leverage": 7.330064,
+            "capital_utilization": 0.049641
+          },
+          "robustness": {
+            "fee_2x": {
+              "net_pnl": 53716.312365,
+              "sharpe": 4.390801,
+              "episodes": 226,
+              "ending_equity": 83716.312365,
+              "fees": 13958.797983,
+              "funding": 46.175016,
+              "max_dd_usdt": -735.984796,
+              "max_dd_pct": -0.010831,
+              "max_effective_leverage": 7.367927,
+              "capital_utilization": 0.052276
+            },
+            "funding_2x": {
+              "net_pnl": 60649.53634,
+              "sharpe": 4.399323,
+              "episodes": 226,
+              "ending_equity": 90649.53634,
+              "fees": 6979.398992,
+              "funding": 92.350033,
+              "max_dd_usdt": -707.279796,
+              "max_dd_pct": -0.009713,
+              "max_effective_leverage": 7.330064,
+              "capital_utilization": 0.049654
+            },
+            "entry_delay_1_bar": {
+              "net_pnl": 17375.485091,
+              "sharpe": 0.637267,
+              "episodes": 218,
+              "ending_equity": 47375.485091,
+              "fees": 6220.03774,
+              "funding": 66.850015,
+              "max_dd_usdt": -31843.619511,
+              "max_dd_pct": -0.412841,
+              "max_effective_leverage": 6.782704,
+              "capital_utilization": 0.051464
+            },
+            "slippage_2ticks": {
+              "net_pnl": 62226.3253,
+              "sharpe": 4.379434,
+              "episodes": 226,
+              "ending_equity": 92226.3253,
+              "fees": 7331.681937,
+              "funding": 49.169216,
+              "max_dd_usdt": -712.641807,
+              "max_dd_pct": -0.009619,
+              "max_effective_leverage": 7.337455,
+              "capital_utilization": 0.05306
+            }
+          },
+          "no_funding_reference": {
+            "net_pnl": 51100.627251,
+            "sharpe": 4.015304,
+            "episodes": 184,
+            "ending_equity": 81100.627251,
+            "fees": 5853.473689,
+            "funding": 0.0,
+            "max_dd_usdt": -707.279796,
+            "max_dd_pct": -0.009695,
+            "max_effective_leverage": 7.330064,
+            "capital_utilization": 0.059161
+          }
+        }
+      }
+    ],
+    "source_artifacts": {
+      "DONE": "sha256:f74e600ce29197e6556ebcaecfee24ed647ccbd9e65239d97afda28aeaca261d",
+      "artifacts/assertions.json": "sha256:539fd0e5ceba1109fd43a17f0c79fb23e1110e487d80e384eeea5410b9b4982f",
+      "artifacts/cohort_results.json": "sha256:4fedd270390c134b76fd71ef19fd1f81163555fc67998952987145474e53dfc8",
+      "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+      "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+      "round-spec.json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+      "run-spec.json": "sha256:aa51cce779e2c3b7823f834879aa2c46b1de8e9e5c9277def594231ca7da32b5",
+      "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3"
+    },
+    "generator": {
+      "path": "runtime/survivor_bundle.py",
+      "sha256": "sha256:b9f2b97aea54033ff26bc18c52c54c24d61f635da139b123d37355d78211b5da"
+    },
+    "generated_at_utc": "2026-09-13T01:55:50Z",
+    "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363"
+  }
+}
