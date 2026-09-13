@@ -11,6 +11,11 @@ artifact that decides what "all survivors advance" means in practice, so these c
   * the v1.4.1 identity recipe: the published `bundle_identity_sha256` is the canonical JSON
     digest of everything EXCEPT `generated_at_utc` and the identity column itself, recomputed
     from the persisted file by an independent stdlib implementation (the F1 regression pin),
+  * the v1.4.2 replay-comparison scope pin: of the producer-identity fields, only the top-level
+    `contract` and the nested `generator.sha256` may be ignored, so an edit to `generator.path`
+    that recomputes the public identity to look self-consistent is still refused by `--check`
+    and by the writer, and a non-dict `generator` is compared rather than normalised away (the
+    F2 regression pin),
   * fail-closed behaviour: a non-terminal attempt, a mismatched survivor count/order, false
     assertions, incomplete coverage, or a disagreeing disposition band all refuse to freeze,
   * tamper control: a frozen bundle whose measurement, or whose published identity, no longer
@@ -121,7 +126,7 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertTrue(bundle["all_survivors_advance"])
         self.assertIsNone(bundle["ranking"])
         self.assertEqual(bundle["contract_section"], "7.3 / 10.8")
-        self.assertIn("v1.4.1", bundle["contract"])
+        self.assertIn("v1.4.2", bundle["contract"])
 
     def test_one_survivor_band_and_verdict(self):
         bundle, problems = sb.build(make_attempt(self.root, [survivor(A)]))
@@ -264,6 +269,67 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         payload = json.loads(proc.stdout)
         self.assertEqual(payload["bundle_identity_sha256"], bundle["bundle_identity_sha256"])
+        self.assertTrue(payload["identity_recipe_matches"])
+
+    def test_check_refuses_a_self_consistent_generator_path_tamper(self):
+        # F2 regression pin (auditor t_3edafbb9): contract 10.8 lets the replay comparison ignore
+        # ONLY two producer-identity keys - top-level `contract` and the nested
+        # `generator.sha256`.  `generator.path` is provenance of the measurement and stays inside
+        # the comparison, so an edit that recomputes the public identity to look self-consistent
+        # must still be refused by both `--check` and the writer.
+        attempt = make_attempt(self.root, [survivor(A), survivor(B)])
+        bundle, problems = sb.build(attempt)
+        self.assertEqual(problems, [])
+        out = os.path.join(os.path.dirname(os.path.dirname(attempt)), "survivor-bundle.json")
+        self.assertEqual(sb.write_bundle(copy.deepcopy(bundle), out), "written")
+
+        with open(out) as fh:
+            tampered = json.load(fh)
+        self.assertEqual(tampered["generator"]["path"], "runtime/survivor_bundle.py")
+        tampered["generator"]["path"] = "tampered/other_writer.py"
+        # only the PUBLIC identity is recomputed, with the independent 10.8 recipe: this is the
+        # attacker who hides the edit from the "does the file agree with itself?" check
+        tampered["bundle_identity_sha256"] = recipe_identity(tampered)
+        with open(out, "w") as fh:
+            json.dump(tampered, fh)
+
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--check", "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("does not match the attempt", proc.stderr)
+
+        # ... and the writer must refuse to treat it as its own frozen content
+        self.assertEqual(sb.write_bundle(sb.build(attempt)[0], out), "refused_different_bytes")
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("already exists with different content", proc.stderr)
+        with open(out) as fh:
+            self.assertEqual(json.load(fh)["generator"]["path"], "tampered/other_writer.py",
+                             "a refused bundle is never rewritten")
+
+        # a non-dict generator is compared as it stands, not normalised away
+        self.assertNotEqual(sb.content_identity({"generator": "runtime/survivor_bundle.py"}),
+                            sb.content_identity({"generator": "tampered/other_writer.py"}))
+
+        # control: the OTHER 10.8 exception still behaves - with the measurement untouched, a
+        # corrected writer (new contract string, new own-hash, same path) is a no-op and clean
+        control_attempt = make_attempt(os.path.join(self.root, "control"), [survivor(A), survivor(B)])
+        control_bundle, problems = sb.build(control_attempt)
+        self.assertEqual(problems, [])
+        control_out = os.path.join(os.path.dirname(os.path.dirname(control_attempt)),
+                                   "survivor-bundle.json")
+        self.assertEqual(sb.write_bundle(copy.deepcopy(control_bundle), control_out), "written")
+        newer = copy.deepcopy(control_bundle)
+        newer["contract"] = "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.99"
+        newer["generator"] = {"path": "runtime/survivor_bundle.py", "sha256": "sha256:" + "3" * 64}
+        newer["bundle_identity_sha256"] = sb.identity(newer)
+        self.assertEqual(sb.write_bundle(newer, control_out), "already_identical")
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", control_attempt, "--check",
+                               "--json"], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["result"], "check_clean")
         self.assertTrue(payload["identity_recipe_matches"])
 
     def test_multi_survivor_must_not_force_performance_claimable_false(self):

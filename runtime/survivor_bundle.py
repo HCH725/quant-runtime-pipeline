@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Frozen survivor bundle writer (Contract v1.4.1, sections 7.3 / 10.8).
+"""Frozen survivor bundle writer (Contract v1.4.2, sections 7.3 / 10.8).
 
-Contract v1.4.1 says: a strategy family passes the basic research gate as soon as it has
+Contract v1.4.2 says: a strategy family passes the basic research gate as soon as it has
 AT LEAST ONE cohort survivor, and EVERY survivor of the round is kept and advances.  The
 family's survivors are therefore frozen as one bundle - not as a ranking, not as a
 shortlist, and never as a single chosen cell.
@@ -38,7 +38,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "frozen_survivor_bundle"
-CONTRACT_VERSION = "v1.4.1"
+CONTRACT_VERSION = "v1.4.2"
 TERMINAL_OK = "DONE"
 # The v1.4.0 disposition bands (contract 7.3).  >=1 survivor passes the basic gate;
 # the count selects the BAND, never the verdict.
@@ -108,17 +108,32 @@ def identity_problems(obj, label):
 # Producer-identity metadata: the contract version string this writer was built against, and
 # the writer's own file hash.  Both change whenever the writer itself is corrected (fixing this
 # writer's identity recipe changes its own hash), so the "did the measurement change?"
-# comparison excludes exactly these two on top of the identity exclusions.  Everything else -
-# including the human-readable note and every source checksum - stays inside the comparison.
-# The frozen file keeps recording them, and they remain covered by the published identity, so
-# the provenance of a bundle frozen by an earlier writer is never silently rewritten.
-PRODUCER_KEYS = ("contract", "generator")
+# comparison excludes exactly these two keys on top of the identity exclusions.  Contract 10.8
+# names them by exact key - top-level `contract`, and the nested `sha256` key of `generator` -
+# so every other field, `generator.path` included, stays inside the comparison.  Everything else
+# - including the human-readable note and every source checksum - stays inside it too.  The
+# frozen file keeps recording them, and they remain covered by the published identity, so the
+# provenance of a bundle frozen by an earlier writer is never silently rewritten.
+CONTENT_EXCLUDED_TOP_LEVEL_KEYS = ("contract",)
+CONTENT_EXCLUDED_GENERATOR_KEYS = ("sha256",)
 
 
 def content_identity(obj):
-    """Identity of the measured content only - used to compare a rebuild with a frozen file."""
+    """Identity of the measured content only - used to compare a rebuild with a frozen file.
+
+    Excludes the identity-recipe keys plus exactly the two producer-identity keys contract 10.8
+    allows to be ignored: top-level `contract` and the nested `generator.sha256`.  The exclusion
+    is per key, never per object: `generator.path` and every other `generator` field are
+    compared, because the writer's path is measurement provenance - a tamper that recomputes the
+    public identity to look self-consistent must still be refused.  A `generator` that is not a
+    dict is left untouched (included as it stands) instead of being normalised away.
+    """
     body = {k: v for k, v in obj.items()
-            if k not in IDENTITY_EXCLUDED_KEYS and k not in PRODUCER_KEYS}
+            if k not in IDENTITY_EXCLUDED_KEYS and k not in CONTENT_EXCLUDED_TOP_LEVEL_KEYS}
+    generator = body.get("generator")
+    if isinstance(generator, dict):
+        body["generator"] = {k: v for k, v in generator.items()
+                             if k not in CONTENT_EXCLUDED_GENERATOR_KEYS}
     return "sha256:" + hashlib.sha256(canonical(body).encode()).hexdigest()
 
 
@@ -306,7 +321,7 @@ def write_bundle(bundle, out_path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Frozen survivor bundle writer (contract v1.4.1)")
+    ap = argparse.ArgumentParser(description="Frozen survivor bundle writer (contract v1.4.2)")
     ap.add_argument("--attempt-dir", required=True, help="the terminally DONE attempt directory")
     ap.add_argument("--out", default=None,
                     help="bundle path (default: <round-dir>/survivor-bundle.json, itself derived "

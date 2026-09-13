@@ -1,0 +1,126 @@
+{
+  "kind": "v1.4.2-bundle-replay-scope-remediation-verification",
+  "generated_at_utc": "2026-09-13T03:27:06Z",
+  "contract_version": "v1.4.2 (AWAITING AUDIT)",
+  "remediation_card": "t_670a86af",
+  "audited_finding": {
+    "audit_card": "t_3edafbb9",
+    "audited_commit": "5d142144d5ab749516e16f1ee5b61f6b5a6edb84",
+    "code": "F2",
+    "severity": "blocking",
+    "summary": "content_identity() excluded the whole generator object (PRODUCER_KEYS = (\"contract\", \"generator\")), so generator.path was outside the replay comparison; a bundle whose generator.path was edited and whose public bundle_identity_sha256 was recomputed to look self-consistent was still accepted by --check (rc=0/check_clean) and by the writer (rc=0/already_identical). Contract 10.8 permits ignoring only the top-level contract key and the nested generator.sha256 key."
+  },
+  "replay_comparison_scope": {
+    "rule": "contract 10.8: the measurement comparison ignores exactly two producer-identity keys on top of the identity recipe exclusions (generated_at_utc, bundle_identity_sha256) - top-level `contract` and nested `generator.sha256`",
+    "exclusion_is_per_key_not_per_object": true,
+    "generator_path_compared": true,
+    "non_dict_generator_compared_as_it_stands": true,
+    "implementation": "runtime/survivor_bundle.py: CONTENT_EXCLUDED_TOP_LEVEL_KEYS = (\"contract\",) + CONTENT_EXCLUDED_GENERATOR_KEYS = (\"sha256\",); content_identity() copies the top-level body, then - only when generator is a dict - drops the `sha256` key from a copy of it",
+    "contract_version_bumped_to": "v1.4.2"
+  },
+  "frozen_artifact_under_test": {
+    "bundle_path": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json",
+    "attempt_dir": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+    "survivors": ["BTCUSDT/1h", "SOLUSDT/4h"],
+    "survivor_count": 2,
+    "disposition_band": "MULTIPLE_SURVIVORS",
+    "verdict": "PASS",
+    "ranking": null,
+    "all_survivors_advance": true,
+    "generator_path": "runtime/survivor_bundle.py"
+  },
+  "f2_reproducer": {
+    "script": "<WORKSPACE>/f2_reproducer.py (pure stdlib; every mutation on a /tmp copy of the round; the frozen artifacts are only read)",
+    "copy_baseline": {
+      "rebased": "only source_attempt_dir re-based to the copied attempt path, then the public identity re-signed with the contract 10.8 recipe",
+      "check_rc": 0
+    },
+    "generator_path_tamper_self_consistent": {
+      "mutation": "generator.path = \"tampered/other_writer.py\"; bundle_identity_sha256 recomputed with the pure-stdlib 10.8 recipe",
+      "identity_is_self_consistent": true,
+      "check_rc": 1,
+      "check_stderr": "REFUSED: the measurement in <tmp bundle> does not match the attempt's artifacts (recomputed content identity sha256:fd0587c94fedd6616a979b1d8145443b7fd14fd773c03eb41db39ffb44ebe46b)",
+      "writer_rc": 1,
+      "writer_stderr": "REFUSED: <tmp bundle> already exists with different content; a frozen bundle is never rewritten (contract 10.8)",
+      "bundle_not_rewritten": true,
+      "v1_4_1_behaviour_was": "check rc=0/check_clean and writer rc=0/already_identical (the F2 false acceptance)"
+    },
+    "non_dict_generator": {
+      "mutation": "generator = \"runtime/survivor_bundle.py\" (a string), public identity re-signed",
+      "check_rc": 1,
+      "expected": "must be compared as it stands, never normalised away"
+    },
+    "restored_baseline_check_rc": 0,
+    "restored_baseline_result": "check_clean"
+  },
+  "control_the_allowed_exceptions_still_behave": {
+    "mutation": "contract string changed and generator.sha256 changed (generator.path untouched); public identity re-signed with the 10.8 recipe",
+    "check_rc": 0,
+    "check_result": "check_clean",
+    "identity_recipe_matches": true,
+    "library_writer_result": "already_identical",
+    "why_it_matters": "a remediation that stopped excluding these keys would break every frozen bundle on --check and force an immutable artifact rewrite; the per-key fix keeps this control green"
+  },
+  "f1_not_regressed": {
+    "independent_recompute_stdlib_only": {
+      "imports_repo_writer": false,
+      "drop_generated_at_utc_and_bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "published_bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "match": true,
+      "drop_generated_at_utc_only_v1_4_0_wording": "sha256:810e1d6cf85c05aa99ad396c5fd1ff8b7d3d819b59029a7cea7f7594063f3d6d",
+      "drop_generated_at_utc_only_matches_published": false
+    },
+    "writer_check_on_the_frozen_bundle": {
+      "command": "python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check --json",
+      "rc": 0,
+      "result": "check_clean",
+      "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "identity_recomputed_from_persisted_file": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "identity_recipe_matches": true
+    }
+  },
+  "regression_test_is_not_vacuous": {
+    "test": "runtime/tests/test_survivor_bundle.py::TestSurvivorBundle::test_check_refuses_a_self_consistent_generator_path_tamper",
+    "on_the_remediated_writer": "PASS",
+    "on_the_5d14214_writer": "FAIL (the old content_identity excluded the whole generator object, so the tampered copy was reported check_clean rc=0)"
+  },
+  "immutable_artifacts_unchanged_across_verification": {
+    "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+    "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+    "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+    "published_identity_unchanged": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "generator_path_unchanged": true,
+    "identical_before_and_after": true,
+    "bundle_regenerated": false
+  },
+  "test_evidence": {
+    "runtime/tests/test_survivor_bundle.py": "18/18 OK (was 17; +1: the F2 generator.path self-consistent tamper regression, including the generator.sha256 + contract control and the non-dict generator comparison)",
+    "runtime/tests/test_strategy_b_v2_templates.py": "8/8 OK",
+    "runtime/tests/test_strategy_a_v2_counts.py": "14/14 OK",
+    "runtime/tests/test_reconcile.py": "23/23 OK",
+    "runtime/tests/test_preflight_p10.py": "10/10 OK",
+    "runtime/tests/test_production_handoff.py": "24/24 OK",
+    "container/scripts/tests/test_strategy_a_engine.py": "37/37 OK with SA_ENGINE_PATH=<repo>/container/scripts/20_strategy_a_run.py; the audit-only staging copy <HOST>/qlib-apple-container/staging/v1.4.0/** passes its SHA256SUMS check and 37/37 the same way; the active container /scripts and /results were not touched",
+    "runtime/strategy_a_v2_counts.py": "cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680 fingerprint=MATCH ok=True (counts unchanged)",
+    "runtime/preflight.py": "P1-P8 PASS, rc=0 (P9/P10 NA without an attempt); the P3 hidden probe was created and removed, <EXPANSION>/qlib-results read back with no residue",
+    "runtime/reconcile.py --dry-run": "scanned=7 incidents=0, rc=0"
+  },
+  "unchanged_state_checks": {
+    "family_gate_all_survivors_advance": "unchanged (>=1 survivor -> PASS; MULTIPLE_SURVIVORS is a band only)",
+    "identity_recipe": "unchanged (10.8 two exclusions: generated_at_utc, bundle_identity_sha256)",
+    "strategy_b_v2_preregistration": "templates unchanged, B v2 engine/results directory absent, not launched",
+    "strategy_b_v1_card": "t_3e696dce still blocked",
+    "handoff_cron": "624d0be5b23c paused (no-agent); read-only listing only, nothing scheduled or changed",
+    "qlib_run_container": "running, qlib:0.9.7-arm64, started 2026-09-12T09:29:02Z (not rebuilt)",
+    "engine_runner_bytes": "container/scripts/20_strategy_a_run.py untouched by this remediation"
+  },
+  "files_changed": [
+    "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+    "runtime/survivor_bundle.py",
+    "runtime/tests/test_survivor_bundle.py",
+    "README.md",
+    "evidence/README.md",
+    "evidence/v1.4.2-bundle-replay-scope-remediation-20260913.json"
+  ]
+}
