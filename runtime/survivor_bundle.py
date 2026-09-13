@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Frozen survivor bundle writer (Contract v1.4.2, sections 7.3 / 10.8).
+"""Frozen survivor bundle writer (Contract v1.5.0, sections 7.3 / 10.8).
 
-Contract v1.4.2 says: a strategy family passes the basic research gate as soon as it has
+Contract says (v1.4.0 mapping, unchanged by v1.5.0, section 7.3): a strategy family passes the
+basic research gate as soon as it has
 AT LEAST ONE cohort survivor, and EVERY survivor of the round is kept and advances.  The
 family's survivors are therefore frozen as one bundle - not as a ranking, not as a
 shortlist, and never as a single chosen cell.
@@ -38,7 +39,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "frozen_survivor_bundle"
-CONTRACT_VERSION = "v1.4.2"
+CONTRACT_VERSION = "v1.5.0"
 TERMINAL_OK = "DONE"
 # The v1.4.0 disposition bands (contract 7.3).  >=1 survivor passes the basic gate;
 # the count selects the BAND, never the verdict.

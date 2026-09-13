@@ -126,7 +126,7 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertTrue(bundle["all_survivors_advance"])
         self.assertIsNone(bundle["ranking"])
         self.assertEqual(bundle["contract_section"], "7.3 / 10.8")
-        self.assertIn("v1.4.2", bundle["contract"])
+        self.assertIn("v1.5.0", bundle["contract"])
 
     def test_one_survivor_band_and_verdict(self):
         bundle, problems = sb.build(make_attempt(self.root, [survivor(A)]))

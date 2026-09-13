@@ -1,0 +1,321 @@
+{
+  "kind": "v1.5.0-post-survivor-lifecycle-verification",
+  "generated_at_utc": "2026-09-13T11:28:21Z",
+  "contract_version": "v1.5.0 (AWAITING AUDIT)",
+  "delivery_card": "t_a7cfcdfd",
+  "baseline": {
+    "previous": "v1.4.2 AUDITED PASS / FROZEN",
+    "audited_content_commit": "d699527",
+    "finalization_commit": "288e986"
+  },
+  "scope": {
+    "new": [
+      "runtime/survivor_index.py",
+      "runtime/survivor_leaderboard.py",
+      "runtime/tests/test_post_survivor.py"
+    ],
+    "changed": [
+      "runtime/survivor_bundle.py (CONTRACT_VERSION -> v1.5.0 + docstring)",
+      "runtime/tests/test_survivor_bundle.py (contract string assertion)"
+    ],
+    "not_added": [
+      "no service/daemon/queue/registry/orchestrator",
+      "no cron",
+      "no Strategy B v2 launch",
+      "no second backtester",
+      "no Qlib computation of any kind"
+    ]
+  },
+  "tooling": {
+    "runtime/survivor_index.py": {
+      "sha256": "sha256:40e09a589e7ffbc37aaf7f858df5467e8944757f6c6a899ad529a52d0e22cf87",
+      "bytes": 25097
+    },
+    "runtime/survivor_leaderboard.py": {
+      "sha256": "sha256:7fefd9e2ae9d1e707537cc60ac5e40d2d1c60c918dee4d5a2f63c22745e86d6a",
+      "bytes": 23991
+    },
+    "runtime/survivor_bundle.py": {
+      "sha256": "sha256:d3b2f41f62e1448f5672bedd35e55fafa126ac2da67789815a05c5683a9c9458",
+      "bytes": 20094
+    },
+    "runtime/tests/test_post_survivor.py": {
+      "sha256": "sha256:49e4054f4a3053adb858fc54df0d6c829339696d82fc106f753aba56d0814421",
+      "bytes": 32926
+    },
+    "runtime/tests/test_survivor_bundle.py": {
+      "sha256": "sha256:902839893c0f044fc0e57a721ed6b25a886a3c072c6ce4cf3a977582cc7ac98b",
+      "bytes": 26309
+    }
+  },
+  "seed_run": {
+    "results_root": "<EXPANSION>/qlib-results",
+    "index": {
+      "path": "<EXPANSION>/qlib-results/_survivors/survivor-index.json",
+      "kind": "survivor_index",
+      "contract_section": "27.2",
+      "bundle_count": 1,
+      "survivor_count": 2,
+      "skipped_bundles": [],
+      "sha256": "sha256:87e80504cc7e06db57b78e96c825ef04375e00a7670c5d32df64a1df2a3c6bb2",
+      "survivors": [
+        {
+          "survivor_id": "sv-904822905a811669",
+          "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+          "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+          "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+          "cohort": "BTCUSDT/1h",
+          "symbol": "BTCUSDT",
+          "timeframe": "1h",
+          "strategy_params": {
+            "window": 20,
+            "discount": 0.03
+          },
+          "dca_params": {
+            "spacing_pct": 0.01,
+            "size_multiplier": 1.0,
+            "breakeven_tp_pct": 0.01,
+            "invalidation_pct": 0.1
+          },
+          "params_sha256": "sha256:09343579c45d15a94ab81d2be2e7f61a9814a728d533fe6197f6c6b582f74cf6",
+          "research_data_cutoff": "2026-09-10",
+          "challenger_of": null,
+          "robustness_stress_floor_net_pnl": 11353.765787,
+          "robustness_stress_floor_grid": "fee_2x",
+          "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+          "bundle_sha256": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+          "oos": {
+            "net_pnl": 6016.344052,
+            "sharpe": 0.536464,
+            "episodes": 34,
+            "max_dd_pct": -0.150469
+          },
+          "full": {
+            "net_pnl": 14913.47311,
+            "sharpe": 0.588432,
+            "episodes": 204,
+            "max_dd_pct": -0.21656
+          },
+          "neighbourhood": {
+            "same_sign_fraction": 0.833333,
+            "passed": true,
+            "neighbours": 6,
+            "agreeing": 5
+          }
+        },
+        {
+          "survivor_id": "sv-f762a1da8909a5bf",
+          "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+          "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+          "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+          "cohort": "SOLUSDT/4h",
+          "symbol": "SOLUSDT",
+          "timeframe": "4h",
+          "strategy_params": {
+            "window": 100,
+            "discount": 0.03
+          },
+          "dca_params": {
+            "spacing_pct": 0.01,
+            "size_multiplier": 1.1,
+            "breakeven_tp_pct": 0.01,
+            "invalidation_pct": 0.1
+          },
+          "params_sha256": "sha256:95ca1f1622d9d9138685d8e5d7786d7e13562a1fc969a440e563c384b54e609c",
+          "research_data_cutoff": "2026-09-10",
+          "challenger_of": null,
+          "robustness_stress_floor_net_pnl": 17375.485091,
+          "robustness_stress_floor_grid": "entry_delay_1_bar",
+          "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+          "bundle_sha256": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+          "oos": {
+            "net_pnl": 8485.605171,
+            "sharpe": 2.17438,
+            "episodes": 41,
+            "max_dd_pct": -0.003455
+          },
+          "full": {
+            "net_pnl": 60695.711357,
+            "sharpe": 4.396559,
+            "episodes": 226,
+            "max_dd_pct": -0.009704
+          },
+          "neighbourhood": {
+            "same_sign_fraction": 0.857143,
+            "passed": true,
+            "neighbours": 7,
+            "agreeing": 6
+          }
+        }
+      ]
+    },
+    "leaderboard": {
+      "json": "<EXPANSION>/qlib-results/_survivors/leaderboard.json",
+      "csv": "<EXPANSION>/qlib-results/_survivors/leaderboard.csv",
+      "json_sha256": "sha256:ee9e230892f5896fe68c70f9f3a3377b417cf2ef86b93f4cd427e535020f39d3",
+      "csv_sha256": "sha256:c962bb5c97ff9dc26882ad23171df70ad10cbf380fd224c05d4595433976d9b8",
+      "ordering_rule": [
+        "has_forward DESC (post-freeze evidence outranks the frozen OOS fallback)",
+        "forward_sharpe DESC NULLS LAST",
+        "forward_return_pct DESC NULLS LAST",
+        "forward_max_dd_pct abs() ASC NULLS LAST (a shallower drawdown ranks higher)",
+        "oos_sharpe DESC",
+        "robustness_stress_floor_net_pnl DESC (worst of the four stress reruns; same base capital)",
+        "neighbourhood same_sign_fraction DESC",
+        "survivor_id lexical ASC (last resort, so the order is total and reproducible)"
+      ],
+      "evidence_state_rule": {
+        "FROZEN_ONLY": "no forward slice recorded: frozen OOS/full/robustness evidence only",
+        "ACCUMULATING": "forward slices exist but their total episodes are below the survivor's frozen OOS episode count, i.e. the unseen sample is still shorter than the window the survivor was validated on",
+        "FORWARD_POSITIVE": "enough forward episodes and forward net_pnl > 0 AND forward sharpe > 0",
+        "FORWARD_DEGRADED": "enough forward episodes and forward net_pnl <= 0 OR forward sharpe <= 0"
+      },
+      "survivor_count": 2,
+      "top10_count": 2,
+      "rows": [
+        {
+          "rank": 1,
+          "survivor_id": "sv-f762a1da8909a5bf",
+          "cohort": "SOLUSDT/4h",
+          "evidence_state": "FROZEN_ONLY",
+          "champion_candidate": false,
+          "in_top10": true,
+          "forward": {
+            "has_forward": false,
+            "slices": 0
+          },
+          "oos_sharpe": 2.17438,
+          "oos_net_pnl": 8485.605171,
+          "full_net_pnl": 60695.711357,
+          "robustness_stress_floor_net_pnl": 17375.485091,
+          "params_sha256": "sha256:95ca1f1622d9d9138685d8e5d7786d7e13562a1fc969a440e563c384b54e609c"
+        },
+        {
+          "rank": 2,
+          "survivor_id": "sv-904822905a811669",
+          "cohort": "BTCUSDT/1h",
+          "evidence_state": "FROZEN_ONLY",
+          "champion_candidate": false,
+          "in_top10": true,
+          "forward": {
+            "has_forward": false,
+            "slices": 0
+          },
+          "oos_sharpe": 0.536464,
+          "oos_net_pnl": 6016.344052,
+          "full_net_pnl": 14913.47311,
+          "robustness_stress_floor_net_pnl": 11353.765787,
+          "params_sha256": "sha256:09343579c45d15a94ab81d2be2e7f61a9814a728d533fe6197f6c6b582f74cf6"
+        }
+      ],
+      "why_this_order": "FROZEN_ONLY for both, so the frozen fallback decides: oos_sharpe 2.17438 (SOLUSDT/4h) above 0.536464 (BTCUSDT/1h). Nothing is hard-coded by name: the order is a pure function of the frozen evidence."
+    },
+    "forward_evidence": {
+      "dir": "<EXPANSION>/qlib-results/_survivors/forward",
+      "exists": false,
+      "slices_recorded": 0,
+      "why": "no post-freeze forward run was executed in this delivery (v1.5.0 establishes the artifact contract + ingestion/aggregation path and launches nothing), so both survivors keep a zero-forward state; no forward metric is fabricated anywhere",
+      "fabrication_control": "leaderboard.json keeps forward_sharpe/return_pct/max_dd_pct/last_evidence_end null for both rows while evidence_state=FROZEN_ONLY",
+      "champion_candidates": 0
+    }
+  },
+  "post_freeze_data_availability": {
+    "research_data_cutoff": "2026-09-10",
+    "cutoff_source": "<EXPANSION>/qlib-results/<family>/rounds/<round>/round-spec.json data.data_end, accepted only because the file still hashes to the checksum the frozen bundle recorded in source_artifacts",
+    "raw_klines_last_bar_utc": "2026-09-13T00:00:00Z",
+    "raw_state_path": "<EXPANSION>/market-data-raw/_meta/STATE.json",
+    "post_cutoff_bars_exist": true,
+    "consequence": "raw coverage now extends past the 2026-09-10 research cutoff, so forward slices are producible by a future run of the existing strategy/Qlib execution semantics; v1.5.0 records none and claims none. Producing them is a separate, launch-bearing task."
+  },
+  "frozen_immutables_under_test": {
+    "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "checksums_after_the_seed_run": {
+      "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+      "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+      "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081"
+    },
+    "expected_from_v1_4_x_records": {
+      "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+      "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+      "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081"
+    }
+  },
+  "executable_checks": {
+    "bundle_check": {
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 runtime/survivor_bundle.py --attempt-dir <EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1 --check --json",
+      "rc": 0,
+      "last_line": "}"
+    },
+    "index_written": {
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 runtime/survivor_index.py --json",
+      "rc": 0,
+      "last_line": "}"
+    },
+    "index_check": {
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 runtime/survivor_index.py --check",
+      "rc": 0,
+      "last_line": "  sv-f762a1da8909a5bf  SOLUSDT/4h     cutoff=2026-09-10 params=sha256:95ca1f1622d9d9138685d8e5d7786d7e13562a1fc969a440e563c384b54e609c"
+    },
+    "leaderboard_written": {
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 runtime/survivor_leaderboard.py leaderboard --json",
+      "rc": 0,
+      "last_line": "}"
+    },
+    "leaderboard_check": {
+      "command": "/Applications/Xcode.app/Contents/Developer/usr/bin/python3 runtime/survivor_leaderboard.py leaderboard --check",
+      "rc": 0,
+      "last_line": "  #2  BTCUSDT/1h     FROZEN_ONLY        sv-904822905a811669"
+    },
+    "index_check_after_a_new_bundle": {
+      "drill": "a throwaway copy of the results root with an extra frozen bundle must make --check fail until the derived index is rebuilt",
+      "detail": "covered by runtime/tests/test_post_survivor.py::test_index_cli_writes_checks_and_detects_drift (rc=1 + 'derived artifact'"
+    }
+  },
+  "tests": {
+    "test_post_survivor.py": {
+      "rc": 0,
+      "tests": 25,
+      "result": "OK"
+    },
+    "test_preflight_p10.py": {
+      "rc": 0,
+      "tests": 10,
+      "result": "OK"
+    },
+    "test_production_handoff.py": {
+      "rc": 0,
+      "tests": 24,
+      "result": "OK"
+    },
+    "test_reconcile.py": {
+      "rc": 0,
+      "tests": 23,
+      "result": "OK"
+    },
+    "test_strategy_a_v2_counts.py": {
+      "rc": 0,
+      "tests": 14,
+      "result": "OK"
+    },
+    "test_strategy_b_v2_templates.py": {
+      "rc": 0,
+      "tests": 8,
+      "result": "OK"
+    },
+    "test_survivor_bundle.py": {
+      "rc": 0,
+      "tests": 18,
+      "result": "OK"
+    }
+  },
+  "unchanged_state": {
+    "strategy_b_v2": "not launched (no /results strategy-b* directory)",
+    "cron_624d0be5b23c": "paused (read back with hermes cron list --all)",
+    "qlib_run_container": "running (qlib:0.9.7-arm64, started 2026-09-12T09:29:02Z, not rebuilt)",
+    "strategy_b_v1_card": "t_3e696dce still blocked",
+    "writes_outside_delivery": "only /results/_survivors/{survivor-index.json,leaderboard.json,leaderboard.csv} were created; no round or attempt directory was written"
+  },
+  "redaction": "host-specific absolute paths are replaced by <EXPANSION>/<REPO>/<HOME>; no other edit"
+}
