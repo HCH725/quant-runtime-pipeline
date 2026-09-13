@@ -8,11 +8,18 @@ artifact that decides what "all survivors advance" means in practice, so these c
     no dropped survivor (and the identity is order-sensitive, i.e. the writer does not sort),
   * the v1.4.0 disposition/verdict mapping (0 -> REJECT, >=1 -> PASS) and the disappearance
     of the old "more than one survivor forces performance_claimable false" gate,
+  * the v1.4.1 identity recipe: the published `bundle_identity_sha256` is the canonical JSON
+    digest of everything EXCEPT `generated_at_utc` and the identity column itself, recomputed
+    from the persisted file by an independent stdlib implementation (the F1 regression pin),
   * fail-closed behaviour: a non-terminal attempt, a mismatched survivor count/order, false
     assertions, incomplete coverage, or a disagreeing disposition band all refuse to freeze,
+  * tamper control: a frozen bundle whose measurement, or whose published identity, no longer
+    matches the attempt's artifacts is refused by `--check` (and never rewritten), while a
+    corrected writer with unchanged measurement still recognises its own frozen content,
   * idempotency: an identical bundle is a no-op, a different one is never overwritten.
 """
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -32,6 +39,20 @@ _spec.loader.exec_module(sb)
 
 A = "BTCUSDT/1h"
 B = "SOLUSDT/4h"
+
+# Independent, stdlib-only reimplementation of the contract 10.8 identity recipe.  It is
+# deliberately NOT sb.identity(): the point of the check is that a third party reproduces the
+# published value from the persisted file without using this repo's writer code.
+IDENTITY_EXCLUDED = ("generated_at_utc", "bundle_identity_sha256")
+
+
+def digest(obj):
+    canonical = json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def recipe_identity(bundle):
+    return digest({k: v for k, v in bundle.items() if k not in IDENTITY_EXCLUDED})
 
 
 def survivor(label):
@@ -100,7 +121,7 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertTrue(bundle["all_survivors_advance"])
         self.assertIsNone(bundle["ranking"])
         self.assertEqual(bundle["contract_section"], "7.3 / 10.8")
-        self.assertIn("v1.4.0", bundle["contract"])
+        self.assertIn("v1.4.1", bundle["contract"])
 
     def test_one_survivor_band_and_verdict(self):
         bundle, problems = sb.build(make_attempt(self.root, [survivor(A)]))
@@ -129,6 +150,121 @@ class TestSurvivorBundle(unittest.TestCase):
                             "a permuted survivor list must not collapse to the same bundle: "
                             "the writer must not sort (no ranking)")
         self.assertEqual([s["cohort"] for s in other["survivors"]], [B, A])
+
+    def test_identity_excludes_its_own_column_so_the_recipe_is_not_recursive(self):
+        bundle, problems = sb.build(make_attempt(self.root, [survivor(A), survivor(B)]))
+        self.assertEqual(problems, [])
+        without_column = {k: v for k, v in bundle.items() if k != "bundle_identity_sha256"}
+        self.assertEqual(sb.identity(bundle), sb.identity(without_column),
+                         "the published identity must not depend on its own value")
+        self.assertEqual(bundle["bundle_identity_sha256"], sb.identity(bundle))
+        self.assertEqual(sb.identity_problems(bundle, "bundle"), [])
+        forged = dict(bundle, bundle_identity_sha256="sha256:" + "0" * 64)
+        self.assertTrue(sb.identity_problems(forged, "forged"), "a stale published identity must fail")
+
+    def test_published_identity_equals_the_recipe_recomputed_from_the_persisted_file(self):
+        # F1 regression pin (auditor t_0bd01630): the recipe must name BOTH exclusions.  A
+        # reader who removes only generated_at_utc - the wording Contract v1.4.0 shipped, and
+        # what the writer's own docstring implied - hashes the identity column into its own
+        # input and can never reproduce the published digest.
+        attempt = make_attempt(self.root, [survivor(A), survivor(B)])
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        with open(payload["bundle_path"]) as fh:
+            persisted = json.load(fh)
+
+        self.assertEqual(persisted["bundle_identity_sha256"], recipe_identity(persisted))
+        self.assertEqual(payload["bundle_identity_sha256"], persisted["bundle_identity_sha256"])
+        self.assertEqual(payload["identity_recomputed_from_persisted_file"],
+                         persisted["bundle_identity_sha256"])
+        self.assertTrue(payload["identity_recipe_matches"])
+        only_timestamp_removed = digest({k: v for k, v in persisted.items()
+                                         if k != "generated_at_utc"})
+        self.assertNotEqual(only_timestamp_removed, persisted["bundle_identity_sha256"],
+                            "the v1.4.0 wording (drop generated_at_utc only) is not the recipe: "
+                            "it hashes the identity column into its own input")
+
+    def test_check_refuses_a_tampered_frozen_bundle(self):
+        attempt = make_attempt(self.root, [survivor(A), survivor(B)])
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        out = json.loads(proc.stdout)["bundle_path"]
+        with open(out) as fh:
+            pristine = json.load(fh)
+
+        def check():
+            return subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--check"],
+                                  capture_output=True, text=True)
+
+        def rewrite(doc):
+            with open(out, "w") as fh:
+                json.dump(doc, fh)
+
+        # (a) a measurement edited while the published identity is left stale
+        stale = copy.deepcopy(pristine)
+        stale["verdict"] = "REJECT"
+        rewrite(stale)
+        proc = check()
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("bundle_identity_sha256", proc.stderr)
+
+        # (b) the same edit with the identity column recomputed to look self-consistent: still
+        # refused, because the measurement no longer matches the attempt's artifacts
+        forged = copy.deepcopy(stale)
+        forged["bundle_identity_sha256"] = recipe_identity(forged)
+        rewrite(forged)
+        proc = check()
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("does not match the attempt", proc.stderr)
+
+        # (c) an edit to non-measurement prose is still caught by the published identity
+        prose = copy.deepcopy(pristine)
+        prose["note"] = "one survivor was silently dropped"
+        rewrite(prose)
+        self.assertEqual(check().returncode, 1)
+
+        # (d) the untouched frozen bundle passes, and reports its own published identity
+        rewrite(pristine)
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--check",
+                               "--json"], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["result"], "check_clean")
+        self.assertEqual(payload["bundle_identity_sha256"], pristine["bundle_identity_sha256"])
+        self.assertTrue(payload["identity_recipe_matches"])
+
+    def test_a_corrected_writer_still_recognises_its_own_frozen_content(self):
+        # The remediation scenario itself: the measurement is untouched, but the writer changed
+        # (so the contract string and the writer's own hash in the frozen bundle no longer match
+        # what the corrected writer would emit).  Re-running must be a no-op and --check clean -
+        # otherwise the fix could only be shipped by rewriting an immutable artifact.
+        attempt = make_attempt(self.root, [survivor(A), survivor(B)])
+        bundle, problems = sb.build(attempt)
+        self.assertEqual(problems, [])
+        out = os.path.join(os.path.dirname(os.path.dirname(attempt)), "survivor-bundle.json")
+        self.assertEqual(sb.write_bundle(copy.deepcopy(bundle), out), "written")
+
+        newer = copy.deepcopy(bundle)
+        newer["contract"] = "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.99"
+        newer["generator"] = {"path": "runtime/survivor_bundle.py", "sha256": "sha256:" + "1" * 64}
+        newer["bundle_identity_sha256"] = sb.identity(newer)
+        self.assertNotEqual(newer["bundle_identity_sha256"], bundle["bundle_identity_sha256"])
+        self.assertEqual(sb.write_bundle(newer, out), "already_identical")
+        with open(out) as fh:
+            on_disk = json.load(fh)
+        self.assertEqual(on_disk["bundle_identity_sha256"], bundle["bundle_identity_sha256"],
+                         "the frozen file must keep its own provenance")
+        self.assertEqual(on_disk["contract"], bundle["contract"])
+
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--check", "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["bundle_identity_sha256"], bundle["bundle_identity_sha256"])
+        self.assertTrue(payload["identity_recipe_matches"])
 
     def test_multi_survivor_must_not_force_performance_claimable_false(self):
         # the negative control for the v1.3.x gate that v1.4.0 removed

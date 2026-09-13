@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Frozen survivor bundle writer (Contract v1.4.0, sections 7.3 / 10.8).
+"""Frozen survivor bundle writer (Contract v1.4.1, sections 7.3 / 10.8).
 
-Contract v1.4.0 says: a strategy family passes the basic research gate as soon as it has
+Contract v1.4.1 says: a strategy family passes the basic research gate as soon as it has
 AT LEAST ONE cohort survivor, and EVERY survivor of the round is kept and advances.  The
 family's survivors are therefore frozen as one bundle - not as a ranking, not as a
 shortlist, and never as a single chosen cell.
@@ -17,6 +17,13 @@ atomically with the source checksums.  It never ranks, sorts, filters or drops a
 never rewrites an existing bundle, never writes into an attempt directory, never runs
 Qlib and is not a service (contract 1.2).
 
+The bundle exposes a public identity, `bundle_identity_sha256`, computed over the bundle's
+canonical JSON after removing BOTH `generated_at_utc` and `bundle_identity_sha256` itself
+(see `identity()` / IDENTITY_EXCLUDED_KEYS below, and contract 10.8).  A value can never
+cover its own digest, so the identity column must not enter its own input; with the identity
+column excluded the recipe is non-recursive and an auditor recomputes it from the persisted
+file with stdlib alone.
+
 usage:
   python3 runtime/survivor_bundle.py --attempt-dir <attempt> [--out <path>] [--check] [--json]
 exit: 0 = ok (written / already identical / check clean), 1 = refused or mismatch,
@@ -31,7 +38,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "frozen_survivor_bundle"
-CONTRACT_VERSION = "v1.4.0"
+CONTRACT_VERSION = "v1.4.1"
 TERMINAL_OK = "DONE"
 # The v1.4.0 disposition bands (contract 7.3).  >=1 survivor passes the basic gate;
 # the count selects the BAND, never the verdict.
@@ -64,12 +71,54 @@ def verdict_for(count):
 
 
 def canonical(obj):
+    """Contract 10.8 canonicalization: sorted keys, no insignificant whitespace, real UTF-8."""
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
+# Contract 10.8 identity recipe: the generation timestamp is not part of the measurement, and
+# the identity column cannot cover itself (a digest inside its own input is unsolvable).  Both
+# are therefore removed before canonicalizing; no other key is ever excluded.
+IDENTITY_EXCLUDED_KEYS = ("generated_at_utc", "bundle_identity_sha256")
+
+
 def identity(obj):
-    """Reproducible identity of the bundle: everything except the generation timestamp."""
-    body = {k: v for k, v in obj.items() if k != "generated_at_utc"}
+    """Public, independently recomputable identity of a bundle (contract 10.8).
+
+        "sha256:" + sha256(canonical({k: v for k in obj if k not in IDENTITY_EXCLUDED_KEYS}))
+
+    The same value is produced whether or not the object already carries
+    `bundle_identity_sha256`, so an auditor recomputes it from the persisted bundle with
+    stdlib alone and compares it with the field the file publishes.
+    """
+    body = {k: v for k, v in obj.items() if k not in IDENTITY_EXCLUDED_KEYS}
+    return "sha256:" + hashlib.sha256(canonical(body).encode()).hexdigest()
+
+
+def identity_problems(obj, label):
+    """The persisted bundle's published identity must equal the recipe applied to itself."""
+    declared = obj.get("bundle_identity_sha256")
+    recomputed = identity(obj)
+    if declared != recomputed:
+        return ["%s publishes bundle_identity_sha256 %r but the contract 10.8 recipe "
+                "(canonical JSON minus generated_at_utc and bundle_identity_sha256) "
+                "recomputes %r" % (label, declared, recomputed)]
+    return []
+
+
+# Producer-identity metadata: the contract version string this writer was built against, and
+# the writer's own file hash.  Both change whenever the writer itself is corrected (fixing this
+# writer's identity recipe changes its own hash), so the "did the measurement change?"
+# comparison excludes exactly these two on top of the identity exclusions.  Everything else -
+# including the human-readable note and every source checksum - stays inside the comparison.
+# The frozen file keeps recording them, and they remain covered by the published identity, so
+# the provenance of a bundle frozen by an earlier writer is never silently rewritten.
+PRODUCER_KEYS = ("contract", "generator")
+
+
+def content_identity(obj):
+    """Identity of the measured content only - used to compare a rebuild with a frozen file."""
+    body = {k: v for k, v in obj.items()
+            if k not in IDENTITY_EXCLUDED_KEYS and k not in PRODUCER_KEYS}
     return "sha256:" + hashlib.sha256(canonical(body).encode()).hexdigest()
 
 
@@ -227,16 +276,24 @@ def build(attempt_dir, attempts_root=None):
                       "sha256": sha256_file(os.path.abspath(__file__))},
         "generated_at_utc": now_utc(),
     }
+    # The published identity is the contract 10.8 recipe applied to this bundle (the identity
+    # column is excluded from its own input, so this is well defined).
     bundle["bundle_identity_sha256"] = identity(bundle)
     return bundle, []
 
 
 def write_bundle(bundle, out_path):
-    """Idempotent atomic write: identical bundle -> no-op; different bytes -> refuse."""
+    """Idempotent atomic write: identical measurement -> no-op; different bytes -> refuse.
+
+    The comparison is on the measured content (contract 10.8 identity minus the producer
+    metadata), so re-running a corrected writer over an already frozen attempt is a no-op
+    instead of a spurious "different bytes" refusal - while any change to the measurement
+    itself still refuses, and the frozen file is never rewritten.
+    """
     text = json.dumps(bundle, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     if os.path.exists(out_path):
         existing = load_json(out_path)
-        if identity(existing) == identity(bundle):
+        if content_identity(existing) == content_identity(bundle):
             return "already_identical"
         return "refused_different_bytes"
     tmp = out_path + ".tmp"
@@ -249,7 +306,7 @@ def write_bundle(bundle, out_path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Frozen survivor bundle writer (contract v1.4.0)")
+    ap = argparse.ArgumentParser(description="Frozen survivor bundle writer (contract v1.4.1)")
     ap.add_argument("--attempt-dir", required=True, help="the terminally DONE attempt directory")
     ap.add_argument("--out", default=None,
                     help="bundle path (default: <round-dir>/survivor-bundle.json, itself derived "
@@ -278,8 +335,17 @@ def main():
             sys.stderr.write("REFUSED: no bundle at %s\n" % out_path)
             return 1
         existing = load_json(out_path)
-        if identity(existing) != identity(bundle):
-            sys.stderr.write("REFUSED: bundle %s does not match the attempt's artifacts\n" % out_path)
+        # 1) the persisted file must publish the contract 10.8 recipe applied to itself, and
+        # 2) re-reading the attempt must reproduce the same measurement (producer metadata such
+        #    as the writer's own hash is not part of the measurement; see content_identity).
+        problems = identity_problems(existing, out_path)
+        if content_identity(existing) != content_identity(bundle):
+            problems.append("the measurement in %s does not match the attempt's artifacts "
+                            "(recomputed content identity %s)"
+                            % (out_path, content_identity(bundle)))
+        if problems:
+            for p in problems:
+                sys.stderr.write("REFUSED: %s\n" % p)
             return 1
         result = "check_clean"
     else:
@@ -289,10 +355,17 @@ def main():
                              "is never rewritten (contract 10.8)\n" % out_path)
             return 1
 
-    out = {"ok": True, "result": result, "bundle_path": out_path, "survivor_count": bundle["survivor_count"],
-           "disposition_band": bundle["disposition_band"], "verdict": bundle["verdict"],
-           "survivors": [s["cohort"] for s in bundle["survivors"]],
-           "bundle_identity_sha256": bundle["bundle_identity_sha256"]}
+    # Report what the file on disk actually publishes, not what this process rebuilt: the
+    # value the auditor recomputes must be the frozen bundle's, and after a writer fix the two
+    # legitimately differ (the persisted one keeps recording the producing writer's hash).
+    target = load_json(out_path)
+    out = {"ok": True, "result": result, "bundle_path": out_path,
+           "survivor_count": target["survivor_count"],
+           "disposition_band": target["disposition_band"], "verdict": target["verdict"],
+           "survivors": [s["cohort"] for s in target["survivors"]],
+           "bundle_identity_sha256": target["bundle_identity_sha256"],
+           "identity_recomputed_from_persisted_file": identity(target),
+           "identity_recipe_matches": not identity_problems(target, out_path)}
     if args.json:
         print(json.dumps(out, indent=2, ensure_ascii=False))
     else:

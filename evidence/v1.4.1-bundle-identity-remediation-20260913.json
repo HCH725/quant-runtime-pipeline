@@ -1,0 +1,92 @@
+{
+  "kind": "v1.4.1-bundle-identity-remediation-verification",
+  "generated_at_utc": "2026-09-13T03:03:50Z",
+  "contract_version": "v1.4.1 (AWAITING AUDIT)",
+  "remediation_card": "t_58166acc",
+  "audited_finding": {
+    "audit_card": "t_0bd01630",
+    "audited_commit": "5a7c3c8274c0419b4fe18a7f2ea324ac94c2d756",
+    "code": "F1",
+    "severity": "blocking",
+    "summary": "the public bundle_identity_sha256 of the frozen survivor bundle could not be recomputed from the persisted artifact following Contract v1.4.0 10.8 (which named only generated_at_utc as the exclusion)"
+  },
+  "canonical_identity_recipe": "sha256: + sha256(json.dumps({k: v for k, v in bundle.items() if k not in ('generated_at_utc', 'bundle_identity_sha256')}, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8'))",
+  "recipe_notes": [
+    "the identity column itself is excluded: a digest can never cover its own input (self-recursion is unsolvable)",
+    "generated_at_utc is the production timestamp, not the measurement",
+    "no other key is ever excluded, so the recipe is fully specified by the contract and reproducible with stdlib alone",
+    "runtime/survivor_bundle.py:IDENTITY_EXCLUDED_KEYS holds exactly these two entries; IDENTITY_EXCLUDED_KEYS/identity_problems()/content_identity() implement it"
+  ],
+  "frozen_artifact_under_test": {
+    "bundle_path": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json",
+    "attempt_dir": "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+    "survivors": ["BTCUSDT/1h", "SOLUSDT/4h"],
+    "survivor_count": 2,
+    "disposition_band": "MULTIPLE_SURVIVORS",
+    "verdict": "PASS",
+    "ranking": null,
+    "all_survivors_advance": true
+  },
+  "independent_recompute_stdlib_only": {
+    "command_shape": "python3 <4-line stdlib script from contract 10.8> <bundle>",
+    "imports_repo_writer": false,
+    "drop_generated_at_utc_and_bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "published_bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "match": true,
+    "drop_generated_at_utc_only_v1_4_0_wording": "sha256:810e1d6cf85c05aa99ad396c5fd1ff8b7d3d819b59029a7cea7f7594063f3d6d",
+    "drop_generated_at_utc_only_matches_published": false,
+    "conclusion": "the v1.4.0 wording hashed the identity column into its own input and therefore could never reproduce the published value; the v1.4.1 recipe (two exclusions) reproduces it bit-for-bit"
+  },
+  "writer_check_on_the_frozen_bundle": {
+    "command": "python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check --json",
+    "rc": 0,
+    "result": "check_clean",
+    "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "identity_recomputed_from_persisted_file": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "identity_recipe_matches": true
+  },
+  "tamper_negative_controls": {
+    "executed_on": "a copy of the round's JSON artifacts plus the frozen bundle under a temp directory (the frozen artifacts were never modified); the copy's source_attempt_dir was re-based so the baseline itself is clean",
+    "baseline_check_rc": 0,
+    "measurement_edited_digest_left_stale_rc": 1,
+    "measurement_edited_digest_left_stale_stderr": "publishes bundle_identity_sha256 '<old>' but the contract 10.8 recipe (canonical JSON minus generated_at_utc and bundle_identity_sha256) recomputes '<new>'",
+    "measurement_edited_digest_recomputed_self_consistent_rc": 1,
+    "measurement_edited_digest_recomputed_self_consistent_stderr": "the measurement in <bundle> does not match the attempt's artifacts (recomputed content identity sha256:0f25e29054a35a488bebbc91f65c92d56afa4e86f02184fdd07acab64b473fd4)",
+    "prose_note_edited_rc": 1,
+    "restored_baseline_rc": 0
+  },
+  "immutable_artifacts_unchanged_across_verification": {
+    "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+    "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+    "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+    "identical_before_and_after": true,
+    "bundle_regenerated": false
+  },
+  "test_evidence": {
+    "runtime/tests/test_survivor_bundle.py": "17/17 OK (was 13; +4: identity self-exclusion, third-party stdlib recompute of the published value with the v1.4.0 wording proven insufficient, tamper controls, corrected-writer no-op on frozen content)",
+    "runtime/tests/test_strategy_b_v2_templates.py": "8/8 OK",
+    "runtime/tests/test_strategy_a_v2_counts.py": "14/14 OK",
+    "runtime/tests/test_reconcile.py": "23/23 OK",
+    "runtime/tests/test_preflight_p10.py": "10/10 OK",
+    "runtime/tests/test_production_handoff.py": "24/24 OK",
+    "runtime/preflight.py": "P1-P8 PASS, rc=0 (P9/P10 NA without an attempt)",
+    "runtime/reconcile.py --dry-run": "scanned=7 incidents=0, rc=0"
+  },
+  "unchanged_state_checks": {
+    "family_gate_all_survivors_advance": "unchanged (>=1 survivor -> PASS; MULTIPLE_SURVIVORS is a band only)",
+    "strategy_b_v2_preregistration": "templates unchanged, B v2 engine/run absent, not launched",
+    "strategy_b_v1_card": "t_3e696dce still blocked",
+    "handoff_cron": "624d0be5b23c paused (no-agent)",
+    "qlib_run_container": "running, qlib:0.9.7-arm64, started 2026-09-12T09:29:02Z (not rebuilt)",
+    "engine_runner_bytes": "container/scripts/20_strategy_a_run.py untouched by this remediation"
+  },
+  "files_changed": [
+    "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+    "runtime/survivor_bundle.py",
+    "runtime/tests/test_survivor_bundle.py",
+    "README.md",
+    "evidence/README.md",
+    "evidence/v1.4.1-bundle-identity-remediation-20260913.json"
+  ]
+}
