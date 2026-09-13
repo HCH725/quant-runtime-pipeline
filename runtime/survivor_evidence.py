@@ -393,6 +393,15 @@ def build_package(results_root, staging, survivor_dir, entry, published, staging
         _, episodes = read_csv(ledger_paths["episodes.csv"])
         _, equity_rows = read_csv(ledger_paths["equity.csv"])
         problems.extend(ledger_problems(row, fills, episodes, equity_rows, label))
+        ledger_info = {}
+        for name in LEDGER_NAMES:
+            # The manifest pins the LEDGER FILES OF THE PACKAGE (not the staging copies they were
+            # assembled from), so a later byte change to a published ledger fails `check`.
+            ledger_info[name] = {
+                "path": os.path.join(package_dir(results_root, entry["survivor_id"]), "grids",
+                                     grid, name),
+                "sha256": si.sha256_file(ledger_paths[name]),
+                "rows": len(read_csv(ledger_paths[name])[1])}
         grids_doc.append({
             "grid": grid,
             "window_kind": grid,
@@ -403,10 +412,7 @@ def build_package(results_root, staging, survivor_dir, entry, published, staging
             "replay_row_identity_sha256": grid_row_identity(
                 {k: row[k] for k in header}),
             "comparison": "MATCH",
-            "ledgers": {name: {"path": ledger_paths[name],
-                               "sha256": si.sha256_file(ledger_paths[name]),
-                               "rows": len(read_csv(ledger_paths[name])[1])}
-                        for name in LEDGER_NAMES},
+            "ledgers": ledger_info,
         })
         aggregate_rows.append(dict({"grid": grid}, **{k: row[k] for k in header}))
     if problems:
