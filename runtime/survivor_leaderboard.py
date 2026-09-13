@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Forward evidence ingestion + survivor leaderboard (Contract v1.5.0, sections 27.3 / 27.5).
+"""Forward evidence ingestion + survivor leaderboard (Contract v1.5.2, sections 27.3 / 27.5).
 
 The post-survivor lifecycle is: full backtest -> frozen survivor bundle -> forward evidence ->
 survivor leaderboard -> champion candidate / challenger -> (future) paper/testnet/live.
@@ -24,11 +24,13 @@ Two file-based operations live here, and nothing else:
                  shortlist.
 
 Neither operation computes a backtest: the numbers in a slice come from a run of the existing
-strategy/Qlib execution semantics, which the slice's `source_run` points at and which this tool
-re-verifies from disk (sentinel + result checksums) before ranking on it.  Nothing here is a
-service, daemon, queue or registry, nothing here writes into a round or attempt directory (the
-only writable subtree is `_survivors/**`, contract 27.1, enforced on `--out-dir` with both sides
-realpath-resolved), and nothing here changes a verdict: the Top-10 is a ranking/selection aid, so
+strategy/Qlib execution semantics, which the slice's `source_run` points at - by an absolute
+attempt dir inside the results tree (v1.5.2) - and which this tool re-verifies from disk (sentinel
++ result checksums) before ranking on it.  Nothing here is a service, daemon, queue or registry,
+nothing here writes into a round or attempt directory (the only writable subtree is `_survivors/**`,
+contract 27.1: `--out-dir` and the forward append are both checked against it, the reserved root
+must not be a symlink, and the target must realpath into it), and nothing here changes a verdict:
+the Top-10 is a ranking/selection aid, so
 falling out of it is not a rejection, and a `champion_candidate` is a research shortlist entry -
 v1.5 never trades and never allocates capital.
 
@@ -52,7 +54,7 @@ import survivor_index as si  # noqa: E402
 
 SCHEMA_VERSION = 1
 KIND = "survivor_leaderboard"
-CONTRACT_VERSION = "v1.5.1"
+CONTRACT_VERSION = "v1.5.2"
 CONTRACT_SECTION = "27.3 / 27.5"
 SLICE_SCHEMA_VERSION = 2
 TOP_N = 10
@@ -171,6 +173,17 @@ def source_run_problems(slice_doc, entry, results_root):
             problems.append("source_run.%s is not a sha256:<64 hex> checksum (%r)"
                             % (key, source.get(key)))
     if problems:
+        return problems
+
+    if not os.path.isabs(source["attempt_dir"]):
+        # v1.5.2 / audit finding F2: `realpath()` resolves a relative attempt_dir against the
+        # READER's cwd, so the very same slice was verifiable from one directory and not from
+        # another (and could name a directory the results tree never contained).  Provenance that
+        # depends on where the tool happens to be run from is not provenance.
+        problems.append("source_run.attempt_dir %r is not an absolute path: a relative attempt "
+                        "dir resolves against the reader's working directory, so the same slice "
+                        "would be verifiable from one cwd and unverifiable from another (contract "
+                        "27.3)" % source["attempt_dir"])
         return problems
 
     attempt = os.path.realpath(source["attempt_dir"])
@@ -539,6 +552,14 @@ def cmd_forward(args, results_root):
         return 1
 
     path = si.forward_path(results_root, entry["survivor_id"])
+    # Contract 27.1/27.3: appending forward evidence is a write into `<results-root>/_survivors/**`
+    # and must pass the same boundary check as `--out`/`--out-dir` - including the v1.5.2 reserved
+    # root check, so a `_survivors` symlink cannot turn the append into a write inside a frozen
+    # round/attempt directory.
+    escape = si.outside_write_boundary(results_root, path)
+    if escape:
+        sys.stderr.write("REFUSED: %s\n" % escape)
+        return 1
     existing, bad_line = read_slices(path, entry, results_root)
     if existing is None:
         sys.stderr.write("REFUSED: the existing forward evidence at %s is not a valid slice for "
@@ -638,7 +659,7 @@ def cmd_leaderboard(args, results_root):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="forward evidence + survivor leaderboard "
-                                            "(contract v1.5.0)")
+                                            "(contract v1.5.2)")
     sub = ap.add_subparsers(dest="command", required=True)
     for name in ("forward", "leaderboard"):
         parser = sub.add_parser(name)

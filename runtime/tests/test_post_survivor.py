@@ -11,15 +11,18 @@ The checks pin the properties that make the layer honest:
   * the index is a deterministic rebuild of the frozen bundles, and a survivor_id pins family,
     round, run, bundle identity, cohort and the frozen strategy + DCA cell,
   * fail-closed: missing checksum, invalid bundle identity, a source that disagrees with the
-    bundle (directory name, missing OR mismatched kanban_task_id, round-spec checksum), a param
-    cell outside the registered axes, and a duplicate survivor_id all refuse to index,
-  * the layer only ever writes under `_survivors/**`: `--out` / `--out-dir` cannot be pointed at a
-    frozen bundle, verdict or result (not by an absolute path, not by a `..` segment, not by a
-    symlink), and a path inside the boundary is still accepted,
+    bundle (directory name, a missing / empty / mismatched / non-string `kanban_task_id`,
+    round-spec checksum), a param cell outside the registered axes, and a duplicate survivor_id
+    all refuse to index,
+  * the layer only ever writes under `_survivors/**`: `--out` / `--out-dir` / the forward append
+    cannot be pointed at a frozen bundle, verdict or result (not by an absolute path, not by a `..`
+    segment, not by a symlink, and not by re-pointing `_survivors` itself with a symlink), and a
+    path inside the boundary is still accepted,
   * forward evidence is strictly post-freeze, never overlaps or repeats a recorded slice, never
     carries params other than the incumbent's (a retune is a challenger, not evidence), and is
-    only admissible when its `source_run` resolves to a terminal DONE run whose sentinel-pinned
-    `result.json` carries the same numbers (a self-declared slice is refused, not ranked),
+    only admissible when its `source_run` resolves to a terminal DONE run - by an ABSOLUTE attempt
+    dir inside the results tree - whose sentinel-pinned `result.json` carries the same numbers (a
+    self-declared or cwd-dependent slice is refused, not ranked),
   * a challenger's OOS start must be after its own preregistration cutoff, and a retune never
     rewrites the incumbent: both survivors coexist with their own params,
   * the leaderboard ordering is total and reproducible (forward evidence outranks the frozen
@@ -249,7 +252,7 @@ class TestSurvivorIndex(Base):
         self.assertEqual(si.measured(first), si.measured(second),
                          "a rebuild must reproduce the index byte for byte, clock aside")
         self.assertEqual(first["contract"], "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md "
-                                            "v1.5.1")
+                                            "v1.5.2")
         self.assertEqual(sorted(s["cohort"] for s in first["survivors"]), sorted([A, B]))
         self.assertEqual([s["survivor_id"] for s in first["survivors"]],
                          sorted(s["survivor_id"] for s in first["survivors"]),
@@ -371,6 +374,33 @@ class TestSurvivorIndex(Base):
             self.assertEqual(index["survivor_count"], 2)
         finally:
             shutil.rmtree(root3, ignore_errors=True)
+
+    def test_non_string_ownership_id_fails_closed(self):
+        # The v1.5.1 residual (audit t_346bcc04 finding F3): the check was truthful/equal only, so
+        # the very same JSON *number* on both sides - self-consistent, hence not caught by the
+        # identity check either - was accepted as provenance.
+        for value in (12345, True, "", ["t_1f97bf6b"], None):
+            root = tempfile.mkdtemp(prefix="ownership-type-")
+            try:
+                make_family(root, "fam-a", a_v2_like_bundle(), task_id=value)
+                index, problems = si.build(root)
+                self.assertIsNone(index, value)
+                self.assertTrue(any("source ownership is incomplete" in p for p in problems),
+                                (value, problems))
+                self.assertTrue(any("not a non-empty string" in p for p in problems),
+                                (value, problems))
+            finally:
+                shutil.rmtree(root, ignore_errors=True)
+
+        # the control: a non-empty string id on both sides is still indexed
+        root = tempfile.mkdtemp(prefix="ownership-string-")
+        try:
+            make_family(root, "fam-a", a_v2_like_bundle(), task_id="t_1f97bf6b")
+            index, problems = si.build(root)
+            self.assertEqual(problems, [])
+            self.assertEqual(index["survivor_count"], 2)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
 
     def test_unknown_or_missing_param_axis_refuses_to_index(self):
         broken = survivor(A)
@@ -572,6 +602,31 @@ class TestForwardEvidence(Base):
                                   run_id="fw-inside-u1")
         doc["source_run"] = source
         return doc
+
+    def test_relative_attempt_dir_is_refused(self):
+        # The v1.5.1 residual (audit t_346bcc04 finding F2): a relative attempt_dir was resolved
+        # against the READER's cwd, so the identical slice was accepted when the tool was run from
+        # the results root and refused when it was run from the repository.
+        valid = self.slice_doc(self.entry, "2026-09-11", "2026-09-30")
+        relative = dict(valid, source_run=dict(
+            valid["source_run"],
+            attempt_dir=os.path.relpath(valid["source_run"]["attempt_dir"], self.root)))
+        rel_path = self.write_slice("relative-attempt.json", relative)
+        proc = subprocess.run([sys.executable, LEADERBOARD_CLI, "forward", "--survivor-id",
+                               self.entry["survivor_id"], "--slice", rel_path,
+                               "--results-root", self.root],
+                              capture_output=True, text=True, cwd=self.root)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("is not an absolute path", proc.stderr)
+        self.assertFalse(os.path.exists(si.forward_path(self.root, self.entry["survivor_id"])),
+                         "a cwd-dependent provenance never appends evidence")
+
+        # the control: the identical slice with an absolute attempt_dir is still accepted
+        abs_path = self.write_slice("absolute-attempt.json", valid)
+        ok = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id", self.entry["survivor_id"],
+                          "--slice", abs_path, "--json")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertEqual(json.loads(ok.stdout)["result"], "appended")
 
     def test_slice_numbers_must_reconcile_with_the_pinned_run_result(self):
         valid = self.slice_doc(self.entry, "2026-09-11", "2026-09-30", episodes=40,
@@ -870,6 +925,52 @@ class TestWriteBoundary(Base):
         ok = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--out-dir", inside, "--json")
         self.assertEqual(ok.returncode, 0, ok.stderr)
         self.assertTrue(os.path.isfile(os.path.join(inside, "leaderboard.json")))
+
+    def test_symlinked_survivors_root_cannot_escape(self):
+        # The v1.5.1 residual (audit t_346bcc04 finding F1): `_survivors` ITSELF was a symlink onto
+        # the frozen round, so realpath resolved the boundary onto that round and every
+        # "in-boundary" write landed on frozen artifacts with rc=0.
+        path = make_family(self.root, "fam-a", a_v2_like_bundle())
+        round_dir = os.path.dirname(path)
+        verdict = write_json(os.path.join(round_dir, "verdict.json"),
+                             {"kind": "round_verdict", "verdict": "PASS"})
+        before = {"bundle": si.sha256_file(path), "verdict": si.sha256_file(verdict)}
+        reserved = os.path.join(self.root, si.SURVIVORS_DIRNAME)
+        os.symlink(round_dir, reserved)
+
+        proc = self.run_cli(INDEX_CLI, "--out", os.path.join(reserved, "verdict.json"))
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("is a symlink", proc.stderr)
+        self.assertIn("outside the reserved post-survivor write boundary", proc.stderr)
+
+        proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--out-dir", reserved)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("is a symlink", proc.stderr)
+
+        # the append path is a writer too: it may not create forward/ inside the frozen round
+        entry = self.entry_for(B)
+        slice_path = self.write_slice("escape-root.json",
+                                      self.slice_doc(entry, "2026-09-11", "2026-09-30"))
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id", entry["survivor_id"],
+                            "--slice", slice_path)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("is a symlink", proc.stderr)
+
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "forward")))
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "leaderboard.json")))
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "leaderboard.csv")))
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "survivor-index.json")))
+        self.assertEqual(si.sha256_file(path), before["bundle"],
+                         "the frozen bundle is never rewritten through a symlinked _survivors root")
+        self.assertEqual(si.sha256_file(verdict), before["verdict"],
+                         "the frozen verdict is never rewritten through a symlinked _survivors root")
+
+        # the control: a real `_survivors` directory (same root, same bundles) still writes
+        os.unlink(reserved)
+        os.makedirs(reserved)
+        ok = self.run_cli(INDEX_CLI, "--json")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertTrue(os.path.isfile(si.index_path(self.root)))
 
 
 if __name__ == "__main__":

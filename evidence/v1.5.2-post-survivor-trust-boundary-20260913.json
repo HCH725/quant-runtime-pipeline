@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "kind": "v1.5.2_trust_boundary_remediation_evidence",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.5.2",
+  "contract_status": "AWAITING AUDIT",
+  "contract_sections": [
+    "27.1",
+    "27.2",
+    "27.3",
+    "27.7",
+    "22 A28",
+    "23 item 16",
+    "25",
+    "附錄 C"
+  ],
+  "date_utc": "2026-09-13",
+  "kanban_card": "t_d19618e1",
+  "source_audit_card": "t_346bcc04",
+  "audited_commit_previous": "84f494cb6371424fd30a387856e1d3db2fccd376",
+  "scope": "minimal remediation of the three blocking trust-boundary residuals the independent auditor found in v1.5.1: F1 symlinked `_survivors` root, F2 relative `source_run.attempt_dir`, F3 non-string `kanban_task_id`. No leaderboard ordering change, no survivor/family gate change, no B v2 launch, no cron enablement, no frozen artifact touched, no service/daemon/queue/Registry/Orchestrator added.",
+  "findings": {
+    "F1_symlinked_reserved_root": {
+      "contract": "§27.1",
+      "defect_v1_5_1": "`_survivors` itself being a symlink onto the frozen round directory resolved the boundary onto that frozen directory (realpath on both sides), so `--out <root>/_survivors/verdict.json` returned rc=0 and overwrote the frozen verdict, `--out-dir <root>/_survivors` wrote leaderboard files inside the frozen round, and the `forward` append created `forward/` there.",
+      "fix_v1_5_2": "new `reserved_root()` / `reserved_root_problem()` in runtime/survivor_index.py: the reserved root must not be a symlink and its realpath must equal `<realpath(results-root)>/_survivors`; `outside_write_boundary()` returns the refusal before any write, and it is now applied to index `--out`, leaderboard `--out-dir` and the `forward` append.",
+      "code": [
+        "runtime/survivor_index.py: reserved_root(), reserved_root_problem(), write_boundary(), outside_write_boundary()",
+        "runtime/survivor_leaderboard.py: cmd_forward() boundary check"
+      ],
+      "regression": "runtime/tests/test_post_survivor.py::TestWriteBoundary.test_symlinked_survivors_root_cannot_escape",
+      "observed_v1_5_2": "index --out <root>/_survivors/verdict.json rc=1 (stderr: `the reserved post-survivor root … is a symlink … outside the reserved post-survivor write boundary …`); leaderboard --out-dir rc=1; forward rc=1; no leaderboard.json/csv, forward/ or survivor-index.json appears in the frozen round; frozen verdict/bundle sha256 unchanged; control: same root with a real `_survivors` directory writes rc=0.",
+      "observed_v1_5_1": "same regression in the 84f494c worktree: FAILED — `0 != 1 : index=…/_survivors/verdict.json result=written` (the index wrote through the symlink onto the frozen verdict)."
+    },
+    "F2_relative_source_run_attempt_dir": {
+      "contract": "§27.3",
+      "defect_v1_5_1": "`os.path.realpath(source_run.attempt_dir)` resolved a relative path against the reader's cwd, so a genuine DONE run expressed relatively was accepted from the results-root cwd and the same slice was refused from the repository cwd.",
+      "fix_v1_5_2": "source_run_problems() refuses any non-absolute `attempt_dir` before resolution; the absolute path must still realpath inside the results root and outside `_survivors/**`, keep the run-id directory name, and match the terminal DONE sentinel + pinned result.json checksum + field-by-field `forward_slice`.",
+      "code": [
+        "runtime/survivor_leaderboard.py: source_run_problems() isabs check"
+      ],
+      "regression": "runtime/tests/test_post_survivor.py::TestForwardEvidence.test_relative_attempt_dir_is_refused",
+      "observed_v1_5_2": "relative attempt_dir with cwd = results root → rc=1 (`source_run.attempt_dir … is not an absolute path`), no jsonl appended; identical slice with the absolute attempt_dir → rc=0 / `appended` (control).",
+      "observed_v1_5_1": "same regression in the 84f494c worktree: FAILED — `0 != 1 : appended survivor=sv-… cohort=SOLUSDT/4h 2026-09-11..2026-09-30 slices=1`."
+    },
+    "F3_non_string_ownership_id": {
+      "contract": "§27.2 item 4 / §22 A28",
+      "defect_v1_5_1": "the ownership check was truthiness + equality only, so the same non-zero JSON number (or bool/list) in both `family.json` and the bundle was accepted as provenance — self-consistent, hence invisible to the identity/checksum check.",
+      "fix_v1_5_2": "entries_for_bundle() requires a non-empty string on BOTH sides and string equality; any int/bool/list/null/empty string fails closed even when both sides carry the same JSON value.",
+      "code": [
+        "runtime/survivor_index.py: entries_for_bundle() ownership block"
+      ],
+      "regression": "runtime/tests/test_post_survivor.py::TestSurvivorIndex.test_non_string_ownership_id_fails_closed",
+      "observed_v1_5_2": "kanban_task_id = 12345 / true / \"\" / [\"t_1f97bf6b\"] / null on both sides → si.build() returns no index and `source ownership is incomplete - kanban_task_id is not a non-empty string on both sides`; control with \"t_1f97bf6b\" on both sides still indexes 2 survivors.",
+      "observed_v1_5_1": "same regression in the 84f494c worktree: FAILED — the index was built with two survivors carrying `kanban_task_id: 12345`."
+    }
+  },
+  "preserved_v1_5_1_protections": [
+    "write boundary to `_survivors/**` (realpath, both sides) for `--out` / `--out-dir`",
+    "`source_run` provenance: results-tree attempt dir, terminal DONE sentinel (hash, status, run/task/family ids), sentinel-recorded result.json checksum, field-by-field `forward_slice` equality, re-verified at write time and at ranking time",
+    "ranking-time revalidation of every recorded slice (read_slices → slice_problems)",
+    "no fake forward evidence (zero-forward stays FROZEN_ONLY)",
+    "challenger rule (incumbent params immutable; retune ⇒ new family with preregistration cutoff)",
+    "Top-10 deterministic ordering tuple and NULLS LAST handling unchanged"
+  ],
+  "tests": {
+    "runtime/tests/test_post_survivor.py": "33/33 OK (30 kept + 3 new v1.5.2 regressions)",
+    "runtime/tests/test_survivor_bundle.py": "18/18 OK",
+    "runtime/tests/test_strategy_b_v2_templates.py": "8/8 OK",
+    "runtime/tests/test_strategy_a_v2_counts.py": "14/14 OK",
+    "runtime/tests/test_reconcile.py": "23/23 OK",
+    "runtime/tests/test_preflight_p10.py": "10/10 OK",
+    "runtime/tests/test_production_handoff.py": "24/24 OK",
+    "total_assertions": 130,
+    "interpreter": "Python 3.9.6 (host)",
+    "non_vacuity": "the three new tests copied into a `git worktree` of 84f494c (v1.5.1): `Ran 3 tests in 0.571s — FAILED (failures=3)`; in v1.5.2: `Ran 33 tests … OK`."
+  },
+  "reseed": {
+    "command_index": "python3 runtime/survivor_index.py --json → result=written, bundle_count=1, survivor_count=2, index_sha256=sha256:23fd3970c50a2abd993651e38e12ca2e1d57ec88b07608f617b64f8d02f3260f",
+    "command_index_check": "python3 runtime/survivor_index.py --check → rc=0 check_clean",
+    "command_leaderboard": "python3 runtime/survivor_leaderboard.py leaderboard --json → result=written, survivor_count=2, top10_count=2, every row evidence_state=FROZEN_ONLY, forward metrics null, champion_candidate=false",
+    "command_leaderboard_check": "python3 runtime/survivor_leaderboard.py leaderboard --check → rc=0 check_clean",
+    "survivor_ids_unchanged": {
+      "sv-904822905a811669": "BTCUSDT/1h",
+      "sv-f762a1da8909a5bf": "SOLUSDT/4h"
+    },
+    "ranking": "#1 SOLUSDT/4h (oos_sharpe 2.17438), #2 BTCUSDT/1h (oos_sharpe 0.536464) - the v1.5.0/v1.5.1 fallback order is unchanged",
+    "forward_dir": "/results/_survivors/forward/ does not exist; 0 slices",
+    "note": "index/leaderboard are derived artifacts carrying the `contract` version string, so they were rebuilt once inside `_survivors/**` to make `--check` clean; leaderboard.csv carries no timestamp/version and is byte-identical."
+  },
+  "frozen_immutables": {
+    "../../../../Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+    "../../../../Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+    "../../../../Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/round-spec.json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+    "../../../../Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "../../../../Volumes/ExpansionDrive/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081"
+  },
+  "bundle_identity_recheck": {
+    "command": "python3 runtime/survivor_bundle.py --attempt-dir <attempt> --check --json",
+    "rc": 0,
+    "result": "check_clean",
+    "identity_recipe_matches": true,
+    "note": "runtime/survivor_bundle.py was not modified by v1.5.2"
+  },
+  "artifact_hashes": {
+    "runtime/survivor_index.py": "sha256:6cf357c87985d9e6af901cc00966821222f69250279f8449316fe0f0b640d90b",
+    "runtime/survivor_leaderboard.py": "sha256:d5a6227fa6bbc5da5cbc02fb64e472d808f9873574d13fcebe704ffa026b534e",
+    "runtime/tests/test_post_survivor.py": "sha256:38a91e93033579d965e4bcde01731bce73e408837e63c6ca68d2d9d4fe88b838",
+    "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md": "sha256:4cc0fd74549be39d6c80837cbf7ca4b9e31b92bdf89410e6950b216b9e5c06d2",
+    "README.md": "sha256:87c1b79f801898c20dcd9ad0c7e57b9141ba9733d6e7cb268901f6d9ebc62ce5"
+  },
+  "governance": {
+    "cron_624d0be5b23c": "paused (read back with `hermes cron list --all`)",
+    "strategy_b_v2_directory": "absent (not launched)",
+    "strategy_b_v1_card": "t_3e696dce blocked",
+    "qlib": "no container rebuild, no Qlib computation executed by this card",
+    "families_or_strategy_cards_created": 0,
+    "results_writes": [
+      "/results/_survivors/survivor-index.json",
+      "/results/_survivors/leaderboard.json",
+      "/results/_survivors/leaderboard.csv"
+    ]
+  },
+  "attacks_ran_on": "/tmp worktree (84f494c) and results-root copies; the real frozen artifacts were read-only for every attack"
+}

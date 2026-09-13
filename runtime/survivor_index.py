@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""File-only frozen-survivor index (Contract v1.5.0, sections 27.2 / 27.7).
+"""File-only frozen-survivor index (Contract v1.5.2, sections 27.2 / 27.7).
 
 Contract v1.5.0 starts the post-survivor lifecycle: every survivor frozen into a
 `rounds/<round_id>/survivor-bundle.json` keeps accumulating unseen forward evidence and is
@@ -30,8 +30,10 @@ Fail-closed (never guessed, never repaired):
 
 Nothing here ranks, selects, promotes or rejects a survivor, and nothing here ever writes into
 a round or attempt directory: the only place this layer may write is `<results-root>/_survivors/**`
-(contract 27.1), and `--out` is checked against that boundary with both sides realpath-resolved,
-so a `--out` (or a symlink, or a `..` segment) can never land on a frozen bundle/verdict/result.
+(contract 27.1).  `--out` is checked against that boundary before the first write, and the reserved
+root itself must not be a symlink and must resolve to the literal `<results-root>/_survivors`
+(v1.5.2), so neither a `--out`, a symlink, nor a `..` segment - and not a re-pointed `_survivors`
+root either - can land on a frozen bundle/verdict/result.
 
 usage:
   python3 runtime/survivor_index.py [--results-root <dir>] [--out <path>] [--check] [--json]
@@ -47,7 +49,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "survivor_index"
-CONTRACT_VERSION = "v1.5.1"
+CONTRACT_VERSION = "v1.5.2"
 CONTRACT_SECTION = "27.2"
 DEFAULT_RESULTS_ROOT = "/Volumes/ExpansionDrive/qlib-results"
 
@@ -111,20 +113,64 @@ def index_path(results_root):
     return os.path.join(results_root, SURVIVORS_DIRNAME, INDEX_NAME)
 
 
+def reserved_root(results_root):
+    """`<results-root>/_survivors` as a literal path (its final component not resolved)."""
+    return os.path.join(os.path.abspath(results_root), SURVIVORS_DIRNAME)
+
+
 def write_boundary(results_root):
-    """The one subtree contract 27.1 lets this layer write to: `<results-root>/_survivors`."""
-    return os.path.realpath(os.path.join(os.path.abspath(results_root), SURVIVORS_DIRNAME))
+    """The one subtree contract 27.1 lets this layer write to: `<results-root>/_survivors`.
+
+    The results root's own symlinks are resolved (a symlinked `/results` volume is fine), but the
+    reserved component is kept literal - `reserved_root_problem()` refuses a root that is itself a
+    symlink, so the boundary can never be silently re-pointed at a frozen round/attempt directory.
+    """
+    return os.path.join(os.path.realpath(os.path.abspath(results_root)), SURVIVORS_DIRNAME)
+
+
+def reserved_root_problem(results_root):
+    """None when `<results-root>/_survivors` is itself the literal reserved directory, else why not.
+
+    v1.5.2 / audit t_346bcc04 finding F1: resolving both sides is not enough on its own.  If
+    `_survivors` is ITSELF a symlink onto a frozen round/attempt directory, realpath resolves the
+    boundary onto that frozen directory, so an "in-boundary" `--out` lands on a frozen verdict and
+    `makedirs()`/`open(w)` create files inside the frozen round - all with rc=0.  The reserved root
+    must therefore be a real directory sitting exactly one level under the resolved results root,
+    and any root/ancestor escape is refused before the first write.
+    """
+    literal = reserved_root(results_root)
+    boundary = write_boundary(results_root)
+    if os.path.islink(literal):
+        return ("the reserved post-survivor root %s is a symlink -> %s: contract 27.1 permits this "
+                "layer to write only under the literal <results-root>/_survivors directory, and a "
+                "symlinked root puts the write outside the reserved post-survivor write boundary "
+                "%s (root/ancestor escape)"
+                % (literal, os.path.realpath(literal), boundary))
+    resolved = os.path.realpath(literal)
+    if resolved != boundary:
+        return ("the resolved reserved post-survivor root %s is not the literal %s child of the "
+                "resolved results root: writing through it lands outside the reserved post-survivor "
+                "write boundary %s (root/ancestor escape)"
+                % (resolved, SURVIVORS_DIRNAME, boundary))
+    return None
 
 
 def outside_write_boundary(results_root, path):
     """None when `path` lands inside `<results-root>/_survivors/**`, else the refusal message.
 
     Contract 27.1: the post-survivor layer writes only under `_survivors/**`, never into a
-    `<family_id>`, round or attempt directory.  Both sides are realpath-resolved first, so a
-    symlink or a `..` segment cannot be used to reach a frozen bundle/verdict/result either -
-    which is exactly what an unchecked `--out` did before v1.5.1 (audit finding F1: the index
-    overwrote `rounds/<round_id>/survivor-bundle.json` and `verdict.json` with rc=0).
+    `<family_id>`, round or attempt directory.  Three things are checked before any write, in
+    order: the reserved root itself must not be a symlink and must resolve to the literal
+    `<results-root>/_survivors` (v1.5.2; audit finding F1 - a symlinked root re-pointed the whole
+    boundary onto a frozen round directory, which the two-sided realpath check below could not
+    see), then the target is realpath-resolved and must sit inside that boundary.  A symlink or a
+    `..` segment can therefore not be used to reach a frozen bundle/verdict/result - which is what
+    an unchecked `--out` did before v1.5.1 (audit finding F1: the index overwrote
+    `rounds/<round_id>/survivor-bundle.json` and `verdict.json` with rc=0).
     """
+    root_problem = reserved_root_problem(results_root)
+    if root_problem:
+        return root_problem
     boundary = write_boundary(results_root)
     target = os.path.realpath(os.path.abspath(path))
     if target == boundary or target.startswith(boundary + os.sep):
@@ -372,16 +418,21 @@ def entries_for_bundle(bundle_path, problems):
             if family.get("family_id") != family_id:
                 problems.append("%s: family.json family_id %r disagrees with the directory name"
                                 % (label, family.get("family_id")))
-            # Contract 27.2 item 4 / 22 A28(3): a missing ownership id is as fatal as a mismatch.
-            # Comparing only when BOTH sides are truthy fails open on a bundle that carries no
-            # `kanban_task_id` at all (audit finding F3), which is exactly the shape an
-            # unverifiable source takes - so the id must be present on both sides and equal.
+            # Contract 27.2 item 4 / 22 A28(3): ownership must be present, a non-empty string and
+            # equal on both sides.  Comparing only when BOTH sides are truthy fails open on a
+            # bundle that carries no `kanban_task_id` at all (audit finding F3), which is exactly
+            # the shape an unverifiable source takes - and a non-string id (number/bool/list) that
+            # happens to match on both sides is not provenance either: the pipeline's ownership id
+            # is a Kanban card id, so anything but a non-empty string is source inconsistency.
             family_task = family.get("kanban_task_id")
             bundle_task = bundle.get("kanban_task_id")
-            if not family_task or not bundle_task:
-                problems.append("%s: source ownership is incomplete - kanban_task_id is missing "
-                                "(family.json %r, bundle %r); a survivor whose owning card cannot "
-                                "be cross-checked is never indexed (contract 27.2/22 A28)"
+            if not (isinstance(family_task, str) and family_task.strip()
+                    and isinstance(bundle_task, str) and bundle_task.strip()):
+                problems.append("%s: source ownership is incomplete - kanban_task_id is not a "
+                                "non-empty string on both sides (family.json %r, bundle %r); a "
+                                "missing, empty, numeric, boolean, list or null ownership id is "
+                                "source inconsistency and is never indexed, even when both sides "
+                                "carry the very same JSON value (contract 27.2 item 4 / 22 A28)"
                                 % (label, family_task, bundle_task))
             elif family_task != bundle_task:
                 problems.append("%s: kanban_task_id mismatch: family.json %r != bundle %r"
@@ -530,7 +581,7 @@ def write_index(index, out_path):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="file-only frozen-survivor index (contract v1.5.0)")
+    ap = argparse.ArgumentParser(description="file-only frozen-survivor index (contract v1.5.2)")
     ap.add_argument("--results-root", default=DEFAULT_RESULTS_ROOT,
                     help="the durable results root (default: %(default)s)")
     ap.add_argument("--out", default=None,
