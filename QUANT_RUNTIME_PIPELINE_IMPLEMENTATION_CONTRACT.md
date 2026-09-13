@@ -1327,6 +1327,15 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
   （`sv-f762a1da8909a5bf` SOLUSDT/4h、`sv-904822905a811669` BTCUSDT/1h），各 replay 9 個註冊 grid，
   **18/18 winner cell 逐欄相符**、trace off／on 一致；`coverage` = **2/2 PRESENT**；leaderboard 仍
   `FROZEN_ONLY`、`champion_candidate=false`、`forward` 仍 0 slices、排名仍 SOLUSDT/4h #1、BTCUSDT/1h #2。
+- `[V]` **實跑讀回（2026-09-13，commit `e4c6903`）**：`runtime/tests/test_survivor_evidence.py` **12/12 OK**（host、
+  自建 temp fixture，真實 `/results` 未被觸碰）、`container/scripts/tests/test_survivor_trace.py` **7/7 OK**（host
+  與 `qlib-run` 內 `/opt/venv/bin/python` 各實跑一次）；package identity `sv-904822905a811669` =
+  `sha256:16338360…`、`sv-f762a1da8909a5bf` = `sha256:7088a5a2…`；兩個 package 的 `aggregate.csv` 皆
+  `MATCH`（9 grids × 32 columns = 288 cells）；`source_runner` pin `sha256:c4f9a216…` 由 deployed
+  `/scripts/20_strategy_a_run.py` **實際 readback** 相符（非採信 prompt）；frozen `survivor-bundle.json`
+  （`4638885f…`）／`verdict.json`（`cb470adf…`）／`round-spec.json`（`e0b348bf…`）／`result.json`
+  （`012e6d1a…`）／`artifacts/cohort_survivors.json`（`74f250cf…`）逐位元不變、`_survivors/forward/` 不存在。
+  證據快照：`evidence/v1.6.0-survivor-evidence-20260913.json`。
 - `[V]` **未變動項**：`contract 28` 不新增任何 service／daemon／queue／Registry／UI／DB；B v2 未 launch；
   cron `624d0be5b23c` 仍 paused；Strategy B v1 仍 blocked；§27 的 forward evidence 語意與 `forward/` 目錄狀態不變。
 

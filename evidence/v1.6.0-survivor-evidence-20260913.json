@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.6.0",
+  "contract_section": "28",
+  "recorded_at_utc": "2026-09-13",
+  "task": "t_68954a45",
+  "head_commit": "e4c6903dc941986a649780e92822a0f1ab613cc5",
+  "leaderboard": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/_survivors/leaderboard.json",
+    "sha256": "sha256:6cc421b21a8e16a7938c6c28117d193e0c555c825824322f05dcae03d231fc4b",
+    "csv_sha256": "sha256:a54edab56e458480b2e5241953db1b6df9bcc6d0ee133ac19917b7b96c13e8bf",
+    "survivor_count": 2,
+    "top10_count": 2,
+    "entries": [
+      {
+        "rank": 1,
+        "survivor_id": "sv-f762a1da8909a5bf",
+        "cohort": "SOLUSDT/4h",
+        "evidence_state": "FROZEN_ONLY",
+        "champion_candidate": false,
+        "forward_slices": 0,
+        "evidence_package_status": "PRESENT",
+        "evidence_manifest_path": "/Volumes/ExpansionDrive/qlib-results/_survivors/evidence/sv-f762a1da8909a5bf/manifest.json",
+        "evidence_manifest_sha256": "sha256:87f1bd035ff80285398aa63fc0e335ddffa7618e30eb16d84e34e43b4df5052d"
+      },
+      {
+        "rank": 2,
+        "survivor_id": "sv-904822905a811669",
+        "cohort": "BTCUSDT/1h",
+        "evidence_state": "FROZEN_ONLY",
+        "champion_candidate": false,
+        "forward_slices": 0,
+        "evidence_package_status": "PRESENT",
+        "evidence_manifest_path": "/Volumes/ExpansionDrive/qlib-results/_survivors/evidence/sv-904822905a811669/manifest.json",
+        "evidence_manifest_sha256": "sha256:1dc0db9ddf54fe1697eae5737bb59eb31b2f2059330a2b51c77a256e2b65a7ae"
+      }
+    ]
+  },
+  "index": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/_survivors/survivor-index.json",
+    "sha256": "sha256:6e9baf177e4e19a6e387f3d8f60c232881fd82718477deda61b654cbef847a29",
+    "survivor_count": 2,
+    "bundle_count": 1
+  },
+  "evidence_packages": [
+    {
+      "survivor_id": "sv-904822905a811669",
+      "package": "/Volumes/ExpansionDrive/qlib-results/_survivors/evidence/sv-904822905a811669",
+      "manifest_sha256": "sha256:1dc0db9ddf54fe1697eae5737bb59eb31b2f2059330a2b51c77a256e2b65a7ae",
+      "package_identity_sha256": "sha256:16338360beff455bb2a219e5226d11cbd27637caf871817e7b0c923e6e70b19d",
+      "identity_recipe_matches": true,
+      "aggregate": {
+        "comparison": "MATCH",
+        "grids_compared": 9,
+        "columns_compared": 32,
+        "cells_compared": 288
+      },
+      "grids": [
+        {
+          "grid": "entry_delay_1_bar",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+          "frozen_csv_sentinel_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e"
+        },
+        {
+          "grid": "fee_2x",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+          "frozen_csv_sentinel_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4"
+        },
+        {
+          "grid": "full",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+          "frozen_csv_sentinel_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e"
+        },
+        {
+          "grid": "funding_2x",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+          "frozen_csv_sentinel_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a"
+        },
+        {
+          "grid": "historical",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+          "frozen_csv_sentinel_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156"
+        },
+        {
+          "grid": "no_funding",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+          "frozen_csv_sentinel_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3"
+        },
+        {
+          "grid": "no_funding_full",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08",
+          "frozen_csv_sentinel_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08"
+        },
+        {
+          "grid": "oos",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+          "frozen_csv_sentinel_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3"
+        },
+        {
+          "grid": "slippage_2ticks",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+          "frozen_csv_sentinel_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab"
+        }
+      ],
+      "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "materialization": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored",
+      "source_runner": {
+        "path": "/scripts/20_strategy_a_run.py",
+        "sha256": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+        "sha256_source": "frozen run-spec script.sha256",
+        "deployed_runner_path": "/scripts/20_strategy_a_run.py",
+        "deployed_sha256_readback": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+      },
+      "replay_runner": {
+        "path": "/results/_survivors/evidence/.staging-v16/engine/20_strategy_a_run.py",
+        "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+        "note": "instrumented repo runner (adds the inert trace hook only; engine SHA differs from source_runner by that hook)"
+      },
+      "replay_header": {
+        "grids": 9,
+        "materialization_disclosure": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored"
+      }
+    },
+    {
+      "survivor_id": "sv-f762a1da8909a5bf",
+      "package": "/Volumes/ExpansionDrive/qlib-results/_survivors/evidence/sv-f762a1da8909a5bf",
+      "manifest_sha256": "sha256:87f1bd035ff80285398aa63fc0e335ddffa7618e30eb16d84e34e43b4df5052d",
+      "package_identity_sha256": "sha256:7088a5a209b0a277b3825c494b3cb8c11147cff3e133f004e71bedaa9eca8401",
+      "identity_recipe_matches": true,
+      "aggregate": {
+        "comparison": "MATCH",
+        "grids_compared": 9,
+        "columns_compared": 32,
+        "cells_compared": 288
+      },
+      "grids": [
+        {
+          "grid": "entry_delay_1_bar",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+          "frozen_csv_sentinel_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e"
+        },
+        {
+          "grid": "fee_2x",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+          "frozen_csv_sentinel_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4"
+        },
+        {
+          "grid": "full",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+          "frozen_csv_sentinel_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e"
+        },
+        {
+          "grid": "funding_2x",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+          "frozen_csv_sentinel_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a"
+        },
+        {
+          "grid": "historical",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+          "frozen_csv_sentinel_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156"
+        },
+        {
+          "grid": "no_funding",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+          "frozen_csv_sentinel_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3"
+        },
+        {
+          "grid": "no_funding_full",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08",
+          "frozen_csv_sentinel_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08"
+        },
+        {
+          "grid": "oos",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+          "frozen_csv_sentinel_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3"
+        },
+        {
+          "grid": "slippage_2ticks",
+          "comparison": "MATCH",
+          "frozen_csv_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+          "frozen_csv_sentinel_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab"
+        }
+      ],
+      "bundle_identity_sha256": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+      "materialization": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored",
+      "source_runner": {
+        "path": "/scripts/20_strategy_a_run.py",
+        "sha256": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+        "sha256_source": "frozen run-spec script.sha256",
+        "deployed_runner_path": "/scripts/20_strategy_a_run.py",
+        "deployed_sha256_readback": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+      },
+      "replay_runner": {
+        "path": "/results/_survivors/evidence/.staging-v16/engine/20_strategy_a_run.py",
+        "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+        "note": "instrumented repo runner (adds the inert trace hook only; engine SHA differs from source_runner by that hook)"
+      },
+      "replay_header": {
+        "grids": 9,
+        "materialization_disclosure": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored"
+      }
+    }
+  ],
+  "replay": {
+    "driver": "container/scripts/21_strategy_a_survivor_replay.py",
+    "engine_module": "container/scripts/20_strategy_a_run.py",
+    "staging": "/Volumes/ExpansionDrive/qlib-results/_survivors/evidence/.staging-v16",
+    "replayed_cells_per_survivor": 9,
+    "grids": [
+      "entry_delay_1_bar",
+      "fee_2x",
+      "full",
+      "funding_2x",
+      "historical",
+      "no_funding",
+      "no_funding_full",
+      "oos",
+      "slippage_2ticks"
+    ],
+    "frozen_rows_matched": 18,
+    "trace_inert_verified": true,
+    "research_evaluations_not_replayed": 103662
+  },
+  "engine_sha256": {
+    "instrumented_repo_runner": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+    "replay_driver": "sha256:34783c8c0cabe2b2f97168ca521c345325962e0524620679975fe9b417f60a18",
+    "deployed_source_runner_readback": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+  },
+  "frozen_artifacts_unchanged": {
+    "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+    "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+    "round-spec.json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+    "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+    "artifacts/grid_full.csv": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+    "forward_dir_exists": false
+  },
+  "tests": {
+    "runtime/tests/test_survivor_evidence.py": 12,
+    "container/scripts/tests/test_survivor_trace.py": 7
+  }
+}

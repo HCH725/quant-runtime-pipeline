@@ -252,7 +252,7 @@ class TestSurvivorIndex(Base):
         self.assertEqual(si.measured(first), si.measured(second),
                          "a rebuild must reproduce the index byte for byte, clock aside")
         self.assertEqual(first["contract"], "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md "
-                                            "v1.5.2")
+                                            "v1.6.0")
         self.assertEqual(sorted(s["cohort"] for s in first["survivors"]), sorted([A, B]))
         self.assertEqual([s["survivor_id"] for s in first["survivors"]],
                          sorted(s["survivor_id"] for s in first["survivors"]),

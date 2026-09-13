@@ -656,10 +656,18 @@ class TestGrossPnlAccounting(unittest.TestCase):
         # exit statement, and the retired `realized + fees_total + funding_paid` must not return
         src = inspect.getsource(sa.simulate)
         self.assertIn("gross_pnl = 0.0", src)
-        self.assertIn("gross_pnl += exit_price_pnl(", src)
         self.assertNotIn('"gross_pnl": realized', src)
         self.assertNotIn("+ fees_total + funding_paid", src)
-        self.assertEqual(src.count("gross_pnl += exit_price_pnl("), 4)  # every exit/flatten path
+        # v1.6.0 captures the exit price-PnL into `ep_gross` first (so the inert trace hook can
+        # report the episode's gross PnL) and then accumulates it: still exactly ONE
+        # `exit_price_pnl` call and ONE accumulator update per exit/flatten path, and still
+        # never derived from the realised/fee/funding ledger.
+        self.assertEqual(src.count("ep_gross = exit_price_pnl(qty * xpx, cost)"), 4)
+        self.assertEqual(src.count("gross_pnl += ep_gross"), 4)
+        self.assertEqual(src.count("gross_pnl += "), 4)
+        self.assertNotIn("gross_pnl += realized", src)
+        self.assertNotIn("gross_pnl += fees", src)
+        self.assertNotIn("gross_pnl += funding", src)
 
     def test_decomposition_fails_when_the_gross_path_is_tampered(self):
         # negative control: the cross-check must be able to fail.  Monkeypatching the gross
