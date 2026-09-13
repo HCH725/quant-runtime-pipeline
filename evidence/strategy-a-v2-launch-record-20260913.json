@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "kind": "launch_record",
+  "contract_section": "9.2",
+  "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+  "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+  "run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+  "kanban_task_id": "t_1f97bf6b",
+  "kanban_board": "quant-strategy-research",
+  "launched_by_task": "t_0be43c9b",
+  "launched_at_utc": "2026-09-13T00:45:53Z",
+  "exact_once": true,
+  "launch_mode": "container exec --detach (process runs inside qlib-run; no host-side supervisor process to lose)",
+  "launch_command": "container exec -d qlib-run sh -c \"/opt/venv/bin/python /scripts/20_strategy_a_run.py /results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/run-spec.json > /results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/logs/run.log 2>&1\"",
+  "preflight": "evidence/strategy-a-v2-preflight-20260913.json - P1-P10 all PASS, launch_gate=evaluated, rc=0 (2026-09-13T00:45:09Z)",
+  "engine_selfcheck": {
+    "path": "/scripts/tests/test_strategy_a_engine.py",
+    "sha256": "sha256:d5ddb2475e047addf5a3fe9e4c4fdccb98526e29a79d90fa3b977a8a45097b5d",
+    "command": "container exec qlib-run env SA_ENGINE_PATH=/scripts/20_strategy_a_run.py /opt/venv/bin/python /scripts/tests/test_strategy_a_engine.py",
+    "result": "Ran 35 tests in 0.013s - OK"
+  },
+  "script": {
+    "path": "/scripts/20_strategy_a_run.py",
+    "sha256": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+    "bytes": 51775
+  },
+  "container": {
+    "id": "qlib-run",
+    "image": "qlib:0.9.7-arm64",
+    "qlib_version": "0.9.7"
+  },
+  "family_fingerprint": "sha256:7087e9693382093914ecaf86aef9e3872f239c1fc4d49e52b47f0da35dd1c557",
+  "instantiated_specs": {
+    "round_spec": "/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/round-spec.json",
+    "round_spec_sha256": "e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+    "run_spec": "/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/run-spec.json",
+    "run_spec_sha256": "aa51cce779e2c3b7823f834879aa2c46b1de8e9e5c9277def594231ca7da32b5",
+    "family_json": "/results/close-vs-sma-mean-reversion-long-flat-v2/family.json",
+    "family_json_sha256": "4891a9e2976b03fd34e1eb8c21e2792e7d4e0f79a08b5becb72b6b6cf1dc893d",
+    "counts_check": "python3 runtime/strategy_a_v2_counts.py --spec <instantiated round-spec> --run-spec <instantiated run-spec> -> cohorts=20 strategy=12 dca=48 base_per_cohort=576 per_grid=11520 total=103680 fingerprint=MATCH ok=True, rc=0; snapshot evidence/strategy-a-v2-counts-instantiated-20260913.json"
+  },
+  "expected_case_evaluations": 103680,
+  "observed_startup": {
+    "bins_build_wall_seconds": 36.4,
+    "bins_bytes": 79187392,
+    "first_cohort": "BTCUSDT/5m bars=493632 days=1714 funding_official=3137 modeled_excluded=2005",
+    "state_json_stage": "RUNNING_QLIB"
+  },
+  "naming": "round/run ids follow contract section 8 (<family_id>-r<N> / <round_id>-u<M>). Note that the v1.3.0/v1.3.1/v1.3.2 appendix C paragraphs and the README history rows written before this launch used the '<family_id>-v2-r1-u1' shorthand; the registered ids are the ones above.",
+  "note": "Container writes result.json + artifacts/ + state.json + logs/ only; the terminal sentinel (DONE/FAILED/INCOMPLETE) is published host-side afterwards via runtime/terminal_evidence.py. The production card t_1f97bf6b monitors the attempt and owns the round verdict.json."
+}

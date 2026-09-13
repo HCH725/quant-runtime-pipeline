@@ -53,15 +53,18 @@ audited implementation contract 與其變化歷史。
   （只能 `non_gating` diagnostic）。§14.4 handoff 新增 candidate body 必須帶 DCA domain 與 cohort survivor rules
   （`candidate_body_not_v13` fail-closed）；§13 新增 `operator_stopped`。**語意不變**：production 仍 sequential A→B→C、
   §9.4 reconciler、§11/§12/§15/§16、無新服務、auditor 不是每張 strategy card 的 stage。詳見契約 §7.2/§7.3/§14.4 與附錄 C。
-- **Strategy A v2（語意重跑，尚未啟動）**：v1.3.0 的 A v2 = 新 family `close-vs-sma-mean-reversion-long-flat-v2`
-  （舊 `...-v1` 與其 REJECT artifacts 保持 immutable），pre-registration 模板在 `runtime/templates/`，計數由
-  `runtime/strategy_a_v2_counts.py` 驗證：20 cohorts × 12 strategy × 48 DCA = 576 / cohort / grid，
-  9 phase grids → **103,680 case evaluations**。**不得在 v1.3.x audit PASS 前啟動**。
+- **Strategy A v2（2026-09-13 已啟動，production run）**：family `close-vs-sma-mean-reversion-long-flat-v2`
+  （舊 `...-v1` 與其 REJECT artifacts 保持 immutable），round/run = `close-vs-sma-mean-reversion-long-flat-v2-r1` /
+  `...-r1-u1`，production 卡 `t_1f97bf6b`，runner sha256 `c4f9a216…`（v1.3.2，已部署到 active `/scripts`）。
+  preflight P1–P10 全綠後於 2026-09-13T00:45:53Z 以 `container exec --detach` exact-once 投遞；
+  20 cohorts × 12 strategy × 48 DCA = 576 / cohort / grid × 9 phase grids = **103,680 case evaluations**。
+  啟動前提已滿足：Contract v1.3.2 = AUDITED PASS / FROZEN（audited content commit `0363011`，attestation commit `84b8728`，
+  auditor `t_3ffaeeb8`）。證據：`evidence/strategy-a-v2-{preflight,counts-instantiated,launch-record}-20260913.json`。
 - **Strategy B（operator-stopped）**：卡 `t_3e696dce` 在任何 verdict 產生前被 operator 中止並保持 `blocked`；B 的
   `/results` artifacts 全部保留，未終結的 attempt 已於 host 端補發 `INCOMPLETE`（`failure.class=operator_stopped`）。
   **B 沒有 PASS/REJECT**。B 的 exact runner 與 engine test 已不再位於 active runtime 路徑：逐位元存檔於
   `evidence/strategy-b-operator-stopped/runtime/`（archive-only，不得執行），host `/scripts` 部署副本已移除。
-  handoff cron `624d0be5b23c` 依 operator 決定**保持 paused**，直到 v1.3.x audit PASS 且 A v2 就緒。
+  handoff cron `624d0be5b23c` 依 operator 決定**保持 paused**；依 t_0be43c9b 指示，在 A v2 terminal 之前不得啟用。
 - **v1.2.0（2026-09-13，AUDITED PASS / FROZEN）**：新增 Contract **§14.4 automatic production handoff trigger**——正式 strategy card terminal 後，由 default 的單一 no-agent cron 自動 append 下一張 family（`runtime/production_handoff.py`，候選來自已 review 的 pool `/results/_handoff/candidates.json`）。第一次真實 handoff 已 append Strategy B（卡 `t_3e696dce`，`parents=[t_97208408]`），並由 dispatcher 自動 claim；該 family 隨後被 operator 依 v1.3.0 決策中止（見上）。詳見契約 §14.4 與附錄 C。
 - **v1.1.1（2026-09-13）**：audit `t_d7f48c7a` 的最小 remediation——`reconcile.py` 先判 consumed（非 `scheduled` 即 no-op，不寫 incident／不留 comment）、mapping 補足 family/round/run/container identity、preflight P10 必須由 host 端實際重算 `script.sha256`（不可讀即 `FAIL`／NOT VERIFIED），**語意不變**（Nautilus 仍 out-of-scope、production 仍 sequential A→B→C）。變更記錄見契約附錄 C。
 - Runtime `[V]`：Apple Container **1.4.1**（client/server commit `9a8917ca…`）＋ Qlib **0.9.7** native linux/arm64
@@ -177,6 +180,12 @@ v1.3.x 的 runner 只在 Strategy A v2 啟動時才部署，屆時 P10 會逐位
 `SHA256SUMS`、`README.md`）與 container `/qlib/work/staging/v1.3.2/**`，其 bytes 與 repo commit 逐位元一致；
 auditor 在 `qlib-run` 內以 `SA_ENGINE_PATH=<staging runner> /opt/venv/bin/python <staging test>` 執行即可（35/35 OK）。
 staging 不新增 daemon/service、不改動 active `/scripts` mount、不寫 `/results`、不產生任何 A v2 結果。
+
+**2026-09-13 A v2 launch 的部署（更新上述三段狀態）**：attestation commit `84b8728` 之後，v1.3.2 runner 已部署到 active path：
+host `qlib-apple-container/scripts/20_strategy_a_run.py`（sha256 `c4f9a216…`、51,775 bytes）與
+`scripts/tests/test_strategy_a_engine.py`（sha256 `d5ddb247…`），container `/scripts`（ro mount）讀回逐位元相同，
+preflight P10 由 host 端**實際重算**相符。此後 active `/scripts` 的 `20_strategy_a_run.py` 為 v1.3.2，不再等於 frozen A v1
+（sha256 `8f3ce89d…`）；A v1 artifacts 的 `script.sha256` 仍可由 git 歷史（commit `4859051` 的 bytes）重算。
 
 **host `/scripts` 的 B 清理（v1.3.1 M1）**：`qlib-apple-container/scripts/30_strategy_b_run.py` 與
 `qlib-apple-container/scripts/tests/test_strategy_b_engine.py` 已從 host 部署目錄移除（container 內 `/scripts` 同步消失）；
