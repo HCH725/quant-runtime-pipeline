@@ -4,11 +4,15 @@
 These are *simulation* checks: the kernel read-back and the `unblock` call are injected
 (`reconcile.card_status` / `reconcile.sh`), so the release decision state machine can be exercised
 without mutating a real board. They assert the fail-closed property that matters: `unblock` is issued
-**only** when every contract 9.4 check passed on an *unconsumed* terminal sentinel.
+**only** when every contract 9.4 check passed on an *unconsumed* terminal sentinel of the round's
+authoritative current attempt (v1.7.1: an older attempt whose terminal was superseded by a newer
+valid attempt of the same round is a descriptive no-op, and an unorderable round fails closed).
 
 Run: python3 runtime/tests/test_reconcile.py     (stdlib unittest, no dependencies)
 """
+import contextlib
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -318,6 +322,273 @@ class Harness(unittest.TestCase):
         attempt, _ = self.fixture()
         (attempt / "run-spec.json").unlink()
         self.assert_mapping_fail_closed(attempt)
+
+    # --- v1.7.1: round-level authoritative current attempt -----------------
+    # The production bug: a round with a superseded FAILED u1 and a RUNNING u2 was released on u1's
+    # terminal sentinel (duplicate Hermes wake). A round now has exactly one attempt that may drive
+    # a board transition: the newest valid run-spec identity. Everything older is provenance.
+    def round_setup(self, family="fam-a", round_id="fam-a-r1", task=TASK):
+        base = Path(self.root) / family
+        rnd = base / "rounds" / round_id
+        (rnd / "attempts").mkdir(parents=True, exist_ok=True)
+        (base / "family.json").write_text(json.dumps(
+            {"schema_version": 1, "family_id": family, "kanban_task_id": task,
+             "kanban_board": BOARD}))
+        (rnd / "round-spec.json").write_text(json.dumps(
+            {"schema_version": 1, "family_id": family, "round_id": round_id,
+             "kanban_task_id": task, "kanban_board": BOARD}))
+        return rnd
+
+    def add_attempt(self, rnd, run_id, terminals=(), created="2026-09-13T00:00:00Z", task=TASK,
+                    spec=True, spec_over=None, status_field=None, stage=None, boot=None,
+                    tamper=False):
+        family, round_id = rnd.parent.parent.name, rnd.name
+        attempt = rnd / "attempts" / run_id
+        attempt.mkdir(parents=True)
+        if spec:
+            run_doc = {"schema_version": 1, "family_id": family, "round_id": round_id,
+                       "run_id": run_id, "task_id": task, "kanban_board": BOARD,
+                       "created_at_utc": created, "container_id": "qlib-run",
+                       "image_id": "qlib:0.9.7-arm64"}
+            run_doc.update(spec_over or {})
+            (attempt / "run-spec.json").write_text(json.dumps(run_doc))
+        if stage is not None:
+            (attempt / "state.json").write_text(json.dumps(
+                {"schema_version": 1, "family_id": family, "round_id": round_id, "run_id": run_id,
+                 "stage": stage}))
+        payload = (Path(self.root) / family / "family.json").read_text()
+        (attempt / "result.json").write_text(payload)
+        checksum = "sha256:" + hashlib.sha256(payload.encode()).hexdigest()
+        if tamper:
+            (attempt / "result.json").write_text(payload + "tampered")
+        sentinel = {
+            "schema_version": 1, "family_id": family, "round_id": round_id, "run_id": run_id,
+            "task_id": task, "kanban_board": BOARD, "created_at_utc": created,
+            "host_boot_id": boot or reconcile.host_boot_id(), "container_id": "qlib-run",
+            "image_id": "qlib:0.9.7-arm64", "artifact_manifest": ["result.json"],
+            "artifact_checksums": {"result.json": checksum}, "verdict_hint": "CANDIDATE_PASS",
+        }
+        for term in terminals:
+            (attempt / term).write_text(json.dumps(dict(sentinel, status=status_field or term)))
+        return attempt
+
+    def run_root(self, dry_run=False):
+        """Full traversal (the real main() loop) over the temp root with injected kernel I/O."""
+        argv = ["reconcile.py", "--results-root", self.root, "--board", BOARD, "--json"]
+        if dry_run:
+            argv.append("--dry-run")
+        buf = io.StringIO()
+        real_argv = sys.argv
+        try:
+            sys.argv = argv
+            with contextlib.redirect_stdout(buf):
+                rc = reconcile.main()
+        finally:
+            sys.argv = real_argv
+        return rc, json.loads(buf.getvalue())
+
+    def row(self, report, run_id):
+        rows = [r for r in report["results"] if r["run_id"] == run_id]
+        self.assertEqual(len(rows), 1, "expected exactly one row for %s, got %d" % (run_id, len(rows)))
+        return rows[0]
+
+    def assert_no_release(self, report):
+        self.assertEqual(report["unblocked"], [])
+        self.assertEqual(report["would_unblock"], [])
+        self.assertEqual(self.unblock_calls(), [])
+
+    def test_older_terminal_superseded_by_newer_running_attempt(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("FAILED",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", created="2026-09-13T00:10:00Z", stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        self.assertEqual(report["incidents"], 0)
+        superseded = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(superseded["action"], "superseded")
+        self.assertEqual(superseded["detail"]["authoritative_run_id"], "fam-a-r1-u2")
+        self.assertEqual(superseded["detail"]["terminal_files"], ["FAILED"])
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "orphan_candidate")
+        self.assert_no_incident_no_comment()
+
+    def test_only_the_newest_terminal_is_actionable(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("FAILED",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created="2026-09-13T00:10:00Z")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "unblocked")
+        self.assertEqual(len(self.unblock_calls()), 1)
+
+    def test_single_terminal_attempt_still_releases(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("FAILED",), created="2026-09-13T00:00:00Z")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(report["superseded"], [])
+
+    def assert_round_fails_closed(self, report, run_ids):
+        self.assertEqual(len(report["results"]), 1)
+        row = report["results"][0]
+        self.assertEqual(row["action"], "incident")
+        self.assertEqual(row["reason"], "attempt_selection_ambiguous")
+        self.assertEqual(row["detail"]["round_attempts"], list(run_ids))
+        self.assert_no_release(report)
+        lines = self.incident_lines()
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(json.loads(lines[0])["kind"], "attempt_selection_ambiguous")
+        comments = [c for c in self.calls if c[0] == "sh" and "comment" in c[1]]
+        self.assertEqual(len(comments), 1)
+
+    def test_newest_attempt_without_identity_fails_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", spec=False, created="2026-09-13T00:10:00Z")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 3)
+        self.assert_round_fails_closed(report, ["fam-a-r1-u1", "fam-a-r1-u2"])
+        self.assertEqual(report["results"][0]["run_id"], "fam-a-r1-u2")
+
+    def test_newest_attempt_with_malformed_ordering_metadata_fails_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", spec_over={"created_at_utc": "not-a-timestamp"},
+                         created="not-a-timestamp")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 3)
+        self.assert_round_fails_closed(report, ["fam-a-r1-u1", "fam-a-r1-u2"])
+
+    def test_conflicting_task_ownership_in_one_round_fails_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created="2026-09-13T00:10:00Z",
+                         task="t_OTHER")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 3)
+        self.assertEqual(len(report["results"]), 1)
+        self.assert_no_release(report)
+        self.assertIn("conflicting task ownership", report["results"][0]["detail"]["ambiguity"])
+
+    def test_u10_beats_u9_on_a_timestamp_tie(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        tie = "2026-09-13T00:00:00Z"
+        self.add_attempt(rnd, "fam-a-r1-u9", terminals=("FAILED",), created=tie)
+        self.add_attempt(rnd, "fam-a-r1-u10", created=tie, stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        self.assertEqual(self.row(report, "fam-a-r1-u9")["action"], "superseded")
+        self.assertEqual(self.row(report, "fam-a-r1-u9")["detail"]["authoritative_run_id"],
+                         "fam-a-r1-u10")
+        self.assertEqual(self.row(report, "fam-a-r1-u10")["action"], "orphan_candidate")
+
+    def test_timestamp_tie_resolved_by_numeric_ordinal(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        tie = "2026-09-13T00:00:00Z"
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("FAILED",), created=tie)
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created=tie)
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+
+    def test_timestamp_tie_without_ordinal_tiebreak_fails_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        tie = "2026-09-13T00:00:00Z"
+        self.add_attempt(rnd, "fam-a-r1-alpha", terminals=("DONE",), created=tie)
+        self.add_attempt(rnd, "fam-a-r1-beta", created=tie, stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 3)
+        self.assert_round_fails_closed(report, ["fam-a-r1-alpha", "fam-a-r1-beta"])
+
+    def test_different_rounds_do_not_supersede(self):
+        self.install_fakes()
+        rnd1 = self.round_setup(round_id="fam-a-r1")
+        self.add_attempt(rnd1, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        rnd2 = self.round_setup(round_id="fam-a-r2")
+        self.add_attempt(rnd2, "fam-a-r2-u1", created="2026-09-13T00:10:00Z", stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "unblocked")
+        self.assertEqual(self.row(report, "fam-a-r2-u1")["action"], "orphan_candidate")
+        self.assertEqual(report["superseded"], [])
+
+    def test_different_families_do_not_supersede(self):
+        self.install_fakes()
+        rnd_a = self.round_setup(family="fam-a", round_id="fam-a-r1")
+        self.add_attempt(rnd_a, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        rnd_b = self.round_setup(family="fam-b", round_id="fam-b-r1")
+        self.add_attempt(rnd_b, "fam-b-r1-u1", created="2026-09-13T00:10:00Z", stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "unblocked")
+        self.assertEqual(report["superseded"], [])
+
+    def test_dry_run_selects_the_same_attempt_and_never_mutates(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("FAILED",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created="2026-09-13T00:10:00Z")
+        rc, report = self.run_root(dry_run=True)
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["would_unblock"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "would_unblock")
+        self.assertEqual(self.unblock_calls(), [])
+        self.assert_no_incident_no_comment()
+
+    def test_ambiguous_round_with_consumed_card_is_noop(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", spec=False, created="2026-09-13T00:10:00Z")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["incidents"], 0)
+        self.assertEqual(report["results"][0]["action"], "consumed")
+        self.assert_no_release(report)
+        self.assert_no_incident_no_comment()
+
+    def test_superseded_attempt_with_conflicting_terminals_is_noop(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE", "FAILED"),
+                         created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created="2026-09-13T00:10:00Z")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+        self.assert_no_incident_no_comment()
+
+    def test_authoritative_attempt_checks_still_fail_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", terminals=("DONE",), created="2026-09-13T00:00:00Z")
+        self.add_attempt(rnd, "fam-a-r1-u2", terminals=("DONE",), created="2026-09-13T00:10:00Z",
+                         tamper=True)
+        rc, report = self.run_root()
+        self.assertEqual(rc, 3)
+        self.assert_no_release(report)
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "incident")
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["reason"], "checksum_mismatch")
 
 
 if __name__ == "__main__":

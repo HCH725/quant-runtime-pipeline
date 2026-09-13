@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "kind": "v1.7.1 reconciler authoritative current attempt evidence snapshot",
+  "card": "t_fd672413",
+  "author": "Hermes default (Xiaoqian)",
+  "created_at_utc": "2026-09-13T22:28:08Z",
+  "redaction": "host-specific absolute paths are replaced by <HOME>/<EXPANSION> per evidence/README.md; nothing else altered",
+  "contract_snapshot": {
+    "version": "v1.7.1",
+    "status_at_snapshot": "AWAITING AUDIT",
+    "previous_frozen_version": "v1.7.0 (AUDITED PASS / FROZEN, audited content commit d21ec33)",
+    "sections_touched": [
+      "header status/version + 作者 (v1.7.1) + 作者補註 (v1.7.1)",
+      "§9.4 (v1.7.1 [C]: round-level authoritative current attempt, 5 clauses; 2 [V] readback lines)",
+      "§12.6 (incident kind list + attempt_selection_ambiguous bullet)",
+      "§22 (new A30)",
+      "§23 (new item 18 executable verification)",
+      "§25 (two v1.7.1 hard rules)",
+      "change log row v1.7.1 + 驗證方式 (v1.7.1) + closing status line"
+    ],
+    "no_semantic_section_rewritten": true,
+    "no_new_daemon_service_db_registry": true,
+    "no_state_machine_added": true
+  },
+  "production_bug": {
+    "summary": "reconcile.py scanned attempts individually and consumed an older terminal sentinel even when a newer non-terminal attempt existed in the same round; the 06:06 reconciler tick unblocked t_35b3e5da on r1-u1's FAILED sentinel while r1-u2 was RUNNING_QLIB (duplicate Hermes wake).",
+    "observed_on": "2026-09-14 06:06 local (reconciler cron f6b9aa5e9034, run then released the card)",
+    "qlib_u2_health": "unaffected; u2 kept running (live grid writer observed before/after this card)",
+    "read_only_repro_on_current_production_tree": {
+      "command": "env -u HERMES_DELEGATED_CHILD_CONTEXT python3 runtime/reconcile.py --dry-run --json",
+      "code_revision": "v1.7.0 bytes (git show HEAD:runtime/reconcile.py)",
+      "returncode": 0,
+      "attempts_scanned": 9,
+      "would_unblock": [
+        "t_35b3e5da"
+      ],
+      "unblocked": [],
+      "incidents": 0,
+      "action_counts": {
+        "consumed": 7,
+        "would_unblock": 1,
+        "orphan_candidate": 1
+      },
+      "b_v2_r1_u1": {
+        "action": "would_unblock",
+        "reason": "all contract 9.4 checks pass; card is scheduled",
+        "terminal_files": [
+          "FAILED"
+        ]
+      },
+      "b_v2_r1_u2": {
+        "action": "orphan_candidate",
+        "stage": "RUNNING_QLIB"
+      },
+      "note": "read-only: dry-run writes no incident, no comment, no card change"
+    }
+  },
+  "fix": {
+    "rule": "one round has exactly one authoritative current attempt: the valid run-spec identity with the greatest (created_at_utc, uN ordinal); older attempts are superseded descriptive no-ops; an unorderable round fails closed with incident kind attempt_selection_ambiguous and never falls back to an older terminal; consumption is still checked first.",
+    "superseded_action": "superseded",
+    "new_incident_kind": "attempt_selection_ambiguous",
+    "changed_repo_files": [
+      {
+        "path": "runtime/reconcile.py",
+        "sha256_before": "140eb6ddeee820901d5db2b8eb961dc9879ed6c06d9726148647bfe144e574c9",
+        "sha256_after": "1e15d32114398ecef50b0d2092006b1d17881940d4f7adf0e866162e0cb7b667"
+      },
+      {
+        "path": "runtime/tests/test_reconcile.py",
+        "sha256_before": "66b5213fb424fbde7b00d3a32593e89cc28074252537996f5773b4c5b0f381f5",
+        "sha256_after": "b11db00169854266b8de2baddb07f1fd241b2baa458f5df0163dde5c4708c6aa"
+      }
+    ],
+    "untouched": [
+      "container/scripts/** (Strategy B engine)",
+      "runtime/production_handoff.py, runtime/preflight.py, runtime/terminal_evidence.py",
+      "candidate pool / handoff logic / strategy semantics",
+      "any /results attempt artifact (B v2 u1/u2, A v1/v2, B v1)"
+    ]
+  },
+  "reconcile_dry_run_after_fix": {
+    "command": "env -u HERMES_DELEGATED_CHILD_CONTEXT python3 runtime/reconcile.py --dry-run --json",
+    "code_revision": "v1.7.1 (working tree)",
+    "returncode": 0,
+    "attempts_scanned": 9,
+    "unblocked": [],
+    "would_unblock": [],
+    "incidents": 0,
+    "superseded": [
+      {
+        "run_id": "close-vs-sma-mean-reversion-long-flat-v1-r2-u1",
+        "superseded_by": "close-vs-sma-mean-reversion-long-flat-v1-r2-u3",
+        "task_id": "t_97208408"
+      },
+      {
+        "run_id": "close-vs-sma-mean-reversion-long-flat-v1-r2-u2",
+        "superseded_by": "close-vs-sma-mean-reversion-long-flat-v1-r2-u3",
+        "task_id": "t_97208408"
+      },
+      {
+        "run_id": "ema-crossover-walkforward-momentum-long-short-v1-r1-u1",
+        "superseded_by": "ema-crossover-walkforward-momentum-long-short-v1-r1-u2",
+        "task_id": "t_3e696dce"
+      },
+      {
+        "run_id": "ema-crossover-walkforward-momentum-long-short-v2-r1-u1",
+        "superseded_by": "ema-crossover-walkforward-momentum-long-short-v2-r1-u2",
+        "task_id": "t_35b3e5da"
+      }
+    ],
+    "action_counts": {
+      "consumed": 4,
+      "superseded": 4,
+      "orphan_candidate": 1
+    },
+    "b_v2_r1_u1": {
+      "action": "superseded",
+      "authoritative_run_id": "ema-crossover-walkforward-momentum-long-short-v2-r1-u2"
+    },
+    "b_v2_r1_u2": {
+      "action": "orphan_candidate",
+      "stage": "RUNNING_QLIB"
+    },
+    "no_card_action_for_t_35b3e5da": true
+  },
+  "live_safety_b_v2_attempt_tree": {
+    "root": "<EXPANSION>/qlib-results/ema-crossover-walkforward-momentum-long-short-v2",
+    "files_before": 34,
+    "files_after": 34,
+    "identical": 33,
+    "changed": [
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u2/artifacts/grid_fee_2x.csv"
+    ],
+    "added": [],
+    "missing": [],
+    "changed_explanation": "u2 is the live writer of its own grid CSVs; grid_fee_2x.csv grew while this card ran. Nothing was written by this card.",
+    "stable_sha256": {
+      "family.json": "63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+      "rounds/...-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/run-spec.json": "e997ac6b9f7779c8e91163f2d3c9b11d34c11fe84d4d98cd14fe8954ab294162",
+      "rounds/...-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/state.json": "3ecdc7dec3c8d17e14ce5207fc0a5540eb4407bc9c732bdaf548aa5cadf2f763",
+      "rounds/...-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u2/run-spec.json": "b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+      "rounds/...-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u2/state.json": "c8465714502867708afa5e424da93ef6a334aef65a761f4b8ce1f7f3f61e9a58",
+      "rounds/...-r1/round-spec.json": "a3dd33a95e3fb307c91f5e07f5b486b3c51e8be4bbc214ae85d654a169bcaf22"
+    },
+    "u1_files_unchanged": [
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/FAILED",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/bins_build.json",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_cost_attrition_40bps.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_entry_delay_1_bar.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_fee_2x.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_full.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_funding_2x.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_historical.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_no_funding.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_no_funding_full.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_oos.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/grid_slippage_2ticks.csv",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/input_manifest.json",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/artifacts/progress.json",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/logs/run.log",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/run-spec.json",
+      "rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/state.json"
+    ],
+    "process_actions": "none: u2 was not stopped, restarted, or re-specified; no u3 was created"
+  },
+  "tests": {
+    "reconcile": {
+      "file": "runtime/tests/test_reconcile.py",
+      "passed": 38,
+      "total": 38,
+      "new_round_level_checks": 15
+    },
+    "all_files": {
+      "test_production_handoff.py": 26,
+      "test_post_survivor.py": 33,
+      "test_reconcile.py": 38,
+      "test_preflight_p10.py": 10,
+      "test_strategy_a_v2_counts.py": 14,
+      "test_strategy_b_v2_templates.py": 8,
+      "test_survivor_bundle.py": 18,
+      "test_survivor_evidence.py": 12,
+      "total": 159
+    },
+    "red_check": {
+      "description": "the 15 new round-level checks re-run against v1.7.0 reconcile.py bytes (isolated /tmp tree)",
+      "result": "11 FAIL + 3 ERROR (errors are KeyError 'superseded' from the v1.7.0 report shape)",
+      "green_on_v1_7_1": "38/38 OK"
+    },
+    "known_flake_disclosure": {
+      "test": "test_post_survivor.py::TestSurvivorIndex::test_index_cli_writes_checks_and_detects_drift",
+      "symptom": "AssertionError: 'result=unchanged' not found ... result=written (survivor index regenerated with a fresh generated_at_utc)",
+      "observed": "hit 3/14 reruns in this session (pre-existing, documented intermittent in the v1.7.0 audit context)",
+      "relation_to_this_change": "none - reconcile.py is not imported by survivor_index/leaderboard; every rerun that does not hit the flake is OK"
+    }
+  },
+  "cron_readback": {
+    "reconciler_f6b9aa5e9034": {
+      "state": "paused",
+      "enabled": false,
+      "no_agent": true,
+      "schedule": "every 15m",
+      "last_run": "2026-09-14T06:06:54+08:00"
+    },
+    "handoff_624d0be5b23c": {
+      "state": "unchanged by this card",
+      "schedule": "5 * * * *"
+    },
+    "resumed_any_cron": false
+  },
+  "board_readback": {
+    "db": "<HOME>/.hermes/kanban/boards/quant-strategy-research/kanban.db",
+    "t_35b3e5da": {
+      "status": "scheduled",
+      "worker_pid": null
+    },
+    "status_counts": {
+      "archived": 70,
+      "done": 47,
+      "running": 1,
+      "scheduled": 1
+    },
+    "blocked": 0,
+    "strategy_c_d_e_real_cards": 0
+  },
+  "guards": {
+    "resumed_any_cron": false,
+    "created_strategy_card": false,
+    "wrote_any_results_artifact": false,
+    "touched_frozen_science_artifacts": false,
+    "new_daemon_service_db_queue_registry": false,
+    "default_self_audited": false,
+    "b_v2_u2_stopped_or_restarted": false
+  }
+}

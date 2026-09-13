@@ -6,6 +6,14 @@ Only legal action: `scheduled -> ready` (kernel `unblock`), taken **only** after
 verification list passes for an *unconsumed* terminal sentinel. Anything conflicting is fail-closed:
 no unblock, no block, an append-only incident line, and a card comment.
 
+Only the round's **authoritative current attempt** (contract 9.4 v1.7.1) may ever drive a Kanban
+transition: the valid `run-spec.json` identity with the greatest (`created_at_utc`, `uN` ordinal).
+An older attempt is *superseded* - its sentinel stays readable provenance, but it is a descriptive
+no-op even when it is terminal, because a newer attempt of the same round exists. Ordering never
+comes from the run_id string (v1.7.1: `u10` > `u9`). When the newest attempt of a round cannot be
+ordered deterministically (missing/malformed/ambiguous run-spec identity, conflicting task
+ownership) the round fails closed: incident, no action, and **no** fallback to an older terminal.
+
 This is not a daemon: run it manually or from a no_agent cron / one-shot invocation.
 Exit codes: 0 = no incident, 3 = incidents recorded (human needed), 2 = usage error.
 
@@ -14,8 +22,10 @@ Examples:
     python3 runtime/reconcile.py                           # apply (unblock what verifies)
 """
 import argparse
+import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -95,8 +105,12 @@ def incident_id(attempt_dir, kind):
     return "inc-%s-%s" % (time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()), h)
 
 
-def discover_attempts(results_root):
-    """<root>/<family_id>/rounds/<round_id>/attempts/<run_id>/"""
+def discover_rounds(results_root):
+    """<root>/<family_id>/rounds/<round_id>/attempts/<run_id>/ -> [(family_id, round_id, [dirs])]
+
+    The round is the selection unit (contract 9.4 v1.7.1): attempts are only ever compared with
+    attempts of the same family + round, never across rounds/families.
+    """
     root = Path(results_root)
     if not root.is_dir():
         return []
@@ -111,10 +125,174 @@ def discover_attempts(results_root):
             attempts = rnd / "attempts"
             if not (rnd.is_dir() and attempts.is_dir()):
                 continue
-            for attempt in sorted(attempts.iterdir()):
-                if attempt.is_dir():
-                    out.append(attempt)
+            found = [a for a in sorted(attempts.iterdir()) if a.is_dir()]
+            if found:
+                out.append((family.name, rnd.name, found))
     return out
+
+
+def discover_attempts(results_root):
+    out = []
+    for _family_id, _round_id, attempts in discover_rounds(results_root):
+        out.extend(attempts)
+    return out
+
+
+ORDINAL = re.compile(r"u(\d+)$")
+
+
+class Attempt(object):
+    """One attempt dir plus the durable identity/ordering metadata used for round selection.
+
+    `run-spec.json` is the ordering authority (it is published before compute, contract 9.2 step 1):
+    `created_at_utc` is primary, the `uN` run ordinal only a deterministic tie-break, so the
+    run_id string itself can never decide which attempt is current (`u10` > `u9`). Any missing or
+    ambiguous piece lands in `problems` and makes the round undecidable -> fail closed.
+    """
+
+    def __init__(self, path, family_id, round_id, run_id):
+        self.path = Path(path)
+        self.family_id = family_id
+        self.round_id = round_id
+        self.run_id = run_id
+        self.task_id = None
+        self.kanban_board = None
+        self.created_at = None
+        self.ordinal = None
+        self.problems = []
+
+
+def parse_utc(value):
+    """ISO-8601 UTC timestamp -> aware datetime; None when missing/unparsable."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        stamp = datetime.datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=datetime.timezone.utc)
+    return stamp.astimezone(datetime.timezone.utc)
+
+
+def attempt_metadata(path, family_id, round_id, run_id):
+    """Read one attempt's durable ordering identity; non-empty `problems` => undecidable."""
+    rec = Attempt(path, family_id, round_id, run_id)
+    spec = rec.path / "run-spec.json"
+    if not spec.is_file():
+        rec.problems.append("missing run-spec.json")
+        return rec
+    try:
+        doc = json.loads(spec.read_text())
+    except ValueError as exc:
+        rec.problems.append("run-spec.json not valid JSON: %s" % exc)
+        return rec
+    for key, want in (("family_id", family_id), ("round_id", round_id), ("run_id", run_id)):
+        if doc.get(key) != want:
+            rec.problems.append("run-spec.json %s=%r != path %r" % (key, doc.get(key), want))
+    task_id = doc.get("task_id")
+    if isinstance(task_id, str) and task_id:
+        rec.task_id = task_id
+    else:
+        rec.problems.append("run-spec.json task_id is not a non-empty string (%r)" % (task_id,))
+    board = doc.get("kanban_board")
+    if isinstance(board, str) and board:
+        rec.kanban_board = board
+    else:
+        rec.problems.append("run-spec.json kanban_board is not a non-empty string (%r)" % (board,))
+    rec.created_at = parse_utc(doc.get("created_at_utc"))
+    if rec.created_at is None:
+        rec.problems.append("run-spec.json created_at_utc missing/unparsable (%r)"
+                            % (doc.get("created_at_utc"),))
+    match = ORDINAL.search(run_id)
+    rec.ordinal = int(match.group(1)) if match else None
+    return rec
+
+
+def select_authoritative(records):
+    """(authoritative, superseded, problem) for one round's attempts.
+
+    Contract 9.4 (v1.7.1): exactly one attempt per round is the authoritative *current* attempt;
+    every older one is superseded (readable provenance, descriptive no-op). Undecidable ordering -
+    broken identity, conflicting task ownership, equal timestamps without a deterministic uN
+    tie-break - returns a problem instead of a guess, so the caller fails closed and never falls
+    back to an older terminal.
+    """
+    if len(records) < 2:
+        return records[0], [], None
+    broken = [r for r in records if r.problems]
+    if broken:
+        return None, [], "; ".join("%s: %s" % (r.run_id, ", ".join(r.problems)) for r in broken)
+    owners = sorted(set((r.task_id, r.kanban_board) for r in records))
+    if len(owners) > 1:
+        return None, [], "conflicting task ownership inside one round: %r" % (owners,)
+
+    def order_key(rec):
+        return (rec.created_at, -1 if rec.ordinal is None else rec.ordinal, rec.run_id)
+
+    ordered = sorted(records, key=order_key)
+    for older, newer in zip(ordered, ordered[1:]):
+        if older.created_at != newer.created_at:
+            continue
+        if older.ordinal is None or newer.ordinal is None or older.ordinal == newer.ordinal:
+            return None, [], ("attempts %s and %s share created_at_utc=%s without a deterministic "
+                              "uN tie-break" % (older.run_id, newer.run_id,
+                                                older.created_at.isoformat()))
+    return ordered[-1], ordered[:-1], None
+
+
+def superseded_result(rec, authoritative):
+    res = Result(rec.path, rec.family_id, rec.round_id, rec.run_id)
+    res.action = "superseded"
+    res.reason = ("superseded by newer attempt %s (authoritative current attempt, created_at_utc=%s); "
+                  "read-only no-op, no card mutation (contract 9.4 v1.7.1)"
+                  % (authoritative.run_id, authoritative.created_at.isoformat()))
+    res.task_id = rec.task_id
+    res.detail["authoritative_run_id"] = authoritative.run_id
+    res.detail["terminal_files"] = [t for t in TERMINALS if (rec.path / t).exists()]
+    return res
+
+
+def round_task_ids(records):
+    """Distinct task ids visible for a round (run-specs + parsable terminal sentinels)."""
+    ids = set(r.task_id for r in records if r.task_id)
+    for rec in records:
+        task_id, _board = terminal_identity(rec.path)
+        if task_id:
+            ids.add(task_id)
+    return sorted(ids)
+
+
+def handle_ambiguous_round(records, problem, results_root, board, dry_run, detector):
+    """Fail closed: no attempt of an unorderable round may act (contract 12.6).
+
+    Consumption still short-circuits incidents (contract 9.4 scan scope): a round whose card is no
+    longer `scheduled` is a no-op, so a historical malformed round never accumulates incidents on
+    every run. Everything else becomes an incident - never a release, never a fallback.
+    """
+    ids = round_task_ids(records)
+    boards = [r.kanban_board for r in records if r.kanban_board]
+    subject = next((r for r in records if r.problems), records[-1])
+    res = Result(subject.path, subject.family_id, subject.round_id, subject.run_id)
+    res.detail["round_attempts"] = [r.run_id for r in records]
+    res.detail["ambiguity"] = problem
+    res.task_id = ids[0] if len(ids) == 1 else None
+    if len(ids) == 1:
+        status, why = card_status(boards[0] if boards else board, ids[0])
+        if status is not None:
+            res.status_before = status
+            if status != "scheduled":
+                res.action = "consumed"
+                res.reason = ("round is ambiguous (%s) but card status=%s is not scheduled -> "
+                              "consumed, no incident" % (problem, status))
+                return res
+        else:
+            res.detail["kanban_readback"] = why
+    return fail(res, results_root, "attempt_selection_ambiguous", detector, dry_run,
+                [str(r.path) for r in records], board)
 
 
 class Result(object):
@@ -372,11 +550,18 @@ def main():
         return 2
 
     results = []
-    for attempt in discover_attempts(args.results_root):
-        rel = attempt.relative_to(Path(args.results_root)).parts
-        family_id, round_id, run_id = rel[0], rel[2], rel[4]
-        res = Result(attempt, family_id, round_id, run_id)
-        res.detail["terminal_files"] = [t for t in TERMINALS if (attempt / t).exists()]
+    for family_id, round_id, attempts in discover_rounds(args.results_root):
+        records = [attempt_metadata(attempt, family_id, round_id, attempt.name)
+                   for attempt in attempts]
+        authoritative, superseded, problem = select_authoritative(records)
+        if problem:
+            results.append(handle_ambiguous_round(records, problem, args.results_root, args.board,
+                                                  args.dry_run, args.detector))
+            continue
+        for rec in superseded:
+            results.append(superseded_result(rec, authoritative))
+        res = Result(authoritative.path, family_id, round_id, authoritative.run_id)
+        res.detail["terminal_files"] = [t for t in TERMINALS if (authoritative.path / t).exists()]
         results.append(handle(res, args.results_root, args.board, args.dry_run, args.detector))
 
     incidents = [r for r in results if r.action == "incident"]
@@ -392,6 +577,8 @@ def main():
         "attempts_scanned": len(results),
         "unblocked": [r.task_id for r in results if r.action == "unblocked"],
         "would_unblock": [r.task_id for r in results if r.action == "would_unblock"],
+        "superseded": [{"run_id": r.run_id, "superseded_by": r.detail.get("authoritative_run_id"),
+                        "task_id": r.task_id} for r in results if r.action == "superseded"],
         "incidents": len(incidents),
         "results": [r.as_dict() for r in results],
     }
