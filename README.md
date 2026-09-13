@@ -19,10 +19,10 @@ audited implementation contract 與其變化歷史。
 
 ## 2. Current status（2026-09-13）
 
-- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.3.2，AWAITING AUDIT**（卡片 `t_33457313`，依 auditor `t_23f4c3ef` 對 v1.3.1 的 FAIL）；
+- `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md`：**v1.3.2，AUDITED PASS / FROZEN**（auditor `t_3ffaeeb8`，2026-09-13；audited content commit `0363011`；remediation 卡片 `t_33457313`，依 auditor `t_23f4c3ef` 對 v1.3.1 的 FAIL）；
   上一個 AUDITED PASS / FROZEN 的版本是 **v1.2.0**（auditor `t_7b979fe8`，2026-09-13；audited content commit `068d6f7`），
   更前為 **v1.1.1**（auditor re-audit `t_83682069`，2026-09-13；audited content commit `18d6c3f`）與 **v1.0.1**（auditor re-audit `t_e35c39c0`）。
-- **v1.3.2（2026-09-13，AWAITING AUDIT；audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）**：兩項。
+- **v1.3.2（2026-09-13，AUDITED PASS / FROZEN；auditor `t_3ffaeeb8`，audited content commit `0363011`；audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）**：兩項。
   **F3 獨立 gross PnL 會計**——`gross_pnl` 不再由 net 反向回推（`realized + fees_total + funding_paid` 已刪除），
   改由**獨立的 price-PnL accumulator**：`simulate()` 的 4 個 exit／flatten 路徑各自只累加該 episode 的
   `exit proceeds − cost basis`（不含 fee、不含 funding），`summarize()` 的 `pnl_decomposition` 改以
@@ -44,7 +44,7 @@ audited implementation contract 與其變化歷史。
   round-spec／run-spec 口徑一致，並由 `runtime/strategy_a_v2_counts.py` 的 provenance 檢查與 5 個負向控制強制（`test_strategy_a_v2_counts.py` 由 9 → **14/14**）。
   **M1 archive hygiene**——operator-stopped 的 Strategy B runner 與其 engine test 已逐位元移到 archive-only 路徑
   `evidence/strategy-b-operator-stopped/runtime/`，host `/scripts` 部署副本同步移除（`/results` 未動）。詳見契約 §7.2/§10.2/§13 與附錄 C。
-- **v1.3.0（2026-09-13，AWAITING AUDIT）**：**DCA parameter domain 全量納入 full-backtest**——full-backtest 改為
+- **v1.3.0（2026-09-13，FAIL audit `t_246c62d7`）**：**DCA parameter domain 全量納入 full-backtest**——full-backtest 改為
   `symbols × timeframes × strategy parameter domain × DCA parameter domain × historical/OOS/robustness`，且每個
   `(symbol, timeframe)` cohort 都必須跑完整的 `strategy × DCA` 乘積（單一固定 DCA rail 不再合格，§7.2）；
   **cohort-level survivor disposition**（新增 §7.3）——每個 cohort 以 deterministic、**historical-only** 的 selector 選出唯一
@@ -103,7 +103,7 @@ host reconciler (deterministic, no-agent)  →  Kanban unblock  →  Hermes
 
 | 路徑 | 內容 |
 |---|---|
-| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.3.2 / AWAITING AUDIT**，依 `t_33457313`（audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）；前版 **v1.3.1** = FAIL audit `t_23f4c3ef`；再前版 **v1.3.0** = FAIL audit `t_246c62d7`；上一個 FROZEN 版本 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；再前為 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
+| `QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md` | canonical contract（現行 **v1.3.2 / AUDITED PASS / FROZEN**，audited content commit `0363011`，auditor `t_3ffaeeb8`，依 `t_33457313`（audit `t_23f4c3ef` 對 v1.3.1 的 F3/F4 最小 remediation）；前版 **v1.3.1** = FAIL audit `t_23f4c3ef`；再前版 **v1.3.0** = FAIL audit `t_246c62d7`；上一個 FROZEN 版本 **v1.2.0 / AUDITED PASS / FROZEN**，audited content commit `068d6f7`，auditor `t_7b979fe8`，含 §14.4 automatic handoff；再前為 **v1.1.1 / AUDITED PASS / FROZEN**，audited content commit `18d6c3f`，auditor re-audit `t_83682069`），全文三級標記 `[V]`/`[C]`/`[T]`，變更記錄見附錄 C |
 | `container/Containerfile` | **唯一** image 定義：`python:3.12-slim` + Qlib `v0.9.7`（build 內 `rev-parse HEAD` 守衛，upstream 移動 tag 即 build 失敗） |
 | `container/scripts/` | **現行** runtime 的 canonical rebuild / verify / engine 定義：`20_strategy_a_run.py`（v1.3.0/v1.3.1/v1.3.2 Strategy A 全量回測 engine）、`00_env_baseline.py`、`03_qlib_smoke.py`、`verify_final.sh`、`run_phase4.sh`、`fetch_kernel.sh`、`tests/test_strategy_a_engine.py`。v1.1.0 僅 `verify_final.sh` 兩處 Qlib 檢查改為 `/opt/venv/bin/python`，其餘與稽核當時逐位元相同（見 §6 Provenance）；一次性 phase/history 腳本已排除（分類與理由見 `evidence/README.md`）。**已 operator-stopped 的 Strategy B runner 與其 test 不在這裡**：它們逐位元存檔於 `evidence/strategy-b-operator-stopped/runtime/`（archive-only，不得執行），host `/scripts` 部署副本亦已移除（Contract §13 archive hygiene，卡 `t_6c83c9fb`） |
 | `runtime/` | host 端最小 runtime readiness：`preflight.py`（P1–P10）、`reconcile.py`（no-agent 完成橋）、`terminal_evidence.py`（sentinel/checksum 產生器）、`production_handoff.py`（§14.4 automatic handoff：每輪檢查並最多 append 1 張 family 卡，v1.3.0 起另檢 candidate body 的 DCA domain／cohort survivor 標記）、`strategy_a_v2_counts.py`（v1.3.0 pre-registration 計數器／驗證器）、`templates/strategy_a_v2_{round,run}_spec.template.json`、`tests/test_reconcile.py`、`tests/test_preflight_p10.py`、`tests/test_production_handoff.py`、`tests/test_strategy_a_v2_counts.py`（皆 stdlib unittest）。純 stdlib、手動或 no_agent cron 觸發；不含任何常駐服務 |
