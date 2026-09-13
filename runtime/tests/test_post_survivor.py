@@ -11,10 +11,15 @@ The checks pin the properties that make the layer honest:
   * the index is a deterministic rebuild of the frozen bundles, and a survivor_id pins family,
     round, run, bundle identity, cohort and the frozen strategy + DCA cell,
   * fail-closed: missing checksum, invalid bundle identity, a source that disagrees with the
-    bundle (directory name, kanban_task_id, round-spec checksum), a param cell outside the
-    registered axes, and a duplicate survivor_id all refuse to index,
-  * forward evidence is strictly post-freeze, never overlaps or repeats a recorded slice, and
-    never carries params other than the incumbent's (a retune is a challenger, not evidence),
+    bundle (directory name, missing OR mismatched kanban_task_id, round-spec checksum), a param
+    cell outside the registered axes, and a duplicate survivor_id all refuse to index,
+  * the layer only ever writes under `_survivors/**`: `--out` / `--out-dir` cannot be pointed at a
+    frozen bundle, verdict or result (not by an absolute path, not by a `..` segment, not by a
+    symlink), and a path inside the boundary is still accepted,
+  * forward evidence is strictly post-freeze, never overlaps or repeats a recorded slice, never
+    carries params other than the incumbent's (a retune is a challenger, not evidence), and is
+    only admissible when its `source_run` resolves to a terminal DONE run whose sentinel-pinned
+    `result.json` carries the same numbers (a self-declared slice is refused, not ranked),
   * a challenger's OOS start must be after its own preregistration cutoff, and a retune never
     rewrites the incumbent: both survivors coexist with their own params,
   * the leaderboard ordering is total and reproducible (forward evidence outranks the frozen
@@ -130,8 +135,9 @@ def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end
     return write_json(os.path.join(round_dir, "survivor-bundle.json"), bundle)
 
 
-def slice_doc(entry, data_start, data_end, episodes=50, net_pnl=100.0, sharpe=1.0,
-              max_dd_pct=-0.02, return_pct=1.0):
+def bare_slice(entry, data_start, data_end, episodes=50, net_pnl=100.0, sharpe=1.0,
+               max_dd_pct=-0.02, return_pct=1.0):
+    """The measured fields of a slice, without provenance (`source_run`)."""
     return {"survivor_id": entry["survivor_id"],
             "bundle_identity_sha256": entry["bundle_identity_sha256"],
             "params_sha256": entry["params_sha256"], "data_start": data_start,
@@ -143,10 +149,56 @@ def slice_doc(entry, data_start, data_end, episodes=50, net_pnl=100.0, sharpe=1.
             "produced_at_utc": "2026-10-06T00:00:00Z"}
 
 
+def make_forward_run(root, entry, slice_fields, run_id="fw-r1-u1", family_id=None,
+                     task_id="t_forward_launch", status="DONE", result_family_id=None,
+                     result_run_id=None, drop_sentinel=False, extra_result=None,
+                     mutate_result=None, mutate_sentinel=None):
+    """A terminal run whose `result.json` declares the slice: the only admissible source_run.
+
+    Mirrors what a real forward launch writes: `<attempt_dir>/result.json` plus the terminal
+    sentinel published by `runtime/terminal_evidence.py`, which records the result's checksum.
+    """
+    family_id = family_id or entry["family_id"]
+    attempt = os.path.join(root, family_id, "rounds", family_id + "-fw-r1", "attempts", run_id)
+    result = {"schema_version": 1, "family_id": result_family_id or family_id,
+              "round_id": family_id + "-fw-r1", "run_id": result_run_id or run_id,
+              "task_id": task_id, "coverage_complete": True,
+              "forward_slice": dict(slice_fields)}
+    result.update(extra_result or {})
+    if mutate_result:
+        result = mutate_result(result)
+    result_path = write_json(os.path.join(attempt, "result.json"), result)
+    sentinel = {"schema_version": 1, "status": status, "family_id": family_id,
+                "round_id": family_id + "-fw-r1", "run_id": run_id, "task_id": task_id,
+                "kanban_board": "quant-strategy-research",
+                "created_at_utc": "2026-11-02T00:00:00Z",
+                "artifact_manifest": ["result.json"],
+                "artifact_checksums": {"result.json": si.sha256_file(result_path)}}
+    if mutate_sentinel:
+        sentinel = mutate_sentinel(sentinel)
+    sentinel_path = write_json(os.path.join(attempt, "DONE"), sentinel)
+    return {"attempt_dir": attempt, "run_id": run_id, "kanban_task_id": task_id,
+            "sentinel_sha256": si.sha256_file(sentinel_path),
+            "result_sha256": si.sha256_file(result_path)}
+
+
+def resign(bundle):
+    """Give a mutated bundle a self-consistent published identity (the tamper the audit used)."""
+    return dict(bundle, bundle_identity_sha256=bundle_identity(bundle))
+
+
+def drop_bundle_task_id(bundle):
+    """A bundle that lost its owning card id, re-signed so only the ownership check can catch it."""
+    return resign({k: v for k, v in bundle.items() if k != "kanban_task_id"})
+
+
 class Base(unittest.TestCase):
 
     def setUp(self):
         self.root = tempfile.mkdtemp(prefix="post-survivor-")
+        # every slice fixture gets its own produced-run directory, so the provenance of one slice
+        # can never be satisfied by another slice's run
+        self._forward_runs = 0
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
@@ -171,6 +223,21 @@ class Base(unittest.TestCase):
     def write_slice(self, name, doc):
         return write_json(os.path.join(self.root, "slices", name), doc)
 
+    def slice_doc(self, entry, data_start, data_end, episodes=50, net_pnl=100.0, sharpe=1.0,
+                  max_dd_pct=-0.02, return_pct=1.0):
+        """A slice carrying the provenance contract 27.3 requires.
+
+        The numbers are written into a real (terminal DONE) run inside this test's results root,
+        exactly as a forward launch would, so the happy-path cases exercise the provenance check
+        instead of bypassing it.
+        """
+        self._forward_runs += 1
+        doc = bare_slice(entry, data_start, data_end, episodes=episodes, net_pnl=net_pnl,
+                         sharpe=sharpe, max_dd_pct=max_dd_pct, return_pct=return_pct)
+        doc["source_run"] = make_forward_run(self.root, entry, doc,
+                                             run_id="fw-r1-u%d" % self._forward_runs)
+        return doc
+
 
 class TestSurvivorIndex(Base):
 
@@ -182,7 +249,7 @@ class TestSurvivorIndex(Base):
         self.assertEqual(si.measured(first), si.measured(second),
                          "a rebuild must reproduce the index byte for byte, clock aside")
         self.assertEqual(first["contract"], "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md "
-                                            "v1.5.0")
+                                            "v1.5.1")
         self.assertEqual(sorted(s["cohort"] for s in first["survivors"]), sorted([A, B]))
         self.assertEqual([s["survivor_id"] for s in first["survivors"]],
                          sorted(s["survivor_id"] for s in first["survivors"]),
@@ -272,6 +339,39 @@ class TestSurvivorIndex(Base):
         finally:
             shutil.rmtree(root3, ignore_errors=True)
 
+    def test_missing_ownership_id_fails_closed(self):
+        # The v1.5.0 attack (audit finding F3): the comparison only ran when BOTH ids were
+        # truthy, so a bundle that lost its kanban_task_id - re-signed, so the identity check
+        # cannot catch it either - was indexed anyway.
+        make_family(self.root, "fam-a", a_v2_like_bundle(), mutate=drop_bundle_task_id)
+        index, problems = si.build(self.root)
+        self.assertIsNone(index)
+        self.assertTrue(any("source ownership is incomplete" in p for p in problems), problems)
+
+        # and the same when the family record is the side that lost the id
+        root2 = tempfile.mkdtemp(prefix="family-taskid-")
+        try:
+            make_family(root2, "fam-a", a_v2_like_bundle())
+            family_path = os.path.join(root2, "fam-a", "family.json")
+            with open(family_path) as fh:
+                family = json.load(fh)
+            del family["kanban_task_id"]
+            write_json(family_path, family)
+            _, problems = si.build(root2)
+            self.assertTrue(any("source ownership is incomplete" in p for p in problems), problems)
+        finally:
+            shutil.rmtree(root2, ignore_errors=True)
+
+        # the control: the id present on both sides is still indexed
+        root3 = tempfile.mkdtemp(prefix="ownership-ok-")
+        try:
+            make_family(root3, "fam-a", a_v2_like_bundle())
+            index, problems = si.build(root3)
+            self.assertEqual(problems, [])
+            self.assertEqual(index["survivor_count"], 2)
+        finally:
+            shutil.rmtree(root3, ignore_errors=True)
+
     def test_unknown_or_missing_param_axis_refuses_to_index(self):
         broken = survivor(A)
         del broken["winner"]["discount"]
@@ -336,50 +436,51 @@ class TestForwardEvidence(Base):
         self.entry = self.entry_for(B)
 
     def test_slice_must_be_strictly_post_freeze(self):
-        doc = slice_doc(self.entry, "2026-09-10", "2026-09-20")
+        doc = self.slice_doc(self.entry, "2026-09-10", "2026-09-20")
         self.assertTrue(any("not later than the survivor's research data cutoff" in p
-                            for p in sl.slice_problems(doc, self.entry, [])))
-        doc = slice_doc(self.entry, "2026-08-01", "2026-09-11")
-        self.assertTrue(any("not later than" in p for p in sl.slice_problems(doc, self.entry, [])))
-        doc = slice_doc(self.entry, "2026-09-11", "2026-09-20")
-        self.assertEqual(sl.slice_problems(doc, self.entry, []), [])
+                            for p in sl.slice_problems(doc, self.entry, [], self.root)))
+        doc = self.slice_doc(self.entry, "2026-08-01", "2026-09-11")
+        self.assertTrue(any("not later than" in p
+                            for p in sl.slice_problems(doc, self.entry, [], self.root)))
+        doc = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
+        self.assertEqual(sl.slice_problems(doc, self.entry, [], self.root), [])
 
     def test_overlapping_or_repeated_slice_is_refused(self):
-        prior = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+        prior = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
         for start, end in (("2026-09-15", "2026-09-25"), ("2026-09-11", "2026-09-20"),
                            ("2026-09-01", "2026-09-12")):
-            later = slice_doc(self.entry, start, end)
+            later = self.slice_doc(self.entry, start, end)
             self.assertTrue(any("overlaps the recorded slice" in p
-                                for p in sl.slice_problems(later, self.entry, [prior])),
+                                for p in sl.slice_problems(later, self.entry, [prior], self.root)),
                             (start, end))
-        clean = slice_doc(self.entry, "2026-09-21", "2026-09-30")
-        self.assertEqual(sl.slice_problems(clean, self.entry, [prior]), [])
+        clean = self.slice_doc(self.entry, "2026-09-21", "2026-09-30")
+        self.assertEqual(sl.slice_problems(clean, self.entry, [prior], self.root), [])
 
     def test_param_or_bundle_identity_mismatch_is_refused(self):
-        retuned = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+        retuned = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
         retuned["params_sha256"] = "sha256:" + "0" * 64
         self.assertTrue(any("may never be filed as evidence" in p
-                            for p in sl.slice_problems(retuned, self.entry, [])))
-        foreign = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+                            for p in sl.slice_problems(retuned, self.entry, [], self.root)))
+        foreign = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
         foreign["bundle_identity_sha256"] = "sha256:" + "1" * 64
         self.assertTrue(any("is not the survivor's frozen bundle" in p
-                            for p in sl.slice_problems(foreign, self.entry, [])))
-        wrong_target = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+                            for p in sl.slice_problems(foreign, self.entry, [], self.root)))
+        wrong_target = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
         wrong_target["survivor_id"] = "sv-someone-else"
         self.assertTrue(any("is not the target survivor" in p
-                            for p in sl.slice_problems(wrong_target, self.entry, [])))
+                            for p in sl.slice_problems(wrong_target, self.entry, [], self.root)))
 
     def test_missing_slice_field_is_refused(self):
         for field in sorted(sl.SLICE_REQUIRED):
-            doc = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+            doc = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
             del doc[field]
-            self.assertTrue(sl.slice_problems(doc, self.entry, []), field)
-        no_episodes = slice_doc(self.entry, "2026-09-11", "2026-09-20", episodes=0)
+            self.assertTrue(sl.slice_problems(doc, self.entry, [], self.root), field)
+        no_episodes = self.slice_doc(self.entry, "2026-09-11", "2026-09-20", episodes=0)
         self.assertTrue(any("positive integer" in p
-                            for p in sl.slice_problems(no_episodes, self.entry, [])))
+                            for p in sl.slice_problems(no_episodes, self.entry, [], self.root)))
 
     def test_cli_appends_reads_back_and_refuses_a_second_identical_slice(self):
-        first = slice_doc(self.entry, "2026-09-11", "2026-09-20")
+        first = self.slice_doc(self.entry, "2026-09-11", "2026-09-20")
         path = self.write_slice("one.json", first)
         proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
                             self.entry["survivor_id"], "--slice", path, "--json")
@@ -389,14 +490,14 @@ class TestForwardEvidence(Base):
         record = json.load(open(si.forward_path(self.root, self.entry["survivor_id"])))
         self.assertEqual({k: record[k] for k in first}, first,
                          "the slice is stored verbatim (only a slice schema version is added)")
-        self.assertEqual(record["slice_schema_version"], 1)
+        self.assertEqual(record["slice_schema_version"], 2)
 
         again = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
                              self.entry["survivor_id"], "--slice", path)
         self.assertEqual(again.returncode, 1)
         self.assertIn("overlaps the recorded slice", again.stderr)
 
-        second = slice_doc(self.entry, "2026-09-21", "2026-09-30", episodes=5, net_pnl=10.0)
+        second = self.slice_doc(self.entry, "2026-09-21", "2026-09-30", episodes=5, net_pnl=10.0)
         path2 = self.write_slice("two.json", second)
         proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
                             self.entry["survivor_id"], "--slice", path2, "--json")
@@ -407,11 +508,110 @@ class TestForwardEvidence(Base):
         self.assertEqual(len(lines), 2, "forward evidence is append-only")
 
     def test_unknown_survivor_id_is_refused(self):
-        path = self.write_slice("one.json", slice_doc(self.entry, "2026-09-11", "2026-09-20"))
+        path = self.write_slice("one.json",
+                                self.slice_doc(self.entry, "2026-09-11", "2026-09-20"))
         proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id", "sv-nope",
                             "--slice", path)
         self.assertEqual(proc.returncode, 1)
         self.assertIn("matches 0 indexed survivors", proc.stderr)
+
+    def test_self_declared_slice_without_a_verifiable_source_run_is_refused(self):
+        # The v1.5.0 attack (audit finding F2): invented episodes/PnL/Sharpe with no reference at
+        # all was accepted, ranking rank 1 / FORWARD_POSITIVE / champion_candidate.
+        bare = bare_slice(self.entry, "2026-09-11", "2026-09-30", episodes=999,
+                          net_pnl=987654.0, sharpe=999.0, return_pct=12345.0)
+        path = self.write_slice("invented.json", bare)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            self.entry["survivor_id"], "--slice", path)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("source_run", proc.stderr)
+        self.assertFalse(os.path.exists(si.forward_path(self.root, self.entry["survivor_id"])),
+                         "nothing is written when the provenance does not check out")
+
+        valid = self.slice_doc(self.entry, "2026-09-11", "2026-09-30")
+        cases = {
+            "the run directory does not exist":
+                dict(valid, source_run=dict(valid["source_run"],
+                                            attempt_dir=os.path.join(self.root, "gone"))),
+            "the run is not a directory":
+                dict(valid, source_run=dict(valid["source_run"],
+                                            attempt_dir=os.path.join(self.root, "fam-a"))),
+            "the sentinel was never published": self.slice_without_sentinel(valid),
+            "the run did not finish": self.slice_with_failed_sentinel(valid),
+            "the sentinel checksum was forged": dict(valid, source_run=dict(
+                valid["source_run"], sentinel_sha256="sha256:" + "0" * 64)),
+            "the source lives in the post-survivor namespace":
+                self.slice_inside_survivors_namespace(valid),
+        }
+        for position, (label, doc) in enumerate(sorted(cases.items())):
+            path = self.write_slice("bad-%d.json" % position, doc)
+            proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                                self.entry["survivor_id"], "--slice", path)
+            self.assertEqual(proc.returncode, 1, label)
+            self.assertFalse(os.path.exists(si.forward_path(self.root, self.entry["survivor_id"])),
+                             label)
+        self.assertFalse(os.path.exists(si.forward_path(self.root, self.entry["survivor_id"])))
+
+    def slice_without_sentinel(self, valid):
+        doc = copy.deepcopy(valid)
+        os.unlink(os.path.join(doc["source_run"]["attempt_dir"], "DONE"))
+        return doc
+
+    def slice_with_failed_sentinel(self, valid):
+        doc = copy.deepcopy(valid)
+        write_json(os.path.join(doc["source_run"]["attempt_dir"], "DONE"),
+                   {"schema_version": 1, "status": "FAILED", "run_id": doc["source_run"]["run_id"],
+                    "task_id": doc["source_run"]["kanban_task_id"], "family_id": self.entry["family_id"],
+                    "artifact_checksums": {}})
+        return doc
+
+    def slice_inside_survivors_namespace(self, valid):
+        doc = copy.deepcopy(valid)
+        source = make_forward_run(os.path.join(self.root, "_survivors"), self.entry,
+                                  {k: v for k, v in valid.items() if k != "source_run"},
+                                  run_id="fw-inside-u1")
+        doc["source_run"] = source
+        return doc
+
+    def test_slice_numbers_must_reconcile_with_the_pinned_run_result(self):
+        valid = self.slice_doc(self.entry, "2026-09-11", "2026-09-30", episodes=40,
+                               net_pnl=500.0, sharpe=0.9, return_pct=2.0)
+        # (a) the numbers are edited after the run that supposedly produced them published its
+        #     result - the run artifact still holds the real values
+        invented = dict(valid, episodes=999, net_pnl=987654.0, sharpe=999.0, return_pct=12345.0)
+        path = self.write_slice("invented-metrics.json", invented)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            self.entry["survivor_id"], "--slice", path)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("does not match the source run's result.json.forward_slice", proc.stderr)
+
+        # (b) the run's result is rewritten after the fact: the sentinel's recorded checksum no
+        #     longer matches the file, so the evidence is unverifiable
+        rewritten = copy.deepcopy(valid)
+        result_path = os.path.join(rewritten["source_run"]["attempt_dir"], "result.json")
+        with open(result_path) as fh:
+            result = json.load(fh)
+        result["forward_slice"]["net_pnl"] = -1.0
+        write_json(result_path, result)
+        path = self.write_slice("rewritten-result.json", rewritten)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            self.entry["survivor_id"], "--slice", path)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("hashes to", proc.stderr)
+
+        # (c) the run belongs to another family: evidence for this survivor cannot come from it
+        foreign = copy.deepcopy(valid)
+        foreign["source_run"] = make_forward_run(self.root, self.entry,
+                                                 {k: v for k, v in valid.items()
+                                                  if k != "source_run"},
+                                                 run_id="fw-foreign-u1", family_id="fam-other")
+        path = self.write_slice("foreign-run.json", foreign)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            self.entry["survivor_id"], "--slice", path)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("sentinel records family_id", proc.stderr)
+        self.assertFalse(os.path.exists(si.forward_path(self.root, self.entry["survivor_id"])),
+                         "no unverifiable evidence is ever appended")
 
 
 class TestLeaderboard(Base):
@@ -420,7 +620,7 @@ class TestLeaderboard(Base):
         entry = self.entry_for(cohort)
         for index, doc in enumerate(slices):
             path = self.write_slice("%s-%d.json" % (cohort.replace("/", "-"), index),
-                                    slice_doc(entry, *doc))
+                                    self.slice_doc(entry, *doc))
             proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
                                 entry["survivor_id"], "--slice", path)
             self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -478,7 +678,7 @@ class TestLeaderboard(Base):
         make_family(self.root, "fam-b", [survivor("ETHUSDT/1h", oos=(0.4, 10.0, 40))],
                     data_end="2026-09-25")
         degraded = self.entry_for("ETHUSDT/1h")
-        path = self.write_slice("degraded.json", slice_doc(
+        path = self.write_slice("degraded.json", self.slice_doc(
             degraded, "2026-09-26", "2026-09-30", episodes=60, net_pnl=-200.0, sharpe=-0.5))
         proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
                             degraded["survivor_id"], "--slice", path)
@@ -588,7 +788,7 @@ class TestLeaderboard(Base):
         self.assertNotEqual(challengers[0]["survivor_id"], incumbent["survivor_id"])
 
         # and a retuned slice can never be filed as the incumbent's forward evidence
-        retuned = slice_doc(incumbent, "2026-09-11", "2026-09-20")
+        retuned = self.slice_doc(incumbent, "2026-09-11", "2026-09-20")
         retuned["params_sha256"] = challengers[0]["params_sha256"]
         path = self.write_slice("retune.json", retuned)
         proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
@@ -607,6 +807,69 @@ class TestLeaderboard(Base):
         bundle = json.load(open(path))
         self.assertEqual(bundle["ranking"], None)
         self.assertEqual(bundle["all_survivors_advance"], True)
+
+
+class TestWriteBoundary(Base):
+    """Contract 27.1: this layer may only write under `_survivors/**` (audit finding F1)."""
+
+    def test_index_out_cannot_escape_the_survivors_boundary(self):
+        path = make_family(self.root, "fam-a", a_v2_like_bundle())
+        round_dir = os.path.dirname(path)
+        verdict = write_json(os.path.join(round_dir, "verdict.json"),
+                             {"kind": "round_verdict", "verdict": "PASS"})
+        before = {"bundle": si.sha256_file(path), "verdict": si.sha256_file(verdict)}
+        for target in (verdict, path, os.path.join(self.root, "outside.json"),
+                       os.path.join(self.root, "fam-a", "leaderboard.json"),
+                       os.path.join(self.root, "_handoff", "survivor-index.json")):
+            proc = self.run_cli(INDEX_CLI, "--out", target)
+            self.assertEqual(proc.returncode, 1, target)
+            self.assertIn("outside the reserved post-survivor write boundary", proc.stderr)
+        self.assertEqual(si.sha256_file(path), before["bundle"],
+                         "the frozen bundle is never rewritten by an escaped --out")
+        self.assertEqual(si.sha256_file(verdict), before["verdict"],
+                         "the frozen verdict is never rewritten by an escaped --out")
+
+        # a symlink inside _survivors is resolved rather than trusted
+        os.makedirs(os.path.join(self.root, "_survivors"), exist_ok=True)
+        link = os.path.join(self.root, "_survivors", "escape.json")
+        os.symlink(verdict, link)
+        proc = self.run_cli(INDEX_CLI, "--out", link)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("outside the reserved post-survivor write boundary", proc.stderr)
+        self.assertEqual(si.sha256_file(verdict), before["verdict"])
+
+        # a `..` segment cannot reach out of the boundary either
+        proc = self.run_cli(INDEX_CLI, "--out", os.path.join(self.root, "_survivors", "..", "fam-a",
+                                                             "rounds", "index.json"))
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("outside the reserved post-survivor write boundary", proc.stderr)
+
+        # the boundary is not "refuse everything": the canonical path inside it still works
+        ok = self.run_cli(INDEX_CLI, "--json")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertTrue(os.path.isfile(si.index_path(self.root)))
+        inside = os.path.join(self.root, "_survivors", "scratch", "index.json")
+        ok = self.run_cli(INDEX_CLI, "--out", inside, "--json")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertTrue(os.path.isfile(inside))
+
+    def test_leaderboard_out_dir_cannot_escape_the_survivors_boundary(self):
+        path = make_family(self.root, "fam-a", a_v2_like_bundle())
+        round_dir = os.path.dirname(path)
+        before = si.sha256_file(path)
+        for target in (round_dir, self.root, os.path.join(self.root, "elsewhere")):
+            proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--out-dir", target)
+            self.assertEqual(proc.returncode, 1, target)
+            self.assertIn("outside the reserved post-survivor write boundary", proc.stderr)
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "leaderboard.json")))
+        self.assertFalse(os.path.exists(os.path.join(round_dir, "leaderboard.csv")))
+        self.assertFalse(os.path.exists(os.path.join(self.root, "elsewhere", "leaderboard.json")))
+        self.assertEqual(si.sha256_file(path), before)
+
+        inside = os.path.join(self.root, "_survivors", "scratch")
+        ok = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--out-dir", inside, "--json")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertTrue(os.path.isfile(os.path.join(inside, "leaderboard.json")))
 
 
 if __name__ == "__main__":

@@ -22,14 +22,16 @@ Fail-closed (never guessed, never repaired):
   * a bundle without `bundle_identity_sha256`, or whose published identity is not the recipe
     applied to itself (missing checksum / invalid bundle),
   * a bundle whose `family_id` / `round_id` disagree with the directory it sits in, whose
-    `kanban_task_id` disagrees with `family.json`, whose `source_artifacts` map is empty or
-    malformed, or whose `round-spec.json` no longer hashes to the value the bundle recorded
-    (source inconsistency),
+    `kanban_task_id` is missing on either side or disagrees with `family.json`, whose
+    `source_artifacts` map is empty or malformed, or whose `round-spec.json` no longer hashes to
+    the value the bundle recorded (source inconsistency),
   * a survivor record whose param cell is not exactly the registered strategy + DCA axes,
   * two entries claiming the same `survivor_id` (duplicate).
 
 Nothing here ranks, selects, promotes or rejects a survivor, and nothing here ever writes into
-a round or attempt directory.
+a round or attempt directory: the only place this layer may write is `<results-root>/_survivors/**`
+(contract 27.1), and `--out` is checked against that boundary with both sides realpath-resolved,
+so a `--out` (or a symlink, or a `..` segment) can never land on a frozen bundle/verdict/result.
 
 usage:
   python3 runtime/survivor_index.py [--results-root <dir>] [--out <path>] [--check] [--json]
@@ -45,7 +47,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "survivor_index"
-CONTRACT_VERSION = "v1.5.0"
+CONTRACT_VERSION = "v1.5.1"
 CONTRACT_SECTION = "27.2"
 DEFAULT_RESULTS_ROOT = "/Volumes/ExpansionDrive/qlib-results"
 
@@ -107,6 +109,30 @@ def forward_path(results_root, survivor_id):
 
 def index_path(results_root):
     return os.path.join(results_root, SURVIVORS_DIRNAME, INDEX_NAME)
+
+
+def write_boundary(results_root):
+    """The one subtree contract 27.1 lets this layer write to: `<results-root>/_survivors`."""
+    return os.path.realpath(os.path.join(os.path.abspath(results_root), SURVIVORS_DIRNAME))
+
+
+def outside_write_boundary(results_root, path):
+    """None when `path` lands inside `<results-root>/_survivors/**`, else the refusal message.
+
+    Contract 27.1: the post-survivor layer writes only under `_survivors/**`, never into a
+    `<family_id>`, round or attempt directory.  Both sides are realpath-resolved first, so a
+    symlink or a `..` segment cannot be used to reach a frozen bundle/verdict/result either -
+    which is exactly what an unchecked `--out` did before v1.5.1 (audit finding F1: the index
+    overwrote `rounds/<round_id>/survivor-bundle.json` and `verdict.json` with rc=0).
+    """
+    boundary = write_boundary(results_root)
+    target = os.path.realpath(os.path.abspath(path))
+    if target == boundary or target.startswith(boundary + os.sep):
+        return None
+    return ("%s is outside the reserved post-survivor write boundary %s: contract 27.1 permits "
+            "this layer to write only under _survivors/** - never into a <family_id>, round or "
+            "attempt directory, and never over a frozen bundle, verdict or result"
+            % (target, boundary))
 
 
 def bundle_paths(results_root):
@@ -346,11 +372,20 @@ def entries_for_bundle(bundle_path, problems):
             if family.get("family_id") != family_id:
                 problems.append("%s: family.json family_id %r disagrees with the directory name"
                                 % (label, family.get("family_id")))
-            if (family.get("kanban_task_id") and bundle.get("kanban_task_id")
-                    and family.get("kanban_task_id") != bundle.get("kanban_task_id")):
+            # Contract 27.2 item 4 / 22 A28(3): a missing ownership id is as fatal as a mismatch.
+            # Comparing only when BOTH sides are truthy fails open on a bundle that carries no
+            # `kanban_task_id` at all (audit finding F3), which is exactly the shape an
+            # unverifiable source takes - so the id must be present on both sides and equal.
+            family_task = family.get("kanban_task_id")
+            bundle_task = bundle.get("kanban_task_id")
+            if not family_task or not bundle_task:
+                problems.append("%s: source ownership is incomplete - kanban_task_id is missing "
+                                "(family.json %r, bundle %r); a survivor whose owning card cannot "
+                                "be cross-checked is never indexed (contract 27.2/22 A28)"
+                                % (label, family_task, bundle_task))
+            elif family_task != bundle_task:
                 problems.append("%s: kanban_task_id mismatch: family.json %r != bundle %r"
-                                % (label, family.get("kanban_task_id"),
-                                   bundle.get("kanban_task_id")))
+                                % (label, family_task, bundle_task))
         else:
             problems.append("%s: family.json is not an object" % label)
 
@@ -507,6 +542,10 @@ def main(argv=None):
 
     root = os.path.abspath(args.results_root)
     out_path = os.path.abspath(args.out) if args.out else index_path(root)
+    escape = outside_write_boundary(root, out_path)
+    if escape:
+        sys.stderr.write("REFUSED: %s\n" % escape)
+        return 1
 
     index, problems = build(root)
     if problems:

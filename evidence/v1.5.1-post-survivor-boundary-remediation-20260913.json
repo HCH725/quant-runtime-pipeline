@@ -1,0 +1,244 @@
+{
+  "kind": "v1.5.1-post-survivor-boundary-remediation-verification",
+  "generated_at_utc": "2026-09-13T12:02:10Z",
+  "contract_version": "v1.5.1 (AWAITING RE-AUDIT)",
+  "delivery_card": "t_171ba94f",
+  "audit_findings_remediated": {
+    "audit_card": "t_57357d4c",
+    "audited_commit": "ceeadb196360b0d06580158a17ea52ab90d29630",
+    "F1": "unconstrained --out / --out-dir could atomically overwrite frozen rounds/<id>/survivor-bundle.json and verdict.json (rc=0)",
+    "F2": "a wholly self-declared forward slice with no artifact/result hash or source-run link became FORWARD_POSITIVE / champion_candidate / rank 1",
+    "F3": "a bundle without kanban_task_id was accepted (the comparison only ran when both ids were truthy)"
+  },
+  "fix": {
+    "runtime/survivor_index.py": [
+      "write_boundary() / outside_write_boundary(): both sides realpath-resolved; --out outside <results-root>/_survivors refuses with rc=1 and writes nothing",
+      "kanban_task_id: missing on either side (bundle or family.json) is now source inconsistency -> fail closed",
+      "CONTRACT_VERSION -> v1.5.1"
+    ],
+    "runtime/survivor_leaderboard.py": [
+      "SLICE_REQUIRED gains source_run (object); SLICE_SCHEMA_VERSION 1 -> 2",
+      "source_run_problems(): attempt_dir must be inside the results root and outside _survivors, dir name == run_id, terminal DONE sentinel hash-pinned, sentinel status/run_id/task_id/family_id verified, sentinel-recorded result.json checksum == declared == on-disk, result.json.family_id/run_id verified, result.json.forward_slice equal to the slice field by field",
+      "slice_problems()/read_slices() take results_root and re-run the same verification at ingestion AND at ranking time; leaderboard --out-dir uses the same write boundary; CONTRACT_VERSION -> v1.5.1"
+    ],
+    "runtime/tests/test_post_survivor.py": "25 -> 30 checks (TestWriteBoundary x2, forward provenance x2, ownership id x1)",
+    "runtime/survivor_bundle.py": "untouched (frozen-bundle semantics and writer identity unchanged)"
+  },
+  "tooling": {
+    "runtime/survivor_index.py": {
+      "sha256": "sha256:9ee625dcecf79c7dc90ded3a3f49376d5730438c79220e283c09351a96bf07d1",
+      "bytes": 27559
+    },
+    "runtime/survivor_leaderboard.py": {
+      "sha256": "sha256:ca446edeea5897e1450644d8dd6701bce8ad5041864581acc310951ff0a987ef",
+      "bytes": 33961
+    },
+    "runtime/survivor_bundle.py": {
+      "sha256": "sha256:d3b2f41f62e1448f5672bedd35e55fafa126ac2da67789815a05c5683a9c9458",
+      "bytes": 20094
+    },
+    "runtime/tests/test_post_survivor.py": {
+      "sha256": "sha256:2a6f51c0e221d43aec0b221a7b72dadf4ef864f4e293191ac8bce6d8d3a0ff08",
+      "bytes": 48554
+    },
+    "runtime/tests/test_survivor_bundle.py": {
+      "sha256": "sha256:902839893c0f044fc0e57a721ed6b25a886a3c072c6ce4cf3a977582cc7ac98b",
+      "bytes": 26309
+    }
+  },
+  "attacks_replayed_on_isolated_copy": {
+    "probes": {
+      "F1_leaderboard_out_dir_into_round": {
+        "rc": 1,
+        "stderr_head": "REFUSED: <TMP>/v15-attack/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1 is outside the reserved post-survivor write boundary <TMP>/v",
+        "round_untouched": true,
+        "wrote_leaderboard_into_round": false
+      },
+      "F1_leaderboard_out_dir_elsewhere": {
+        "rc": 1,
+        "stderr_head": "REFUSED: <TMP>/v15-attack/results/elsewhere is outside the reserved post-survivor write boundary <TMP>/v15-attack/results/_survivors: contract 27.1 permits this layer to write only under",
+        "wrote_outside": false
+      },
+      "F1_index_out_into_verdict": {
+        "rc": 1,
+        "stderr_head": "REFUSED: <TMP>/v15-attack/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/verdict.json is outside the reserved post-survivor write boundary /",
+        "verdict_unchanged": true
+      },
+      "F1_index_out_into_frozen_bundle": {
+        "rc": 1,
+        "stderr_head": "REFUSED: <TMP>/v15-attack/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json is outside the reserved post-survivor write bo",
+        "bundle_unchanged": true
+      },
+      "F1_index_out_through_symlink": {
+        "rc": 1,
+        "stderr_head": "REFUSED: <TMP>/v15-attack/results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/verdict.json is outside the reserved post-survivor write boundary /",
+        "verdict_unchanged": true
+      },
+      "F1_inside_boundary_positive_control": {
+        "index_rc": 0,
+        "leaderboard_check_rc": 1,
+        "nested_inside_rc": 0,
+        "nested_inside_written": true
+      },
+      "F2_self_declared_slice": {
+        "forward_rc": 1,
+        "forward_stderr_head": "REFUSED: slice field 'source_run' is not an object (None)",
+        "leaderboard_rc": 0,
+        "row": {
+          "rank": 1,
+          "survivor_id": "sv-f762a1da8909a5bf",
+          "cohort": "SOLUSDT/4h",
+          "evidence_state": "FROZEN_ONLY",
+          "champion_candidate": false,
+          "forward_sharpe": null,
+          "oos_sharpe": 2.17438
+        },
+        "jsonl_written": false
+      },
+      "F3_bundle_kanban_task_id_removed_and_resigned": {
+        "rc": 1,
+        "stderr_head": "REFUSED: close-vs-sma-mean-reversion-long-flat-v2/close-vs-sma-mean-reversion-long-flat-v2-r1: source ownership is incomplete - kanban_task_id is missing (family.json 't_1f97bf6b', bundle None); a survivor whose owning card cannot be cross-checked is never indexed (contract 27.2/22 A28)",
+        "stdout_head": ""
+      }
+    },
+    "frozen_before": {
+      "bundle": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "verdict": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3"
+    },
+    "frozen_after": {
+      "bundle": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "verdict": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3"
+    }
+  },
+  "regression_is_not_vacuous": {
+    "method": "the v1.5.1 test file was copied into a /tmp worktree of ceeadb1 (v1.5.0 bytes) and run",
+    "command": "python3 runtime/tests/test_post_survivor.py TestWriteBoundary TestForwardEvidence.test_self_declared_slice_without_a_verifiable_source_run_is_refused TestSurvivorIndex.test_missing_ownership_id_fails_closed",
+    "result": "Ran 4 tests - FAILED (failures=4)",
+    "failures": [
+      "F1 index: AssertionError: 0 != 1 : <TMP>/post-survivor-.../fam-a/rounds/fam-a-r1/verdict.json (rc was 0: the verdict was overwritten)",
+      "F1 leaderboard: AssertionError: 0 != 1 : <TMP>/post-survivor-.../fam-a/rounds/fam-a-r1 (rc was 0: files were written into the round dir)",
+      "F2: AssertionError: 0 != 1 (the self-declared slice was accepted)",
+      "F3: AssertionError: {...index with 'kanban_task_id': None...} is not None (the index was built)"
+    ],
+    "log_excerpt_lines": 41
+  },
+  "real_results_readback": {
+    "index_check": {
+      "rc": 0,
+      "stdout_tail": [
+        "index=<EXPANSION>/qlib-results/_survivors/survivor-index.json result=check_clean bundles=1 survivors=2",
+        "  sv-904822905a811669  BTCUSDT/1h     cutoff=2026-09-10 params=sha256:09343579c45d15a94ab81d2be2e7f61a9814a728d533fe6197f6c6b582f74cf6",
+        "  sv-f762a1da8909a5bf  SOLUSDT/4h     cutoff=2026-09-10 params=sha256:95ca1f1622d9d9138685d8e5d7786d7e13562a1fc969a440e563c384b54e609c"
+      ],
+      "stderr": ""
+    },
+    "leaderboard_check": {
+      "rc": 0,
+      "stdout_tail": [
+        "leaderboard=<EXPANSION>/qlib-results/_survivors/leaderboard.json result=check_clean survivors=2 top10=2",
+        "  #1  SOLUSDT/4h     FROZEN_ONLY        sv-f762a1da8909a5bf",
+        "  #2  BTCUSDT/1h     FROZEN_ONLY        sv-904822905a811669"
+      ],
+      "stderr": ""
+    },
+    "survivor_bundle_check": {
+      "rc": 0,
+      "stdout_tail": [
+        "  \"identity_recomputed_from_persisted_file\": \"sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363\",",
+        "  \"identity_recipe_matches\": true",
+        "}"
+      ],
+      "stderr": ""
+    },
+    "forward_dir_exists": false,
+    "frozen_sha256": {
+      "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+      "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+      "cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+      "round-spec.json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4"
+    },
+    "frozen_sha256_unchanged_since_v1.5.0_baseline": {
+      "survivor-bundle.json": "identical (4638885f...)",
+      "verdict.json": "identical (cb470adf...)",
+      "result.json": "identical (012e6d1a...)",
+      "cohort_survivors.json": "identical (74f250cf...)",
+      "round-spec.json": "identical (e0b348bf...)",
+      "bundle_identity_sha256": "unchanged sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363"
+    },
+    "derived_artifact_rebuild": {
+      "reason": "the index/leaderboard embed the contract version string, so v1.5.1 required one rebuild inside _survivors/**",
+      "survivor-index.json": {
+        "before": "sha256:e724dda19a8d9729f79207090425a55a758fd9631d0f3a9af2de1af1fa8f6c84",
+        "after": "sha256:68887ae39fea1c47f6d0b59c6fdf1c1920d829c34e6665ababf0a3866561ddad"
+      },
+      "leaderboard.json": {
+        "before": "sha256:9769dba728d47864d78d9bc99b951bfc548a58361072c39944003b915f958699",
+        "after": "sha256:517a61f58eced920485fdc6bdc9af2b2bf4f716d536c3d6255a34fc72154f27f"
+      },
+      "leaderboard.csv": {
+        "before": "sha256:c962bb5c97ff9dc26882ad23171df70ad10cbf380fd224c05d4595433976d9b8",
+        "after": "sha256:c962bb5c97ff9dc26882ad23171df70ad10cbf380fd224c05d4595433976d9b8",
+        "note": "byte-identical: the csv carries no timestamp and no version"
+      }
+    },
+    "seed_after_rebuild": {
+      "survivor_count": 2,
+      "top10_count": 2,
+      "evidence_states": [
+        "FROZEN_ONLY",
+        "FROZEN_ONLY"
+      ],
+      "champion_candidates": 0,
+      "forward_slices": 0,
+      "survivor_ids": [
+        "sv-904822905a811669",
+        "sv-f762a1da8909a5bf"
+      ]
+    }
+  },
+  "test_suite": {
+    "test_post_survivor.py": {
+      "rc": 0,
+      "tests": 30,
+      "ok": false
+    },
+    "test_preflight_p10.py": {
+      "rc": 0,
+      "tests": 10,
+      "ok": false
+    },
+    "test_production_handoff.py": {
+      "rc": 0,
+      "tests": 24,
+      "ok": false
+    },
+    "test_reconcile.py": {
+      "rc": 0,
+      "tests": 23,
+      "ok": false
+    },
+    "test_strategy_a_v2_counts.py": {
+      "rc": 0,
+      "tests": 14,
+      "ok": false
+    },
+    "test_strategy_b_v2_templates.py": {
+      "rc": 0,
+      "tests": 8,
+      "ok": false
+    },
+    "test_survivor_bundle.py": {
+      "rc": 0,
+      "tests": 18,
+      "ok": false
+    },
+    "_total_checks": 127
+  },
+  "governance_readback": {
+    "cron_624d0be5b23c": "paused (no-agent)",
+    "strategy_b_v1_card_t_3e696dce": "blocked",
+    "strategy_b_v2_directory": "absent (not launched)",
+    "new_service_daemon_queue_registry_orchestrator": "none"
+  }
+}

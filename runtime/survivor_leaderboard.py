@@ -11,8 +11,12 @@ Two file-based operations live here, and nothing else:
                  The slice must be post-freeze (its start is later than the round's registered
                  research data end), must not overlap or repeat an already recorded slice, and
                  must carry the survivor's own frozen params/bundle identity - so a retuned cell
-                 can never be filed as evidence for its incumbent (contract 27.4).  The file is
-                 append-only; every line is read back before the command reports success.
+                 can never be filed as evidence for its incumbent (contract 27.4).  It must also
+                 name the run that produced it (`source_run`: attempt dir + terminal `DONE`
+                 sentinel + the sentinel's recorded `result.json` checksum), and its numbers must
+                 equal that pinned `result.json`'s `forward_slice` block field by field: a
+                 self-declared slice is not evidence (contract 27.3; v1.5.0 audit finding F2).  The
+                 file is append-only; every line is read back before the command reports success.
 
   `leaderboard`  rebuild the survivor index in memory, aggregate each survivor's forward
                  evidence, and write `<results-root>/_survivors/leaderboard.{json,csv}` with a
@@ -20,9 +24,11 @@ Two file-based operations live here, and nothing else:
                  shortlist.
 
 Neither operation computes a backtest: the numbers in a slice come from a run of the existing
-strategy/Qlib execution semantics, and the slice records which semantics and cost model produced
-them.  Nothing here is a service, daemon, queue or registry, nothing here writes into a round or
-attempt directory, and nothing here changes a verdict: the Top-10 is a ranking/selection aid, so
+strategy/Qlib execution semantics, which the slice's `source_run` points at and which this tool
+re-verifies from disk (sentinel + result checksums) before ranking on it.  Nothing here is a
+service, daemon, queue or registry, nothing here writes into a round or attempt directory (the
+only writable subtree is `_survivors/**`, contract 27.1, enforced on `--out-dir` with both sides
+realpath-resolved), and nothing here changes a verdict: the Top-10 is a ranking/selection aid, so
 falling out of it is not a rejection, and a `champion_candidate` is a research shortlist entry -
 v1.5 never trades and never allocates capital.
 
@@ -46,22 +52,35 @@ import survivor_index as si  # noqa: E402
 
 SCHEMA_VERSION = 1
 KIND = "survivor_leaderboard"
-CONTRACT_VERSION = "v1.5.0"
+CONTRACT_VERSION = "v1.5.1"
 CONTRACT_SECTION = "27.3 / 27.5"
-SLICE_SCHEMA_VERSION = 1
+SLICE_SCHEMA_VERSION = 2
 TOP_N = 10
 EVIDENCE_STATES = ("FROZEN_ONLY", "ACCUMULATING", "FORWARD_POSITIVE", "FORWARD_DEGRADED")
 
 # Contract 27.3: the fields a forward slice must record.  `fees`/`funding`/`slippage_ticks` are
 # the realized cost numbers; `cost_model` and `execution_semantics` say which assumptions and
-# which existing runner produced them.
+# which existing runner produced them; `source_run` says WHERE those numbers can be re-read from
+# (see SOURCE_RUN_REQUIRED) so the slice is traceable instead of merely self-declared.
 SLICE_REQUIRED = {
     "survivor_id": "str", "bundle_identity_sha256": "str", "params_sha256": "str",
     "data_start": "date", "data_end": "date", "data_snapshot": "str",
     "execution_semantics": "str", "cost_model": "str", "episodes": "count",
     "net_pnl": "num", "return_pct": "num", "sharpe": "num", "max_dd_pct": "num",
     "fees": "num", "funding": "num", "slippage_ticks": "count", "produced_at_utc": "str",
+    "source_run": "object",
 }
+
+# Contract 27.3: the provenance of a slice.  `attempt_dir` is the (absolute) directory of the run
+# that produced the numbers, `<attempt_dir>/DONE` is that run's terminal sentinel published by
+# `runtime/terminal_evidence.py`, and `result_sha256` must be the checksum the sentinel recorded
+# for `<attempt_dir>/result.json`.  The run's `result.json` must carry a `forward_slice` block that
+# equals the slice field by field.  A slice without this cannot be checked against any real
+# computation, so it is refused instead of being ranked as evidence.
+SOURCE_RUN_REQUIRED = ("attempt_dir", "run_id", "kanban_task_id", "sentinel_sha256", "result_sha256")
+SOURCE_RUN_SENTINEL_NAME = "DONE"
+SOURCE_RUN_RESULT_NAME = "result.json"
+SOURCE_RUN_BLOCK = "forward_slice"
 
 # Contract 27.5 ordering: transparent, deterministic, recomputable by hand.  FORWARD evidence
 # always sorts above the frozen fallback; within a group the tuple below applies, NULLS LAST.
@@ -110,7 +129,147 @@ def is_date(value):
             and value.replace("-", "").isdigit())
 
 
-def slice_problems(slice_doc, entry, existing):
+def is_checksum(value):
+    return (isinstance(value, str) and len(value) == 71 and value.startswith("sha256:")
+            and all(c in "0123456789abcdef" for c in value[7:]))
+
+
+def inside(path, parent):
+    """True when the (already realpath-resolved) `path` sits inside `parent`."""
+    return path == parent or path.startswith(parent + os.sep)
+
+
+def source_run_problems(slice_doc, entry, results_root):
+    """Contract 27.3: a slice only counts as evidence when it can be re-read from a real run.
+
+    v1.5.0 accepted any self-declared JSON document, so a slice with invented episodes/PnL/Sharpe
+    and no reference at all became `FORWARD_POSITIVE`, `champion_candidate=true` and rank 1 (audit
+    finding F2).  The numbers must therefore come from a run the pipeline itself recorded:
+
+        slice.source_run  ->  <attempt_dir>/DONE      (terminal sentinel, hash-pinned)
+                          ->  the sentinel's recorded checksum for <attempt_dir>/result.json
+                          ->  result.json's `forward_slice` block, equal to the slice field by field
+
+    That makes a bare JSON blob insufficient (the numbers have to exist in a hash-pinned run
+    artifact), keeps the evidence re-verifiable at read time (deleting or editing the run after the
+    fact fails closed instead of ranking on a claim), and reuses the existing sentinel machinery
+    instead of inventing a second runner.
+    """
+    source = slice_doc.get("source_run")
+    if not isinstance(source, dict):
+        return ["slice carries no source_run object: forward evidence must name the run that "
+                "produced its numbers (attempt dir, terminal DONE sentinel, result checksum) and "
+                "match that run's result.json - a self-declared slice is never rankable evidence "
+                "(contract 27.3)"]
+    problems = []
+    for key in ("attempt_dir", "run_id", "kanban_task_id"):
+        value = source.get(key)
+        if not (isinstance(value, str) and value.strip()):
+            problems.append("source_run.%s is missing or not a non-empty string (%r)" % (key, value))
+    for key in ("sentinel_sha256", "result_sha256"):
+        if not is_checksum(source.get(key)):
+            problems.append("source_run.%s is not a sha256:<64 hex> checksum (%r)"
+                            % (key, source.get(key)))
+    if problems:
+        return problems
+
+    attempt = os.path.realpath(source["attempt_dir"])
+    root = os.path.realpath(os.path.abspath(results_root))
+    survivors_root = si.write_boundary(root)
+    if not inside(attempt, root):
+        problems.append("source_run.attempt_dir %s is outside the results root %s: forward evidence "
+                        "may only be read from a run inside the pipeline's own results tree"
+                        % (attempt, root))
+    elif inside(attempt, survivors_root):
+        problems.append("source_run.attempt_dir %s sits inside the post-survivor namespace %s: the "
+                        "layer that consumes the evidence may not also be its source (contract "
+                        "27.1/27.3)" % (attempt, survivors_root))
+    if not os.path.isdir(attempt):
+        problems.append("source_run.attempt_dir %s is not a directory: the producing run's "
+                        "artifacts are gone, so the numbers cannot be re-read" % attempt)
+        return problems
+    if os.path.basename(attempt) != source["run_id"]:
+        problems.append("source_run.run_id %r is not the attempt directory name %r (the terminal "
+                        "sentinel is published under the run id)"
+                        % (source["run_id"], os.path.basename(attempt)))
+
+    sentinel_path = os.path.join(attempt, SOURCE_RUN_SENTINEL_NAME)
+    if not os.path.isfile(sentinel_path):
+        problems.append("the source run has no terminal %s sentinel at %s: only a terminally DONE "
+                        "run (runtime/terminal_evidence.py) can be the source of forward evidence"
+                        % (SOURCE_RUN_SENTINEL_NAME, sentinel_path))
+        return problems
+    actual_sentinel = si.sha256_file(sentinel_path)
+    if actual_sentinel != source["sentinel_sha256"]:
+        problems.append("source_run.sentinel_sha256 %s is not the sentinel on disk %s"
+                        % (source["sentinel_sha256"], actual_sentinel))
+    try:
+        sentinel = si.load_json(sentinel_path)
+    except (OSError, ValueError) as exc:
+        problems.append("the source run's sentinel is unreadable/unparsable (%s)" % exc)
+        return problems
+    if not isinstance(sentinel, dict):
+        problems.append("the source run's sentinel is not an object")
+        return problems
+    if sentinel.get("status") != SOURCE_RUN_SENTINEL_NAME:
+        problems.append("the source run is not terminally DONE (status %r): a FAILED/INCOMPLETE "
+                        "run never produces evidence" % sentinel.get("status"))
+    for key, want in (("run_id", source["run_id"]), ("task_id", source["kanban_task_id"]),
+                      ("family_id", entry["family_id"])):
+        if sentinel.get(key) != want:
+            problems.append("the source run's sentinel records %s %r, not %r"
+                            % (key, sentinel.get(key), want))
+    if sentinel.get("run_id") == entry["run_id"]:
+        problems.append("the source run is the frozen research run %r itself: forward evidence "
+                        "must come from a later, distinct run" % entry["run_id"])
+    recorded = (sentinel.get("artifact_checksums") or {}).get(SOURCE_RUN_RESULT_NAME)
+    if recorded != source["result_sha256"]:
+        problems.append("source_run.result_sha256 %s is not the checksum the source run's terminal "
+                        "sentinel recorded for %s (%r)"
+                        % (source["result_sha256"], SOURCE_RUN_RESULT_NAME, recorded))
+
+    result_path = os.path.join(attempt, SOURCE_RUN_RESULT_NAME)
+    if not os.path.isfile(result_path):
+        problems.append("the source run has no %s at %s" % (SOURCE_RUN_RESULT_NAME, result_path))
+        return problems
+    actual_result = si.sha256_file(result_path)
+    if actual_result != source["result_sha256"]:
+        problems.append("the source run's %s hashes to %s, not the declared %s: the run artifact "
+                        "changed after the slice was written (contract 27.3)"
+                        % (SOURCE_RUN_RESULT_NAME, actual_result, source["result_sha256"]))
+        return problems
+    try:
+        result = si.load_json(result_path)
+    except (OSError, ValueError) as exc:
+        problems.append("the source run's %s is unreadable/unparsable (%s)"
+                        % (SOURCE_RUN_RESULT_NAME, exc))
+        return problems
+    if not isinstance(result, dict):
+        problems.append("the source run's %s is not an object" % SOURCE_RUN_RESULT_NAME)
+        return problems
+    for key, want in (("family_id", entry["family_id"]), ("run_id", source["run_id"])):
+        if result.get(key) != want:
+            problems.append("the source run's %s records %s %r, not %r"
+                            % (SOURCE_RUN_RESULT_NAME, key, result.get(key), want))
+    block = result.get(SOURCE_RUN_BLOCK)
+    if not isinstance(block, dict):
+        problems.append("the source run's %s carries no %s block: the slice numbers must be read "
+                        "off the run's own result artifact, not declared by the slice itself "
+                        "(contract 27.3)"
+                        % (SOURCE_RUN_RESULT_NAME, SOURCE_RUN_BLOCK))
+        return problems
+    for key in SLICE_REQUIRED:
+        if key == "source_run":
+            continue
+        if block.get(key) != slice_doc.get(key):
+            problems.append("slice field %r (%r) does not match the source run's %s.%s (%r): the "
+                            "numbers must come from the pinned run result (contract 27.3)"
+                            % (key, slice_doc.get(key), SOURCE_RUN_RESULT_NAME, SOURCE_RUN_BLOCK,
+                               block.get(key)))
+    return problems
+
+
+def slice_problems(slice_doc, entry, existing, results_root):
     """Contract 27.3: refuse anything that would not be genuine, post-freeze, unseen evidence."""
     problems = []
     if not isinstance(slice_doc, dict):
@@ -126,6 +285,8 @@ def slice_problems(slice_doc, entry, existing):
             problems.append("slice field %r is not a positive integer (%r)" % (key, value))
         elif kind == "num" and not is_number(value):
             problems.append("slice field %r is not a finite number (%r)" % (key, value))
+        elif kind == "object" and not isinstance(value, dict):
+            problems.append("slice field %r is not an object (%r)" % (key, value))
     if problems:
         return problems
 
@@ -162,10 +323,11 @@ def slice_problems(slice_doc, entry, existing):
                             "is append-only and never re-covers a window"
                             % (slice_doc["data_start"], slice_doc["data_end"],
                                prior["data_start"], prior["data_end"]))
+    problems.extend(source_run_problems(slice_doc, entry, results_root))
     return problems
 
 
-def read_slices(path, entry):
+def read_slices(path, entry, results_root):
     """Read one survivor's append-only jsonl, re-checking its integrity (never trust the file)."""
     if not os.path.exists(path):
         return [], 0
@@ -180,7 +342,7 @@ def read_slices(path, entry):
                 return None, lineno  # unparsable evidence: fail closed at aggregation time
             if not isinstance(doc, dict):
                 return None, lineno
-            problems = slice_problems(doc, entry, slices)
+            problems = slice_problems(doc, entry, slices, results_root)
             if problems:
                 return None, lineno
             slices.append(doc)
@@ -251,7 +413,7 @@ def build(results_root):
     rows = []
     for entry in index["survivors"]:
         path = si.forward_path(results_root, entry["survivor_id"])
-        slices, bad_line = read_slices(path, entry)
+        slices, bad_line = read_slices(path, entry, results_root)
         if slices is None:
             return None, None, ["%s: recorded forward evidence at %s is not a valid post-freeze "
                                 "slice for this survivor (line %d); refusing to rank on "
@@ -377,13 +539,13 @@ def cmd_forward(args, results_root):
         return 1
 
     path = si.forward_path(results_root, entry["survivor_id"])
-    existing, bad_line = read_slices(path, entry)
+    existing, bad_line = read_slices(path, entry, results_root)
     if existing is None:
         sys.stderr.write("REFUSED: the existing forward evidence at %s is not a valid slice for "
                          "this survivor (line %d); fix the artifact before appending\n"
                          % (path, bad_line))
         return 1
-    problems = slice_problems(slice_doc, entry, existing)
+    problems = slice_problems(slice_doc, entry, existing, results_root)
     if problems:
         for p in problems:
             sys.stderr.write("REFUSED: %s\n" % p)
@@ -422,6 +584,10 @@ def cmd_forward(args, results_root):
 def cmd_leaderboard(args, results_root):
     out_dir = os.path.abspath(args.out_dir) if args.out_dir else os.path.join(
         results_root, si.SURVIVORS_DIRNAME)
+    escape = si.outside_write_boundary(results_root, out_dir)
+    if escape:
+        sys.stderr.write("REFUSED: %s\n" % escape)
+        return 1
     json_path = os.path.join(out_dir, "leaderboard.json")
     csv_path = os.path.join(out_dir, "leaderboard.csv")
 
