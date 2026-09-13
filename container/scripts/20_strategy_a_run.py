@@ -78,6 +78,28 @@ WINNER_METRIC_KEYS = ("net_pnl", "sharpe", "episodes", "ending_equity", "fees", 
                       "capital_utilization")
 LAYER_TOTALS = {}
 
+# ---------------------------------------------------------------------------
+# optional inert trace hook (contract v1.6.0 section 28.2)
+#
+# `TRACE` is the module-level sink used by the survivor-evidence replay driver
+# (container/scripts/21_strategy_a_survivor_replay.py).  It is None on every
+# production path, and every emit point sits behind an explicit
+# `if TRACE is not None` guard, so with tracing off the engine executes the very
+# same arithmetic in the very same order and returns the very same aggregate
+# (enforced by the trace off/on equality check the replay driver runs on every
+# replayed cell, and by container/scripts/tests/test_survivor_trace.py).
+# A traced value is only ever observed: nothing recorded here is read back by
+# any decision, accounting or return value of the engine.
+# ---------------------------------------------------------------------------
+TRACE = None
+
+
+def _trace(event, **fields):
+    """Emit one trace record to the optional sink; a no-op when TRACE is None."""
+    if TRACE is None:
+        return
+    TRACE(event, fields)
+
 
 def log(msg):
     line = "[%s] %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), msg)
@@ -451,6 +473,9 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
     # and `gross_pnl` can never be reverse-derived from the net figure.
     gross_pnl = 0.0
     fees_total = 0.0
+    # Trace-only per-episode fee ledger (contract 28.2): accumulated alongside the
+    # engine's own ledgers and never read back by the engine.
+    ep_fees = 0.0
     episodes = tp_hits = stop_hits = open_at_end = margin_calls = 0
     bars_in_market = 0
     max_lev = 0.0
@@ -465,9 +490,31 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
         metric is the equity net of fees and funding, and every fill (entry, DCA add, exit)
         is a market order, so the deduction is a single choke point here.
         """
-        nonlocal realized, fees_total
+        nonlocal realized, fees_total, ep_fees
         fees_total += amount
         realized -= amount
+        ep_fees += amount
+        return amount
+
+    def _episode_exit(reason, bar, price, fill_qty, layer, trigger, ref, slip):
+        """Trace-only episode close (contract 28.2): the closing fill plus the episode row.
+
+        Called behind the caller's `TRACE is not None` guard and read by nothing in the
+        engine, so the aggregate and the calculation order are unaffected by tracing.
+        """
+        close_ms = int(cohort.open_time_ms[i0 + bar])
+        open_ms = int(cohort.open_time_ms[i0 + ep_open_bar])
+        exit_type = "FLATTEN" if reason == "EOD_FLATTEN" else "EXIT"
+        _trace("fill", episode=episodes, event_type=exit_type, bar_index=i0 + bar,
+               open_time_ms=close_ms, price=price, qty=fill_qty, dca_level=layer,
+               trigger_price=trigger, ref_price=ref, fee=ep_last_fee, slip_ticks=slip)
+        _trace("episode", episode=episodes, exit_reason=reason,
+               entry_bar_index=i0 + ep_open_bar, entry_time_ms=open_ms,
+               exit_bar_index=i0 + bar, exit_time_ms=close_ms,
+               entry_price=p0, exit_price=price, gross_pnl=ep_gross, fees=ep_fees,
+               funding=ep_fund, net_pnl=ep_gross - ep_fees - ep_fund,
+               holding_bars=bar - ep_open_bar, layers_used=layer,
+               mae_usdt=ep_mae, mfe_usdt=ep_mfe)
 
     n_edges = len(edge)
     pos = 0
@@ -485,8 +532,20 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
         p0 = px
         qty = base * lev / px
         cost = qty * px
+        ep_fees = 0.0
         charge_fee(qty * px * taf)
         ep_fund = 0.0
+        ep_gross = 0.0
+        ep_last_fee = 0.0
+        ep_open_bar = e
+        ep_mae = 0.0
+        ep_mfe = 0.0
+        if TRACE is not None:
+            _trace("fill", episode=episodes, event_type="ENTRY", bar_index=i0 + e,
+                   open_time_ms=int(cohort.open_time_ms[i0 + e]), price=px, qty=qty,
+                   dca_level=0, trigger_price=None,
+                   ref_price=Ce[e] if e < len(Ce) else C[e], fee=qty * px * taf,
+                   slip_ticks=slip_ticks)
         levels = [p0 * (1.0 - d0 * k) for k in range(12)]
         layers[0] += 1
         exit_bar = n - 1
@@ -520,16 +579,28 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
                 qty += q
                 cost += q * fpx
                 charge_fee(q * fpx * taf)
+                if TRACE is not None:
+                    _trace("fill", episode=episodes, event_type="DCA_ADD", bar_index=i0 + t,
+                           open_time_ms=int(cohort.open_time_ms[i0 + t]), price=fpx, qty=q,
+                           dca_level=k, trigger_price=trig, ref_price=trig,
+                           fee=q * fpx * taf, slip_ticks=slip_ticks)
                 layers[k] += 1
                 k += 1
             eq = START_EQUITY + realized
             ueq = eq + qty * C[t] - cost
+            if TRACE is not None:
+                excursion = ueq - eq
+                ep_mae = min(ep_mae, excursion)
+                ep_mfe = max(ep_mfe, excursion)
             if killed_at is None and ueq <= cohort.margin_maint * qty * C[t]:
                 xpx = C[t] - slip_ticks * tick  # capital-exhaustion backstop
+                ep_gross = exit_price_pnl(qty * xpx, cost)
                 realized += qty * xpx - cost
-                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
-                charge_fee(qty * xpx * taf)
+                gross_pnl += ep_gross  # independent gross accumulator
+                ep_last_fee = charge_fee(qty * xpx * taf)
                 exit_bar, broke, margin_calls = t, True, margin_calls + 1
+                if TRACE is not None:
+                    _episode_exit("MARGIN_CALL", exit_bar, xpx, qty, k, C[t], C[t], slip_ticks)
                 break
             if ueq > 0:
                 lv = (qty * C[t]) / ueq
@@ -541,26 +612,35 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
                 day_equity[day_of_bar[t]] = ueq
             if killed_at is not None:
                 xpx = killed_at - slip_ticks * tick
+                ep_gross = exit_price_pnl(qty * xpx, cost)
                 realized += qty * xpx - cost
-                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
-                charge_fee(qty * xpx * taf)
+                gross_pnl += ep_gross  # independent gross accumulator
+                ep_last_fee = charge_fee(qty * xpx * taf)
                 exit_bar, broke, stop_hits = t, True, stop_hits + 1
+                if TRACE is not None:
+                    _episode_exit("STOP", exit_bar, xpx, qty, k, killed_at, L[t], slip_ticks)
                 break
             tpx = (cost / qty) * (1.0 + tp_pct)  # reduce-only breakeven-anchored TP
             if h >= tpx:
                 xpx = tpx - slip_ticks * tick
+                ep_gross = exit_price_pnl(qty * xpx, cost)
                 realized += qty * xpx - cost
-                gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
-                charge_fee(qty * xpx * taf)
+                gross_pnl += ep_gross  # independent gross accumulator
+                ep_last_fee = charge_fee(qty * xpx * taf)
                 exit_bar, broke, tp_hits = t, True, tp_hits + 1
+                if TRACE is not None:
+                    _episode_exit("TP", exit_bar, xpx, qty, k, tpx, H[t], slip_ticks)
                 break
         exit_kind = "CLOSED" if broke else "EOD_OPEN"
         if not broke:
             xpx = C[-1] - slip_ticks * tick
+            ep_gross = exit_price_pnl(qty * xpx, cost)
             realized += qty * xpx - cost
-            gross_pnl += exit_price_pnl(qty * xpx, cost)  # independent gross accumulator
-            charge_fee(qty * xpx * taf)
+            gross_pnl += ep_gross  # independent gross accumulator
+            ep_last_fee = charge_fee(qty * xpx * taf)
             open_at_end += 1
+            if TRACE is not None:
+                _episode_exit("EOD_FLATTEN", exit_bar, xpx, qty, k, C[-1], C[-1], slip_ticks)
         funding_paid += ep_fund
         realized -= ep_fund
         episodes += 1
@@ -579,6 +659,11 @@ def simulate(cohort, window, rail, p, stress, slip_ticks, kind):
             last = v
         series.append(last)
     series = np.array(series, dtype=np.float64)
+    if TRACE is not None:
+        _trace("equity_marks", window_kind=kind,
+               cohort="%s/%s" % (cohort.symbol, cohort.timeframe),
+               day_index=list(range(len(series))), equity=[float(v) for v in series],
+               in_window=[v is not None for v in day_equity])
     if len(series) > 2:
         rets = np.diff(series) / series[:-1]
         sd = float(np.std(rets, ddof=1))

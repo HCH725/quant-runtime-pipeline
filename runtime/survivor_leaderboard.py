@@ -27,6 +27,10 @@ Neither operation computes a backtest: the numbers in a slice come from a run of
 strategy/Qlib execution semantics, which the slice's `source_run` points at - by an absolute
 attempt dir inside the results tree (v1.5.2) - and which this tool re-verifies from disk (sentinel
 + result checksums) before ranking on it.  Nothing here is a service, daemon, queue or registry,
+nor into a round or attempt directory, and since v1.6.0 each row also carries the non-ranking
+evidence drill-back pointer (`evidence_package_status` / `evidence_manifest_path` /
+`evidence_manifest_sha256`, contract 28.6), which never enters the ordering tuple and never gates
+anything.
 nothing here writes into a round or attempt directory (the only writable subtree is `_survivors/**`,
 contract 27.1: `--out-dir` and the forward append are both checked against it, the reserved root
 must not be a symlink, and the target must realpath into it), and nothing here changes a verdict:
@@ -51,10 +55,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import survivor_index as si  # noqa: E402
+import survivor_evidence as se  # noqa: E402
 
 SCHEMA_VERSION = 1
 KIND = "survivor_leaderboard"
-CONTRACT_VERSION = "v1.5.2"
+CONTRACT_VERSION = "v1.6.0"
 CONTRACT_SECTION = "27.3 / 27.5"
 SLICE_SCHEMA_VERSION = 2
 TOP_N = 10
@@ -117,6 +122,11 @@ CSV_COLUMNS = [
     "robustness_stress_floor_net_pnl", "robustness_stress_floor_grid",
     "neighbourhood_same_sign_fraction", "research_data_cutoff", "bundle_identity_sha256",
     "bundle_sha256", "bundle_path",
+    # Contract 28.6: preservation coverage drill-back.  These three describe WHERE the execution
+    # evidence package for this row is, or that it is not preserved yet.  They are deliberately
+    # NOT part of ORDERING_RULE / sort_key: a package appearing or disappearing must never move a
+    # rank, change a Top-10 membership, or feed `evidence_state`/`champion_candidate`.
+    "evidence_package_status", "evidence_manifest_path", "evidence_manifest_sha256",
 ]
 
 
@@ -436,6 +446,9 @@ def build(results_root):
         row["forward"] = forward
         row["evidence_state"] = evidence_state(forward, entry)
         row["last_evidence_end"] = forward.get("last_data_end")
+        # Contract 28.6: a non-ranking drill-back pointer only.  A missing package leaves this
+        # row, the ranking and the Top-10 exactly as they were (the leaderboard stays rc=0).
+        row.update(se.pointer(results_root, entry))
         rows.append(row)
 
     rows.sort(key=sort_key)
@@ -502,6 +515,9 @@ def csv_rows(rows):
             "research_data_cutoff": row["research_data_cutoff"],
             "bundle_identity_sha256": row["bundle_identity_sha256"],
             "bundle_sha256": row["bundle_sha256"], "bundle_path": row["bundle_path"],
+            "evidence_package_status": row["evidence_package_status"],
+            "evidence_manifest_path": row["evidence_manifest_path"],
+            "evidence_manifest_sha256": row["evidence_manifest_sha256"],
         })
     return out
 

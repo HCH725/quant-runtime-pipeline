@@ -49,7 +49,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "survivor_index"
-CONTRACT_VERSION = "v1.5.2"
+CONTRACT_VERSION = "v1.6.0"
 CONTRACT_SECTION = "27.2"
 DEFAULT_RESULTS_ROOT = "/Volumes/ExpansionDrive/qlib-results"
 
