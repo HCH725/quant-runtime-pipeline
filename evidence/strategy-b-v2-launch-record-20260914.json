@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "kind": "launch_record",
+  "contract_section": "9.2",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "run_id": "ema-crossover-walkforward-momentum-long-short-v2-r1-u2",
+  "kanban_task_id": "t_35b3e5da",
+  "kanban_board": "quant-strategy-research",
+  "launched_at_utc": "2026-09-13T21:50:34Z",
+  "launched_by_task": "t_35b3e5da",
+  "exact_once": true,
+  "launch_mode": "container exec --detach (process runs inside qlib-run; no host-side supervisor)",
+  "launch_command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/30_strategy_b_run.py <container run-spec> > <attempt>/logs/run.log 2>&1\"",
+  "engine": {
+    "path": "/scripts/30_strategy_b_run.py",
+    "host_source": "/Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py",
+    "sha256": "sha256:940768c3d5bed836a16a006170771f36a21644fec8e59ade1e2b44aca68edd85",
+    "bytes": 80057,
+    "note": "new v1.4.0-semantics B v2 engine (pinned-pair walk-forward); the archived operator-stopped B v1 runner was not reused"
+  },
+  "engine_selfcheck": {
+    "path": "/scripts/tests/test_strategy_b_engine.py",
+    "sha256": "sha256:97e09191511a8e5c20cb4704772d94d91ae37a387c5fec9c6c3b1acad2a6b0bb",
+    "command": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py",
+    "result": "Ran 20 tests in 0.143s - OK"
+  },
+  "instantiated_specs": {
+    "round_spec": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/round-spec.json",
+    "round_spec_sha256": "sha256:a3dd33a95e3fb307c91f5e07f5b486b3c51e8be4bbc214ae85d654a169bcaf22",
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u2/run-spec.json",
+    "run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+    "family_json": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/family.json",
+    "family_json_sha256": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+    "semantic_fingerprint": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "instantiation_tool": "runtime/instantiate_strategy_b_v2.py (round-spec reused verbatim for u2)",
+    "counts_check": "runtime/strategy_b_v2_counts.py: cohorts=20 strategy=120 dca=48 base_per_cohort=5760 per_grid=115200 total=1152000 fingerprint=MATCH ok=True"
+  },
+  "counts": {
+    "cohorts": 20,
+    "strategy_cases": 120,
+    "dca_configs": 48,
+    "base_combinations_per_cohort": 5760,
+    "case_evaluations_per_grid": 115200,
+    "expected_case_evaluations": 1152000
+  },
+  "counts_self_test": "11/11 negative controls flagged",
+  "preflight": {
+    "u1": "evidence/strategy-b-v2-preflight-20260914.json (P1-P10 PASS)",
+    "u2": "evidence/strategy-b-v2-preflight-u2-20260914.json (P1-P10 PASS, launch_gate=evaluated)",
+    "script_sha256_recomputed_host_side": true
+  },
+  "incident_u1": {
+    "status": "FAILED sentinel published host-side (card-local, class=script_bug)",
+    "sentinel": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u1/FAILED",
+    "runtime_seconds": 130,
+    "root_cause": "run_cohort passed cohort.day_index (a per-BAR day number array) where the walk-forward step segments need cohort.day_start (the per-DAY first-bar index); the 5m/15m cohorts then had empty training segments, so every case was empty (n_steps=0, net_pnl=0)",
+    "detection": "launcher read the live grid CSVs + runner log ~2 minutes after launch; the run was stopped before the container published any sentinel",
+    "partial_artifacts": "the u1 attempt's artifacts/grid_*.csv, progress.json and state.json are INVALID partial output and must never be read as evidence",
+    "remediation": "same round, new run u2 with engine sha256 sha256:940768c3d5bed836a16a006170771f36a21644fec8e59ade1e2b44aca68edd85; hypothesis, domains, split, gates and DCA rail unchanged (contract 8)"
+  },
+  "observed_after_launch_u2": {
+    "bins_build_wall_seconds": 29.9,
+    "bins_bytes": 79187392,
+    "state_json_stage": "RUNNING_QLIB",
+    "live_csv_sanity": "artifacts/grid_historical.csv: 1154 rows, 1154 with n_steps>0 (5m cohort) at ~30s after the cohort started",
+    "measured_pace": "~38 rows/s; 1,152,000 rows total -> ~8-9 h wall time",
+    "registered_estimate": "round-spec expected.runtime_expectation: ~4.2 h (extrapolated from the Strategy A v2 per-case cost)",
+    "discrepancy_note": "a B v2 case is a walk-forward case (per-step training selection over the 30 pairs + the pinned test execution), measured at ~0.1 s per case vs the A engine's 12.6 ms per case on real data; the registered estimate is a preregistered estimate, not a promise, and this run's measured projection is reported instead"
+  },
+  "guards": {
+    "auditor_child_card_created": false,
+    "strategy_c_card_generated": false,
+    "cron_resumed": false,
+    "second_engine": false,
+    "strategy_a_v2_artifacts_modified": false,
+    "strategy_b_v1_artifacts_modified": false,
+    "immutable_specs_modified": false,
+    "new_service_daemon_queue_orchestrator": false
+  },
+  "card_transition": "card parked to 'scheduled' right after the launch (contract 9.2 step 5); the sentinel-based reconciler cron f6b9aa5e9034 stays PAUSED, so the operator must release the card (or resume the reconciler) once attempts/<run_id>/DONE appears",
+  "note": "container writes result.json + artifacts/ + state.json + logs/; the terminal sentinel is published host-side via runtime/terminal_evidence.py. The card owns the round verdict.json + survivor bundle after the sentinel lands."
+}
