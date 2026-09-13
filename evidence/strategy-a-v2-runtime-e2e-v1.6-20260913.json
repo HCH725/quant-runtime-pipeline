@@ -1,0 +1,788 @@
+{
+  "schema_version": 2,
+  "kind": "runtime_sop_end_to_end_acceptance",
+  "card": "t_280407ce (acceptance; created by ChatGPT GPT-5.6 Sol)",
+  "recorded_at_utc": "2026-09-13T16:40:18Z",
+  "head_commit": "db6346fd32a8b5f0b8f08520ee22f51c449104b4",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.6.0 (AUDITED PASS / FROZEN; audited content commit 6e7d046)",
+  "verdict": "PASS",
+  "acceptance_criteria": {
+    "coverage_103680_of_103680": true,
+    "same_two_cohort_survivors": true,
+    "frozen_winning_params_identical": true,
+    "winner_metrics_field_identical": true,
+    "grid_rows_byte_identical": true,
+    "family_disposition_current_semantics": "PASS (MULTIPLE_SURVIVORS band; no FINALIST gate semantics)",
+    "downstream_chain_completed_unattended": true,
+    "evidence_coverage_2_of_2": true,
+    "production_immutable": true,
+    "unresolved_technical_failure": false
+  },
+  "validation_root": "<EXPANSION>/qlib-results/_validation/strategy-a-v2-runtime-e2e-v1.6-20260913",
+  "identity": {
+    "family_id": "close-vs-sma-mean-reversion-long-flat-v2",
+    "round_id": "close-vs-sma-mean-reversion-long-flat-v2-r1",
+    "governing_run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u2",
+    "aborted_run_id": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+    "kanban_task_id": "t_280407ce",
+    "kanban_board": "quant-strategy-research"
+  },
+  "coverage": {
+    "cohorts": 20,
+    "strategy_cases_per_cohort": 12,
+    "dca_configs_per_cohort": 48,
+    "registered_grids": 9,
+    "case_evaluations_total": 103680,
+    "expected_case_evaluations": 103680,
+    "coverage_complete": true,
+    "assertions_all_true": true,
+    "grid_rows_compared": 103680
+  },
+  "runtime": {
+    "engine_runtime_seconds": 1499,
+    "bins_build": {
+      "build_wall_seconds": 35.056,
+      "qlib_dir_bytes": 79187392,
+      "qlib_version": "0.9.7"
+    },
+    "launch_mode": "container exec -d qlib-run (canonical production launch mode)",
+    "source_runner_sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+    "reproposed_reason": "the deployed /scripts production runner (c4f9a216) still embeds the pre-v1.4.0 band->verdict RECOMMENDATION mapping (>1 survivor -> FINALIST); contract 28.2 leaves that deployed file untouched on purpose, so the acceptance run re-pinned the v1.6.0-audited instrumented repo runner (same engine + inert trace hook + current mapping). Recorded in the run-spec, in evidence/... and in the u1 INCOMPLETE sentinel.",
+    "deployed_runner_readback_sha256": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f",
+    "replay_driver_sha256": "sha256:34783c8c0cabe2b2f97168ca521c345325962e0524620679975fe9b417f60a18"
+  },
+  "reproducibility": {
+    "grid_csvs_byte_identical_to_canonical": true,
+    "grid_csv_sha256": {
+      "historical": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+      "oos": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+      "full": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+      "fee_2x": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+      "funding_2x": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+      "entry_delay_1_bar": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+      "slippage_2ticks": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+      "no_funding": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+      "no_funding_full": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08"
+    },
+    "grid_rows_compared": 103680,
+    "json_documents_field_identical": {
+      "artifacts/cohort_results.json": true,
+      "artifacts/cohort_survivors.json": true,
+      "artifacts/assertions.json": true,
+      "artifacts/dca_layer_histogram.json": true
+    },
+    "result_json_differences_vs_canonical": [
+      {
+        "key": "/contract_semantics_version",
+        "canonical": null,
+        "fresh": "v1.4.0"
+      },
+      {
+        "key": "/disposition_mapping_version",
+        "canonical": null,
+        "fresh": "v1.4.0"
+      },
+      {
+        "key": "/performance_claimable_recommendation",
+        "canonical": false,
+        "fresh": true
+      },
+      {
+        "key": "/run_id",
+        "canonical": "close-vs-sma-mean-reversion-long-flat-v2-r1-u1",
+        "fresh": "close-vs-sma-mean-reversion-long-flat-v2-r1-u2"
+      },
+      {
+        "key": "/verdict_recommendation",
+        "canonical": "FINALIST",
+        "fresh": "PASS"
+      }
+    ],
+    "survivors": [
+      {
+        "cohort": "BTCUSDT/1h",
+        "strategy_params": {
+          "window": 20,
+          "discount": 0.03
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c",
+        "metrics": {
+          "historical": {
+            "net_pnl": 14790.093348,
+            "sharpe": 0.676463,
+            "episodes": 170,
+            "ending_equity": 44790.093348,
+            "fees": 6750.845753,
+            "funding": 150.567721,
+            "max_dd_usdt": -6522.553451,
+            "max_dd_pct": -0.199943,
+            "max_effective_leverage": 9.96216,
+            "capital_utilization": 0.171114
+          },
+          "oos": {
+            "net_pnl": 6016.344052,
+            "sharpe": 0.536464,
+            "episodes": 34,
+            "ending_equity": 36016.344052,
+            "fees": 1743.891637,
+            "funding": 23.038695,
+            "max_dd_usdt": -6124.419748,
+            "max_dd_pct": -0.150469,
+            "max_effective_leverage": 9.349163,
+            "capital_utilization": 0.160537
+          },
+          "full": {
+            "net_pnl": 14913.47311,
+            "sharpe": 0.588432,
+            "episodes": 204,
+            "ending_equity": 44913.47311,
+            "fees": 8621.873688,
+            "funding": 212.029681,
+            "max_dd_usdt": -12017.384038,
+            "max_dd_pct": -0.21656,
+            "max_effective_leverage": 9.96216,
+            "capital_utilization": 0.160526
+          }
+        },
+        "robustness": {
+          "fee_2x": 11353.765787,
+          "funding_2x": 14701.443429,
+          "entry_delay_1_bar": 12210.28144,
+          "slippage_2ticks": 14876.072721
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 5,
+          "same_sign_fraction": 0.833333,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "passed": true
+        }
+      },
+      {
+        "cohort": "SOLUSDT/4h",
+        "strategy_params": {
+          "window": 100,
+          "discount": 0.03
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c",
+        "metrics": {
+          "historical": {
+            "net_pnl": 51035.16769,
+            "sharpe": 4.017045,
+            "episodes": 184,
+            "ending_equity": 81035.16769,
+            "fees": 5853.473689,
+            "funding": 65.459561,
+            "max_dd_usdt": -707.279796,
+            "max_dd_pct": -0.009704,
+            "max_effective_leverage": 7.330064,
+            "capital_utilization": 0.059173
+          },
+          "oos": {
+            "net_pnl": 8485.605171,
+            "sharpe": 2.17438,
+            "episodes": 41,
+            "ending_equity": 38485.605171,
+            "fees": 993.990418,
+            "funding": -18.758655,
+            "max_dd_usdt": -133.414358,
+            "max_dd_pct": -0.003455,
+            "max_effective_leverage": 3.400981,
+            "capital_utilization": 0.056342
+          },
+          "full": {
+            "net_pnl": 60695.711357,
+            "sharpe": 4.396559,
+            "episodes": 226,
+            "ending_equity": 90695.711357,
+            "fees": 6979.398992,
+            "funding": 46.175016,
+            "max_dd_usdt": -707.279796,
+            "max_dd_pct": -0.009704,
+            "max_effective_leverage": 7.330064,
+            "capital_utilization": 0.049641
+          }
+        },
+        "robustness": {
+          "fee_2x": 53716.312365,
+          "funding_2x": 60649.53634,
+          "entry_delay_1_bar": 17375.485091,
+          "slippage_2ticks": 62226.3253
+        },
+        "neighbourhood": {
+          "neighbours": 7,
+          "agreeing": 6,
+          "same_sign_fraction": 0.857143,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "passed": true
+        }
+      }
+    ],
+    "canonical_survivor_metrics_identical": {
+      "BTCUSDT/1h": true,
+      "SOLUSDT/4h": true
+    },
+    "canonical_frozen_bundle_identity": "sha256:c051759fdf8291f66bce8f7249cb226b856c04de2ad78a8d055fdb4657543363",
+    "fresh_bundle_identity": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c",
+    "fresh_bundle_verdict": "PASS",
+    "fresh_bundle_source_attempt_semantics": {
+      "verdict_mapping": "v1.4.0",
+      "verdict_recommendation_recorded_in_result_json": "PASS",
+      "performance_claimable_recommendation_recorded_in_result_json": true
+    }
+  },
+  "post_survivor_lifecycle": {
+    "survivor_index_sha256": "sha256:8dd06d50636110d8f467dfaa78055fb0923db413f80fcdca6cf46a8eaf89c6d0",
+    "leaderboard_json_sha256": "sha256:58a198c96ab105ce2d95aaf52ae9d853e7876193e264496284f3fe1d19d20bef",
+    "leaderboard_csv_sha256": "sha256:df18ae59618d2c4adbcec6e956009df241bd038d2b3d8a2d4a927b211612e6a3",
+    "entries": [
+      {
+        "rank": 1,
+        "survivor_id": "sv-3b9f69f7cef2a885",
+        "cohort": "SOLUSDT/4h",
+        "evidence_state": "FROZEN_ONLY",
+        "champion_candidate": false,
+        "forward_slices": 0,
+        "evidence_package_status": "PRESENT",
+        "evidence_manifest_sha256": "sha256:16752812aa7698273954f330a1a7019582b0beccfe253fce77bc7cda65324571",
+        "oos_sharpe": null,
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c"
+      },
+      {
+        "rank": 2,
+        "survivor_id": "sv-edd7ee1ba59a8c42",
+        "cohort": "BTCUSDT/1h",
+        "evidence_state": "FROZEN_ONLY",
+        "champion_candidate": false,
+        "forward_slices": 0,
+        "evidence_package_status": "PRESENT",
+        "evidence_manifest_sha256": "sha256:c2c50918c3608699cf60ac4d077fbaa04315581d8b2be827a242a51e06afdb94",
+        "oos_sharpe": null,
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c"
+      }
+    ],
+    "all_checks_clean": true,
+    "evidence_packages": [
+      {
+        "survivor_id": "sv-3b9f69f7cef2a885",
+        "cohort": "SOLUSDT/4h",
+        "symbol": "SOLUSDT",
+        "timeframe": "4h",
+        "strategy_params": {
+          "window": 100,
+          "discount": 0.03
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "params_sha256": "sha256:95ca1f1622d9d9138685d8e5d7786d7e13562a1fc969a440e563c384b54e609c",
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c",
+        "package_identity_sha256": "sha256:033d381710ccb2cb692c67279973e13f1230df2dc7e945f386900b818e0de350",
+        "manifest_sha256": "sha256:16752812aa7698273954f330a1a7019582b0beccfe253fce77bc7cda65324571",
+        "aggregate": {
+          "comparison": "MATCH",
+          "grids_compared": 9,
+          "columns_compared": 32,
+          "cells_compared": 288
+        },
+        "grids": [
+          {
+            "grid": "entry_delay_1_bar",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+            "ledgers": {
+              "fills.csv": 768,
+              "episodes.csv": 218,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "fee_2x",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+            "ledgers": {
+              "fills.csv": 827,
+              "episodes.csv": 226,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "full",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+            "ledgers": {
+              "fills.csv": 827,
+              "episodes.csv": 226,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "funding_2x",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+            "ledgers": {
+              "fills.csv": 827,
+              "episodes.csv": 226,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "historical",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+            "ledgers": {
+              "fills.csv": 684,
+              "episodes.csv": 184,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "no_funding",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+            "ledgers": {
+              "fills.csv": 684,
+              "episodes.csv": 184,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "no_funding_full",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08",
+            "ledgers": {
+              "fills.csv": 827,
+              "episodes.csv": 226,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "oos",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+            "ledgers": {
+              "fills.csv": 132,
+              "episodes.csv": 41,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "slippage_2ticks",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+            "ledgers": {
+              "fills.csv": 857,
+              "episodes.csv": 226,
+              "equity.csv": 1714
+            }
+          }
+        ],
+        "source_runner": {
+          "path": "<REPO>/container/scripts/20_strategy_a_run.py",
+          "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+          "sha256_source": "frozen run-spec script.sha256",
+          "deployed_runner_path": "/scripts/20_strategy_a_run.py",
+          "deployed_sha256_readback": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+        },
+        "replay_runner": {
+          "path": "/results/_validation/strategy-a-v2-runtime-e2e-v1.6-20260913/_survivors/evidence/.staging-e2e/engine/20_strategy_a_run.py",
+          "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+          "note": "instrumented repo runner (adds the inert trace hook only; engine SHA differs from source_runner by that hook)"
+        },
+        "materialization": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored"
+      },
+      {
+        "survivor_id": "sv-edd7ee1ba59a8c42",
+        "cohort": "BTCUSDT/1h",
+        "symbol": "BTCUSDT",
+        "timeframe": "1h",
+        "strategy_params": {
+          "window": 20,
+          "discount": 0.03
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "params_sha256": "sha256:09343579c45d15a94ab81d2be2e7f61a9814a728d533fe6197f6c6b582f74cf6",
+        "bundle_identity_sha256": "sha256:ab78302855d1bbd1ee5ee55849a97060dfff2eb42df14c0bc848c2c8a5f2da6c",
+        "package_identity_sha256": "sha256:7baf87e098a7fed683218468c7f4670e733f83cb722712d76111ccdef0a0f521",
+        "manifest_sha256": "sha256:c2c50918c3608699cf60ac4d077fbaa04315581d8b2be827a242a51e06afdb94",
+        "aggregate": {
+          "comparison": "MATCH",
+          "grids_compared": 9,
+          "columns_compared": 32,
+          "cells_compared": 288
+        },
+        "grids": [
+          {
+            "grid": "entry_delay_1_bar",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:e150a7e7ba575f43bb011fc021dde3b843dea16a0f99bcfad8351ec15dac516e",
+            "ledgers": {
+              "fills.csv": 1136,
+              "episodes.csv": 202,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "fee_2x",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:781f4845ca91e871c35057e26f7133332778f6f36d23eb4390a78912aa3a4db4",
+            "ledgers": {
+              "fills.csv": 1023,
+              "episodes.csv": 204,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "full",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:4489b6dc455d48df0cff54f651cdd14bfc765f14944ce79c6cacf2bc8f35190e",
+            "ledgers": {
+              "fills.csv": 1065,
+              "episodes.csv": 204,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "funding_2x",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:f68cb7c9718db6db7c26f489b4cb271eab6727f8ac0249a468cd2c62b5ce777a",
+            "ledgers": {
+              "fills.csv": 1065,
+              "episodes.csv": 204,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "historical",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:c59c6c2c56d1b6be36ce5ed8053a7f0e3b29a4f49998e0d55446c7e983cea156",
+            "ledgers": {
+              "fills.csv": 844,
+              "episodes.csv": 170,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "no_funding",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:104b7965684274382235d777baa78f4a2f288c84973778855b6fe604484429d3",
+            "ledgers": {
+              "fills.csv": 844,
+              "episodes.csv": 170,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "no_funding_full",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:bc27d21145266f42ed92385c7681c8c844b78824951802bc7f99b8e95574be08",
+            "ledgers": {
+              "fills.csv": 1065,
+              "episodes.csv": 204,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "oos",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:a5bb708e1d2198f9eeaea0519038ff58f764b09875f33896dfaa53712028edf3",
+            "ledgers": {
+              "fills.csv": 208,
+              "episodes.csv": 34,
+              "equity.csv": 1714
+            }
+          },
+          {
+            "grid": "slippage_2ticks",
+            "comparison": "MATCH",
+            "frozen_csv_sha256": "sha256:b46fb8ba8dca99bcfded90935cf7fec2562d843516630d6cf7ab7d64112732ab",
+            "ledgers": {
+              "fills.csv": 1065,
+              "episodes.csv": 204,
+              "equity.csv": 1714
+            }
+          }
+        ],
+        "source_runner": {
+          "path": "<REPO>/container/scripts/20_strategy_a_run.py",
+          "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+          "sha256_source": "frozen run-spec script.sha256",
+          "deployed_runner_path": "/scripts/20_strategy_a_run.py",
+          "deployed_sha256_readback": "sha256:c4f9a216ce424a6c0c34379f29a74d0b348da9036818b0b590bfcaeba853b40f"
+        },
+        "replay_runner": {
+          "path": "/results/_validation/strategy-a-v2-runtime-e2e-v1.6-20260913/_survivors/evidence/.staging-e2e/engine/20_strategy_a_run.py",
+          "sha256": "sha256:4a910fc6a4c0d0bde1fcaa4efeee3d722b41f086417ceb3a57e22dcb53d3f889",
+          "note": "instrumented repo runner (adds the inert trace hook only; engine SHA differs from source_runner by that hook)"
+        },
+        "materialization": "these ledgers are a DETERMINISTIC REPLAY materialisation produced by re-running the same engine on the same frozen inputs; the original research run kept only aggregates, so this is not a recovery of bytes the original run stored"
+      }
+    ],
+    "evidence_coverage": {
+      "leaderboard_entries": 2,
+      "present": 2,
+      "absent": 0
+    },
+    "ranking_unchanged_by_package_presence": true,
+    "forward_slices": 0
+  },
+  "production_immutability": {
+    "checked_files": 16,
+    "survivors_tree_entries": 160,
+    "canonical_family_tree_entries": 26,
+    "identical_before_after": true,
+    "before": {
+      "verdict.json": "sha256:cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+      "survivor-bundle.json": "sha256:4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+      "round-spec.json": "sha256:e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+      "result.json": "sha256:012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+      "artifacts/cohort_survivors.json": "sha256:74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+      "canonical leaderboard.json": "sha256:6cc421b21a8e16a7938c6c28117d193e0c555c825824322f05dcae03d231fc4b",
+      "canonical leaderboard.csv": "sha256:a54edab56e458480b2e5241953db1b6df9bcc6d0ee133ac19917b7b96c13e8bf",
+      "canonical survivor-index.json": "sha256:6e9baf177e4e19a6e387f3d8f60c232881fd82718477deda61b654cbef847a29",
+      "evidence manifest sv-f762a1da8909a5bf": "sha256:87f1bd035ff80285398aa63fc0e335ddffa7618e30eb16d84e34e43b4df5052d",
+      "evidence manifest sv-904822905a811669": "sha256:1dc0db9ddf54fe1697eae5737bb59eb31b2f2059330a2b51c77a256e2b65a7ae"
+    },
+    "after_equal": true
+  },
+  "governance": {
+    "cron_624d0be5b23c": "paused",
+    "strategy_b_v2_launched": false,
+    "strategy_c_created": false,
+    "forward_evidence_written": false,
+    "paper_testnet_live": false,
+    "repo_runtime_code_changed": false
+  },
+  "human_intervention_and_retries": {
+    "interventions": [
+      {
+        "what": "u1 launch stopped and re-pinned before any window completed",
+        "why": "the deployed production runner's recommendation mapping is the pre-v1.4.0 FINALIST mapping; card t_280407ce requires the fresh round's disposition semantics to be the current all-survivors mapping",
+        "needed_human_judgment": true,
+        "was_sop_supported": "yes: preflight P10 resolves a run-spec script.path host-side, so the re-pin needed no code change; the new sha is recorded in the run-spec",
+        "durable_state_after": "u1 = INCOMPLETE sentinel (check clean), u2 = governing DONE attempt"
+      }
+    ],
+    "crashes": 0,
+    "engineering_failures": 0,
+    "manual_artifact_edits": 0,
+    "resumed_from_durable_state": true,
+    "comparable_canonical_wall_clock_minutes": 21.7,
+    "this_run_wall_clock_minutes": 25.0
+  },
+  "timeline": [
+    {
+      "stage": "card claimed / run start",
+      "utc": "2026-09-13T16:03:26Z"
+    },
+    {
+      "stage": "canonical production immutable SHA snapshot (before)",
+      "utc": "2026-09-13T16:06:09Z"
+    },
+    {
+      "stage": "validation round-spec + u1 run-spec instantiated",
+      "utc": "2026-09-13T16:06:35Z"
+    },
+    {
+      "stage": "pre-registration counts check (103,680) + preflight u1 P1-P10 PASS",
+      "utc": "2026-09-13T16:07:41Z"
+    },
+    {
+      "stage": "u1 launch (deployed production runner pin c4f9a216)",
+      "utc": "2026-09-13T16:07:44Z"
+    },
+    {
+      "stage": "u1 stopped before completion (runner re-pin decision)",
+      "utc": "2026-09-13T16:08:51Z"
+    },
+    {
+      "stage": "u1 INCOMPLETE sentinel published",
+      "utc": "2026-09-13T16:11:18Z"
+    },
+    {
+      "stage": "instrumented runner + tests staged under <root>/_runtime, u2 run-spec instantiated",
+      "utc": "2026-09-13T16:09:57Z"
+    },
+    {
+      "stage": "engine selfcheck 37/37 + trace-inertness test 7/7 inside qlib-run",
+      "utc": "2026-09-13T16:10:00Z"
+    },
+    {
+      "stage": "preflight u2 P1-P10 PASS (script.sha256=4a910fc6 resolved host-side)",
+      "utc": "2026-09-13T16:10:08Z"
+    },
+    {
+      "stage": "u2 launch (container exec -d)",
+      "utc": "2026-09-13T16:10:13Z"
+    },
+    {
+      "stage": "bins rebuilt from read-only raw (79,187,392 bytes, 35.1 s)",
+      "utc": "2026-09-13T16:10:49Z"
+    },
+    {
+      "stage": "20/20 cohorts + 9 grids complete, ARTIFACT_READY (engine runtime_seconds=1499)",
+      "utc": "2026-09-13T16:35:13Z"
+    },
+    {
+      "stage": "terminal DONE sentinel published (host, atomic)",
+      "utc": "2026-09-13T16:35:58Z"
+    },
+    {
+      "stage": "round verdict.json written (PASS)",
+      "utc": "2026-09-13T16:35:58Z"
+    },
+    {
+      "stage": "frozen survivor bundle written + --check",
+      "utc": "2026-09-13T16:35:58Z"
+    },
+    {
+      "stage": "validation survivor index rebuilt + --check",
+      "utc": "2026-09-13T16:35:58Z"
+    },
+    {
+      "stage": "validation leaderboard written + --check",
+      "utc": "2026-09-13T16:36:38Z"
+    },
+    {
+      "stage": "18 winner-cell replays in container (2 survivors x 9 registered grids)",
+      "utc": "2026-09-13T16:36:15Z"
+    },
+    {
+      "stage": "evidence packages materialized (staging -> atomic rename)",
+      "utc": "2026-09-13T16:36:31Z"
+    },
+    {
+      "stage": "leaderboard rebuilt with drill-back + --check, evidence check + coverage 2/2",
+      "utc": "2026-09-13T16:36:38Z"
+    }
+  ],
+  "observations_non_blocking": [
+    {
+      "id": "O1",
+      "title": "deployed production runner still embeds the pre-v1.4.0 recommendation mapping",
+      "detail": "/scripts/20_strategy_a_run.py (c4f9a216) emits verdict_recommendation=FINALIST and performance_claimable_recommendation=false for >1 survivor. Contract 28.2 deliberately leaves the deployed file alone (only its provenance is recorded), and the SOP treats the runner output as a hint (7.3/9.3), so no verdict path is affected - but any future run that pins the deployed runner will keep producing a legacy-labelled source attempt and a bundle that carries the pre-v1.4.0 legacy disclosure. Non-blocking; a documentation/wording fix at most."
+    },
+    {
+      "id": "O2",
+      "title": "validation round-spec inherits the repo template's prose version strings",
+      "detail": "the fresh round-spec is instantiated verbatim from runtime/templates/strategy_a_v2_round_spec.template.json, so its document_kind still says 'template (v1.4.0 ...)' and its contract field names v1.4.0 even though the governing contract is v1.6.0. Fields are verbatim-instantiated by design (that is what makes the comparison auditable); cosmetic only."
+    },
+    {
+      "id": "O3",
+      "title": "u1 attempt was aborted by operator choice, not by a failure",
+      "detail": "recorded as INCOMPLETE/card-local (superseded_runner_pinning) with no scientific result; the round's governing attempt is u2. §8 explicitly allows a same-round new run.",
+      "gate_impact": "none"
+    }
+  ],
+  "checks_run": [
+    {
+      "command": "python3 runtime/strategy_a_v2_counts.py --spec <validation round-spec> --run-spec <u1|u2 run-spec>",
+      "rc": 0,
+      "result": "cohorts=20 strategy=12 dca=48 per_grid=11520 total=103680 fingerprint=MATCH"
+    },
+    {
+      "command": "python3 runtime/preflight.py --launch --attempt-dir <attempt>",
+      "rc": 0,
+      "result": "P1-P10 PASS (evaluated=10, failed=0) for both u1 and u2"
+    },
+    {
+      "command": "container exec qlib-run env SA_ENGINE_PATH=<staged runner> /opt/venv/bin/python <staged tests>/test_strategy_a_engine.py",
+      "rc": 0,
+      "result": "Ran 37 tests ... OK"
+    },
+    {
+      "command": "container exec qlib-run env SA_ENGINE_PATH=<staged runner> /opt/venv/bin/python <staged tests>/test_survivor_trace.py",
+      "rc": 0,
+      "result": "Ran 7 tests ... OK"
+    },
+    {
+      "command": "python3 runtime/terminal_evidence.py publish/check --attempt-dir <u2>",
+      "rc": 0,
+      "result": "DONE published, check problems=[]"
+    },
+    {
+      "command": "python3 runtime/survivor_bundle.py --attempt-dir <u2> [--check]",
+      "rc": 0,
+      "result": "written; --check rc=0 check_clean"
+    },
+    {
+      "command": "python3 runtime/survivor_index.py --results-root <validation root> [--check]",
+      "rc": 0,
+      "result": "written; --check check_clean, survivor_count=2"
+    },
+    {
+      "command": "python3 runtime/survivor_leaderboard.py leaderboard --results-root <validation root> [--check]",
+      "rc": 0,
+      "result": "written; --check check_clean, entries=2"
+    },
+    {
+      "command": "container exec qlib-run /opt/venv/bin/python <staging>/tools/21_strategy_a_survivor_replay.py --survivor-id <sv-...> --staging <staging> --results-root <root> --engine <staging>/engine/20_strategy_a_run.py",
+      "rc": 0,
+      "result": "2x9/9 grids 'matches frozen row', trace_inert=true"
+    },
+    {
+      "command": "python3 runtime/survivor_evidence.py materialize --results-root <root> --staging <staging>",
+      "rc": 0,
+      "result": "published 2 packages (9 grids each)"
+    },
+    {
+      "command": "python3 runtime/survivor_evidence.py check --results-root <root>",
+      "rc": 0,
+      "result": "check_clean, 2 packages x 9 grids"
+    },
+    {
+      "command": "python3 runtime/survivor_evidence.py coverage --results-root <root>",
+      "rc": 0,
+      "result": "leaderboard_entries=2 present=2 absent=0"
+    },
+    {
+      "command": "python3 <independent compare_runs.py> <canonical attempt> <fresh u2 attempt>",
+      "rc": 0,
+      "result": "9/9 grid CSVs byte-identical; cohort_results/cohort_survivors/assertions/placeholder identical; result.json differs only in run_id + mapping-version fields + the mapping-derived recommendations"
+    },
+    {
+      "command": "python3 <independent verify_acceptance.py>",
+      "rc": 0,
+      "result": "18 winner cells x 32 columns re-derived from the fresh CSVs = 576/576 match; manifest pins verified; 95 identical param/metric fields per survivor"
+    },
+    {
+      "command": "python3 <production immutable before/after comparison>",
+      "rc": 0,
+      "result": "16 files + 160 survivors-tree + 26 family-tree entries identical"
+    }
+  ],
+  "verification_method": {
+    "independently_recomputed": [
+      "grid CSV sha256 for all 9 registration grids, both attempts",
+      "the 18 winner rows re-derived from the FRESH grid CSVs and compared against the published evidence packages (576 column cells) instead of trusting the materializer's own report",
+      "every manifest pin (frozen csv sha, sentinel pin, 3 ledgers x 9 grids per package) read back from disk",
+      "the 95 param/metric fields per survivor compared with the canonical frozen bundle",
+      "production before/after sha snapshot (16 files + 186 tree entries)"
+    ],
+    "trusted_self_reports": [
+      "container engine runtime seconds (timing only, never a measurement)"
+    ]
+  }
+}
