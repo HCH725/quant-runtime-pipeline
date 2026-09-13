@@ -322,5 +322,70 @@ class TestDryRunAndReporting(Base):
         self.assertEqual(json.loads(log[-1])["action"], "appended")
 
 
+class SeqBoard(FakeBoard):
+    """FakeBoard variant that hands out a DISTINCT task id per idempotency key, so a simulated
+    round can mark the appended card terminal and the next round can advance the tail."""
+
+    def __init__(self, tasks):
+        super(SeqBoard, self).__init__(tasks)
+        self.seq = 0
+
+    def __call__(self, cmd, timeout=0):
+        if cmd[4] != "create":
+            return super(SeqBoard, self).__call__(cmd, timeout)
+        self.calls.append(cmd)
+        key = cmd[cmd.index("--idempotency-key") + 1]
+        parent = cmd[cmd.index("--parent") + 1]
+        if key not in self.keys:
+            self.seq += 1
+            self.keys[key] = "t_SEQ%d" % self.seq
+        tid = self.keys[key]
+        self.tasks.setdefault(tid, {"id": tid, "status": "ready", "created_at": 100 + self.seq,
+                                    "title": key, "parents": [parent]})
+        return 0, json.dumps(dict(self.tasks[tid], id=tid)), ""
+
+
+class TestPoolOrdering(Base):
+    """v1.7.0 (card t_15fed3f2): the reviewed pool's eligible order must be B v2 -> C -> D -> E.
+
+    Hermetic mirror of the real pool shape: the consumed historical entry (B v1) stays first and
+    must never be appended again; each round appends exactly the first unconsumed candidate.
+    """
+
+    def setUp(self):
+        super(TestPoolOrdering, self).setUp()
+        self.fake = SeqBoard(self.tasks)
+        h.sh = self.fake
+        self.order = ["fam-b-v1", "fam-b2-v1", "fam-c-v1", "fam-d-v1", "fam-e-v1"]
+        self._write_pool([candidate(family=fid, fingerprint_input="%s|w=2,4|1h|long" % fid)
+                          for fid in self.order])
+        # B v1 is consumed: its family directory + a terminal (archived) card already exist
+        self._write_family(self.order[0], "t_B1")
+        self.tasks["t_B1"] = {"status": "archived", "created_at": 2, "title": "Strategy B v1"}
+
+    def test_sequence_is_b2_then_c_then_d_then_e(self):
+        appended = []
+        for _ in range(len(self.order) - 1):        # B v2, C, D, E  (B v1 is already consumed)
+            res = self.run_round()
+            self.assertEqual(res.action, "appended", res.reason)
+            appended.append(res.family_id)
+            self.fake.tasks[res.task_id]["status"] = "done"   # card reaches terminal
+        self.assertEqual(appended, self.order[1:])
+        self.assertEqual(self.run_round().finding_key, "no_eligible_candidate")
+        keys = [c[c.index("--idempotency-key") + 1]
+                for c in self.fake.calls if c[4] == "create"]
+        self.assertEqual(keys, self.order[1:])
+        self.assertNotIn(self.order[0], keys)
+
+    def test_consumed_b_v1_is_never_recreated(self):
+        res = self.run_round()
+        self.assertEqual(res.family_id, self.order[1])
+        self.assertEqual(json.loads((Path(self.root) / self.order[0] / "family.json").read_text()),
+                         {"schema_version": 1, "family_id": self.order[0],
+                          "kanban_task_id": "t_B1", "kanban_board": BOARD,
+                          "parent_family": None, "lineage_note": "x",
+                          "created_at_utc": "2026-09-13T00:00:00Z"})
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

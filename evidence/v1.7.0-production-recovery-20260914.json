@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "kind": "v1.7.0 production recovery automation evidence snapshot",
+  "card": "t_15fed3f2",
+  "author": "Hermes default (Xiaoqian)",
+  "created_at_utc": "2026-09-14T04:45:00Z",
+  "contract_snapshot": {
+    "version": "v1.7.0",
+    "status_at_snapshot": "AWAITING AUDIT",
+    "previous_frozen_version": "v1.6.0 (AUDITED PASS / FROZEN, audited content commit 6e7d046)",
+    "sections_touched": [
+      "header status/version + 作者補註 (v1.7.0)",
+      "§9.4 (v1.7.0 handoff/reconciler cron responsibility split + mount readback)",
+      "§14.4 ([V] v1.7.0 pool/board/dry-run/fixture state)",
+      "§21.1 R0 (version status) and R3 (reconciler cron mounted but paused)",
+      "change log row v1.7.0 + 驗證方式 (v1.7.0)"
+    ],
+    "no_semantic_section_rewritten": true
+  },
+  "candidate_pool": {
+    "pool_path": "<EXPANSION>/qlib-results/_handoff/candidates.json",
+    "pool_sha256_before": "7ad6d0cf1091e605d8787be401fcb9105384e39938959820eeafcae4fa6eb292",
+    "pool_sha256_after": "1105d8265fd8cdeaf5cdf394707acd3fc8b33ca998975c932393f157db4affb9",
+    "before_bytes_snapshot": "<EXPANSION>/qlib-results/_handoff/verification/v1.7.0-pool-before/**",
+    "ordering": ["ema-crossover-walkforward-momentum-long-short-v1", "ema-crossover-walkforward-momentum-long-short-v2", "funding-decile-extreme-contrarian-btc-v1", "utc-clock-hour-seasonality-perp-panel-v1", "copula-cmi-pairs-relative-value-perp-v1"],
+    "eligible_order_after_consumption": ["ema-crossover-walkforward-momentum-long-short-v2", "funding-decile-extreme-contrarian-btc-v1", "utc-clock-hour-seasonality-perp-panel-v1", "copula-cmi-pairs-relative-value-perp-v1"],
+    "b_v1_entry_preserved_unchanged": true,
+    "b_v1_body_byte_identical": true,
+    "duplicate_family_id": false,
+    "duplicate_fingerprint": false,
+    "recomputed_fingerprints": {
+      "ema-crossover-walkforward-momentum-long-short-v1": "sha256:46c22b9141fc9aa5098c3f69677e2d893dbdd6dce12e6f982ac9d9ff987ad85e (grandfathered; matches its /results family.json)",
+      "ema-crossover-walkforward-momentum-long-short-v2": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "funding-decile-extreme-contrarian-btc-v1": "sha256:ee24af423629ced49df586270312081be1c1b618b3422d85b014958ac2d611e6",
+      "utc-clock-hour-seasonality-perp-panel-v1": "sha256:b1b1dccbffe207fb42aaa9a4bc944f4791c709a9ef34f333cabf403c4fe69b13",
+      "copula-cmi-pairs-relative-value-perp-v1": "sha256:33d1fa76a6dba9b8de1a025eed99e465dcbe893fd50e792e76509e33997cd2a1"
+    },
+    "body_sha256": {
+      "bodies/ema-crossover-walkforward-momentum-long-short-v1.md": {"before": "558a01fb63c05833a703f6f125dbdf04319117f61c285d9628b52c9df537114a", "after": "558a01fb63c05833a703f6f125dbdf04319117f61c285d9628b52c9df537114a"},
+      "bodies/ema-crossover-walkforward-momentum-long-short-v2.md": {"before": null, "after": "704956aaf78fd1b5a47cc090163b26d5c400112f2acf583cbafac74f730495f1", "note": "new file"},
+      "bodies/funding-decile-extreme-contrarian-btc-v1.md": {"before": "33d9a155c943ada179c78e033cf6645f14bf57fd0047ee9479791a0ea75079a3", "after": "2bd2404fb723bf141a6ec839b37e46a7ffa2c90cdce3b3029fabb082121999d9"},
+      "bodies/utc-clock-hour-seasonality-perp-panel-v1.md": {"before": "304aa3fabe85f179a3b4bacc6022b7841820c636719a56bad927a2a906a0146b", "after": "c4200964eb11d750311fd383a332a7533b472b4a3da6299960e1439d2c759bbd"},
+      "bodies/copula-cmi-pairs-relative-value-perp-v1.md": {"before": "7a9fbce0e022eef220820077d0bed0d9855b9522b99445cb8abb9bb607157cfc", "after": "8a7c7f4a9e2dca0f2bd970265a0d8c85f5b0d179790fa9391747741b39fd5bbe"}
+    },
+    "marker_check": "all four current bodies (B v2/C/D/E) contain the case-insensitive markers DCA PARAMETER DOMAIN and COHORT SURVIVOR; the preserved B v1 historical body is exempt because it is consumed and can never be chosen again",
+    "verify_script": "<EXPANSION>/qlib-results/_handoff/verification/v1.7.0-pool-verify.py",
+    "verify_result": "<EXPANSION>/qlib-results/_handoff/verification/v1.7.0-pool-verify.json (all_true=true)",
+    "b_v2_semantics_summary": "eligible universe 4 perps x 5 timeframes = 20 cohorts; data window 2022-01-01..2026-09-10 with historical 2022-01-01..2025-09-30 / OOS 2025-10-01..2026-09-10; strategy domain 30 EMA pairs x 4 diagonal walk-forward cells = 120 cases/cohort; DCA PARAMETER DOMAIN 4 axes 4x2x3x2 = 48 configs with provenance classes and long/short mirrored leg semantics; COHORT SURVIVOR SEMANTICS historical-only selector + five survivor requirements + 0=REJECT / >=1=PASS with all survivors advancing; 10 phase grids x 115200 = 1152000 case evaluations; survivor bundle (10.8) + evidence preservation (28, not a PASS gate); scientific vs infrastructure/operator failure separation",
+    "c_d_e_reauthor_summary": "same hypothesis / provenance / eligible-universe semantics; DCA domain + cohort survivor semantics + evidence preservation + failure taxonomy added; E explicitly leg-aware (per-leg ladder sized by OLS hedge ratio, both legs reduce-only exit together; no directional single-leg DCA)"
+  },
+  "board_cleanup": {
+    "archived": ["t_3e696dce", "t_720406f2"],
+    "dispositions": {
+      "t_3e696dce": "operator-stopped before any verdict (no PASS, no REJECT); history preserved; /results artifacts untouched",
+      "t_720406f2": "known-nonblocking generated_at_utc idempotence flake; operator DEFER; NOT marked done, NOT fixed"
+    },
+    "comments_added": {"t_3e696dce": 121, "t_720406f2": 122},
+    "command": "hermes kanban --board quant-strategy-research archive t_3e696dce t_720406f2 (fence-free host context: HERMES_DELEGATED_CHILD_CONTEXT and the other HERMES_KANBAN_* vars scrubbed)",
+    "readback": {"t_3e696dce": "archived", "t_720406f2": "archived", "blocked_count": 0, "archived_count": 70, "traceable_via_kanban_show": true}
+  },
+  "reconciler_cron": {
+    "job_id": "f6b9aa5e9034",
+    "name": "Quant runtime reconciler (completion bridge, paused until audit PASS)",
+    "schedule": "every 15m",
+    "repeat": "forever",
+    "no_agent": true,
+    "deliver": "discord:1519163199117721650",
+    "enabled": false,
+    "state": "paused",
+    "paused_at": "2026-09-14T04:38:05.777490+08:00",
+    "paused_reason": "Created PAUSED by card t_15fed3f2 (Contract v1.7.0): stays paused until ChatGPT decides after auditor PASS",
+    "script": "quant_runtime_reconcile.py",
+    "wrapper_path": "<HOME>/.hermes/scripts/quant_runtime_reconcile.py",
+    "wrapper_sha256": "66d913c6fe06666229e0608d63d262e14b03d56fe9b4ae7972e2f83f095a8d78",
+    "wrapper_is_thin": "runpy wrapper over repo runtime/reconcile.py (single logic source); adds only the cron-side noise policy: silent on normal no-op, one line per NEW incident signature or real unblock, --dry-run never writes state",
+    "wrapper_dry_run": {"cwd": "/tmp (foreign)", "rc": 0, "stdout_bytes": 0, "state_file_written": false},
+    "state_path": "<HOME>/.hermes/state/quant_runtime_reconcile_last.json",
+    "handoff_cron_624d0be5b23c": "paused (readback via hermes cron list --all; not enabled by this card)"
+  },
+  "handoff_dry_run": {
+    "command": "env -u HERMES_DELEGATED_CHILD_CONTEXT ... python3 runtime/production_handoff.py --dry-run --json",
+    "record": {
+      "schema_version": 1,
+      "detector": "handoff",
+      "contract_section": "14.4",
+      "ran_at_utc": "2026-09-13T20:38:13Z",
+      "board": "quant-strategy-research",
+      "results_root": "<EXPANSION>/qlib-results",
+      "dry_run": true,
+      "action": "would_append",
+      "reason": "all section 14 gates pass; would append family ema-crossover-walkforward-momentum-long-short-v2 at tail t_1f97bf6b",
+      "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+      "task_id": null,
+      "tail_id": "t_1f97bf6b",
+      "detail": {"families_scanned": 3, "strategy_cards": 3}
+    },
+    "no_blocked_card_gate": true,
+    "selected_b_v2_not_c_not_b_v1": true,
+    "side_effects": "none (no card, no family.json, no log line)"
+  },
+  "isolated_fixture_sequence": {
+    "script": "<EXPANSION>/qlib-results/_handoff/verification/v1.7.0-pool-sequence-verify.py",
+    "result_file": "<EXPANSION>/qlib-results/_handoff/verification/v1.7.0-pool-sequence-verify.json",
+    "method": "REAL pool + REAL body files with an isolated temp results root and an injected fake kanban CLI",
+    "sequence_observed": ["ema-crossover-walkforward-momentum-long-short-v2", "funding-decile-extreme-contrarian-btc-v1", "utc-clock-hour-seasonality-perp-panel-v1", "copula-cmi-pairs-relative-value-perp-v1"],
+    "fifth_round": "no_eligible_candidate",
+    "b_v1_never_reappears": true,
+    "real_cards_created": 0,
+    "rc": 0
+  },
+  "tests": {
+    "runtime/tests/test_post_survivor.py": 33,
+    "runtime/tests/test_preflight_p10.py": 10,
+    "runtime/tests/test_production_handoff.py": 26,
+    "runtime/tests/test_reconcile.py": 23,
+    "runtime/tests/test_strategy_a_v2_counts.py": 14,
+    "runtime/tests/test_strategy_b_v2_templates.py": 8,
+    "runtime/tests/test_survivor_bundle.py": 18,
+    "runtime/tests/test_survivor_evidence.py": 12,
+    "total": 144,
+    "delta": "test_production_handoff.py 24 -> 26 (new TestPoolOrdering regression: sequence B v2 -> C -> D -> E; consumed B v1 never recreated)",
+    "interpreter": "Python 3.9.6 host interpreter"
+  },
+  "frozen_artifacts_unchanged": {
+    "note": "hashes are identical to the values recorded by v1.3.2 / v1.5.x / v1.6.0 evidence; this card wrote no family/round/attempt file",
+    "<EXPANSION>/qlib-results/close-vs-sma-mean-reversion-long-flat-v2/rounds/close-vs-sma-mean-reversion-long-flat-v2-r1/survivor-bundle.json": "4638885f5f3787ee947d860a1fe48627de9802c2e9adb1d13f62a6917240eb53",
+    ".../verdict.json": "cb470adf56e9db19c3e6e6bc352177d634d7ecc800b4ceabaa41394c66ad0bf3",
+    ".../attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/result.json": "012e6d1a6eed4206e5035796ddeac67d0a3a90f76cee866edb98ed89bb9543e8",
+    ".../attempts/close-vs-sma-mean-reversion-long-flat-v2-r1-u1/artifacts/cohort_survivors.json": "74f250cf165511ba80875af5dc22560ac07292d4445ea8007ccf7f7bcda71081",
+    ".../round-spec.json": "e0b348bfdd0da706e55bf7fb1eacbcd47d34540934bebfe13aa9ab41d74c49e4",
+    "_survivors/survivor-index.json": "6e9baf177e4e19a6e387f3d8f60c232881fd82718477deda61b654cbef847a29",
+    "_survivors/leaderboard.json": "6cc421b21a8e16a7938c6c28117d193e0c555c825824322f05dcae03d231fc4b",
+    "_survivors/leaderboard.csv": "a54edab56e458480b2e5241953db1b6df9bcc6d0ee133ac19917b7b96c13e8bf",
+    "_handoff/bodies/ema-crossover-walkforward-momentum-long-short-v1.md": "558a01fb63c05833a703f6f125dbdf04319117f61c285d9628b52c9df537114a",
+    "<EXPANSION>/qlib-results/ema-crossover-walkforward-momentum-long-short-v1/family.json": "6ae2696c61517b295aacf9b553089d274b7fb070ab241e8308cf59f89f8ac98c (read only; B v1 artifacts remain immutable)"
+  },
+  "guards": {
+    "b_v2_launched": false,
+    "c_d_e_real_cards_created": false,
+    "qlib_computation_executed": false,
+    "cron_624d0be5b23c_state": "paused",
+    "cron_f6b9aa5e9034_state": "paused",
+    "new_service_daemon_queue_registry_orchestrator": false,
+    "checkpointing": false,
+    "auto_container_restart": false,
+    "auditor_child_created": "created after completion (assignee auditor, parents=[t_15fed3f2])",
+    "default_self_audited": false
+  },
+  "git": {
+    "head_before_card_commit": "e821ad5 (Acceptance: Strategy A v2 end-to-end Runtime SOP reproduction)",
+    "note": "this snapshot file is committed together with the contract/README/test changes of card t_15fed3f2; the commit hash is recorded in the card completion metadata and in the run history"
+  }
+}
