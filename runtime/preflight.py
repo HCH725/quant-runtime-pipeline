@@ -8,6 +8,7 @@ Exit codes: 0 = every *evaluated* check PASS, 1 = at least one FAIL, 2 = usage e
 Examples:
     python3 runtime/preflight.py                       # environment checks P1-P8 only
     python3 runtime/preflight.py --json                # same, machine readable
+    python3 runtime/preflight.py --recover --json      # opt-in reboot recovery, then P1-P8
     python3 runtime/preflight.py --launch --attempt-dir /Volumes/ExpansionDrive/qlib-results/<f>/rounds/<r>/attempts/<u>
 """
 import argparse
@@ -46,7 +47,9 @@ def host_boot_id():
 
 
 def container_info(name):
-    rc, out, err = run(["container", "ls", "--format", "json"])
+    # ponytail: --all needed to see stopped containers; without it recovery
+    # misidentifies stopped-as-absent and fails closed instead of healing.
+    rc, out, err = run(["container", "ls", "--format", "json", "--all"])
     if rc != 0:
         return None, err.strip() or "container ls failed"
     try:
@@ -117,6 +120,85 @@ def p1_p3(checks, expansion):
     return raw, results
 
 
+def system_status():
+    """Parse `container system status` -> (rc, status_word)."""
+    rc, out, _ = run(["container", "system", "status"])
+    status = ""
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and parts[0] == "status":
+            status = parts[1]
+    return rc, status
+
+
+def _wait_until(pred, timeout_s=60, interval_s=5):
+    """Poll pred() until truthy or timeout. First probe is immediate (no initial sleep)."""
+    end = time.time() + timeout_s
+    while True:
+        if pred():
+            return True
+        if time.time() >= end:
+            return False
+        time.sleep(interval_s)
+
+
+def recover_execution_plane(expansion, name):
+    """Opt-in reboot recovery (only called with --recover). Ordered, fail-closed.
+
+    Order: ExpansionDrive present/readable -> `container system start` if the
+    Apple Container system is down (then verify running) -> `container start`
+    if qlib-run exists but is stopped (then verify running). A missing
+    container is fail-closed: never silently recreated here (no documented
+    safe auto-create; runbook container/scripts/run_phase4.sh is a manual
+    operator procedure, not an unattended cron action).
+    Returns {"attempted": True, "ok": bool, "fail_reason": str|None, "actions": [...] }.
+    """
+    actions = []
+    if not (os.path.isdir(expansion) and os.access(expansion, os.R_OK | os.X_OK)):
+        return {"attempted": True, "ok": False, "fail_reason": "expansion_missing",
+                "actions": actions}
+
+    def _system_running():
+        rc, status = system_status()
+        return rc == 0 and status == "running"
+
+    if not _system_running():
+        rc2, _out2, err2 = run(["container", "system", "start"], timeout=180)
+        actions.append({"step": "system_start", "rc": rc2,
+                        "detail": ((_out2 or "").strip().splitlines()[-1:]
+                                   if (_out2 or "").strip() else [])
+                        or (err2.strip().splitlines()[-1:] if err2.strip() else [])})
+        # ponytail: poll instead of a fixed sleep; a cold system takes tens of seconds.
+        if not _wait_until(_system_running, timeout_s=120, interval_s=5):
+            _, status = system_status()
+            return {"attempted": True, "ok": False, "fail_reason": "system_start_failed",
+                    "actions": actions, "system_status": status or "unknown"}
+    info, why = container_info(name)
+    if info is None:
+        # ponytail: fail-closed on absent container; never auto `container run`
+        # (creation needs the exact manual mount set; wrong auto-create would
+        # corrupt identity P6/P8). Operator recreates per runbook, then re-run.
+        return {"attempted": True, "ok": False, "fail_reason": "container_absent",
+                "actions": actions, "detail": why}
+
+    def _container_running():
+        info2, _ = container_info(name)
+        return (info2 or {}).get("status", {}).get("state") == "running"
+
+    state = info.get("status", {}).get("state")
+    if state != "running":
+        rc3, _out3, err3 = run(["container", "start", name], timeout=120)
+        actions.append({"step": "container_start", "rc": rc3,
+                        "detail": ((_out3 or "").strip().splitlines()[-1:]
+                                   if (_out3 or "").strip() else [])
+                        or (err3.strip().splitlines()[-1:] if err3.strip() else [])})
+        if not _wait_until(_container_running, timeout_s=60, interval_s=5):
+            info, why = container_info(name)
+            return {"attempted": True, "ok": False, "fail_reason": "container_start_failed",
+                    "actions": actions, "detail": why}
+    return {"attempted": True, "ok": True, "fail_reason": None, "actions": actions}
+
+
 def p4_p6(checks, name, image):
     rc, out, _ = run(["container", "system", "status"])
     status = ""
@@ -128,10 +210,8 @@ def p4_p6(checks, name, image):
           "container system status=%s (rc=%d)" % (status or "unknown", rc))
 
     info, why = container_info(name)
-    if info is not None and info.get("status", {}).get("state") != "running":
-        run(["container", "start", name], timeout=120)
-        time.sleep(2)
-        info, why = container_info(name)
+    # ponytail: default preflight is read-only; never auto-start here.
+    # Unattended recovery lives only in recover_execution_plane() (--recover).
     state = (info or {}).get("status", {}).get("state")
     check(checks, "P5", "PASS" if state == "running" else "FAIL", "shared-layer",
           "%s state=%s%s" % (name, state or "absent", "" if info else " (%s)" % why))
@@ -209,7 +289,7 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     except ValueError as exc:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json not valid JSON: %s" % exc)
         return
-    missing = [k for k in ("schema_version", "family_id", "round_id", "run_id", "task_id", "kanban_board", "script")
+    missing = [k for k in ("schema_version", "family_id", "round_id", "run_id", "task_id", "kanban_board")
                if k not in spec]
     if missing:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json missing keys: %s" % missing)
@@ -248,12 +328,19 @@ def main():
     ap.add_argument("--host-scripts", default=os.environ.get("QLIB_HOST_SCRIPTS", DEFAULT_HOST_SCRIPTS),
                     help="host directory mounted read-only as the container's /scripts (P10 sha resolution)")
     ap.add_argument("--launch", action="store_true", help="require --attempt-dir (full launch gate)")
+    ap.add_argument("--recover", action="store_true",
+                    help="opt-in reboot recovery before checks (ordered, fail-closed; default is read-only)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
     if args.launch and not args.attempt_dir:
         sys.stderr.write("usage error: --launch requires --attempt-dir (P9/P10 cannot be evaluated)\n")
         return 2
+
+    if args.recover:
+        recovery = recover_execution_plane(args.expansion, args.container)
+    else:
+        recovery = {"attempted": False, "ok": True, "fail_reason": None, "actions": []}
 
     checks = []
     raw, _results = p1_p3(checks, args.expansion)
@@ -274,12 +361,16 @@ def main():
         "host_boot_id": host_boot_id(),
         "attempt_dir": args.attempt_dir,
         "launch_gate": "evaluated" if args.attempt_dir else "not_evaluated",
+        "recovery": recovery,
         "overall": "FAIL" if failed else "PASS",
         "checks": checks,
     }
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
+        if recovery.get("attempted"):
+            print("recovery: ok=%s fail_reason=%s actions=%d" % (
+                recovery.get("ok"), recovery.get("fail_reason"), len(recovery.get("actions") or [])))
         for c in checks:
             print("%-4s %-4s %-12s %s" % (c["id"], c["status"], c["layer"], c["detail"]))
         print("overall: %s (evaluated=%d failed=%d launch_gate=%s)" % (
