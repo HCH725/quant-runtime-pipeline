@@ -25,10 +25,13 @@ import copy
 import hashlib
 import json
 import os
+import sys
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, os.path.join(REPO, "runtime"))
+import parameter_contract as pc  # noqa: E402
 ROUND_SPEC = os.path.join(REPO, "runtime", "templates", "strategy_b_v2_round_spec.template.json")
 RUN_SPEC = os.path.join(REPO, "runtime", "templates", "strategy_b_v2_run_spec.template.json")
 
@@ -338,6 +341,44 @@ class TestBv2Preregistration(unittest.TestCase):
         spec["semantic_fingerprint"]["semantic_fingerprint"] = "sha256:" + "1" * 64
         _, _, problems = check(spec, None)
         self.assertTrue(any("semantic_fingerprint" in p for p in problems), problems)
+
+    # --- v1.8 / contract 26.1: the forward template must carry the generic parameter contract ---
+    def test_round_spec_template_carries_the_generic_parameter_contract(self):
+        contract = self.round_spec.get("parameter_contract")
+        self.assertIsInstance(contract, dict)
+        self.assertEqual(pc.validate_contract(contract), [])
+        self.assertEqual(pc.validate_round_spec_contract(self.round_spec), [])
+        self.assertEqual(contract["family_id"], self.round_spec["family_id"])
+        self.assertEqual(contract["domain_cardinality"],
+                         {"strategy": 120, "dca": 48, "per_cohort": 5760})
+        self.assertEqual(contract["composite_map"],
+                         {"ema_pair": ["ema_fast", "ema_slow"],
+                          "walk_forward": ["wf_train_days", "wf_test_days"]})
+        self.assertEqual(contract["strategy_param_fields"],
+                         ["ema_fast", "ema_slow", "wf_train_days", "wf_test_days"])
+        self.assertEqual(contract["dca_param_fields"],
+                         ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                          "invalidation_pct"])
+        # the composite axes must carry the registered values of the declared domains, in order:
+        # a hand-edit that drifts from the registered axes fails here
+        params = self.round_spec["parameter_domain"]
+        self.assertEqual(contract["research_axes_ordered"][0]["registered_values"],
+                         [[p["fast"], p["slow"]] for p in params["ema_pair"]])
+        self.assertEqual(contract["research_axes_ordered"][1]["registered_values"],
+                         [[c["train_days"], c["test_days"]] for c in params["walk_forward"]])
+        self.assertEqual(contract["research_axes_ordered"][2:],
+                         [{"name": axis, "kind": "atomic", "members": [axis],
+                           "registered_values": list(self.round_spec["dca_domain"][axis]),
+                           "row_fields": [axis]}
+                          for axis in ("spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                                       "invalidation_pct")])
+
+    def test_round_spec_template_without_the_contract_fails_closed(self):
+        """Negative control: the pre-v1.8 template shape (no parameter_contract) is refused."""
+        spec = copy.deepcopy(self.round_spec)
+        spec.pop("parameter_contract")
+        problems = pc.validate_round_spec_contract(spec)
+        self.assertTrue(any("fail closed" in p for p in problems), problems)
 
 
 if __name__ == "__main__":

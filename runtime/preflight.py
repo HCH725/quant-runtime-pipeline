@@ -20,6 +20,11 @@ import subprocess
 import sys
 import time
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import parameter_contract as pc  # noqa: E402  (same directory; pure stdlib)
+
 DEFAULT_EXPANSION = "/Volumes/ExpansionDrive"
 DEFAULT_CONTAINER = "qlib-run"
 DEFAULT_IMAGE = "qlib:0.9.7-arm64"
@@ -278,6 +283,30 @@ def script_host_path(path, host_scripts):
     return None
 
 
+def round_spec_contract_problem(attempt_dir):
+    """None when the attempt's round-spec carries a valid v1.8 parameter_contract, else why not.
+
+    v1.8 launch-gate extension of P10 (contract 16.2 / 26.1): a non-legacy family whose frozen
+    round-spec has no generic parameter_contract fails closed in every post-survivor consumer,
+    i.e. after the whole compute, so the gate refuses it before the compute starts.  The
+    pre-schema Strategy A v2 bridge still resolves inside load_contract_from_round_spec, so the
+    legacy family keeps passing (v1.8 backward compatibility).
+    """
+    round_spec_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(attempt_dir))),
+                                   "round-spec.json")
+    if not os.path.isfile(round_spec_path):
+        return "missing %s" % round_spec_path
+    try:
+        with open(round_spec_path) as fh:
+            spec = json.load(fh)
+    except ValueError as exc:
+        return "%s is not valid JSON: %s" % (round_spec_path, exc)
+    problems = pc.validate_round_spec_contract(spec)
+    if problems:
+        return "; ".join(problems)
+    return None
+
+
 def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     if not attempt_dir:
         check(checks, "P9", "NA", "-", "no --attempt-dir; launch gate NOT evaluated")
@@ -322,9 +351,16 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
             h.update(chunk)
     got = h.hexdigest()
     ok = ("sha256:" + got) == sha or got == sha
-    check(checks, "P10", "PASS" if ok else "FAIL", "card-local",
-          "run-spec present; script.sha256=%s recomputed=%s (%s)%s"
-          % (sha, got, resolved, "" if ok else " MISMATCH"))
+    detail = ("run-spec present; script.sha256=%s recomputed=%s (%s)%s"
+              % (sha, got, resolved, "" if ok else " MISMATCH"))
+    if ok:
+        # v1.8 launch gate (contract 26.1): the frozen round-spec must already carry a valid
+        # generic parameter_contract - validated BEFORE any compute, not after it.
+        contract_problem = round_spec_contract_problem(attempt_dir)
+        if contract_problem:
+            ok = False
+            detail += " | round-spec parameter_contract: %s" % contract_problem
+    check(checks, "P10", "PASS" if ok else "FAIL", "card-local", detail)
 
 
 def main():

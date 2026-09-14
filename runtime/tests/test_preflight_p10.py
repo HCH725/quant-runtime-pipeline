@@ -2,8 +2,12 @@
 """Logic checks for preflight P10 (contract 16.2: `run-spec.json` + `script.sha256` 相符).
 
 P10 is the launch gate for "this spec points at this program", so it must never report PASS without
-an actual sha256 recomputation. These checks drive `preflight.p9_p10` on temp attempt dirs, with the
-host scripts dir injected through the existing `/scripts` mount mapping (no container needed).
+an actual sha256 recomputation.  Since v1.8 (contract 26.1) P10 additionally refuses an attempt
+whose frozen round-spec carries no valid generic `parameter_contract`: such a family fails closed
+in every post-survivor consumer, i.e. after the whole compute.  These checks drive
+`preflight.p9_p10` on temp attempt dirs with the real results-tree shape
+(`<root>/<family>/rounds/<round>/attempts/<run>/`), with the host scripts dir injected through the
+existing `/scripts` mount mapping (no container needed).
 
 Run: python3 runtime/tests/test_preflight_p10.py     (stdlib unittest, no dependencies)
 """
@@ -18,24 +22,32 @@ from pathlib import Path
 RUNTIME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RUNTIME))
 import preflight  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 
 SPEC_KEYS = {"schema_version": 1, "family_id": "fam-a", "round_id": "fam-a-r1", "run_id": "fam-a-r1-u1",
              "task_id": "t_SMOKE", "kanban_board": "quant-strategy-research"}
+B_V2_TEMPLATE = RUNTIME / "templates" / "strategy_b_v2_round_spec.template.json"
 
 
 class P10Case(unittest.TestCase):
     def setUp(self):
         self.root = tempfile.mkdtemp(prefix="qrp-p10-test-")
-        self.attempt = Path(self.root) / "attempt"
-        self.attempt.mkdir()
+        self.round = Path(self.root) / "family" / "rounds" / "fam-a-r1"
+        self.attempt = self.round / "attempts" / "fam-a-r1-u1"
+        self.attempt.mkdir(parents=True)
         self.host_scripts = Path(self.root) / "host-scripts"
         self.host_scripts.mkdir()
         self.script = self.host_scripts / "strategy.py"
         self.script.write_text("print('strategy')\n")
         self.sha = "sha256:" + hashlib.sha256(self.script.read_bytes()).hexdigest()
+        # the legacy A v2 shape resolves through the in-code bridge (v1.8 backward compatibility)
+        self.write_round_spec({"family_id": pc.LEGACY_A_FAMILY_ID})
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
+
+    def write_round_spec(self, doc):
+        (self.round / "round-spec.json").write_text(json.dumps(doc))
 
     def run_p10(self, script=None, sha=None, drop_run_spec=False, terminals=()):
         if not drop_run_spec:
@@ -103,6 +115,46 @@ class P10Case(unittest.TestCase):
         checks = []
         preflight.p9_p10(checks, None)
         self.assertEqual([c["status"] for c in checks], ["NA", "NA"])
+
+    # --- v1.8 / contract 26.1: the frozen round-spec must carry the parameter contract ---
+    def test_round_spec_with_valid_parameter_contract_passes_the_launch_gate(self):
+        """The real, forward-authored B v2 template round-spec is the launch-gate shape."""
+        self.write_round_spec(json.loads(B_V2_TEMPLATE.read_text()))
+        by_id = self.assert_p10("PASS")
+        self.assertNotIn("parameter_contract:", by_id["P10"]["detail"])
+
+    def test_round_spec_without_parameter_contract_fails_the_launch_gate(self):
+        """The pre-migration r1 shape (non-legacy family, no schema) must be refused."""
+        doc = json.loads(B_V2_TEMPLATE.read_text())
+        doc.pop("parameter_contract")
+        self.write_round_spec(doc)
+        by_id = self.assert_p10("FAIL")
+        self.assertIn("round-spec parameter_contract", by_id["P10"]["detail"])
+        self.assertIn("fail closed", by_id["P10"]["detail"])
+
+    def test_invalid_parameter_contract_fails_the_launch_gate(self):
+        doc = json.loads(B_V2_TEMPLATE.read_text())
+        doc["parameter_contract"]["domain_cardinality"] = {"strategy": 6, "dca": 48, "per_cohort": 288}
+        self.write_round_spec(doc)
+        by_id = self.assert_p10("FAIL")
+        self.assertIn("parameter_contract invalid", by_id["P10"]["detail"])
+
+    def test_schema_domain_mismatch_fails_the_launch_gate(self):
+        """A contract that is internally valid but disagrees with the declared domain is refused."""
+        doc = json.loads(B_V2_TEMPLATE.read_text())
+        doc["parameter_domain"]["legal_cases_per_cohort"] = 121
+        self.write_round_spec(doc)
+        by_id = self.assert_p10("FAIL")
+        self.assertIn("schema domain mismatch", by_id["P10"]["detail"])
+
+    def test_missing_round_spec_fails_the_launch_gate(self):
+        (self.round / "round-spec.json").unlink()
+        by_id = self.assert_p10("FAIL")
+        self.assertIn("missing", by_id["P10"]["detail"])
+
+    def test_legacy_a_round_spec_still_passes_the_contract_gate(self):
+        """Backward compatibility: the pre-schema A v2 bridge resolves without a contract."""
+        self.assertEqual(preflight.round_spec_contract_problem(str(self.attempt)), None)
 
 
 if __name__ == "__main__":

@@ -330,4 +330,307 @@
     "no reuse of the archived, operator-stopped Strategy B v1 runner as a v1.4.0 engine",
     "no launch in the card that authored this preregistration"
   ]
+,
+  "parameter_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+    "contract_ref": "v1.8 generic family parameter contract (runtime/parameter_contract.py); generated from this document's registered parameter_domain / dca_domain",
+    "research_axes_ordered": [
+      {
+        "name": "ema_pair",
+        "kind": "composite",
+        "members": [
+          "ema_fast",
+          "ema_slow"
+        ],
+        "registered_values": [
+          [
+            5,
+            40
+          ],
+          [
+            5,
+            50
+          ],
+          [
+            5,
+            100
+          ],
+          [
+            5,
+            150
+          ],
+          [
+            5,
+            200
+          ],
+          [
+            7,
+            40
+          ],
+          [
+            7,
+            50
+          ],
+          [
+            7,
+            100
+          ],
+          [
+            7,
+            150
+          ],
+          [
+            7,
+            200
+          ],
+          [
+            10,
+            40
+          ],
+          [
+            10,
+            50
+          ],
+          [
+            10,
+            100
+          ],
+          [
+            10,
+            150
+          ],
+          [
+            10,
+            200
+          ],
+          [
+            15,
+            40
+          ],
+          [
+            15,
+            50
+          ],
+          [
+            15,
+            100
+          ],
+          [
+            15,
+            150
+          ],
+          [
+            15,
+            200
+          ],
+          [
+            20,
+            40
+          ],
+          [
+            20,
+            50
+          ],
+          [
+            20,
+            100
+          ],
+          [
+            20,
+            150
+          ],
+          [
+            20,
+            200
+          ],
+          [
+            30,
+            40
+          ],
+          [
+            30,
+            50
+          ],
+          [
+            30,
+            100
+          ],
+          [
+            30,
+            150
+          ],
+          [
+            30,
+            200
+          ]
+        ],
+        "row_fields": [
+          "ema_fast",
+          "ema_slow"
+        ]
+      },
+      {
+        "name": "walk_forward",
+        "kind": "composite",
+        "members": [
+          "wf_train_days",
+          "wf_test_days"
+        ],
+        "registered_values": [
+          [
+            3,
+            3
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            14,
+            14
+          ],
+          [
+            28,
+            28
+          ]
+        ],
+        "row_fields": [
+          "wf_train_days",
+          "wf_test_days"
+        ]
+      },
+      {
+        "name": "spacing_pct",
+        "kind": "atomic",
+        "members": [
+          "spacing_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03,
+          0.04
+        ],
+        "row_fields": [
+          "spacing_pct"
+        ]
+      },
+      {
+        "name": "size_multiplier",
+        "kind": "atomic",
+        "members": [
+          "size_multiplier"
+        ],
+        "registered_values": [
+          1.0,
+          1.1
+        ],
+        "row_fields": [
+          "size_multiplier"
+        ]
+      },
+      {
+        "name": "breakeven_tp_pct",
+        "kind": "atomic",
+        "members": [
+          "breakeven_tp_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03
+        ],
+        "row_fields": [
+          "breakeven_tp_pct"
+        ]
+      },
+      {
+        "name": "invalidation_pct",
+        "kind": "atomic",
+        "members": [
+          "invalidation_pct"
+        ],
+        "registered_values": [
+          0.05,
+          0.1
+        ],
+        "row_fields": [
+          "invalidation_pct"
+        ]
+      }
+    ],
+    "row_fields": [
+      "ema_fast",
+      "ema_slow",
+      "wf_train_days",
+      "wf_test_days",
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "composite_map": {
+      "ema_pair": [
+        "ema_fast",
+        "ema_slow"
+      ],
+      "walk_forward": [
+        "wf_train_days",
+        "wf_test_days"
+      ]
+    },
+    "strategy_param_fields": [
+      "ema_fast",
+      "ema_slow",
+      "wf_train_days",
+      "wf_test_days"
+    ],
+    "dca_param_fields": [
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "canonical_recipe": {
+      "sort_keys": true,
+      "separators": [
+        ",",
+        ":"
+      ],
+      "ensure_ascii": false,
+      "numeric_rule": "JSON number finite, bool excluded"
+    },
+    "row_match_recipe": {
+      "keys": [
+        "symbol",
+        "timeframe",
+        "ema_fast",
+        "ema_slow",
+        "wf_train_days",
+        "wf_test_days",
+        "spacing_pct",
+        "size_multiplier",
+        "breakeven_tp_pct",
+        "invalidation_pct"
+      ],
+      "equality": "exact, numeric == float compare, rest bytewise"
+    },
+    "non_params": [
+      "symbol",
+      "timeframe",
+      "window_kind",
+      "ema_pair_index",
+      "walk_forward_index",
+      "base_quote",
+      "n_steps",
+      "diagnostics",
+      "metrics"
+    ],
+    "domain_cardinality": {
+      "strategy": 120,
+      "dca": 48,
+      "per_cohort": 5760
+    }
+  }
 }

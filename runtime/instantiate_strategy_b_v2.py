@@ -37,6 +37,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import strategy_b_v2_counts as counts  # noqa: E402  (same directory, pure stdlib)
+import parameter_contract as pc  # noqa: E402  (same directory, pure stdlib)
 
 FAMILY_ID = "ema-crossover-walkforward-momentum-long-short-v2"
 ROUND_TEMPLATE = os.path.join(HERE, "templates", "strategy_b_v2_round_spec.template.json")
@@ -203,6 +204,9 @@ def main():
 
     computed, problems, extra = counts.check(round_spec, run_spec)
     record["problems"] += ["counts/%s: %s" % (name, p) for p in problems]
+    # v1.8 launch gate (contract 26.1): no publish without a valid generic parameter_contract.
+    record["problems"] += ["round-spec contract: %s" % p
+                           for p in pc.validate_round_spec_contract(round_spec)]
     record["counts"] = {k: computed[k] for k in ("cohorts", "strategy_cases", "dca_configs",
                                                  "base_combinations_per_cohort",
                                                  "case_evaluations_per_grid",
@@ -227,9 +231,11 @@ def main():
         # re-validating it against this card, and publish only the new attempt's run-spec.
         existing = load(round_path)
         _, ex_problems, _ = counts.check(existing, None)
-        if ex_problems or existing.get("kanban_task_id") != args.task_id:
+        ex_contract = pc.validate_round_spec_contract(existing)
+        if ex_problems or ex_contract or existing.get("kanban_task_id") != args.task_id:
             record["problems"].append("existing round-spec is not valid for this card: %s"
-                                      % (ex_problems[:2] or "kanban_task_id mismatch"))
+                                      % (ex_problems[:2] or ex_contract[:2]
+                                         or "kanban_task_id mismatch"))
         else:
             round_spec = existing
             round_written = False
@@ -251,6 +257,8 @@ def main():
     _, rb_problems, _ = counts.check(rb_round, rb_run)
     if rb_problems:
         record["problems"] += ["read-back: %s" % p for p in rb_problems]
+    record["problems"] += ["read-back round-spec contract: %s" % p
+                           for p in pc.validate_round_spec_contract(rb_round)]
     record["action"] = "instantiated"
     record["run_spec_sha256"] = sha256_file(run_path)
     return finish(record, args)
