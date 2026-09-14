@@ -62,7 +62,8 @@ DOCUMENT_TAIL = "}\n"
 
 # §26.1 authorizes exactly ONE file: this family, this round, this canonical path.  Anything
 # else (other family, other round, copy at another path) is out of scope and must be refused
-# before any write.
+# before any write.  Path identity is lexical: a symlink alias that resolves to the canonical
+# file is another path too, so the guard never resolves symlinks.
 MIGRATION_FAMILY_ID = "ema-crossover-walkforward-momentum-long-short-v2"
 MIGRATION_ROUND_ID = MIGRATION_FAMILY_ID + "-r1"
 MIGRATION_SPEC_PATH = ("/Volumes/ExpansionDrive/qlib-results/%s/rounds/%s/round-spec.json"
@@ -74,11 +75,16 @@ def scope_problems(spec_path, spec):
 
     Returns the reasons the document is NOT the one authorized round-spec.  A non-empty list
     means: refuse (rc=1) and write nothing at all.
+
+    Path identity is lexical (auditor finding F1): the argument must BE the canonical path,
+    spelled the same way.  os.path.abspath only normalizes the spelling -- it never resolves
+    symlinks -- so an alias that merely points at the canonical file is out of scope.
     """
     problems = []
-    if os.path.realpath(spec_path) != os.path.realpath(MIGRATION_SPEC_PATH):
+    if os.path.abspath(spec_path) != MIGRATION_SPEC_PATH:
         problems.append("out of scope (contract 26.1): %s is not the one authorized round-spec "
-                        "%s" % (spec_path, MIGRATION_SPEC_PATH))
+                        "%s (path identity is lexical, never a symlink resolution)"
+                        % (spec_path, MIGRATION_SPEC_PATH))
     if spec.get("family_id") != MIGRATION_FAMILY_ID:
         problems.append("out of scope (contract 26.1): family_id %r is not %r"
                         % (spec.get("family_id"), MIGRATION_FAMILY_ID))

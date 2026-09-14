@@ -67,13 +67,13 @@ class MigrationScopeCase(unittest.TestCase):
             record = {"stdout": out.getvalue(), "stderr": err.getvalue()}
         return rc, record
 
-    def build_r99_copy(self, root):
-        """A migratable copy of the live round-spec, but round r99 at a temporary path."""
+    def build_round_copy(self, root, round_id):
+        """A migratable copy of the live round-spec, at a temporary path, labelled *round_id*."""
         doc = json.loads(Path(CANONICAL).read_text())
         doc.pop("parameter_contract", None)
-        doc["round_id"] = MIG.MIGRATION_FAMILY_ID + "-r99"
+        doc["round_id"] = round_id
         family_dir = root / MIG.MIGRATION_FAMILY_ID
-        round_dir = family_dir / "rounds" / (MIG.MIGRATION_FAMILY_ID + "-r99")
+        round_dir = family_dir / "rounds" / round_id
         (round_dir / "attempts").mkdir(parents=True)
         shutil.copy2(Path(CANONICAL).parent.parent.parent / "family.json",
                      family_dir / "family.json")
@@ -117,7 +117,7 @@ class MigrationScopeCase(unittest.TestCase):
     def test_cli_refuses_an_r99_copy_and_writes_no_byte(self):
         root = Path(tempfile.mkdtemp(prefix="qrp-migration-scope-"))
         try:
-            spec = self.build_r99_copy(root)
+            spec = self.build_round_copy(root, MIG.MIGRATION_FAMILY_ID + "-r99")
             before = spec.read_bytes()
             rc, record = self.run_migrator(spec)
             self.assertEqual(rc, 1, record)
@@ -136,10 +136,75 @@ class MigrationScopeCase(unittest.TestCase):
     def test_cli_emit_is_held_to_the_same_scope(self):
         root = Path(tempfile.mkdtemp(prefix="qrp-migration-scope-"))
         try:
-            spec = self.build_r99_copy(root)
+            spec = self.build_round_copy(root, MIG.MIGRATION_FAMILY_ID + "-r99")
             rc, record = self.run_migrator(spec, extra=("--emit",))
             self.assertEqual(rc, 1, record)
             self.assertIn("out of scope", " ".join(record.get("problems") or []))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    # --- F1 regression: an alias that RESOLVES to the canonical spec is still out of scope ---
+    @unittest.skipUnless(os.path.exists(CANONICAL), "canonical r1 round-spec not mounted")
+    def test_cli_refuses_a_symlink_alias_to_the_canonical_spec(self):
+        """Path identity is lexical, never realpath (auditor finding F1).
+
+        The bypass: a symlink at another path pointing at the canonical round-spec.  Resolving
+        symlinks made the guard accept it and os.replace() then wrote the alias, so the fixture
+        here must be refused (rc=1, no action) with zero writes -- bytes AND metadata -- to
+        either file.  In this process only, MIGRATION_SPEC_PATH is pointed at the temp canonical
+        copy so the alias really does resolve to "the" canonical document; the live tree is
+        never touched.
+        """
+        root = Path(tempfile.mkdtemp(prefix="qrp-migration-symlink-"))
+        try:
+            canonical = self.build_round_copy(root / "canonical", MIG.MIGRATION_ROUND_ID)
+            alias_root = root / "alias"
+            alias = (alias_root / MIG.MIGRATION_FAMILY_ID / "rounds" / MIG.MIGRATION_ROUND_ID
+                     / "round-spec.json")
+            alias.parent.mkdir(parents=True)
+            (alias.parent / "attempts").mkdir()
+            shutil.copy2(Path(CANONICAL).parent.parent.parent / "family.json",
+                         alias_root / MIG.MIGRATION_FAMILY_ID / "family.json")
+            alias.symlink_to(canonical)
+
+            canonical_bytes, alias_bytes = canonical.read_bytes(), alias.read_bytes()
+            canonical_meta, alias_meta = os.stat(canonical), os.lstat(alias)
+
+            had_constant = hasattr(MIG, "MIGRATION_SPEC_PATH")
+            saved_constant = getattr(MIG, "MIGRATION_SPEC_PATH", None)
+            setattr(MIG, "MIGRATION_SPEC_PATH", str(canonical))
+            try:
+                rc, record = self.run_migrator(alias)
+            finally:
+                if had_constant:
+                    setattr(MIG, "MIGRATION_SPEC_PATH", saved_constant)
+                else:
+                    delattr(MIG, "MIGRATION_SPEC_PATH")
+
+            self.assertEqual(rc, 1, record)
+            self.assertIsNone(record.get("action"), record)
+            problems = " ".join(record.get("problems") or [])
+            self.assertIn("out of scope", problems)
+            self.assertIn("26.1", problems)
+
+            # zero writes: the alias is still the very same symlink, byte- and inode-identical
+            self.assertTrue(os.path.islink(alias), "the alias must still be a symlink")
+            self.assertEqual(os.readlink(alias), str(canonical))
+            alias_after = os.lstat(alias)
+            self.assertEqual((alias_after.st_ino, alias_after.st_mtime_ns),
+                             (alias_meta.st_ino, alias_meta.st_mtime_ns))
+            self.assertEqual(alias.read_bytes(), alias_bytes)
+            self.assertNotIn("parameter_contract", json.loads(alias.read_text()),
+                             "wrote_contract must be False: the alias carries no contract")
+            # ... and so is the canonical target it points at
+            canonical_after = os.stat(canonical)
+            self.assertEqual((canonical_after.st_ino, canonical_after.st_mtime_ns),
+                             (canonical_meta.st_ino, canonical_meta.st_mtime_ns))
+            self.assertEqual(canonical.read_bytes(), canonical_bytes)
+            self.assertNotIn("parameter_contract", json.loads(canonical.read_text()))
+            for round_dir in (canonical.parent, alias.parent):
+                self.assertEqual(sorted(p.name for p in round_dir.iterdir()),
+                                 ["attempts", "round-spec.json"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
