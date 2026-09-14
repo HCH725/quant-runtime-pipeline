@@ -4,6 +4,9 @@
 When the preflight process exits nonzero, the wrapper must treat it as a gate
 failure even if stdout claims overall=PASS. Core reconcile must not run.
 
+Includes a main-level regression that calls wrapper.main() and asserts core
+reconcile (runpy.run_path) is never invoked.
+
 Run: python3 runtime/tests/test_reconcile_wrapper.py   (stdlib unittest, no container)
 """
 import json
@@ -34,25 +37,28 @@ class WrapperGateNonzeroRc(unittest.TestCase):
         return p
 
     def test_nonzero_rc_with_pass_overall_is_gate_failure(self):
-        """Even if stdout says overall=PASS, nonzero rc must fail closed."""
+        """Even if stdout says overall=PASS, nonzero rc must fail closed.
+        Signature preserves legacy format gate|<failed>|<reason>."""
         report = {"overall": "PASS", "checks": [], "recovery": {"ok": True}}
         p = self._make_mock_process(rc=1, stdout=json.dumps(report))
         with patch("subprocess.run", return_value=p):
             proceed, signature, line = wrapper.recovery_gate()
         self.assertFalse(proceed)
-        self.assertTrue(signature.startswith("gate|rc_1|"))
+        # No failed checks → signature uses rc_N as placeholder in legacy format
+        self.assertEqual(signature, "gate|rc_1|nonzero_rc")
         self.assertIn("rc=1", line)
         self.assertIn("no reconcile this tick", line)
 
     def test_nonzero_rc_with_fail_overall_is_gate_failure(self):
-        """Nonzero rc + FAIL overall: also gate failure (existing path)."""
+        """Nonzero rc + FAIL overall: also gate failure, legacy signature."""
         report = {"overall": "FAIL", "checks": [{"id": "P5", "status": "FAIL"}],
                   "recovery": {"ok": False, "fail_reason": "expansion_missing"}}
         p = self._make_mock_process(rc=1, stdout=json.dumps(report))
         with patch("subprocess.run", return_value=p):
             proceed, signature, line = wrapper.recovery_gate()
         self.assertFalse(proceed)
-        self.assertIn("rc_1", signature)
+        # Legacy format: gate|P5|expansion_missing (no rc_ prefix)
+        self.assertEqual(signature, "gate|P5|expansion_missing")
 
     def test_zero_rc_with_pass_overall_proceeds(self):
         """Normal healthy case: rc=0 + overall=PASS → proceed."""
@@ -73,6 +79,29 @@ class WrapperGateNonzeroRc(unittest.TestCase):
         with patch("subprocess.run", return_value=p2):
             _, sig2, _ = wrapper.recovery_gate()
         self.assertEqual(sig1, sig2)
+
+
+class WrapperMainLevelRegression(unittest.TestCase):
+    """Main-level regression: wrapper.main() must not call core reconcile
+    when preflight rc!=0 and stdout claims overall=PASS."""
+
+    def _make_mock_process(self, rc, stdout, stderr=""):
+        p = MagicMock()
+        p.returncode = rc
+        p.stdout = stdout
+        p.stderr = stderr
+        return p
+
+    def test_main_rc1_stdout_pass_does_not_call_core(self):
+        """wrapper.main() returns 0 and never calls runpy.run_path when
+        preflight exits rc=1 with overall=PASS in stdout."""
+        report = {"overall": "PASS", "checks": [], "recovery": {"ok": True}}
+        p = self._make_mock_process(rc=1, stdout=json.dumps(report))
+        with patch("subprocess.run", return_value=p), \
+             patch("runpy.run_path") as mock_run_path:
+            rc = wrapper.main()
+        self.assertEqual(rc, 0)
+        mock_run_path.assert_not_called()
 
 
 if __name__ == "__main__":

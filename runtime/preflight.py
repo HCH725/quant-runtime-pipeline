@@ -2,7 +2,9 @@
 """Execution preflight P1-P10 for the quant runtime pipeline.
 
 Contract: /Users/hong/workspace/quant-runtime-pipeline/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md section 16.
-Read-only, stdlib only, no state written (P3/P7 probes create and immediately remove a hidden temp file).
+Default mode does not start container system or auto-create containers; will start
+existing stopped containers (P5). Stdlib only, no state written (P3/P7 probes create
+and immediately remove a hidden temp file).
 Exit codes: 0 = every *evaluated* check PASS, 1 = at least one FAIL, 2 = usage error.
 
 Examples:
@@ -336,7 +338,7 @@ def main():
                     help="host directory mounted read-only as the container's /scripts (P10 sha resolution)")
     ap.add_argument("--launch", action="store_true", help="require --attempt-dir (full launch gate)")
     ap.add_argument("--recover", action="store_true",
-                    help="opt-in reboot recovery before checks (ordered, fail-closed; default is read-only)")
+                    help="opt-in reboot recovery before checks (ordered, fail-closed; default does not start system or auto-create)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
