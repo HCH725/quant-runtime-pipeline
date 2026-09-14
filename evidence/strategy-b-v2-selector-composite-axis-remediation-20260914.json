@@ -58,6 +58,12 @@
       "script_sha256": "sha256:553e454cb7f2926c06873a29d2bccd3fc085b738faa46107133d854b4a38a752",
       "output": "evidence/strategy-b-v2-selector-remediation-20260914/replay-u2-historical-grid.json",
       "output_sha256": "sha256:ce499f19d067e68f8f76b702df7ed6f9de51efab3ce893ccd1f06cfaf8f0f1c1"
+    },
+    "crash_reproducer": {
+      "script": "evidence/strategy-b-v2-selector-remediation-20260914/reproduce_u2_crash.py",
+      "script_sha256": "sha256:7a985cba4d0cc1ff946fcfae9366859a9458ba4a782a22617d0734fea979ba2e",
+      "usage": "SB_ENGINE_PATH=<runner bytes> <python> reproduce_u2_crash.py <run-spec> <grid_historical.csv>; exit 0 = selector returned, exit 3 = selector raised",
+      "purpose": "the old/new differential instrument: point it at the pre-fix runner bytes and it must fail with the production error; point it at the fixed runner and BTCUSDT/15m must select"
     }
   },
   "container_execution": {
@@ -95,7 +101,13 @@
   "red_green_differential": {
     "red_check": "the host/container deploy copy was temporarily restored to the PRE-FIX expressions of tie_break_key() and cohort_neighbourhood() (RED-CHECK markers), the same suite was rerun, and 7 of the 8 new tests failed (5 ERROR + 2 FAIL) while all 20 pre-existing tests still passed; the red output contains the production error 'ValueError: 10 is not in list'",
     "green_check": "after restoring the fixed bytes (sha256 verified back to sha256:d23811c1...) the suite is 28/28 OK",
-    "restore_proof": "deploy copy sha256 == pre-edit backup sha256 == repo sha256; grep RED-CHECK in the runner == 0"
+    "restore_proof": "deploy copy sha256 == pre-edit backup sha256 == repo sha256; grep RED-CHECK in the runner == 0",
+    "crash_reproducer_differential": {
+      "old_bytes": "git show dbbc239:container/scripts/30_strategy_b_run.py (sha256:940768c3d5bed836a16a006170771f36a21644fec8e59ade1e2b44aca68edd85 - the exact bytes the u2 attempt pinned)",
+      "old_result": "BTCUSDT/15m RAISED ValueError: 10 is not in list (exit 3) - the production crash reproduced",
+      "new_result": "BTCUSDT/15m reason=selected, winner cell [30,40,14,14,0.03,1.1,0.03,0.05]; BTCUSDT/5m reason=no_qualifying_candidate (exit 0)",
+      "where": "verified twice - host numpy venv (~/.hermes/venvs/hermes-main-py311-sqlite3504-20260724T235839, Python 3.11.15) and inside qlib-run with /opt/venv/bin/python"
+    }
   },
   "counts_validator": {
     "command": "python3 runtime/strategy_b_v2_counts.py --spec <round-spec> --run-spec <u2 run-spec> --out <json> --self-test",
@@ -158,6 +170,19 @@
       "evidence": "record() at 30_strategy_b_run.py:923-949 emits ema_fast/ema_slow/wf_train_days/wf_test_days; _pick() filters missing keys; runtime/survivor_index.py:66 STRATEGY_PARAM_KEYS = ('window','discount')"
     }
   ],
+  "auditor_recipes": {
+    "note": "every command below was executed during this card; results are the ones quoted above",
+    "engine_selfcheck_container": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py  # 28/28 OK",
+    "sha_equality": "sha256sum container/scripts/30_strategy_b_run.py /Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py; container exec qlib-run sha256sum /scripts/30_strategy_b_run.py  # all sha256:d23811c1...",
+    "old_bug_reproduction": [
+      "git show dbbc239:container/scripts/30_strategy_b_run.py > /tmp/old/30_strategy_b_run.py  # sha256:940768c3...",
+      "stage the reproducer + a read-only copy of the u2 run-spec and grid_historical.csv (host: any numpy python; container: transfer /tmp files as base64 - /tmp/reproduce_u2_crash.py, /tmp/old_engine_dbbc239.py, /tmp/replay/{u2-run-spec.copy.json,u2-grid-historical.copy.csv} are already staged inside qlib-run from this card)",
+      "SB_ENGINE_PATH=<old bytes> <python> reproduce_u2_crash.py <run-spec> <grid_historical.csv>  # must exit 3 with 'ValueError: 10 is not in list'",
+      "SB_ENGINE_PATH=/scripts/30_strategy_b_run.py <python> reproduce_u2_crash.py <run-spec> <grid_historical.csv>  # must exit 0 with reason=selected for BTCUSDT/15m"
+    ],
+    "counts_validator": "python3 runtime/strategy_b_v2_counts.py --spec <round-spec> --run-spec <u2 run-spec> --self-test  # rc=0, fingerprint MATCH, self_test_ok",
+    "target_head_under_audit": "3a3fa1f (first commit) + the evidence-only follow-up commit that adds reproduce_u2_crash.py; the audited runner/test bytes are sha256:d23811c1... / sha256:ac918304..."
+  },
   "handoff": {
     "next": "independent auditor child card (assignee auditor) - reproduce the old bug, verify the 5,760-cell mapping, composite-axis neighbourhood semantics, old/new differential, repo/host sha equality, and that prereg/counts did not drift; confirm no u3, no Strategy C, u1/u2 immutable, reconciler paused",
     "then": "after auditor PASS, ChatGPT reviews and creates the same-round r1-u3 run-spec/preflight and dispatches it (this card must NOT launch u3)",
