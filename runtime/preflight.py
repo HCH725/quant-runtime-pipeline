@@ -210,9 +210,16 @@ def p4_p6(checks, name, image):
           "container system status=%s (rc=%d)" % (status or "unknown", rc))
 
     info, why = container_info(name)
-    # ponytail: default preflight is read-only; never auto-start here.
-    # Unattended recovery lives only in recover_execution_plane() (--recover).
     state = (info or {}).get("status", {}).get("state")
+    # Default preflight: for an existing stopped container, attempt a safe
+    # `container start` + recheck.  System start and auto-create are NOT
+    # part of default mode — those live only in recover_execution_plane()
+    # (--recover).
+    if info and state != "running":
+        rc_s, _out_s, _err_s = run(["container", "start", name], timeout=120)
+        if rc_s == 0:
+            info, why = container_info(name)
+            state = (info or {}).get("status", {}).get("state")
     check(checks, "P5", "PASS" if state == "running" else "FAIL", "shared-layer",
           "%s state=%s%s" % (name, state or "absent", "" if info else " (%s)" % why))
     return info
@@ -289,7 +296,7 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     except ValueError as exc:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json not valid JSON: %s" % exc)
         return
-    missing = [k for k in ("schema_version", "family_id", "round_id", "run_id", "task_id", "kanban_board")
+    missing = [k for k in ("schema_version", "family_id", "round_id", "run_id", "task_id", "kanban_board", "script")
                if k not in spec]
     if missing:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json missing keys: %s" % missing)
@@ -341,6 +348,29 @@ def main():
         recovery = recover_execution_plane(args.expansion, args.container)
     else:
         recovery = {"attempted": False, "ok": True, "fail_reason": None, "actions": []}
+
+    # Finding B: when --recover is used and recovery fails, fail closed
+    # immediately. Recovery failure is a gate failure per §16.5 ordering.
+    if recovery.get("attempted") and not recovery.get("ok"):
+        report = {
+            "schema_version": 1,
+            "kind": "preflight",
+            "contract_section": "16",
+            "checked_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "host_boot_id": host_boot_id(),
+            "attempt_dir": args.attempt_dir,
+            "launch_gate": "not_evaluated",
+            "recovery": recovery,
+            "overall": "FAIL",
+            "checks": [],
+        }
+        if args.json:
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+        else:
+            print("recovery: ok=%s fail_reason=%s actions=%d" % (
+                recovery.get("ok"), recovery.get("fail_reason"), len(recovery.get("actions") or [])))
+            print("overall: FAIL (recovery failed: %s)" % recovery.get("fail_reason"))
+        return 1
 
     checks = []
     raw, _results = p1_p3(checks, args.expansion)

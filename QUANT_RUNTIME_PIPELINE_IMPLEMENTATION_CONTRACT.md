@@ -742,20 +742,20 @@ family F
 - `[V]` P9/P10 邏輯層檢查：`python3 runtime/tests/test_preflight_p10.py`（stdlib unittest，真實檔案系統 + 注入 host scripts 目錄，不需 container）10/10 OK，涵蓋 mapped/絕對路徑重算相符、sha 不符、不可讀路徑 `NOT VERIFIED`、缺 `script.sha256`、缺 `run-spec.json`、terminal sentinel 使 launch gate FAIL、未給 `--attempt-dir` 的 `NA`。
 
 ### 16.5 Reboot recovery gate（opt-in，fail-closed）
-- `[C]` `--recover` 為 opt-in flag：**預設 preflight 為 read-only**（不啟動任何服務、不改變執行面狀態）。只有明確傳入 `--recover` 時才觸發 `recover_execution_plane()`。
+- `[C]` `--recover` 為 opt-in flag：**預設 preflight 不啟動 container system、不自動建立容器**。預設模式下，已存在但 stopped 的 `qlib-run` 會嘗試 `container start` 並重查（P5 §16.2）。只有明確傳入 `--recover` 時才觸發完整的 `recover_execution_plane()`（含 `container system start`、fail-closed 恢復序列）。
 - `[C]` `recover_execution_plane()` 為 ordered, fail-closed：
   1. ExpansionDrive 存在且可讀 → 否則立即返回 `fail_reason=expansion_missing`（不觸碰 container）。
   2. `container system status` ≠ running → `container system start`（timeout 180s）→ poll 直到 running（timeout 120s）或返回 `fail_reason=system_start_failed`。
   3. `container ls` 查詢 `qlib-run` → 不存在 → 返回 `fail_reason=container_absent`（**never auto-create**；缺失的 container 需由 operator 依 runbook 手動重建）。
   4. `qlib-run` state ≠ running → `container start qlib-run`（timeout 120s）→ poll 或返回 `fail_reason=container_start_failed`。
-- `[C]` 恢復成功後才進入 P1–P8 檢查；恢復失敗時 preflight 整體 `overall=FAIL`，report 內含 `recovery` 物件（`attempted=true, ok=false, fail_reason, actions`）。
+- `[C]` 恢復成功後才進入 P1–P8 檢查；恢復失敗時 preflight 立即返回 `overall=FAIL` 且 `rc=1`，**不進入 P1–P8**，report 內含 `recovery` 物件（`attempted=true, ok=false, fail_reason, actions`）。
 - `[C]` Reconcile wrapper（`~/.hermes/scripts/quant_runtime_reconcile.py`）在每次 cron tick 時**預設**執行 `preflight --recover --json` 作為 recovery gate，結果在 core reconcile 之前評估：
-  - gate `overall=PASS` → 進行 core reconcile。
-  - gate `overall=FAIL` → **fail-closed**：跳過 core reconcile（不 unblock、不 incident、不 state change）；一行輸出 gate failure，重複相同 signature 靜默（dedupe/no-spam，signature = `gate|<failed_checks>|<recovery_fail_reason>`）。
+  - gate `overall=PASS` **且** preflight `rc=0` → 進行 core reconcile。
+  - gate `overall=FAIL` **或** preflight `rc!=0` → **fail-closed**：跳過 core reconcile（不 unblock、不 incident、不 state change）；一行輸出 gate failure，重複相同 signature 靜默（dedupe/no-spam，signature = `gate|<failed_checks>|<recovery_fail_reason>` 或 `gate|rc_<N>|<failed_checks>|<recovery_fail_reason>`）。
   - gate healthy 後自動清除 gate state（下次再 fail 時才重新告警）。
 - `[C]` `--no-recovery` 為 escape hatch：跳過 recovery gate，直接執行 core reconcile（用於已知 healthy 或 operator 手動控制場景）。
 - `[C]` `--dry-run` 仍執行 recovery gate（healing is the point），但不寫 gate-dedupe state 也不寫 reconciler state。
-- `[V]` Recovery gate 測試：`python3 runtime/tests/test_preflight_recover.py`（stdlib unittest，mock all subprocess）7/7 OK，涵蓋 fail-closed（expansion missing / system start failed / container absent / container start failed）、healing order（system down → start → ok / stopped container → start → ok）、default preflight read-only never starts。
+- `[V]` Recovery gate 測試：`python3 runtime/tests/test_preflight_recover.py`（stdlib unittest，mock all subprocess），涵蓋 fail-closed（expansion missing / system start failed / container absent / container start failed）、healing order（system down → start → ok / stopped container → start → ok）、default P5 starts stopped existing container、`--recover` fail-closed 主層級回歸（`ok=false` → `overall=FAIL` rc=1，不進入 P1-P8）。
 
 ## 17. FINALIST 之後：下游 authoritative acceptance（future / out-of-scope / non-blocking）
 

@@ -84,7 +84,11 @@ class P10Case(unittest.TestCase):
         (self.attempt / "run-spec.json").write_text(json.dumps(spec))
         checks = []
         preflight.p9_p10(checks, str(self.attempt), str(self.host_scripts))
-        self.assertEqual({c["id"]: c for c in checks}["P10"]["status"], "FAIL")
+        by_id = {c["id"]: c for c in checks}
+        self.assertEqual(by_id["P10"]["status"], "FAIL")
+        # Finding D regression: `script` is a required key; absent → explicit diagnostic
+        self.assertIn("missing keys", by_id["P10"]["detail"])
+        self.assertIn("script", by_id["P10"]["detail"])
 
     def test_missing_run_spec_is_fail(self):
         self.assert_p10("FAIL", drop_run_spec=True)
