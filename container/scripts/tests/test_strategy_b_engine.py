@@ -14,6 +14,7 @@ import csv
 import importlib.util
 import json
 import os
+import random
 import shutil
 import tempfile
 import unittest
@@ -461,6 +462,251 @@ class TestRunCohortSynthetic(unittest.TestCase):
             self.assertTrue(agg["partition_all"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+# ---------------------------------------------------------------------------
+# registered composite-axis selector / neighbourhood (card t_9afe04ad)
+# ---------------------------------------------------------------------------
+# The registered joint space of round r1, mirrored from the run-spec's `params`/`dca_domain`:
+# 30 ema pairs x 4 walk-forward cells = 120 strategy cases, x 48 DCA configs = 5,760 cells.
+# `ema_pair` and `walk_forward` are COMPOSITE registered axes: one registered value is a whole
+# tuple.  The production u2 attempt crashed in the selector because a scalar of the 8-scalar
+# cell key was used to index those composite axes (`ValueError: 10 is not in list`).  These
+# tests pin the registered-index mapping, the composite-axis face adjacency (+-1 registered
+# step = one whole tuple) and the fail-closed errors.
+REG_FAST = (5, 7, 10, 15, 20, 30)
+REG_SLOW = (40, 50, 100, 150, 200)
+REG_PAIRS = [(f, s) for f in REG_FAST for s in REG_SLOW]
+REG_WF = [(3, 3), (7, 7), (14, 14), (28, 28)]
+REG_DCA = {"spacing_pct": [0.01, 0.02, 0.03, 0.04], "size_multiplier": [1.0, 1.1],
+           "breakeven_tp_pct": [0.01, 0.02, 0.03], "invalidation_pct": [0.05, 0.1]}
+REG_MIN_EP = 20
+
+
+def registered_spec():
+    """The registered joint-space domains (params + dca_domain + gates of round r1)."""
+    return {"params": {"ema_pair": [{"fast": f, "slow": s} for f, s in REG_PAIRS],
+                       "walk_forward": [{"train_days": a, "test_days": b} for a, b in REG_WF],
+                       "grid_size": len(REG_PAIRS) * len(REG_WF)},
+            "dca_domain": dict(REG_DCA, base_quote=1000),
+            "gates": {"min_episodes_is": REG_MIN_EP,
+                      "neighborhood_min_same_sign_fraction": 0.6}}
+
+
+def registered_rows(net_pnl_of=None, kind="historical", sharpe=1.0, episodes=100):
+    """Every one of the 5,760 registered joint cells, in `record()`'s row shape."""
+    rows = []
+    for pi, pair in enumerate(REG_PAIRS):
+        for ci, cell in enumerate(REG_WF):
+            for sp in REG_DCA["spacing_pct"]:
+                for mu in REG_DCA["size_multiplier"]:
+                    for be in REG_DCA["breakeven_tp_pct"]:
+                        for inv in REG_DCA["invalidation_pct"]:
+                            row = {"symbol": "SYNTH", "timeframe": "5m", "window_kind": kind,
+                                   "ema_fast": pair[0], "ema_slow": pair[1],
+                                   "wf_train_days": cell[0], "wf_test_days": cell[1],
+                                   "ema_pair_index": pi, "walk_forward_index": ci,
+                                   "spacing_pct": sp, "size_multiplier": mu,
+                                   "breakeven_tp_pct": be, "invalidation_pct": inv,
+                                   "base_quote": 1000, "sharpe": sharpe, "episodes": episodes,
+                                   "net_pnl": 1.0}
+                            if net_pnl_of is not None:
+                                row["net_pnl"] = net_pnl_of(row)
+                            rows.append(row)
+    return rows
+
+
+def expected_neighbour_cells(w, axes):
+    """Independent hand-written face adjacency of the 8-scalar cell.
+
+    A composite axis moves as ONE registered step: both of its scalars change together, and
+    no neighbour may share just one component of the winner's pair / walk-forward cell.
+    """
+    pairs, wfs = axes["ema_pair"], axes["walk_forward"]
+    w = list(w)
+    out = []
+    for step in (-1, 1):
+        pi = pairs.index((w[0], w[1])) + step
+        if 0 <= pi < len(pairs):
+            out.append((pairs[pi][0], pairs[pi][1]) + tuple(w[2:]))
+        wi = wfs.index((w[2], w[3])) + step
+        if 0 <= wi < len(wfs):
+            out.append(tuple(w[0:2]) + (wfs[wi][0], wfs[wi][1]) + tuple(w[4:]))
+        for axis, comp in (("spacing_pct", 4), ("size_multiplier", 5),
+                           ("breakeven_tp_pct", 6), ("invalidation_pct", 7)):
+            vals, i = axes[axis], axes[axis].index(w[comp])
+            if 0 <= i + step < len(vals):
+                cell = list(w)
+                cell[comp] = vals[i + step]
+                out.append(tuple(cell))
+    return out
+
+
+def cell_row(rows, cell):
+    return sb.same_cell(rows, cell)
+
+
+class TestRegisteredAxisMapping(unittest.TestCase):
+    """t_9afe04ad: rows are addressed through registered axes, never through a split tuple."""
+
+    def test_full_5760_cell_grid_maps_and_tie_breaks_uniquely(self):
+        spec = registered_spec()
+        axes = sb.axis_values(spec)
+        self.assertEqual(len(REG_PAIRS) * len(REG_WF), 120)
+        self.assertEqual(len(REG_DCA["spacing_pct"]) * len(REG_DCA["size_multiplier"])
+                         * len(REG_DCA["breakeven_tp_pct"]) * len(REG_DCA["invalidation_pct"]),
+                         48)
+        rows = registered_rows()
+        self.assertEqual(len(rows), 5760)
+        keys, cells = set(), set()
+        for r in rows:
+            key = sb.axis_key(r)
+            self.assertEqual(len(key), len(sb.AXES))
+            for i, axis in enumerate(sb.AXES):
+                self.assertIn(key[i], axes[axis])
+            tb = sb.tie_break_key(r, axes)
+            self.assertEqual(len(tb), len(sb.AXES))
+            for i, axis in enumerate(sb.AXES):
+                self.assertTrue(0 <= tb[i] < len(axes[axis]))
+            keys.add(tb)
+            cells.add(sb.cell_key(r))
+            self.assertEqual(sb.axis_key_cell(key), sb.cell_key(r))
+        self.assertEqual(len(cells), 5760)
+        self.assertEqual(len(keys), 5760)
+
+    def test_legacy_scalar_indexing_of_composite_axes_is_red(self):
+        """The pre-fix expression verbatim: it must raise on the legal cell u2 crashed on."""
+        def legacy_tie_break_key(row, axes):
+            return tuple(axes[a].index(sb.cell_key(row)[i]) for i, a in enumerate(sb.AXES))
+
+        axes = sb.axis_values(registered_spec())
+        row = next(r for r in registered_rows() if (r["ema_fast"], r["ema_slow"]) == (10, 40))
+        with self.assertRaises(ValueError):
+            legacy_tie_break_key(row, axes)
+        fixed = sb.tie_break_key(row, axes)
+        self.assertEqual(fixed[0], REG_PAIRS.index((10, 40)))
+        self.assertEqual(fixed[1], REG_WF.index((3, 3)))
+        # ema_fast=10 is a legal registered fast value (the u2 crash value)
+        self.assertIn(10, REG_FAST)
+
+    def test_tie_on_sharpe_and_net_pnl_picks_the_first_registered_cell(self):
+        spec = registered_spec()
+        spec["gates"]["min_episodes_is"] = 5
+        axes = sb.axis_values(spec)
+        rows = registered_rows(episodes=5)          # identical sharpe/net_pnl on every cell
+        rows.reverse()                              # input order must not decide the tie
+        winner, reason = sb.select_cohort_winner(rows, spec)
+        self.assertEqual(reason, "selected")
+        self.assertEqual(sb.tie_break_key(winner, axes),
+                         min(sb.tie_break_key(r, axes) for r in rows))
+        self.assertEqual((winner["ema_fast"], winner["ema_slow"]), REG_PAIRS[0])
+        self.assertEqual((winner["wf_train_days"], winner["wf_test_days"]), REG_WF[0])
+        self.assertEqual((winner["spacing_pct"], winner["size_multiplier"],
+                          winner["breakeven_tp_pct"], winner["invalidation_pct"]),
+                         (REG_DCA["spacing_pct"][0], REG_DCA["size_multiplier"][0],
+                          REG_DCA["breakeven_tp_pct"][0], REG_DCA["invalidation_pct"][0]))
+        shuffled = list(rows)
+        random.Random(20260914).shuffle(shuffled)
+        again, _ = sb.select_cohort_winner(shuffled, spec)
+        self.assertEqual(sb.cell_key(again), sb.cell_key(winner))
+
+    def test_unregistered_value_fails_closed_naming_axis_value_and_cell(self):
+        spec = registered_spec()
+        axes = sb.axis_values(spec)
+        row = next(r for r in registered_rows() if (r["ema_fast"], r["ema_slow"]) == (10, 40))
+        row = dict(row, spacing_pct=0.09)           # not a registered spacing value
+        with self.assertRaises(ValueError) as caught:
+            sb.tie_break_key(row, axes)
+        text = str(caught.exception)
+        self.assertIn("spacing_pct", text)
+        self.assertIn("0.09", text)
+        self.assertIn(str(sb.cell_key(row)), text)
+        # no silent fallback in the neighbourhood either: an unregistered winner value fails
+        with self.assertRaises(ValueError) as caught_nb:
+            sb.cohort_neighbourhood(registered_rows(), row, spec)
+        self.assertIn("spacing_pct", str(caught_nb.exception))
+
+
+class TestRegisteredAxisNeighbourhood(unittest.TestCase):
+    """t_9afe04ad: face adjacency on the six registered axes, composite axes move as one."""
+
+    INTERIOR = (10, 50, 7, 7, 0.02, 1.1, 0.02, 0.1)   # interior on every registered axis
+    CORNER = (5, 40, 3, 3, 0.01, 1.0, 0.01, 0.05)      # first registered index everywhere
+
+    def neighbourhood(self, cell, net_pnl_of=None):
+        spec = registered_spec()
+        rows = registered_rows(net_pnl_of)
+        winner = cell_row(rows, cell)
+        return sb.cohort_neighbourhood(rows, winner, spec), rows
+
+    def test_interior_and_corner_neighbour_counts(self):
+        expected, _ = self.neighbourhood(self.INTERIOR)
+        axes = sb.axis_values(registered_spec())
+        self.assertEqual(expected["neighbours"],
+                         len(expected_neighbour_cells(self.INTERIOR, axes)))
+        self.assertEqual(expected["neighbours"], 10)   # 2+2+2+1+2+1 registered steps
+        self.assertEqual(expected["agreeing"], 10)
+        self.assertEqual(expected["same_sign_fraction"], 1.0)
+        self.assertTrue(expected["passed"])
+        corner, _ = self.neighbourhood(self.CORNER)
+        self.assertEqual(corner["neighbours"], 6)      # one +1 step per registered axis
+        self.assertEqual(corner["agreeing"], 6)
+        self.assertEqual(corner["axis_steps"],
+                         {a: len(axes[a]) for a in sb.AXES})
+
+    def test_neighbours_are_the_registered_face_adjacent_cells_only(self):
+        axes = sb.axis_values(registered_spec())
+        want = set(expected_neighbour_cells(self.INTERIOR, axes))
+        self.assertEqual(len(want), 10)
+        positive = want | {self.INTERIOR}          # the winner itself is the sign reference
+        nb, rows = self.neighbourhood(
+            self.INTERIOR, lambda r: 1.0 if sb.cell_key(r) in positive else -1.0)
+        self.assertEqual(nb["neighbours"], 10)
+        self.assertEqual(nb["agreeing"], 10)
+        self.assertEqual(nb["same_sign_fraction"], 1.0)
+        self.assertTrue(nb["passed"])
+        # A cell that shares exactly ONE scalar of the winner's ema_pair is NOT a neighbour:
+        # under the registered-index semantics the only ema_pair neighbours are the pairs at
+        # index +-1 of the registered list ((10,40) and (10,100) here), while a "split the
+        # pair into two scalar axes" reading would also count the fast neighbours (5,50) and
+        # (15,50) - the pre-fix code indexed exactly those scalar values.  Both split cells are
+        # legal registered cells of this grid, so only the adjacency rule can exclude them.
+        split_only = {(5, 50) + self.INTERIOR[2:], (15, 50) + self.INTERIOR[2:]}
+        registered_cells = {sb.cell_key(r) for r in rows}
+        for cell in split_only:
+            self.assertIn(cell, registered_cells)
+            self.assertNotIn(cell, want)
+        self.assertIn((10, 40) + self.INTERIOR[2:], want)
+        self.assertIn((10, 100) + self.INTERIOR[2:], want)
+        nb2, _ = self.neighbourhood(
+            self.INTERIOR,
+            lambda r: 1.0 if sb.cell_key(r) in (split_only | {self.INTERIOR}) else -1.0)
+        self.assertEqual(nb2["neighbours"], 10)
+        self.assertEqual(nb2["agreeing"], 0)
+        self.assertEqual(nb2["same_sign_fraction"], 0.0)
+        self.assertFalse(nb2["passed"])
+
+    def test_missing_legal_neighbour_fails_closed(self):
+        spec = registered_spec()
+        axes = sb.axis_values(spec)
+        rows = registered_rows()
+        winner = cell_row(rows, self.INTERIOR)
+        gone = expected_neighbour_cells(self.INTERIOR, axes)[0]
+        self.assertNotEqual(gone, self.INTERIOR)
+        kept = [r for r in rows if sb.cell_key(r) != gone]
+        self.assertEqual(len(kept), 5759)
+        with self.assertRaises(ValueError) as caught:
+            sb.cohort_neighbourhood(kept, winner, spec)
+        text = str(caught.exception)
+        self.assertIn("missing neighbours", text)
+        self.assertIn(str(gone), text)
+
+    def test_neighbourhood_rejects_non_historical_rows(self):
+        spec = registered_spec()
+        rows = registered_rows(kind="oos")
+        winner = rows[0]
+        with self.assertRaises(ValueError):
+            sb.cohort_neighbourhood(rows, winner, spec)
 
 
 if __name__ == "__main__":

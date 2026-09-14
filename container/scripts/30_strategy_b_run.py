@@ -1127,14 +1127,42 @@ def axis_values(spec):
 
 
 def cell_key(r):
+    """The row's 8-scalar exact-cell identity (cross-grid lookup / same_cell identity)."""
     return (r["ema_fast"], r["ema_slow"], r["wf_train_days"], r["wf_test_days"],
             r["spacing_pct"], r["size_multiplier"], r["breakeven_tp_pct"],
             r["invalidation_pct"])
 
 
+def axis_key(r):
+    """The row's value on each registered axis, in the registered AXES order.
+
+    `ema_pair` and `walk_forward` are COMPOSITE registered axes: one registered value is the
+    whole (fast, slow) / (train_days, test_days) tuple.  Never address those axes with one
+    scalar of the tuple - that would look up (and mutate) axes the round never registered.
+    """
+    return ((r["ema_fast"], r["ema_slow"]), (r["wf_train_days"], r["wf_test_days"]),
+            r["spacing_pct"], r["size_multiplier"], r["breakeven_tp_pct"],
+            r["invalidation_pct"])
+
+
+def axis_key_cell(key):
+    """Registered-axis key -> the 8-scalar exact-cell identity (composite axes re-joined)."""
+    return (key[0][0], key[0][1], key[1][0], key[1][1], key[2], key[3], key[4], key[5])
+
+
+def axis_index(axes, axis, value, row):
+    """The registered index of `value` on `axis`.  Fail closed, naming axis/value/cell."""
+    try:
+        return axes[axis].index(value)
+    except ValueError:
+        raise ValueError("cell %s carries unregistered %s value %r (registered: %s)"
+                         % (str(cell_key(row)), axis, value, str(axes[axis])))
+
+
 def tie_break_key(r, axes):
     """Registered-index lexical key: deterministic and free of float formatting."""
-    return tuple(axes[a].index(cell_key(r)[i]) for i, a in enumerate(AXES))
+    key = axis_key(r)
+    return tuple(axis_index(axes, axis, key[i], r) for i, axis in enumerate(AXES))
 
 
 def require_historical(rows, where):
@@ -1179,26 +1207,31 @@ def cohort_neighbourhood(hist_rows, winner, spec):
 
     Historical window only, by construction (`require_historical`) and by the caller passing
     the historical grid.  The neighbour of each axis is the registered INDEX +- 1 of that
-    axis' registered value list, so every axis really moves one registered step.
+    axis' registered value list, so every axis really moves one registered step - and a
+    COMPOSITE axis (ema_pair, walk_forward) moves one whole registered tuple, never one of its
+    scalars.  The mutated registered-axis key is turned back into the 8-scalar exact-cell
+    identity before the grid lookup, so neighbourhood and cross-grid lookups address the same
+    cells.  A legal neighbour the grid does not hold fails closed.
     """
     require_historical(hist_rows, "cohort_neighbourhood")
     axes = axis_values(spec)
     idx = {cell_key(r): r for r in hist_rows}
-    wkey = cell_key(winner)
+    wkey = axis_key(winner)
     wsign = winner["net_pnl"] > 0.0
     neighbours, missing = [], []
     for ai, axis in enumerate(AXES):
         vals = axes[axis]
-        pos = vals.index(wkey[ai])
+        pos = axis_index(axes, axis, wkey[ai], winner)
         for step in (-1, 1):
             npos = pos + step
             if not (0 <= npos < len(vals)):
                 continue
             nkey = list(wkey)
             nkey[ai] = vals[npos]
-            row = idx.get(tuple(nkey))
+            ncell = axis_key_cell(tuple(nkey))
+            row = idx.get(ncell)
             if row is None:
-                missing.append(tuple(nkey))
+                missing.append("%s step %+d -> %s" % (axis, step, str(ncell)))
             else:
                 neighbours.append(row)
     if missing:

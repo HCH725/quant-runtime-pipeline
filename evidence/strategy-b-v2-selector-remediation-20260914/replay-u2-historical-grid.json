@@ -1,0 +1,114 @@
+{
+  "card": "t_9afe04ad",
+  "checks": {
+    "all_real_rows_map_to_registered_indices": true,
+    "legacy_expression_errors_on_real_rows": {
+      "BTCUSDT/15m": 5760,
+      "BTCUSDT/5m": 5760
+    },
+    "neighbourhood_ran_without_error": true,
+    "registered_keys_unique_per_cohort": true,
+    "selector_ran_without_error": true
+  },
+  "cohorts": {
+    "BTCUSDT/15m": {
+      "distinct_cells": 5760,
+      "distinct_registered_keys": 5760,
+      "historical_rows": 5760,
+      "legacy_pre_fix_errors": {
+        "10 is not in list": 960,
+        "15 is not in list": 960,
+        "20 is not in list": 960,
+        "30 is not in list": 960,
+        "5 is not in list": 960,
+        "7 is not in list": 960
+      },
+      "neighbourhood": {
+        "agreeing": 2,
+        "axis_steps": {
+          "breakeven_tp_pct": 3,
+          "ema_pair": 30,
+          "invalidation_pct": 2,
+          "size_multiplier": 2,
+          "spacing_pct": 4,
+          "walk_forward": 4
+        },
+        "neighbours": 9,
+        "passed": false,
+        "same_sign_fraction": 0.222222,
+        "threshold": 0.6,
+        "winner_net_pnl_positive": true
+      },
+      "selector_reason": "selected",
+      "winner_axis_key": [
+        [
+          30,
+          40
+        ],
+        [
+          14,
+          14
+        ],
+        0.03,
+        1.1,
+        0.03,
+        0.05
+      ],
+      "winner_cell_key": [
+        30,
+        40,
+        14,
+        14,
+        0.03,
+        1.1,
+        0.03,
+        0.05
+      ],
+      "winner_tie_break_key": [
+        25,
+        2,
+        2,
+        1,
+        2,
+        0
+      ]
+    },
+    "BTCUSDT/5m": {
+      "distinct_cells": 5760,
+      "distinct_registered_keys": 5760,
+      "historical_rows": 5760,
+      "legacy_pre_fix_errors": {
+        "10 is not in list": 960,
+        "15 is not in list": 960,
+        "20 is not in list": 960,
+        "30 is not in list": 960,
+        "5 is not in list": 960,
+        "7 is not in list": 960
+      },
+      "selector_reason": "no_qualifying_candidate",
+      "winner_axis_key": null,
+      "winner_cell_key": null,
+      "winner_tie_break_key": null
+    }
+  },
+  "engine_path": "/scripts/30_strategy_b_run.py",
+  "engine_sha256": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+  "engine_version": "b-v2-engine-1.0.0",
+  "grid_csv_path": "/tmp/replay/u2-grid-historical.copy.csv",
+  "grid_csv_sha256": "sha256:8eae12d8069b5ab77fb380902e6e4335b313eac8a40711ad17c478b2d93a3467",
+  "kind": "strategy_b_v2_selector_neighbourhood_replay",
+  "note": "read-only replay of the immutable FAILED u2 attempt's artifacts - a code-path check, never a scientific result, never a verdict input",
+  "registered_axes": {
+    "breakeven_tp_pct": 3,
+    "ema_pair": 30,
+    "invalidation_pct": 2,
+    "size_multiplier": 2,
+    "spacing_pct": 4,
+    "walk_forward": 4
+  },
+  "rows_total": 11520,
+  "run_spec_path": "/tmp/replay/u2-run-spec.copy.json",
+  "run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+  "schema_version": 1,
+  "selector_version": "cohort-selector-v1"
+}

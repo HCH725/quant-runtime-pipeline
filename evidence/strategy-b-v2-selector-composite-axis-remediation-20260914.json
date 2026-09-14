@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_b_v2_selector_composite_axis_remediation",
+  "contract_section": "7.3 (cohort selector + neighbourhood) / 9.2 / 9.3 / 13",
+  "card": "t_9afe04ad",
+  "card_title": "Remediate Strategy B v2 selector composite-axis bug",
+  "authored_by": "ChatGPT (GPT-5.6 Sol)",
+  "recorded_by": "Hermes default (Xiaoqian), card run 154",
+  "recorded_at_utc": "2026-09-14T01:20:00Z",
+  "git_head_at_record": "dbbc239",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "summary": "Production-discovered script bug in the B v2 runner: axis_values() registers 6 joint-space axes (ema_pair and walk_forward are COMPOSITE tuple axes) but tie_break_key()/cohort_neighbourhood() indexed those composite axes with scalar members of the 8-scalar cell_key. u2 crashed with ValueError: 10 is not in list while selecting the BTCUSDT/15m cohort winner. Minimal fix: a registered-axis key helper (axis_key) plus a registered-index lookup that fails closed, and a neighbourhood that moves exactly one REGISTERED VALUE per axis. No hypothesis/domain/split/gate/DCA-semantics change; u1/u2 stay immutable FAILED technical attempts; no u3 launch; reconciler stays paused.",
+  "production_root_cause": {
+    "attempt": "ema-crossover-walkforward-momentum-long-short-v2-r1-u2",
+    "stage": "FAILED_SCRIPT",
+    "runtime_seconds": 6245,
+    "error": "ValueError: 10 is not in list",
+    "traceback": "30_strategy_b_run.py line 1072 run_cohort -> line 1166 select_cohort_winner -> line 1137 tie_break_key -> axes['ema_pair'].index(cell_key(r)[0])",
+    "log_tail": "BTCUSDT/5m completed all 10 registered grids (5,760 rows each, winner=None / no qualifying candidate); BTCUSDT/15m historical grid wrote 5,760 rows and the selector crashed on the first qualifying candidate (ema_fast=10)",
+    "latent_twin": "cohort_neighbourhood() used wkey[ai] against the same composite axes (same misalignment; would have crashed right after the selector was fixed)",
+    "why_5m_did_not_crash": "select_cohort_winner() returns before the tie-break sort when no candidate qualifies; the 5m historical grid has 0 qualifying cells, so the bug only surfaced on the first cohort with >=1 qualifying candidate"
+  },
+  "fix": {
+    "files": [
+      "container/scripts/30_strategy_b_run.py",
+      "container/scripts/tests/test_strategy_b_engine.py"
+    ],
+    "cell_key_unchanged": "cell_key(r) keeps the 8-scalar exact-cell identity; cross-grid lookups, same_cell and the neighbourhood index still key on it",
+    "new_helpers": [
+      "axis_key(r) -> 6-axis registered key ((ema_fast, ema_slow), (wf_train_days, wf_test_days), spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct)",
+      "axis_key_cell(key) -> 8-scalar exact-cell identity (composite axes re-joined)",
+      "axis_index(axes, axis, value, row) -> registered index, fail closed naming axis/value/cell"
+    ],
+    "tie_break_key": "uses axis_key(r) and axis_index() against axis_values(spec); registered-index lexical order unchanged (contract 7.3)",
+    "cohort_neighbourhood": "+/-1 REGISTERED INDEX on exactly one of the 6 registered axes; composite axes move one whole registered tuple; mutated registered-axis key is converted back to the 8-scalar cell key before the grid lookup; missing legal neighbour fails closed and now names the axis/step/cell",
+    "no_scope_creep": "no new abstraction/service/registry; selector/disposition versions unchanged (cohort-selector-v1 / cohort-disposition-v1)",
+    "no_new_abstraction": true
+  },
+  "artifacts": {
+    "engine": {
+      "path": "container/scripts/30_strategy_b_run.py",
+      "sha256": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+      "bytes": 81778,
+      "previous_sha256": "sha256:940768c3d5bed836a16a006170771f36a21644fec8e59ade1e2b44aca68edd85",
+      "deploy_host": "/Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py",
+      "readback": "host deploy sha == repo sha == container /scripts sha (all three re-hashed after the deploy)"
+    },
+    "engine_selfcheck": {
+      "path": "container/scripts/tests/test_strategy_b_engine.py",
+      "sha256": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+      "previous_sha256": "sha256:97e09191511a8e5c20cb4704772d94d91ae37a387c5fec9c6c3b1acad2a6b0bb",
+      "deploy_host": "/Users/hong/workspace/qlib-apple-container/scripts/tests/test_strategy_b_engine.py",
+      "readback": "host deploy sha == repo sha == container /scripts sha"
+    },
+    "replay": {
+      "script": "evidence/strategy-b-v2-selector-remediation-20260914/replay_selector_neighbourhood.py",
+      "script_sha256": "sha256:553e454cb7f2926c06873a29d2bccd3fc085b738faa46107133d854b4a38a752",
+      "output": "evidence/strategy-b-v2-selector-remediation-20260914/replay-u2-historical-grid.json",
+      "output_sha256": "sha256:ce499f19d067e68f8f76b702df7ed6f9de51efab3ce893ccd1f06cfaf8f0f1c1"
+    }
+  },
+  "container_execution": {
+    "container": "qlib-run",
+    "image": "qlib:0.9.7-arm64",
+    "interpreter": "/opt/venv/bin/python (Python 3.12.14)",
+    "engine_selfcheck_command": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py",
+    "note": "the tests were executed inside the container because /scripts is the production runner's runtime environment (repo == host deploy == /scripts, byte-identical)"
+  },
+  "tests": {
+    "before": {"engine_selfcheck": "Ran 20 tests - OK", "command_source": "evidence/strategy-b-v2-launch-record-20260914.json"},
+    "after": {"engine_selfcheck": "Ran 28 tests - OK", "new_tests": 8, "exit_code": 0},
+    "new_test_inventory": [
+      "TestRegisteredAxisMapping.test_full_5760_cell_grid_maps_and_tie_breaks_uniquely",
+      "TestRegisteredAxisMapping.test_legacy_scalar_indexing_of_composite_axes_is_red",
+      "TestRegisteredAxisMapping.test_tie_on_sharpe_and_net_pnl_picks_the_first_registered_cell",
+      "TestRegisteredAxisMapping.test_unregistered_value_fails_closed_naming_axis_value_and_cell",
+      "TestRegisteredAxisNeighbourhood.test_interior_and_corner_neighbour_counts",
+      "TestRegisteredAxisNeighbourhood.test_neighbours_are_the_registered_face_adjacent_cells_only",
+      "TestRegisteredAxisNeighbourhood.test_missing_legal_neighbour_fails_closed",
+      "TestRegisteredAxisNeighbourhood.test_neighbourhood_rejects_non_historical_rows"
+    ],
+    "full_5760_cell_mapping": {
+      "registered_domain": "30 ema pairs x 4 walk-forward cells = 120 strategy cases; 4 x 2 x 3 x 2 = 48 DCA configs; 5,760 joint cells (round r1 run-spec params/dca_domain)",
+      "result": "all 5,760 axis keys are registered values on all 6 axes, all 5,760 tie-break keys are legal registered-index tuples, all 5,760 tie-break keys are unique, and axis_key_cell(axis_key(r)) == cell_key(r) for every row"
+    },
+    "tie_break_order": "with identical sharpe and net_pnl on every cell the selector elects the lexicographically first registered-index key (ema_pair index 0 then walk_forward index 0 then the DCA axes), deterministically under reshuffling",
+    "neighbourhood": {
+      "interior": "10 neighbours (one registered step on each of the 6 axes: 2+2+2+1+2+1) - size_multiplier and invalidation_pct only have 2 registered values",
+      "corner": "6 neighbours (only the +1 step exists on every axis)",
+      "composite_semantics": "the returned neighbour set equals an independently hand-written face-adjacency set; cells that share exactly ONE scalar of a composite pair (e.g. (5,50) / (15,50) for a (10,50) winner) are registered cells but NOT neighbours",
+      "fail_closed": "removing one legal neighbour from the grid raises ValueError naming axis, step and cell"
+    }
+  },
+  "red_green_differential": {
+    "red_check": "the host/container deploy copy was temporarily restored to the PRE-FIX expressions of tie_break_key() and cohort_neighbourhood() (RED-CHECK markers), the same suite was rerun, and 7 of the 8 new tests failed (5 ERROR + 2 FAIL) while all 20 pre-existing tests still passed; the red output contains the production error 'ValueError: 10 is not in list'",
+    "green_check": "after restoring the fixed bytes (sha256 verified back to sha256:d23811c1...) the suite is 28/28 OK",
+    "restore_proof": "deploy copy sha256 == pre-edit backup sha256 == repo sha256; grep RED-CHECK in the runner == 0"
+  },
+  "counts_validator": {
+    "command": "python3 runtime/strategy_b_v2_counts.py --spec <round-spec> --run-spec <u2 run-spec> --out <json> --self-test",
+    "before": "cohorts=20 strategy=120 dca=48 base_per_cohort=5760 per_grid=115200 total=1152000 fingerprint=MATCH ok=True (rc=0)",
+    "after": "identical output and identical semantic fields (raw JSON differs only in ran_at_utc); self_test_ok=true",
+    "prereg_fingerprint": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403 (declared == computed, unchanged)",
+    "note": "the engine sha is not part of the semantic fingerprint; only the run-spec script.sha256 pin (format-checked) changes for a new attempt, which is what the u3 run-spec instantiation will re-pin"
+  },
+  "u2_replay": {
+    "inputs": {
+      "u2_run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356 (matches the launch record)",
+      "u2_grid_historical_sha256": "sha256:8eae12d8069b5ab77fb380902e6e4335b313eac8a40711ad17c478b2d93a3467",
+      "read_only": "the u2 attempt tree was only read; the replay ran on container-local /tmp copies (/tmp/replay/{u2-run-spec.copy.json,u2-grid-historical.copy.csv})"
+    },
+    "cohorts": {
+      "BTCUSDT/15m": {
+        "historical_rows": 5760,
+        "distinct_registered_keys": 5760,
+        "selector": "selected (no ValueError) - cell (30,40,14,14,0.03,1.1,0.03,0.05), tie-break key [25,2,2,1,2,0]",
+        "neighbourhood": "ran: 9 neighbours, 2 agreeing, same_sign_fraction 0.222222 < 0.6 -> passed=false"
+      },
+      "BTCUSDT/5m": {
+        "historical_rows": 5760,
+        "distinct_registered_keys": 5760,
+        "selector": "no_qualifying_candidate (same as the production run: the 5m historical grid has 0 qualifying cells)"
+      }
+    },
+    "pre_fix_expression_on_real_rows": "the pre-fix expression raises ValueError on 5,760/5,760 real rows of both cohorts - 960 rows per registered fast value, including the exact production message '10 is not in list'",
+    "claim_boundary": "This replay is a CODE-PATH CHECK over a FAILED, immutable technical attempt's artifacts. It is NOT a scientific result, NOT a verdict input, and must never be quoted as a Strategy B performance/robustness outcome. The neighbourhood verdict printed above is a by-product of the replay on partial artifacts (OOS/full/stress grids do not exist for this attempt)."
+  },
+  "immutability": {
+    "u1_failed_sentinel_sha256": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d",
+    "u2_failed_sentinel_sha256": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f",
+    "u2_state_json_sha256": "sha256:4c31f64130fe7bf9d01ab6a32db0c26d9ee66b5828e9cdc832799241fccdb540",
+    "u2_run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+    "u2_grid_historical_sha256": "sha256:8eae12d8069b5ab77fb380902e6e4335b313eac8a40711ad17c478b2d93a3467",
+    "strategy_a_v2_artifacts_modified": false,
+    "strategy_b_v2_frozen_specs_modified": false
+  },
+  "guards": {
+    "u3_launched": false,
+    "strategy_c_created": false,
+    "reconciler_resumed": false,
+    "reconciler_state": "f6b9aa5e9034 remains paused (resume is a ChatGPT decision after u3 exists)",
+    "handoff_watchdog_touched": false,
+    "second_engine": false,
+    "new_service_daemon_queue_registry": false,
+    "hypothesis_universe_split_domain_gates_changed": false,
+    "contract_changed": false
+  },
+  "open_findings": [
+    {
+      "id": "F-open-1",
+      "severity": "non-blocking (out of this card's minimal-fix scope, flagged for the u3 run-spec review)",
+      "file": "container/scripts/30_strategy_b_run.py",
+      "location": "evaluate_cohort(): out['winner'] = _pick(winner, AXES + ('ema_pair_index', 'walk_forward_index', 'n_steps'))",
+      "finding": "the 8-scalar CSV row carries ema_fast/ema_slow/wf_train_days/wf_test_days but NOT keys named 'ema_pair'/'walk_forward', so _pick() silently drops both composite axes from the emitted cohort winner record (result.json / artifacts/cohort_results.json / artifacts/cohort_survivors.json). Strategy A's row does carry its axis-named fields (window/discount), so A is unaffected and B is asymmetric.",
+      "impact": "downstream survivor index/evidence consumers that read the winner's strategy params (runtime/survivor_index.py STRATEGY_PARAM_KEYS) would find no value for the B param axes; B has no survivor yet, so nothing is broken today.",
+      "not_remediated_because": "fixing it changes the emitted record shape (and ROW_FIELDS is a frozen CSV surface compared by the evidence package), which is outside this card's minimal fix (items 1-4) and its 'no semantic change / minimal diff' boundary",
+      "evidence": "record() at 30_strategy_b_run.py:923-949 emits ema_fast/ema_slow/wf_train_days/wf_test_days; _pick() filters missing keys; runtime/survivor_index.py:66 STRATEGY_PARAM_KEYS = ('window','discount')"
+    }
+  ],
+  "handoff": {
+    "next": "independent auditor child card (assignee auditor) - reproduce the old bug, verify the 5,760-cell mapping, composite-axis neighbourhood semantics, old/new differential, repo/host sha equality, and that prereg/counts did not drift; confirm no u3, no Strategy C, u1/u2 immutable, reconciler paused",
+    "then": "after auditor PASS, ChatGPT reviews and creates the same-round r1-u3 run-spec/preflight and dispatches it (this card must NOT launch u3)",
+    "u3_binding": "the u3 run-spec must re-pin script.sha256 = sha256:d23811c1... and engine_selfcheck.sha256 = sha256:ac918304..."
+  }
+}
