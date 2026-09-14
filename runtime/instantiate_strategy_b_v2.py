@@ -202,11 +202,13 @@ def main():
         if left:
             record["problems"].append("%s has unsubstituted placeholders: %s" % (name, left[:5]))
 
-    computed, problems, extra = counts.check(round_spec, run_spec)
-    record["problems"] += ["counts/%s: %s" % (name, p) for p in problems]
-    # v1.8 launch gate (contract 26.1): no publish without a valid generic parameter_contract.
+    # v1.8 launch gate (contract 26.1): no compute and no publish without a valid generic
+    # parameter_contract - the validation MUST precede counts.check (compute-before validation
+    # order, card t_e2eca79c F2).
     record["problems"] += ["round-spec contract: %s" % p
                            for p in pc.validate_round_spec_contract(round_spec)]
+    computed, problems, extra = counts.check(round_spec, run_spec)
+    record["problems"] += ["counts/%s: %s" % (name, p) for p in problems]
     record["counts"] = {k: computed[k] for k in ("cohorts", "strategy_cases", "dca_configs",
                                                  "base_combinations_per_cohort",
                                                  "case_evaluations_per_grid",
@@ -230,8 +232,8 @@ def main():
         # immutable pre-registration): reuse the existing round-spec verbatim after
         # re-validating it against this card, and publish only the new attempt's run-spec.
         existing = load(round_path)
+        ex_contract = pc.validate_round_spec_contract(existing)  # contract first, then compute
         _, ex_problems, _ = counts.check(existing, None)
-        ex_contract = pc.validate_round_spec_contract(existing)
         if ex_problems or ex_contract or existing.get("kanban_task_id") != args.task_id:
             record["problems"].append("existing round-spec is not valid for this card: %s"
                                       % (ex_problems[:2] or ex_contract[:2]
@@ -254,11 +256,11 @@ def main():
         return finish(record, args)
     # read back and re-validate the persisted bytes (never trust the in-memory copy)
     rb_round, rb_run = load(round_path), load(run_path)
+    record["problems"] += ["read-back round-spec contract: %s" % p
+                           for p in pc.validate_round_spec_contract(rb_round)]
     _, rb_problems, _ = counts.check(rb_round, rb_run)
     if rb_problems:
         record["problems"] += ["read-back: %s" % p for p in rb_problems]
-    record["problems"] += ["read-back round-spec contract: %s" % p
-                           for p in pc.validate_round_spec_contract(rb_round)]
     record["action"] = "instantiated"
     record["run_spec_sha256"] = sha256_file(run_path)
     return finish(record, args)

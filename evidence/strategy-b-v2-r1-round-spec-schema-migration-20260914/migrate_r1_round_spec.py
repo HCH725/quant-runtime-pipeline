@@ -23,6 +23,11 @@ The §26.1 exception authorizes exactly one write to that file: append one top-l
 This tool is the migration and its proof.  It never touches the u1/u2 attempts, never
 publishes a run-spec and never launches anything.
 
+The exception covers exactly ONE document: family
+`ema-crossover-walkforward-momentum-long-short-v2`, round `...-r1`, at its canonical path under
+the results root.  A wrong family, a wrong round or any other path is refused (rc=1) before a
+single byte is written; --emit and --dry-run are held to the same scope.
+
 usage:
   python3 migrate_r1_round_spec.py --spec <round-spec.json> --emit
   python3 migrate_r1_round_spec.py --spec <round-spec.json> --template <template.json> --dry-run
@@ -54,6 +59,33 @@ CONTRACT_REF = ("v1.8 generic family parameter contract (runtime/parameter_contr
 NON_PARAMS = ["symbol", "timeframe", "window_kind", "ema_pair_index", "walk_forward_index",
               "base_quote", "n_steps", "diagnostics", "metrics"]
 DOCUMENT_TAIL = "}\n"
+
+# §26.1 authorizes exactly ONE file: this family, this round, this canonical path.  Anything
+# else (other family, other round, copy at another path) is out of scope and must be refused
+# before any write.
+MIGRATION_FAMILY_ID = "ema-crossover-walkforward-momentum-long-short-v2"
+MIGRATION_ROUND_ID = MIGRATION_FAMILY_ID + "-r1"
+MIGRATION_SPEC_PATH = ("/Volumes/ExpansionDrive/qlib-results/%s/rounds/%s/round-spec.json"
+                       % (MIGRATION_FAMILY_ID, MIGRATION_ROUND_ID))
+
+
+def scope_problems(spec_path, spec):
+    """§26.1 scope guard: family, round and the sole canonical target path, all fail-closed.
+
+    Returns the reasons the document is NOT the one authorized round-spec.  A non-empty list
+    means: refuse (rc=1) and write nothing at all.
+    """
+    problems = []
+    if os.path.realpath(spec_path) != os.path.realpath(MIGRATION_SPEC_PATH):
+        problems.append("out of scope (contract 26.1): %s is not the one authorized round-spec "
+                        "%s" % (spec_path, MIGRATION_SPEC_PATH))
+    if spec.get("family_id") != MIGRATION_FAMILY_ID:
+        problems.append("out of scope (contract 26.1): family_id %r is not %r"
+                        % (spec.get("family_id"), MIGRATION_FAMILY_ID))
+    if spec.get("round_id") != MIGRATION_ROUND_ID:
+        problems.append("out of scope (contract 26.1): round_id %r is not %r"
+                        % (spec.get("round_id"), MIGRATION_ROUND_ID))
+    return problems
 
 
 def sha256_bytes(blob):
@@ -197,6 +229,13 @@ def main():
     except (OSError, ValueError) as exc:
         sys.stderr.write("usage error: cannot read %s: %s\n" % (spec_path, exc))
         return 2
+
+    scope = scope_problems(spec_path, spec)
+    if scope:
+        record["family_id"] = spec.get("family_id")
+        record["round_id"] = spec.get("round_id")
+        record["problems"] += scope
+        return finish(record, args, 1)
 
     try:
         contract = generate_contract(spec)

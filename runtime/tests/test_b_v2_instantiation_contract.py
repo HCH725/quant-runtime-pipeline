@@ -54,11 +54,11 @@ class InstantiationContractCase(unittest.TestCase):
     def run_spec_path(self, suffix):
         return self.results / FAMILY / "rounds" / ROUND_ID / "attempts" / ("%s-%s" % (ROUND_ID, suffix)) / "run-spec.json"
 
-    def run_cli(self, suffix="u1"):
+    def run_cli(self, suffix="u1", dry_run=False):
         argv = ["instantiate", "--results-root", str(self.results), "--task-id", TASK,
                 "--round-id", ROUND_ID, "--run-id", "%s-%s" % (ROUND_ID, suffix),
                 "--runner-host", str(self.runner), "--engine-test-host", str(self.engine_test),
-                "--json"]
+                "--json"] + (["--dry-run"] if dry_run else [])
         saved = sys.argv
         sys.argv = argv
         out = io.StringIO()
@@ -124,6 +124,48 @@ class InstantiationContractCase(unittest.TestCase):
         self.assertFalse(self.round_spec_path.exists())
         self.assertFalse(self.run_spec_path("u1").exists())
         self.assertIn("parameter_contract", " ".join(record.get("problems") or []))
+
+    # --- call order: validate_round_spec_contract strictly before counts.check (card t_e2eca79c F2) ---
+    def run_cli_recording_call_order(self, suffix="u1", dry_run=False):
+        """Run the launcher with both checks spied on; returns (rc, record, call sequence)."""
+        calls = []
+        real_check, real_contract = counts.check, pc.validate_round_spec_contract
+
+        def spy_check(*args, **kwargs):
+            calls.append("counts.check")
+            return real_check(*args, **kwargs)
+
+        def spy_contract(*args, **kwargs):
+            calls.append("validate_round_spec_contract")
+            return real_contract(*args, **kwargs)
+
+        counts.check = spy_check
+        pc.validate_round_spec_contract = spy_contract
+        try:
+            rc, record = self.run_cli(suffix, dry_run=dry_run)
+        finally:
+            counts.check = real_check
+            pc.validate_round_spec_contract = real_contract
+        return rc, record, calls
+
+    def assert_every_compute_is_preceded_by_the_contract_check(self, calls):
+        self.assertTrue(calls, "no counts.check / validate_round_spec_contract call recorded")
+        for i, name in enumerate(calls):
+            self.assertEqual(name, ("validate_round_spec_contract", "counts.check")[i % 2],
+                             calls)
+
+    def test_fresh_path_validates_the_contract_before_any_compute(self):
+        rc, record, calls = self.run_cli_recording_call_order("u1", dry_run=True)
+        self.assertEqual(rc, 0, record)
+        self.assertEqual(calls, ["validate_round_spec_contract", "counts.check"], calls)
+        self.assertFalse(self.round_spec_path.exists())
+
+    def test_reuse_path_validates_the_contract_before_any_compute(self):
+        self.assertEqual(self.run_cli("u1")[0], 0)
+        rc, record, calls = self.run_cli_recording_call_order("u2")
+        self.assertEqual(rc, 0, record)
+        self.assertTrue(record.get("round_spec_reused"), record)
+        self.assert_every_compute_is_preceded_by_the_contract_check(calls)
 
 
 if __name__ == "__main__":
