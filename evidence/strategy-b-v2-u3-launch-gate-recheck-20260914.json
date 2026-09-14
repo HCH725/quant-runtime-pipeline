@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "kind": "b_v2_u3_launch_gate_recheck",
+  "contract_section": "9.2 / 16.2 / 26.1",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "run_id_planned": "ema-crossover-walkforward-momentum-long-short-v2-r1-u3",
+  "kanban_task_id": "t_35b3e5da",
+  "kanban_board": "quant-strategy-research",
+  "checked_at_utc": "2026-09-14T13:58:17Z",
+  "checked_by": "Hermes default (kanban run 197 worker of t_35b3e5da)",
+  "purpose": "re-evaluate the r1-u3 launch gate after the §26.1 additive r1 round-spec schema migration and the t_e2eca79c F1/F2/F3 remediation; the card launches only when every technical gate is green AND the independent auditor's re-audit has passed",
+  "readback": {
+    "repo": {
+      "head": "a4bcc704d7c517cdcc9a0d7ff4120fa02de48db3",
+      "origin_main": "a4bcc704d7c517cdcc9a0d7ff4120fa02de48db3",
+      "worktree_clean": true
+    },
+    "results_artifacts": {
+      "round_spec_sha256": "sha256:2c6d6f64bf864180c937c740db8ced2bd17c13f59e73e16f66d0183ea7c53ecf",
+      "round_spec_bytes": 43719,
+      "family_json_sha256": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+      "u1_FAILED_sha256": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d",
+      "u2_FAILED_sha256": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f",
+      "u2_run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+      "u3_attempt_dir_exists": false,
+      "incidents_file_exists": false
+    },
+    "engine_bytes_three_way_equal": {
+      "script_sha256": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+      "engine_selfcheck_sha256": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+      "locations": [
+        "repo container/scripts/30_strategy_b_run.py",
+        "host /Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py",
+        "container /scripts/30_strategy_b_run.py"
+      ],
+      "container_selfcheck_run": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py -> Ran 28 tests - OK"
+    },
+    "container": {
+      "container_id": "qlib-run",
+      "image": "qlib:0.9.7-arm64",
+      "state": "running"
+    }
+  },
+  "gate_checks": {
+    "preflight_p1_p8": {
+      "command": "python3 runtime/preflight.py --json",
+      "checked_at_utc": "2026-09-14T13:34:54Z",
+      "overall": "PASS",
+      "checks": {
+        "P1": "PASS",
+        "P2": "PASS",
+        "P3": "PASS",
+        "P4": "PASS",
+        "P5": "PASS",
+        "P6": "PASS",
+        "P7": "PASS",
+        "P8": "PASS",
+        "P9": "NA",
+        "P10": "NA"
+      },
+      "P9": "NA (no --attempt-dir; the u3 attempt dir is deliberately not published yet)",
+      "P10": "NA (same reason)",
+      "launch_gate": "not_evaluated"
+    },
+    "instantiation_dry_run": {
+      "command": "python3 runtime/instantiate_strategy_b_v2.py --results-root /Volumes/ExpansionDrive/qlib-results --task-id t_35b3e5da --round-id ...-r1 --run-id ...-r1-u3 --dry-run --json",
+      "action": "would_instantiate",
+      "problems": [],
+      "counts": {
+        "cohorts": 20,
+        "strategy_cases": 120,
+        "dca_configs": 48,
+        "base_combinations_per_cohort": 5760,
+        "case_evaluations_per_grid": 115200,
+        "expected_case_evaluations": 1152000
+      },
+      "fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "runner_sha256": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+      "engine_test_sha256": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+      "note": "dry-run only; nothing was published. The existing r1 round-spec would be reused verbatim (contract 8); u3 would publish only its run-spec"
+    },
+    "counts_validator": {
+      "command": "python3 runtime/strategy_b_v2_counts.py --spec <r1 round-spec> --run-spec <u2 run-spec> --self-test --json",
+      "ok": true,
+      "problems": [],
+      "fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "canonical": {
+        "cohorts": 20,
+        "ema_pairs": 30,
+        "walk_forward_cells": 4,
+        "strategy_cases_per_cohort": 120,
+        "dca_configs_per_cohort": 48,
+        "base_combinations_per_cohort": 5760,
+        "phase_grid_count": 10,
+        "case_evaluations_per_grid": 115200,
+        "case_evaluations_per_cohort_all_grids": 57600,
+        "expected_case_evaluations": 1152000
+      },
+      "self_test_flagged": 11,
+      "self_test_total": 11
+    },
+    "v1_8_parameter_contract": {
+      "round_spec_has_parameter_contract": true,
+      "validate_contract": [],
+      "validate_round_spec_contract": [],
+      "preflight_round_spec_contract_problem_on_u2_attempt_dir": null
+    }
+  },
+  "blocking_audit": {
+    "card": "t_92ef911d",
+    "title": "Independent re-audit: B v2 u3 F1/F2/F3 remediation @ 6b1cf77 (read-only)",
+    "verdict": "FAIL",
+    "blocking_finding": "F1 — the §26.1 migration tool's scope guard is bypassable through a canonical-path symlink: evidence/strategy-b-v2-r1-round-spec-schema-migration-20260914/migrate_r1_round_spec.py:79 compares os.path.realpath(spec_path) with os.path.realpath(MIGRATION_SPEC_PATH), so a symlink placed at another path that targets the canonical file is accepted and written to (auditor reproducer: rc=0, action=migrated, alias replaced by a regular file, canonical untouched). §26.1 authorises only the canonical path and requires zero-write for every other path.",
+    "passing_items": [
+      "F2 PASS — instantiate_strategy_b_v2.py validates the round-spec contract before counts.check on the fresh, reuse and read-back paths (V,C,V,C,V,C on reuse); the pre-remediation bytes show the inverted order",
+      "F3 PASS — the r1 migration evidence commit is exactly 3 files, matching the corrected narration",
+      "24/24 migration verifier, 259/259 test suite, live r1 pins and u1/u2 immutability all reconfirmed by the auditor"
+    ],
+    "suggested_minimal_fix": "replace the realpath comparison at migrate_r1_round_spec.py:79 with a lexical absolute identity check (e.g. os.path.abspath(spec_path) != MIGRATION_SPEC_PATH) so symlink aliases can never be accepted, and add a symlink-to-canonical fixture to runtime/tests/test_b_v2_r1_migration_scope.py requiring rc=1, a scope problem, and unchanged alias and canonical bytes",
+    "live_spec_impact": "none on the applied migration: the auditor independently reconfirmed the live r1 round-spec (sha256:2c6d6f64…, contract == template == regenerated-from-own-domains, byte-splice reconstruction of the pre-migration document, scientific fields unchanged). The defect is confined to the tool's guard"
+  },
+  "decision": {
+    "u3_launched": false,
+    "reason": "the auditor re-audit returned FAIL on a blocking finding, so the launch gate stays closed (the chain's own rule: no u3 launch before an auditor PASS). The F1 remediation card is created and gates this card as a dependency",
+    "remediation_card": "t_0fd164c6 (assignee default, created by this run; it is a parent of this card, so this card waits for it)",
+    "verdict_json_written": false,
+    "scientific_conclusion": "none — no attempt was launched, so the round has no scientific result and this card makes no scientific claim"
+  },
+  "guards_this_run": {
+    "qlib_launch_performed": false,
+    "writes_to_results": "none (only read-only probes; the preflight P3 probe file is created and removed by runtime/preflight.py itself)",
+    "u3_spec_published": false,
+    "immutable_artifacts_modified": false,
+    "strategy_a_v2_or_b_v1_artifacts_modified": false,
+    "cron_touched": false,
+    "auditor_child_created": false,
+    "strategy_c_card_generated": false,
+    "second_engine_introduced": false
+  },
+  "next_step": "F1 remediation (default) -> independent auditor re-audit (auditor) -> on PASS, instantiate r1-u3 (run-spec pinning script sha256:d23811c1… and engine selfcheck sha256:ac918304…), run the full launch gate (preflight P1-P10 with --launch --attempt-dir) and launch exact-once via container exec; on FAIL, fail closed again and report"
+}
