@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "kind": "b_v2_r1_round_spec_schema_migration",
+  "contract_section": "26.1",
+  "card": "t_67481d49",
+  "ran_at_utc": "2026-09-14T12:07:54Z",
+  "spec": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/round-spec.json",
+  "dry_run": false,
+  "problems": [],
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "generated_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+    "contract_ref": "v1.8 generic family parameter contract (runtime/parameter_contract.py); generated from this document's registered parameter_domain / dca_domain",
+    "research_axes_ordered": [
+      {
+        "name": "ema_pair",
+        "kind": "composite",
+        "members": [
+          "ema_fast",
+          "ema_slow"
+        ],
+        "registered_values": [
+          [
+            5,
+            40
+          ],
+          [
+            5,
+            50
+          ],
+          [
+            5,
+            100
+          ],
+          [
+            5,
+            150
+          ],
+          [
+            5,
+            200
+          ],
+          [
+            7,
+            40
+          ],
+          [
+            7,
+            50
+          ],
+          [
+            7,
+            100
+          ],
+          [
+            7,
+            150
+          ],
+          [
+            7,
+            200
+          ],
+          [
+            10,
+            40
+          ],
+          [
+            10,
+            50
+          ],
+          [
+            10,
+            100
+          ],
+          [
+            10,
+            150
+          ],
+          [
+            10,
+            200
+          ],
+          [
+            15,
+            40
+          ],
+          [
+            15,
+            50
+          ],
+          [
+            15,
+            100
+          ],
+          [
+            15,
+            150
+          ],
+          [
+            15,
+            200
+          ],
+          [
+            20,
+            40
+          ],
+          [
+            20,
+            50
+          ],
+          [
+            20,
+            100
+          ],
+          [
+            20,
+            150
+          ],
+          [
+            20,
+            200
+          ],
+          [
+            30,
+            40
+          ],
+          [
+            30,
+            50
+          ],
+          [
+            30,
+            100
+          ],
+          [
+            30,
+            150
+          ],
+          [
+            30,
+            200
+          ]
+        ],
+        "row_fields": [
+          "ema_fast",
+          "ema_slow"
+        ]
+      },
+      {
+        "name": "walk_forward",
+        "kind": "composite",
+        "members": [
+          "wf_train_days",
+          "wf_test_days"
+        ],
+        "registered_values": [
+          [
+            3,
+            3
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            14,
+            14
+          ],
+          [
+            28,
+            28
+          ]
+        ],
+        "row_fields": [
+          "wf_train_days",
+          "wf_test_days"
+        ]
+      },
+      {
+        "name": "spacing_pct",
+        "kind": "atomic",
+        "members": [
+          "spacing_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03,
+          0.04
+        ],
+        "row_fields": [
+          "spacing_pct"
+        ]
+      },
+      {
+        "name": "size_multiplier",
+        "kind": "atomic",
+        "members": [
+          "size_multiplier"
+        ],
+        "registered_values": [
+          1.0,
+          1.1
+        ],
+        "row_fields": [
+          "size_multiplier"
+        ]
+      },
+      {
+        "name": "breakeven_tp_pct",
+        "kind": "atomic",
+        "members": [
+          "breakeven_tp_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03
+        ],
+        "row_fields": [
+          "breakeven_tp_pct"
+        ]
+      },
+      {
+        "name": "invalidation_pct",
+        "kind": "atomic",
+        "members": [
+          "invalidation_pct"
+        ],
+        "registered_values": [
+          0.05,
+          0.1
+        ],
+        "row_fields": [
+          "invalidation_pct"
+        ]
+      }
+    ],
+    "row_fields": [
+      "ema_fast",
+      "ema_slow",
+      "wf_train_days",
+      "wf_test_days",
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "composite_map": {
+      "ema_pair": [
+        "ema_fast",
+        "ema_slow"
+      ],
+      "walk_forward": [
+        "wf_train_days",
+        "wf_test_days"
+      ]
+    },
+    "strategy_param_fields": [
+      "ema_fast",
+      "ema_slow",
+      "wf_train_days",
+      "wf_test_days"
+    ],
+    "dca_param_fields": [
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "canonical_recipe": {
+      "sort_keys": true,
+      "separators": [
+        ",",
+        ":"
+      ],
+      "ensure_ascii": false,
+      "numeric_rule": "JSON number finite, bool excluded"
+    },
+    "row_match_recipe": {
+      "keys": [
+        "symbol",
+        "timeframe",
+        "ema_fast",
+        "ema_slow",
+        "wf_train_days",
+        "wf_test_days",
+        "spacing_pct",
+        "size_multiplier",
+        "breakeven_tp_pct",
+        "invalidation_pct"
+      ],
+      "equality": "exact, numeric == float compare, rest bytewise"
+    },
+    "non_params": [
+      "symbol",
+      "timeframe",
+      "window_kind",
+      "ema_pair_index",
+      "walk_forward_index",
+      "base_quote",
+      "n_steps",
+      "diagnostics",
+      "metrics"
+    ],
+    "domain_cardinality": {
+      "strategy": 120,
+      "dca": 48,
+      "per_cohort": 5760
+    }
+  },
+  "validators": {
+    "validate_contract": [],
+    "validate_round_spec_contract": []
+  },
+  "counts": {
+    "ok": true,
+    "problems": [],
+    "computed": {
+      "cohorts": 20,
+      "strategy_cases": 120,
+      "dca_configs": 48,
+      "base_combinations_per_cohort": 5760,
+      "case_evaluations_per_grid": 115200,
+      "expected_case_evaluations": 1152000
+    },
+    "fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "fingerprint_match": true
+  },
+  "before_sha256": "sha256:a3dd33a95e3fb307c91f5e07f5b486b3c51e8be4bbc214ae85d654a169bcaf22",
+  "after_sha256": "sha256:2c6d6f64bf864180c937c740db8ced2bd17c13f59e73e16f66d0183ea7c53ecf",
+  "preservation": {
+    "splice": {
+      "preserved_original_bytes": 38282,
+      "original_bytes": 38284,
+      "inserted_bytes": 5435,
+      "inserted_region_is_a_single_top_level_key": true,
+      "inserted_region_starts_with_the_json_comma_separator": true,
+      "original_prefix_preserved": true,
+      "original_tail_preserved": true,
+      "original_bytes_rewritten": 0
+    },
+    "added_top_level_keys": [
+      "parameter_contract"
+    ],
+    "removed_top_level_keys": [],
+    "changed_existing_keys": [],
+    "canonical_json_of_remaining_keys_equal": true,
+    "written_text_parses_to_the_intended_document": true,
+    "bytes_before": 38284,
+    "bytes_after": 43719
+  },
+  "template_cross_check": {
+    "template": "/Users/hong/workspace/quant-runtime-pipeline/runtime/templates/strategy_b_v2_round_spec.template.json",
+    "template_contract_equals_generated": true,
+    "generated_equals_migration_contract": true,
+    "template_contract_sha256": "sha256:4906e876df92b4b6094a43a3e2cb20d5052f3b41d05bdaf3348372bebe6efb37",
+    "migration_contract_sha256": "sha256:4906e876df92b4b6094a43a3e2cb20d5052f3b41d05bdaf3348372bebe6efb37"
+  },
+  "sibling_immutability": {
+    "round_dir": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1",
+    "attempts": [
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2"
+    ],
+    "files": 34,
+    "attempt_pins_before": {
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/run-spec.json": "sha256:e997ac6b9f7779c8e91163f2d3c9b11d34c11fe84d4d98cd14fe8954ab294162",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/FAILED": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/state.json": "sha256:3ecdc7dec3c8d17e14ce5207fc0a5540eb4407bc9c732bdaf548aa5cadf2f763",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/run-spec.json": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/FAILED": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/state.json": "sha256:4c31f64130fe7bf9d01ab6a32db0c26d9ee66b5828e9cdc832799241fccdb540"
+    },
+    "family_json_sha256_before": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+    "attempt_pins_after": {
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/run-spec.json": "sha256:e997ac6b9f7779c8e91163f2d3c9b11d34c11fe84d4d98cd14fe8954ab294162",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/FAILED": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u1/state.json": "sha256:3ecdc7dec3c8d17e14ce5207fc0a5540eb4407bc9c732bdaf548aa5cadf2f763",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/run-spec.json": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/FAILED": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f",
+      "ema-crossover-walkforward-momentum-long-short-v2-r1-u2/state.json": "sha256:4c31f64130fe7bf9d01ab6a32db0c26d9ee66b5828e9cdc832799241fccdb540"
+    },
+    "attempt_pins_equal": true,
+    "sibling_manifests_equal": true,
+    "family_json_sha256_after": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+    "family_json_equal": true
+  },
+  "readback": {
+    "sha256": "sha256:2c6d6f64bf864180c937c740db8ced2bd17c13f59e73e16f66d0183ea7c53ecf",
+    "sha256_matches": true,
+    "bytes_identical_to_planned_text": true,
+    "validate_contract": [],
+    "validate_round_spec_contract": []
+  },
+  "superseded_sha_records": [
+    "evidence/strategy-b-v2-launch-record-20260914.json",
+    "evidence/strategy-b-v2-u2-midrun-status-20260914.json",
+    "evidence/strategy-b-v2-u3-launch-gate-blocker-20260914.json",
+    "evidence/v1.7.1-reconciler-current-attempt-20260914.json"
+  ],
+  "action": "migrated"
+}
