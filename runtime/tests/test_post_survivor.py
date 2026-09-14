@@ -1160,6 +1160,74 @@ class TestGenericFamilyLeaderboard(Base):
         self.assertIn("strategy_params_canonical_json", header)
         self.assertNotIn("strategy_window", header)
 
+    def test_csv_contract_needs_every_row_to_be_legacy_a(self):
+        """R1 residual (v1.8 re-audit): one legacy A row is not enough - a mixed root must not
+        take the legacy per-param columns."""
+        a_row = {"family_id": pc.LEGACY_A_FAMILY_ID}
+        b_row = {"family_id": self.B_FAMILY}
+        self.assertEqual(sl.csv_contract_for([a_row]), pc.LEGACY_A_CONTRACT)
+        self.assertIsNone(sl.csv_contract_for([]))
+        self.assertIsNone(sl.csv_contract_for([b_row]))
+        self.assertIsNone(sl.csv_contract_for([a_row, b_row]))
+        self.assertIsNone(sl.csv_contract_for([b_row, a_row]))
+
+    def test_mixed_a_b_root_uses_generic_columns_for_every_row(self):
+        """R1 residual (v1.8 re-audit): with a legacy-A row ranked FIRST the old rows[0] check
+        took the legacy CSV branch and the B row raised KeyError 'window' - leaderboard.json was
+        already written, leaderboard.csv never was."""
+        make_family(self.root, pc.LEGACY_A_FAMILY_ID,
+                    [survivor("BTCUSDT/1h", oos=(3.0, 100.0, 40))])
+        make_family(self.root, self.B_FAMILY, [self.b_survivor("SOLUSDT/4h")],
+                    parameter_contract=self.b_contract())
+        proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["survivor_count"], 2)
+        # A's OOS sharpe 3.0 outranks B's 1.8, so A really is rows[0] (the failing shape)
+        with open(os.path.join(self.root, "_survivors", "leaderboard.json")) as fh:
+            doc = json.load(fh)
+        self.assertEqual(doc["entries"][0]["family_id"], pc.LEGACY_A_FAMILY_ID)
+        self.assertEqual(doc["entries"][1]["family_id"], self.B_FAMILY)
+        # both halves of the pair are produced, with generic columns for all rows
+        csv_path = os.path.join(self.root, "_survivors", "leaderboard.csv")
+        with open(csv_path) as fh:
+            header = fh.readline().strip()
+            body = [line for line in fh.read().splitlines() if line]
+        self.assertIn("strategy_params_canonical_json", header)
+        self.assertNotIn("strategy_window", header)
+        self.assertEqual(len(body), 2)
+        check = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--check")
+        self.assertEqual(check.returncode, 0, check.stderr)
+
+    def test_legacy_a_only_root_keeps_its_per_param_columns(self):
+        """A compatibility: the R1 fix must not push an all-legacy-A root onto generic columns."""
+        make_family(self.root, pc.LEGACY_A_FAMILY_ID, a_v2_like_bundle())
+        proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(os.path.join(self.root, "_survivors", "leaderboard.csv")) as fh:
+            header = fh.readline().strip()
+        self.assertIn("strategy_window", header)
+        self.assertIn("strategy_discount", header)
+        self.assertNotIn("strategy_params_canonical_json", header)
+        check = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--check")
+        self.assertEqual(check.returncode, 0, check.stderr)
+
+    def test_malformed_composite_map_contract_refuses_instead_of_traceback(self):
+        """R2 residual (v1.8 re-audit): a mixed-type composite_map value must reach the caller
+        as accumulated problems (index refused), never as a TypeError out of sorted()."""
+        contract = self.b_contract()
+        contract["composite_map"] = {"ema_pair": [1, "ema_slow"],
+                                     "walk_forward": ["wf_train_days", "wf_test_days"]}
+        make_family(self.root, self.B_FAMILY, [self.b_survivor("BTCUSDT/1h")],
+                    parameter_contract=contract)
+        index, problems = si.build(self.root)
+        self.assertIsNone(index)
+        self.assertTrue(any("parameter_contract invalid" in p for p in problems), problems)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+        proc = self.run_cli(INDEX_CLI, "--json")
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("REFUSED", proc.stderr)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

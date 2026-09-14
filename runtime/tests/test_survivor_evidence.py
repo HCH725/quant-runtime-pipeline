@@ -575,5 +575,347 @@ class EvidenceTests(unittest.TestCase):
 
 MANIFEST_KEY = se.MANIFEST_NAME
 
+
+# ---------------------------------------------------------------------------
+# T1 (v1.8 re-audit residual): the B-shaped (generic composite contract) evidence package.
+#
+# F2 had fixed `check_package`'s round-spec lookup - `bundle_path` already lives INSIDE the round
+# directory, so round-spec.json sits at `dirname(bundle_path)`, not one directory above it.  No
+# shipped test pinned that line, so reverting it kept the whole suite green while every generic
+# (B-shaped) package failed its winner-row lookup (contract None -> legacy A axes -> ValueError).
+#
+# The fixture plants a decoy round-spec ONE LEVEL ABOVE the round (valid shape, matching
+# family_id, one unique `zeta_marker` axis): a reader that resolves the wrong directory reads the
+# decoy - whose contract is lethal for this cell - while a reader that resolves the round
+# directory passes.
+# ---------------------------------------------------------------------------
+B_FAMILY = "fixture-b-generic-v1"
+B_ROUND = B_FAMILY + "-r1"
+B_RUN = B_ROUND + "-u1"
+B_TASK = "t_fixture_b"
+B_SYMBOL, B_TIMEFRAME = "SOLUSDT", "4h"
+B_GRIDS = ("historical", "full")
+B_WINNER = {"ema_fast": 10, "ema_slow": 60, "wf_train_days": 252, "wf_test_days": 63,
+            "spacing_pct": 0.02, "size_multiplier": 1.1, "breakeven_tp_pct": 0.03,
+            "invalidation_pct": 0.10}
+B_GRID_COLUMNS = ["symbol", "timeframe", "window_kind", "ema_fast", "ema_slow",
+                  "wf_train_days", "wf_test_days", "spacing_pct", "size_multiplier",
+                  "breakeven_tp_pct", "invalidation_pct", "net_pnl", "fees", "funding",
+                  "gross_pnl", "ending_equity", "episodes", "tp_hits", "stop_hits",
+                  "open_at_end", "margin_calls", "halted", "sharpe", "max_dd_usdt",
+                  "max_dd_pct", "days", "total_return_pct"]
+
+
+def b_contract():
+    """The generic shape: two composite axes (ema_pair, walk_forward), no window/discount."""
+    return {
+        "parameter_contract_version": 1, "family_id": B_FAMILY,
+        "contract_ref": "B-shaped fixture contract (composite axes)",
+        "research_axes_ordered": [
+            {"name": "ema_pair", "kind": "composite",
+             "members": ["ema_fast", "ema_slow"],
+             "registered_values": [[5, 40], [10, 60], [15, 80]],
+             "row_fields": ["ema_fast", "ema_slow"]},
+            {"name": "walk_forward", "kind": "composite",
+             "members": ["wf_train_days", "wf_test_days"],
+             "registered_values": [[252, 63], [126, 31]],
+             "row_fields": ["wf_train_days", "wf_test_days"]},
+            {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+             "registered_values": [0.01, 0.02, 0.03], "row_fields": ["spacing_pct"]},
+            {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"],
+             "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+            {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"],
+             "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+            {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"],
+             "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+        ],
+        "row_fields": ["ema_fast", "ema_slow", "wf_train_days", "wf_test_days",
+                       "spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                       "invalidation_pct"],
+        "composite_map": {"ema_pair": ["ema_fast", "ema_slow"],
+                          "walk_forward": ["wf_train_days", "wf_test_days"]},
+        "strategy_param_fields": ["ema_fast", "ema_slow", "wf_train_days", "wf_test_days"],
+        "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                             "invalidation_pct"],
+        "canonical_recipe": {"sort_keys": True, "separators": (",", ":"),
+                             "ensure_ascii": False,
+                             "numeric_rule": "JSON number finite, bool excluded"},
+        "row_match_recipe": {"keys": ["symbol", "timeframe", "ema_fast", "ema_slow",
+                                      "wf_train_days", "wf_test_days", "spacing_pct",
+                                      "size_multiplier", "breakeven_tp_pct",
+                                      "invalidation_pct"],
+                             "equality": "exact"},
+        "non_params": ["symbol", "timeframe"],
+        "domain_cardinality": {"strategy": 6, "dca": 36, "per_cohort": 216},
+    }
+
+
+def zeta_decoy_contract():
+    """A VALID contract that only a wrong-directory reader can pick up: its mandatory
+    `zeta_marker` axis is absent from the B cell, so resolving it cannot verify the package."""
+    return {
+        "parameter_contract_version": 1, "family_id": B_FAMILY,
+        "contract_ref": "decoy: round-spec planted one level above the round",
+        "research_axes_ordered": [
+            {"name": "zeta_marker", "kind": "atomic", "members": ["zeta_marker"],
+             "registered_values": [1], "row_fields": ["zeta_marker"]},
+            {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+             "registered_values": [0.01, 0.02, 0.03], "row_fields": ["spacing_pct"]},
+            {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"],
+             "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+            {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"],
+             "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+            {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"],
+             "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+        ],
+        "row_fields": ["zeta_marker", "spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                       "invalidation_pct"],
+        "composite_map": {},
+        "strategy_param_fields": ["zeta_marker"],
+        "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                             "invalidation_pct"],
+        "canonical_recipe": {"sort_keys": True, "separators": (",", ":"),
+                             "ensure_ascii": False,
+                             "numeric_rule": "JSON number finite, bool excluded"},
+        "row_match_recipe": {"keys": ["symbol", "timeframe"], "equality": "exact"},
+        "non_params": ["symbol", "timeframe"],
+        "domain_cardinality": {"strategy": 1, "dca": 36, "per_cohort": 36},
+    }
+
+
+def b_survivor():
+    return {
+        "cohort": "%s/%s" % (B_SYMBOL, B_TIMEFRAME), "outcome": "SURVIVOR",
+        "no_winner_reason": None, "cull_reasons": [], "winner": dict(B_WINNER),
+        "neighbourhood": {"neighbours": 6, "agreeing": 5, "same_sign_fraction": 0.857143,
+                          "passed": True},
+        "metrics": {
+            "historical": {"net_pnl": 10.0, "sharpe": 1.0, "episodes": 2, "max_dd_pct": -0.01},
+            "oos": {"net_pnl": 20.0, "sharpe": 2.17438, "episodes": 3, "max_dd_pct": -0.02},
+            "full": {"net_pnl": 30.0, "sharpe": 1.5, "episodes": 2, "max_dd_pct": -0.03},
+            "robustness": {g: {"net_pnl": 5.0, "sharpe": 1.0, "max_dd_pct": -0.04}
+                           for g in ("fee_2x", "funding_2x", "entry_delay_1_bar",
+                                     "slippage_2ticks")},
+        },
+    }
+
+
+def write_b_grid(attempt, grid):
+    """The frozen grid CSV of the composite winner cell + the replay ledgers for that grid."""
+    if grid == "historical":
+        episodes = [episode(0, "TP", 100.0, 4.0, 1.0), episode(1, "STOP", -40.0, 4.0, 2.0)]
+        equity = [30000.0, 30060.0, 30055.0]
+        fill_fees = [4.0, 4.0]
+        exit_event, exit_price = "EXIT", 101.0
+    else:
+        episodes = [episode(0, "EOD_FLATTEN", 250.0, 6.0, 3.0), episode(1, "TP", 90.0, 5.0, 1.5)]
+        equity = [30000.0, 30100.0, 30338.5]
+        fill_fees = [6.0, 5.0]
+        exit_event, exit_price = "FLATTEN", 100.5
+    sharpe, dd_usdt, dd_pct, peaks, dd, ddp = series_stats(equity)
+    row = {"symbol": B_SYMBOL, "timeframe": B_TIMEFRAME, "window_kind": grid}
+    row.update(B_WINNER)
+    row.update({
+        "net_pnl": round(sum(e["net_pnl"] for e in episodes), 6),
+        "fees": round(sum(e["fees"] for e in episodes), 6),
+        "funding": round(sum(e["funding"] for e in episodes), 6),
+        "gross_pnl": round(sum(e["gross_pnl"] for e in episodes), 6),
+        "ending_equity": equity[-1], "episodes": len(episodes),
+        "tp_hits": sum(1 for e in episodes if e["exit_reason"] == "TP"),
+        "stop_hits": sum(1 for e in episodes if e["exit_reason"] == "STOP"),
+        "open_at_end": sum(1 for e in episodes if e["exit_reason"] == "EOD_FLATTEN"),
+        "margin_calls": 0, "halted": False, "sharpe": sharpe, "max_dd_usdt": dd_usdt,
+        "max_dd_pct": dd_pct, "days": len(equity),
+        "total_return_pct": round(equity[-1] / 30000.0 - 1.0, 6)})
+    write_csv(os.path.join(attempt, "artifacts", "grid_%s.csv" % grid), B_GRID_COLUMNS, [row])
+    fill_rows = []
+    for i, ep in enumerate(episodes):
+        fill_rows += fills_for(ep["episode"], ep["exit_reason"], fill_fees[i], exit_event,
+                               exit_price)
+    equity_rows = [{"day_index": i, "date": "2026-09-%02d" % (i + 1), "equity": equity[i],
+                    "peak": peaks[i], "drawdown_usdt": dd[i], "drawdown_pct": ddp[i],
+                    "in_window": True} for i in range(len(equity))]
+    return row, {"fills.csv": (FILL_COLUMNS, fill_rows),
+                 "episodes.csv": (EPISODE_COLUMNS, episodes),
+                 "equity.csv": (EQUITY_COLUMNS, equity_rows)}
+
+
+class BShapeFixture(object):
+    """A generic (composite-contract) frozen round + leaderboard + replay staging + package."""
+
+    def __init__(self, root, decoy=True):
+        self.root = root
+        self.family = os.path.join(root, B_FAMILY)
+        self.round = os.path.join(self.family, "rounds", B_ROUND)
+        self.attempt = os.path.join(self.round, "attempts", B_RUN)
+        self.staging = os.path.join(root, "_survivors", "evidence", ".staging-b")
+        self.grid_rows, self.ledgers = {}, {}
+        self.build_round()
+        if decoy:
+            dump(os.path.join(self.family, "rounds", "round-spec.json"),
+                 {"family_id": B_FAMILY, "round_id": B_ROUND,
+                  "data": {"data_end": "2026-09-10"},
+                  "parameter_contract": zeta_decoy_contract()})
+        self.entry = self.build_derived()
+        self.stage_replay()
+
+    def build_round(self):
+        dump(os.path.join(self.family, "family.json"),
+             {"family_id": B_FAMILY, "kanban_task_id": B_TASK,
+              "created_at_utc": "2026-09-13T00:00:00Z", "parent_family": None})
+        spec_path = os.path.join(self.round, "round-spec.json")
+        dump(spec_path, {"family_id": B_FAMILY, "round_id": B_ROUND,
+                         "data": {"data_end": "2026-09-10"},
+                         "parameter_contract": b_contract()})
+        dump(os.path.join(self.round, "verdict.json"), {"verdict": "PASS"})
+        dump(os.path.join(self.attempt, "run-spec.json"),
+             {"family_id": B_FAMILY, "round_id": B_ROUND, "run_id": B_RUN,
+              "script": {"path": "/scripts/21_strategy_b_run.py",
+                         "sha256": "sha256:" + "c4" * 32},
+              "data": {"symbols": [B_SYMBOL],
+                       "timeframes": [{"raw_interval": B_TIMEFRAME, "qlib_freq": "240min"}],
+                       "start": "2022-01-01", "end": "2026-09-10",
+                       "historical_start": "2022-01-01", "historical_end": "2025-09-30",
+                       "oos_start": "2025-10-01", "oos_end": "2026-09-10"},
+              "dca_domain": {"base_quote": 1000},
+              "expected": {"expected_case_evaluations": 216, "case_evaluations_per_grid": 216},
+              "expected_outputs": ["result.json", "artifacts/bins_build.json",
+                                   "artifacts/input_manifest.json"]
+                                  + ["artifacts/grid_%s.csv" % g for g in B_GRIDS]})
+        dump(os.path.join(self.attempt, "artifacts", "input_manifest.json"), {"raw_files": {}})
+        dump(os.path.join(self.attempt, "artifacts", "bins_build.json"), {"qlib_dir_bytes": 1})
+        for grid in B_GRIDS:
+            self.grid_rows[grid], self.ledgers[grid] = write_b_grid(self.attempt, grid)
+        checksums = {"result.json": "sha256:" + "11" * 32,
+                     "artifacts/input_manifest.json":
+                         sha(os.path.join(self.attempt, "artifacts", "input_manifest.json")),
+                     "artifacts/bins_build.json":
+                         sha(os.path.join(self.attempt, "artifacts", "bins_build.json"))}
+        for grid in B_GRIDS:
+            rel = "artifacts/grid_%s.csv" % grid
+            checksums[rel] = sha(os.path.join(self.attempt, rel))
+        dump(os.path.join(self.attempt, "DONE"),
+             {"schema_version": 1, "status": "DONE", "family_id": B_FAMILY, "round_id": B_ROUND,
+              "run_id": B_RUN, "task_id": B_TASK,
+              "artifact_manifest": list(checksums), "artifact_checksums": checksums})
+        sources = {"round-spec.json": sha(spec_path),
+                   "run-spec.json": sha(os.path.join(self.attempt, "run-spec.json")),
+                   "verdict.json": sha(os.path.join(self.round, "verdict.json")),
+                   "result.json": checksums["result.json"]}
+        bundle = {
+            "schema_version": 1, "kind": "frozen_survivor_bundle",
+            "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.4.0",
+            "family_id": B_FAMILY, "round_id": B_ROUND, "run_id": B_RUN,
+            "kanban_task_id": B_TASK, "survivor_count": 1,
+            "disposition_band": "SURVIVOR_FOUND", "verdict": "PASS", "ranking": None,
+            "survivors": [b_survivor()], "source_artifacts": sources,
+            "generator": {"path": "runtime/survivor_bundle.py",
+                          "sha256": "sha256:" + "22" * 32},
+            "generated_at_utc": "2026-09-13T01:00:00Z",
+        }
+        bundle["bundle_identity_sha256"] = bundle_identity(bundle)
+        dump(os.path.join(self.round, "survivor-bundle.json"), bundle)
+
+    def build_derived(self):
+        index, problems = si.build(self.root)
+        assert not problems, problems
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            rc = sl.main(["leaderboard", "--results-root", self.root, "--json"])
+        assert rc == 0, "leaderboard write failed"
+        return index["survivors"][0]
+
+    def stage_replay(self):
+        out = os.path.join(self.staging, self.entry["survivor_id"])
+        rows, header = [], None
+        for grid in B_GRIDS:
+            grid_dir = os.path.join(out, "grids", grid)
+            for name, (columns, body) in self.ledgers[grid].items():
+                write_csv(os.path.join(grid_dir, name), columns, body)
+            columns = list(self.grid_rows[grid].keys())
+            header = header or columns
+            rows.append(dict({"grid": grid}, **{k: self.grid_rows[grid][k] for k in columns}))
+        write_csv(os.path.join(out, "replay_aggregate.csv"), ["grid"] + header, rows)
+        dump(os.path.join(out, "replay.json"),
+             {"schema_version": 1, "kind": "survivor_evidence_replay",
+              "survivor_id": self.entry["survivor_id"], "cohort": self.entry["cohort"],
+              "symbol": B_SYMBOL, "timeframe": B_TIMEFRAME, "family_id": B_FAMILY,
+              "round_id": B_ROUND, "run_id": B_RUN, "kanban_task_id": B_TASK,
+              "params_sha256": self.entry["params_sha256"],
+              "bundle_sha256": self.entry["bundle_sha256"],
+              "bundle_identity_sha256": self.entry["bundle_identity_sha256"],
+              "research_data_cutoff": self.entry["research_data_cutoff"],
+              "source_data": {"attempt_dir": self.attempt,
+                              "input_manifest_path": os.path.join(self.attempt, "artifacts",
+                                                                  "input_manifest.json"),
+                              "input_manifest_sha256":
+                                  sha(os.path.join(self.attempt, "artifacts",
+                                                   "input_manifest.json")),
+                              "bins_build_path": os.path.join(self.attempt, "artifacts",
+                                                              "bins_build.json"),
+                              "bins_build_sha256": sha(os.path.join(self.attempt, "artifacts",
+                                                                    "bins_build.json")),
+                              "data": {"start": "2022-01-01", "end": "2026-09-10"}},
+              "source_runner": {"path": "/scripts/21_strategy_b_run.py",
+                                "sha256": "sha256:" + "c4" * 32},
+              "replay_runner": {"path": "container/scripts/21_strategy_b_run.py",
+                                "sha256": "sha256:" + "4b" * 32},
+              "materialization_disclosure": "deterministic replay materialization, not the bytes "
+                                            "the original run stored",
+              "generated_at_utc": "2026-09-13T02:00:00Z"})
+
+    def materialize(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = se.main(["materialize", "--results-root", self.root, "--staging", self.staging,
+                          "--json"])
+        return rc, err.getvalue()
+
+    def check(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = se.main(["check", "--results-root", self.root, "--json"])
+        return rc, err.getvalue()
+
+
+class BShapeRoundSpecPathTests(unittest.TestCase):
+    """T1: a B-shaped (generic contract) package re-verifies against the round-spec in the ROUND
+    directory.  A reader that walks one directory up finds the decoy and cannot verify."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="v18-b-shape-")
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def test_b_shaped_check_resolves_the_round_spec_in_the_round_directory(self):
+        fx = BShapeFixture(self.tmp)
+        decoy_path = os.path.join(fx.family, "rounds", "round-spec.json")
+        self.assertTrue(os.path.isfile(decoy_path),
+                        "without the decoy this test cannot prove WHICH round-spec was read")
+        # the decoy really is lethal for this cell: reading it can only fail
+        with self.assertRaises(ValueError):
+            se.cell_params(fx.entry, contract=zeta_decoy_contract())
+        # the fixture really is B-shaped: a composite cell, no window/discount
+        self.assertEqual(fx.entry["strategy_params"],
+                         {k: B_WINNER[k] for k in ("ema_fast", "ema_slow", "wf_train_days",
+                                                   "wf_test_days")})
+        self.assertEqual(fx.materialize()[0], 0)
+        rc, err = fx.check()
+        self.assertEqual(rc, 0, err)
+        manifest, problems = se.check_package(self.tmp, fx.entry["survivor_id"], fx.entry)
+        self.assertEqual(problems, [])
+        self.assertEqual(manifest["package_identity_sha256"], se.identity(manifest))
+        self.assertEqual(manifest["family_id"], B_FAMILY)
+        # the frozen round itself is untouched by the package (read-only evidence)
+        self.assertEqual(si.sha256_file(decoy_path), sha(decoy_path))
+
+    def test_b_shaped_round_spec_missing_one_level_up_is_not_used(self):
+        """The complement: with no decoy, a wrong-directory reader still cannot verify - the
+        round-spec simply is not there, so the check must not fall back to legacy A axes."""
+        fx = BShapeFixture(self.tmp, decoy=False)
+        self.assertEqual(fx.materialize()[0], 0)
+        manifest, problems = se.check_package(self.tmp, fx.entry["survivor_id"], fx.entry)
+        self.assertEqual(problems, [])
+        self.assertEqual(manifest["family_id"], B_FAMILY)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

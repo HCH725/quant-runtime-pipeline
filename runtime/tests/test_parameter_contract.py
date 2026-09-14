@@ -11,6 +11,7 @@ Covers:
   * unknown future-family fixture: round-spec without parameter_contract for non-A family fails;
   * B-type contract: selector regression through contract-validated path.
 """
+import copy
 import json
 import os
 import sys
@@ -384,7 +385,10 @@ class TestMalformedContractShapes(unittest.TestCase):
     validation problems, never raise TypeError."""
 
     def _base(self):
-        base = dict(pc.LEGACY_A_CONTRACT)
+        # deep copy: the axis dicts of LEGACY_A_CONTRACT are shared by reference through a shallow
+        # dict(), so an in-place edit of one axis (members/row_fields) used to corrupt the module
+        # constant for every later test in the same process.
+        base = copy.deepcopy(pc.LEGACY_A_CONTRACT)
         # Add a composite axis so composite_map key validation can reach the value check
         base["research_axes_ordered"] = list(base["research_axes_ordered"]) + [
             {"name": "ema_pair", "kind": "composite",
@@ -444,6 +448,72 @@ class TestMalformedContractShapes(unittest.TestCase):
         contract, problems, is_legacy = pc.load_contract_from_round_spec(spec)
         self.assertIsNone(contract)
         self.assertTrue(len(problems) > 0)
+
+    # --- R2 residual (v1.8 re-audit): mixed-type composite_map/members/field lists -------------
+    def test_composite_map_value_mixed_list_does_not_raise(self):
+        """R2: [1, 'ema_slow'] reached sorted() and raised TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": [1, "ema_slow"]}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+
+    def test_composite_map_value_list_with_dict_does_not_raise(self):
+        """R2: ['ema_fast', {'k': 1}] reached sorted() and raised TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": ["ema_fast", {"k": 1}]}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+
+    def test_composite_map_value_bool_list_does_not_raise(self):
+        """R2: [True, 'ema_slow'] reached sorted() and raised TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": [True, "ema_slow"]}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+
+    def test_referenced_mixed_members_do_not_raise(self):
+        """R2: a composite axis referenced by composite_map whose members are mixed-type
+        reached sorted() and raised TypeError."""
+        bad = self._base()
+        bad["research_axes_ordered"][-1]["members"] = [1, "ema_slow"]
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("members" in p for p in problems), problems)
+
+    def test_mixed_type_row_fields_does_not_raise(self):
+        """R2 sibling: a mixed-type contract row_fields list reached sorted()."""
+        bad = self._base()
+        bad["row_fields"] = list(bad["row_fields"]) + [1]
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("row_fields" in p for p in problems), problems)
+
+    def test_unhashable_strategy_field_does_not_raise(self):
+        """R2 sibling: an unhashable entry in strategy_param_fields reached set()."""
+        bad = self._base()
+        bad["strategy_param_fields"] = ["window", ["discount"]]
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("strategy_param_fields" in p for p in problems), problems)
+
+    def test_mixed_type_strategy_fields_does_not_raise(self):
+        """R2 sibling: a mixed-type strategy/dca field list reached sorted()."""
+        bad = self._base()
+        bad["strategy_param_fields"] = ["window", 7]
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("strategy_param_fields" in p for p in problems), problems)
+
+    def test_load_fails_closed_on_mixed_composite_map(self):
+        """R2: the mixed shapes fail closed at the load boundary, not with a TypeError."""
+        for mutate in (lambda c: c["composite_map"].__setitem__("ema_pair", [1, "ema_slow"]),
+                       lambda c: c["research_axes_ordered"][-1].__setitem__(
+                           "members", [1, "ema_slow"]),
+                       lambda c: c.__setitem__("row_fields", list(c["row_fields"]) + [1])):
+            bad = self._base()
+            mutate(bad)
+            contract, problems, is_legacy = pc.load_contract_from_round_spec(
+                {"family_id": bad["family_id"], "parameter_contract": bad})
+            self.assertIsNone(contract, bad["composite_map"])
+            self.assertTrue(problems)
+            self.assertIn("parameter_contract invalid", problems[0])
+            self.assertFalse(is_legacy)
 
 
 class TestRenderHeaderLabels(unittest.TestCase):

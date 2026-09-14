@@ -567,6 +567,21 @@ def csv_rows(rows, contract=None):
     return out
 
 
+def csv_contract_for(rows):
+    """The contract whose columns the CSV uses, or None for the generic column set.
+
+    R1 remediation (v1.8 re-audit residual): the legacy per-param columns are only valid when
+    EVERY row is legacy A v2.  Selecting them from ``rows[0]`` routed the non-A rows of a mixed
+    root into the legacy branch, where ``row["strategy_params"]["window"]`` raised KeyError -
+    after ``leaderboard.json`` had already been written.
+    """
+    if rows and all(row["family_id"] == pc.LEGACY_A_FAMILY_ID for row in rows):
+        contract, _problems, _is_legacy = pc.load_contract_from_round_spec(
+            {"family_id": pc.LEGACY_A_FAMILY_ID, "parameter_contract": pc.LEGACY_A_CONTRACT})
+        return contract
+    return None  # generic canonical-JSON columns
+
+
 def csv_text(rows, contract=None):
     import io
     columns = csv_columns(contract=contract)
@@ -681,15 +696,10 @@ def cmd_leaderboard(args, results_root):
         return 1
     assert doc is not None and rows is not None
 
-    # Determine the contract for CSV column generation.  If all rows are legacy A v2,
-    # use the legacy per-param columns; otherwise use generic columns.
-    first_family = rows[0]["family_id"] if rows else None
-    if first_family == pc.LEGACY_A_FAMILY_ID:
-        _contract, _cp, _il = pc.load_contract_from_round_spec(
-            {"family_id": first_family, "parameter_contract": pc.LEGACY_A_CONTRACT})
-        csv_contract = _contract
-    else:
-        csv_contract = None  # generic columns
+    # Determine the contract for CSV column generation.  The legacy per-param columns are only
+    # valid when EVERY row is legacy A v2 (R1 remediation); any mixed or non-A root uses the
+    # generic canonical-JSON columns for all of its rows.
+    csv_contract = csv_contract_for(rows)
 
     if args.check:
         if not (os.path.exists(json_path) and os.path.exists(csv_path)):
@@ -707,8 +717,12 @@ def cmd_leaderboard(args, results_root):
             return 1
         result = "check_clean"
     else:
-        write_atomic(json_path, json_text(doc))
-        write_atomic(csv_path, csv_text(rows, contract=csv_contract))
+        # Render both payloads before the first write, so a failure cannot publish one half of
+        # the pair (R1: the mixed root used to write leaderboard.json and then die in the CSV).
+        doc_text = json_text(doc)
+        csv_body = csv_text(rows, contract=csv_contract)
+        write_atomic(json_path, doc_text)
+        write_atomic(csv_path, csv_body)
         result = "written"
 
     payload = {"ok": True, "result": result, "leaderboard_json": json_path,

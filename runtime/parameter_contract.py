@@ -65,6 +65,23 @@ def is_number(value):
             and math.isfinite(value))
 
 
+def _str_list(value):
+    """True when *value* is a list whose entries are all strings."""
+    return isinstance(value, list) and all(isinstance(x, str) for x in value)
+
+
+def _same_names(left, right):
+    """Order-insensitive equality of two field-name lists.
+
+    None when either side is not a plain string list.  R2 remediation (v1.8 re-audit residual):
+    a malformed mixed-type list must become a validation problem, never a TypeError out of
+    sorted() - callers turn None into a problem instead of comparing.
+    """
+    if not (_str_list(left) and _str_list(right)):
+        return None
+    return sorted(left) == sorted(right)
+
+
 def _axis_by_name(contract):
     out = {}
     for ax in contract.get("research_axes_ordered", []):
@@ -133,9 +150,14 @@ def validate_contract(contract):
     row_fields = contract.get("row_fields")
     if not (isinstance(row_fields, list) and row_fields):
         problems.append("row_fields must be a non-empty list")
-    elif sorted(row_fields) != sorted(seen_row_fields):
-        problems.append("row_fields %r != flattened axis row_fields %r"
-                        % (row_fields, seen_row_fields))
+    else:
+        same = _same_names(row_fields, seen_row_fields)
+        if same is None:
+            # R2 remediation: a mixed-type row_fields list must not reach sorted().
+            problems.append("row_fields must be a string list, got %r" % (row_fields,))
+        elif not same:
+            problems.append("row_fields %r != flattened axis row_fields %r"
+                            % (row_fields, seen_row_fields))
     cmap = contract.get("composite_map")
     if not isinstance(cmap, dict):
         problems.append("composite_map must be an object")
@@ -149,8 +171,17 @@ def validate_contract(contract):
                 # F3 remediation: malformed composite_map values (non-list) accumulate
                 # validation problems instead of raising TypeError from sorted().
                 problems.append("composite_map[%r] value is not a list: %r" % (k, v))
-            elif sorted(v) != sorted(ax.get("members", [])):
-                problems.append("composite_map[%r] %r != axis members %r" % (k, v, ax.get("members")))
+            else:
+                same = _same_names(v, ax.get("members"))
+                if same is None:
+                    # R2 remediation (v1.8 re-audit residual): a mixed-type value list, or a
+                    # referenced axis whose members are mixed-type, must accumulate a problem
+                    # instead of raising TypeError out of sorted().
+                    problems.append("composite_map[%r] value %r and axis members %r must both be "
+                                    "string lists" % (k, v, ax.get("members")))
+                elif not same:
+                    problems.append("composite_map[%r] %r != axis members %r"
+                                    % (k, v, ax.get("members")))
     strat = contract.get("strategy_param_fields")
     dca = contract.get("dca_param_fields")
     if not (isinstance(strat, list) and strat and all(isinstance(s, str) for s in strat)):
@@ -158,11 +189,16 @@ def validate_contract(contract):
     if not (isinstance(dca, list) and dca and all(isinstance(s, str) for s in dca)):
         problems.append("dca_param_fields must be a non-empty string list")
     if isinstance(strat, list) and isinstance(dca, list) and isinstance(row_fields, list):
-        if set(strat) & set(dca):
-            problems.append("strategy_param_fields and dca_param_fields overlap: %r"
-                            % sorted(set(strat) & set(dca)))
-        if sorted(list(strat) + list(dca)) != sorted(row_fields):
-            problems.append("strategy+dca fields must partition row_fields exactly")
+        # R2 remediation: set()/sorted() over malformed field lists must not raise.  A non-string
+        # list is already reported by the non-empty-string-list checks above, so the cross-checks
+        # simply do not run on it (still fail closed via those problems).
+        if _str_list(strat) and _str_list(dca):
+            overlap = sorted(set(strat) & set(dca))
+            if overlap:
+                problems.append("strategy_param_fields and dca_param_fields overlap: %r"
+                                % (overlap,))
+            if _str_list(row_fields) and sorted(list(strat) + list(dca)) != sorted(row_fields):
+                problems.append("strategy+dca fields must partition row_fields exactly")
     card = contract.get("domain_cardinality")
     if not isinstance(card, dict):
         problems.append("domain_cardinality must be an object")
