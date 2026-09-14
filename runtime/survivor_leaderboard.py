@@ -150,7 +150,11 @@ def csv_columns(contract=None):
             if c not in ("strategy_window", "strategy_discount",
                          "dca_spacing_pct", "dca_size_multiplier",
                          "dca_breakeven_tp_pct", "dca_invalidation_pct")]
-    if contract is None or contract.get("family_id") == pc.LEGACY_A_FAMILY_ID:
+    # F1 remediation: None sentinel must NOT default to legacy A.  Only an explicit
+    # LEGACY_A_FAMILY_ID match uses the legacy per-param columns; everything else
+    # (including None) uses the generic canonical JSON columns.
+    fam = contract.get("family_id") if isinstance(contract, dict) else None
+    if fam == pc.LEGACY_A_FAMILY_ID:
         # ponytail: insert legacy param columns at the same position as the original
         return (base[:9] + LEGACY_CSV_PARAM_COLUMNS + base[9:])
     return (base[:9] + GENERIC_CSV_PARAM_COLUMNS + base[9:])
@@ -513,7 +517,9 @@ def build(results_root):
 def csv_rows(rows, contract=None):
     """Generate CSV row dicts.  Legacy A v2 uses per-param columns; generic families use the
     canonical JSON + sha256 columns."""
-    is_legacy = contract is None or contract.get("family_id") == pc.LEGACY_A_FAMILY_ID
+    # F1 remediation: None sentinel must NOT default to legacy A (same as csv_columns).
+    fam = contract.get("family_id") if isinstance(contract, dict) else None
+    is_legacy = (fam == pc.LEGACY_A_FAMILY_ID)
     out = []
     for row in rows:
         base = {

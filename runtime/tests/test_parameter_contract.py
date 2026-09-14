@@ -379,5 +379,116 @@ class TestBFamilyContractThroughSelector(unittest.TestCase):
         self.assertIn("cardinality: strategy=6 dca=36 per-cohort=216", text)
 
 
+class TestMalformedContractShapes(unittest.TestCase):
+    """F3 remediation: malformed composite_map/registered_values/members must accumulate
+    validation problems, never raise TypeError."""
+
+    def _base(self):
+        base = dict(pc.LEGACY_A_CONTRACT)
+        # Add a composite axis so composite_map key validation can reach the value check
+        base["research_axes_ordered"] = list(base["research_axes_ordered"]) + [
+            {"name": "ema_pair", "kind": "composite",
+             "members": ["ema_fast", "ema_slow"],
+             "registered_values": [[5, 40], [10, 60]],
+             "row_fields": ["ema_fast", "ema_slow"]},
+        ]
+        base["row_fields"] = list(base["row_fields"]) + ["ema_fast", "ema_slow"]
+        base["composite_map"] = {"ema_pair": ["ema_fast", "ema_slow"]}
+        base["strategy_param_fields"] = list(base["strategy_param_fields"]) + ["ema_fast", "ema_slow"]
+        base["domain_cardinality"] = dict(base["domain_cardinality"],
+                                          strategy=base["domain_cardinality"]["strategy"] * 2,
+                                          per_cohort=base["domain_cardinality"]["per_cohort"] * 2)
+        return base
+
+    def test_composite_map_value_not_a_list(self):
+        """composite_map with a string value (not a list) must not raise TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": "not-a-list"}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p and "not a list" in p for p in problems),
+                        problems)
+
+    def test_composite_map_value_none(self):
+        """composite_map with None value must not raise TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": None}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+
+    def test_composite_map_value_int(self):
+        """composite_map with an integer value must not raise TypeError."""
+        bad = self._base()
+        bad["composite_map"] = {"ema_pair": 42}
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("composite_map" in p for p in problems), problems)
+
+    def test_members_not_a_list(self):
+        """axis members that is not a list must be caught, not raise TypeError."""
+        bad = self._base()
+        bad["research_axes_ordered"][0]["members"] = "not-a-list"
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("members" in p for p in problems), problems)
+
+    def test_row_fields_not_a_list(self):
+        """axis row_fields that is not a list must be caught, not raise TypeError."""
+        bad = self._base()
+        bad["research_axes_ordered"][0]["row_fields"] = "not-a-list"
+        problems = pc.validate_contract(bad)
+        self.assertTrue(any("row_fields" in p for p in problems), problems)
+
+    def test_load_contract_from_round_spec_malformed_does_not_traceback(self):
+        """load_contract_from_round_spec with malformed contract returns problems,
+        never raises."""
+        spec = {"family_id": "fam",
+                "parameter_contract": {"bad": True}}
+        contract, problems, is_legacy = pc.load_contract_from_round_spec(spec)
+        self.assertIsNone(contract)
+        self.assertTrue(len(problems) > 0)
+
+
+class TestRenderHeaderLabels(unittest.TestCase):
+    """F4 remediation: generic atomic header must not be mislabeled legacy-a-v2."""
+
+    def test_legacy_a_header_label(self):
+        text = pc.render_parameter_contract(pc.LEGACY_A_CONTRACT)
+        self.assertIn("legacy-a-v2", text)
+
+    def test_generic_atomic_header_label(self):
+        contract = {
+            "family_id": "generic-atomic-family",
+            "research_axes_ordered": [
+                {"name": "param_x", "kind": "atomic", "members": ["param_x"],
+                 "registered_values": [1, 2], "row_fields": ["param_x"]},
+            ],
+            "composite_map": {},
+            "dca_param_fields": ["param_x"],
+            "domain_cardinality": {"strategy": 2, "dca": 1, "per_cohort": 2},
+            "strategy_param_fields": [],
+            "row_fields": ["param_x"],
+        }
+        text = pc.render_parameter_contract(contract)
+        self.assertIn("v1, atomic", text)
+        self.assertNotIn("legacy-a-v2", text)
+
+    def test_composite_header_label(self):
+        contract = {
+            "family_id": "composite-family",
+            "research_axes_ordered": [
+                {"name": "ema_pair", "kind": "composite",
+                 "members": ["ema_fast", "ema_slow"],
+                 "registered_values": [[5, 40], [10, 60]],
+                 "row_fields": ["ema_fast", "ema_slow"]},
+            ],
+            "composite_map": {"ema_pair": ["ema_fast", "ema_slow"]},
+            "dca_param_fields": ["ema_fast", "ema_slow"],
+            "domain_cardinality": {"strategy": 2, "dca": 1, "per_cohort": 2},
+            "strategy_param_fields": ["ema_fast", "ema_slow"],
+            "row_fields": ["ema_fast", "ema_slow"],
+        }
+        text = pc.render_parameter_contract(contract)
+        self.assertIn("v1, composite", text)
+        self.assertNotIn("legacy-a-v2", text)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

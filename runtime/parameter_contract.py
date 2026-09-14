@@ -112,10 +112,14 @@ def validate_contract(contract):
             problems.append("axis %r row_fields must be a non-empty string list" % (name,))
             continue
         if isinstance(members, list) and isinstance(rfields, list):
-            if sorted(members) != sorted(rfields):
-                # members must equal row_fields as sets (composite members are row fields)
-                problems.append("axis %r members %r != row_fields %r (must match as sets)"
-                                % (name, members, rfields))
+            try:
+                if sorted(members) != sorted(rfields):
+                    # members must equal row_fields as sets (composite members are row fields)
+                    problems.append("axis %r members %r != row_fields %r (must match as sets)"
+                                    % (name, members, rfields))
+            except TypeError:
+                problems.append("axis %r members or row_fields contains non-sortable values"
+                                % (name,))
         if kind == "composite" and isinstance(members, list) and isinstance(reg, list):
             for v in reg:
                 if not (isinstance(v, (list, tuple)) and len(v) == len(members)):
@@ -141,6 +145,10 @@ def validate_contract(contract):
             ax = by_name.get(k)
             if ax is None or ax.get("kind") != "composite":
                 problems.append("composite_map key %r is not a composite axis" % (k,))
+            elif not isinstance(v, list):
+                # F3 remediation: malformed composite_map values (non-list) accumulate
+                # validation problems instead of raising TypeError from sorted().
+                problems.append("composite_map[%r] value is not a list: %r" % (k, v))
             elif sorted(v) != sorted(ax.get("members", [])):
                 problems.append("composite_map[%r] %r != axis members %r" % (k, v, ax.get("members")))
     strat = contract.get("strategy_param_fields")
@@ -355,8 +363,10 @@ def render_parameter_contract(contract):
     card = contract.get("domain_cardinality", {})
     lines = [
         "PARAMETER CONTRACT [%s, %s]" % (contract.get("family_id"),
-                                        "legacy-a-v2, no composite"
-                                        if not cmap else "v1, composite" if cmap else "v1, atomic"),
+                                        "v1, composite" if cmap
+                                        else "legacy-a-v2, no composite"
+                                        if contract.get("family_id") == LEGACY_A_FAMILY_ID
+                                        else "v1, atomic"),
         "research: " + " x ".join(parts),
         "composite: " + cmap_s,
         "DCA/execution: " + ",".join(contract.get("dca_param_fields", []))

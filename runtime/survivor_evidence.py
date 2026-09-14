@@ -642,7 +642,9 @@ def check_package(results_root, survivor_id, entry):
     if entry is not None:
         bundle_path = entry.get("bundle_path")
         if bundle_path:
-            round_dir = os.path.dirname(os.path.dirname(bundle_path))
+            # F2 remediation: bundle_path IS inside the round dir (<round>/survivor-bundle.json),
+            # so round-spec.json is at dirname(bundle_path), NOT dirname(dirname(bundle_path)).
+            round_dir = os.path.dirname(bundle_path)
             round_spec_path = os.path.join(round_dir, "round-spec.json")
             if os.path.isfile(round_spec_path):
                 try:

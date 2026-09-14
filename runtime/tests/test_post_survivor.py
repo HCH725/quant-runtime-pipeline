@@ -1021,5 +1021,145 @@ class TestWriteBoundary(Base):
         self.assertTrue(os.path.isfile(si.index_path(self.root)))
 
 
+class TestGenericFamilyLeaderboard(Base):
+    """F1 remediation: true B-shaped rows must use generic canonical JSON CSV columns,
+    never legacy A window/discount columns.  These tests exercise the full
+    index -> leaderboard -> CSV pipeline with a non-A family fixture."""
+
+    B_FAMILY = "ema-crossover-walkforward-momentum-long-short-v2"
+
+    def b_contract(self):
+        return {
+            "parameter_contract_version": 1,
+            "family_id": self.B_FAMILY,
+            "contract_ref": "B v2 generic contract",
+            "research_axes_ordered": [
+                {"name": "ema_pair", "kind": "composite",
+                 "members": ["ema_fast", "ema_slow"],
+                 "registered_values": [[5, 40], [10, 60], [15, 80]],
+                 "row_fields": ["ema_fast", "ema_slow"]},
+                {"name": "walk_forward", "kind": "composite",
+                 "members": ["wf_train_days", "wf_test_days"],
+                 "registered_values": [[252, 63], [126, 31]],
+                 "row_fields": ["wf_train_days", "wf_test_days"]},
+                {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+                 "registered_values": [0.01, 0.02, 0.03], "row_fields": ["spacing_pct"]},
+                {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"],
+                 "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+                {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"],
+                 "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+                {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"],
+                 "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+            ],
+            "row_fields": ["ema_fast", "ema_slow", "wf_train_days", "wf_test_days",
+                           "spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                           "invalidation_pct"],
+            "composite_map": {"ema_pair": ["ema_fast", "ema_slow"],
+                              "walk_forward": ["wf_train_days", "wf_test_days"]},
+            "strategy_param_fields": ["ema_fast", "ema_slow", "wf_train_days", "wf_test_days"],
+            "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                                 "invalidation_pct"],
+            "canonical_recipe": {"sort_keys": True, "separators": (",", ":"),
+                                 "ensure_ascii": False,
+                                 "numeric_rule": "JSON number finite, bool excluded"},
+            "row_match_recipe": {"keys": ["symbol", "timeframe", "ema_fast", "ema_slow",
+                                          "wf_train_days", "wf_test_days",
+                                          "spacing_pct", "size_multiplier",
+                                          "breakeven_tp_pct", "invalidation_pct"],
+                                 "equality": "exact"},
+            "non_params": ["symbol", "timeframe"],
+            "domain_cardinality": {"strategy": 6, "dca": 36, "per_cohort": 216},
+        }
+
+    def b_survivor(self, cohort, ema_fast=10, ema_slow=60, wf_train=252, wf_test=63,
+                   dca=None):
+        dca = dca or {"spacing_pct": 0.02, "size_multiplier": 1.1,
+                      "breakeven_tp_pct": 0.03, "invalidation_pct": 0.10}
+        return {
+            "cohort": cohort, "outcome": "SURVIVOR", "no_winner_reason": None,
+            "cull_reasons": [],
+            "winner": {"ema_fast": ema_fast, "ema_slow": ema_slow,
+                       "wf_train_days": wf_train, "wf_test_days": wf_test, **dca},
+            "neighbourhood": {"neighbours": 6, "agreeing": 5,
+                              "same_sign_fraction": 0.85, "passed": True},
+            "metrics": {
+                "historical": {"net_pnl": 500.0, "sharpe": 1.5, "episodes": 80,
+                               "max_dd_pct": -0.08},
+                "oos": {"net_pnl": 200.0, "sharpe": 1.8, "episodes": 40,
+                        "max_dd_pct": -0.05},
+                "full": {"net_pnl": 700.0, "sharpe": 2.0, "episodes": 120,
+                         "max_dd_pct": -0.10},
+                "robustness": {g: {"net_pnl": 50.0, "sharpe": 0.8, "max_dd_pct": -0.12}
+                               for g in ("fee_2x", "funding_2x",
+                                         "entry_delay_1_bar", "slippage_2ticks")},
+            },
+        }
+
+    def test_b_index_builds_with_generic_contract(self):
+        """B family round-spec includes parameter_contract; index loads it."""
+        make_family(self.root, self.B_FAMILY,
+                    [self.b_survivor("BTCUSDT/1h"), self.b_survivor("SOLUSDT/4h",
+                     ema_fast=15, ema_slow=80)],
+                    parameter_contract=self.b_contract())
+        index, problems = si.build(self.root)
+        self.assertEqual(problems, [], problems)
+        self.assertEqual(index["survivor_count"], 2)
+        entry = [e for e in index["survivors"]
+                 if e["cohort"] == "BTCUSDT/1h"][0]
+        # B-shaped strategy_params: ema_fast/ema_slow + wf_train/wf_test, NOT window/discount
+        self.assertEqual(entry["strategy_params"],
+                         {"ema_fast": 10, "ema_slow": 60,
+                          "wf_train_days": 252, "wf_test_days": 63})
+        self.assertNotIn("window", entry["strategy_params"])
+        self.assertNotIn("discount", entry["strategy_params"])
+
+    def test_b_leaderboard_csv_uses_generic_columns(self):
+        """Leaderboard CSV for B family uses canonical JSON columns, not legacy A columns."""
+        make_family(self.root, self.B_FAMILY,
+                    [self.b_survivor("BTCUSDT/1h")],
+                    parameter_contract=self.b_contract())
+        doc, rows, problems = sl.build(self.root)
+        self.assertEqual(problems, [], problems)
+        self.assertEqual(len(rows), 1)
+        # csv_columns with a non-A contract must return generic columns
+        contract, _cp, _il = pc.load_contract_from_round_spec(
+            {"family_id": self.B_FAMILY, "parameter_contract": self.b_contract()})
+        cols = sl.csv_columns(contract=contract)
+        self.assertIn("strategy_params_canonical_json", cols)
+        self.assertIn("strategy_params_sha256", cols)
+        self.assertNotIn("strategy_window", cols)
+        self.assertNotIn("strategy_discount", cols)
+        # csv_rows must produce generic output without KeyError
+        csv_rows = sl.csv_rows(rows, contract=contract)
+        self.assertEqual(len(csv_rows), 1)
+        self.assertIn("strategy_params_canonical_json", csv_rows[0])
+        self.assertNotIn("strategy_window", csv_rows[0])
+
+    def test_b_leaderboard_csv_with_none_contract_uses_generic(self):
+        """F1: csv_columns(None) must NOT default to legacy A columns."""
+        cols_none = sl.csv_columns(contract=None)
+        self.assertIn("strategy_params_canonical_json", cols_none)
+        self.assertNotIn("strategy_window", cols_none)
+
+    def test_b_leaderboard_e2e_write_check(self):
+        """Full B-shaped leaderboard write + check roundtrip."""
+        make_family(self.root, self.B_FAMILY,
+                    [self.b_survivor("BTCUSDT/1h"), self.b_survivor("SOLUSDT/4h",
+                     ema_fast=15, ema_slow=80)],
+                    parameter_contract=self.b_contract())
+        proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        self.assertEqual(payload["survivor_count"], 2)
+        # check roundtrip
+        check = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--check")
+        self.assertEqual(check.returncode, 0, check.stderr)
+        # CSV must have generic columns
+        with open(os.path.join(self.root, "_survivors", "leaderboard.csv")) as fh:
+            header = fh.readline().strip()
+        self.assertIn("strategy_params_canonical_json", header)
+        self.assertNotIn("strategy_window", header)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
