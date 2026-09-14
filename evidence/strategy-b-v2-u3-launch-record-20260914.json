@@ -1,0 +1,248 @@
+{
+ "schema_version": 1,
+ "kind": "b_v2_u3_launch_record",
+ "contract_sections": [
+  "8",
+  "9.2",
+  "10.2",
+  "16.2"
+ ],
+ "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+ "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+ "run_id": "ema-crossover-walkforward-momentum-long-short-v2-r1-u3",
+ "kanban_task_id": "t_35b3e5da",
+ "kanban_board": "quant-strategy-research",
+ "checked_by": "Hermes default (kanban run 200 worker of t_35b3e5da)",
+ "checked_at_utc": "2026-09-14T14:23:10Z",
+ "launched_at_utc": "2026-09-14T14:23:52Z",
+ "purpose": "launch the r1-u3 attempt of the B v2 production card after the §26.1 F1 remediation (be111d8) passed its independent re-audit (t_73936dd2, run 199); the launch gate is: readback green + auditor PASS -> instantiate -> preflight P1-P10 -> exact-once container launch",
+ "gate": {
+  "audit_chain": [
+   {
+    "card": "t_92ef911d",
+    "kind": "re-audit F1/F2/F3 @ 6b1cf77",
+    "verdict": "FAIL",
+    "blocking": "F1 - the §26.1 migration scope guard was bypassable through a canonical-path symlink alias (realpath comparison)"
+   },
+   {
+    "card": "t_0fd164c6",
+    "kind": "F1 remediation",
+    "commit": "be111d8",
+    "delivered": "lexical absolute path identity (os.path.abspath(spec_path) != MIGRATION_SPEC_PATH, never realpath) + symlink-alias fixture; 260/260 tests, verify_r1_migration.py 24/24"
+   },
+   {
+    "card": "t_73936dd2",
+    "kind": "independent re-audit of be111d8 (read-only, assignee auditor)",
+    "run": 199,
+    "verdict": "PASS",
+    "auditor_summary": "be111d8 lexical path guard refuses a canonical symlink alias; fixture rc=1, no action, wrote_contract=False, alias and canonical bytes/inode/mtime unchanged; 6b1cf77 pre-fix control RED (rc=0, action=migrated)"
+   }
+  ],
+  "self_verification_this_run": {
+   "migration_scope_test": "python3 runtime/tests/test_b_v2_r1_migration_scope.py -> Ran 8 tests - OK",
+   "suite": "python3 -m unittest discover -s runtime/tests -t runtime/tests -> Ran 260 tests - OK",
+   "guard_review": "migrate_r1_round_spec.py scope_problems(): os.path.abspath identity only, comment states symlinks are never resolved",
+   "repo_state": "HEAD == origin/main == be111d8, worktree clean"
+  }
+ },
+ "readback": {
+  "repo": {
+   "head": "be111d81b9341bb8941670cad1a4986142c14a26",
+   "origin_main": "be111d81b9341bb8941670cad1a4986142c14a26",
+   "worktree_clean": true
+  },
+  "results_artifacts": {
+   "family_json": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/family.json",
+    "sha256": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+    "kanban_task_id": "t_35b3e5da",
+    "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+    "semantic_fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "semantic_fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "fingerprint_match": true
+   },
+   "round_spec": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/round-spec.json",
+    "sha256": "sha256:2c6d6f64bf864180c937c740db8ced2bd17c13f59e73e16f66d0183ea7c53ecf",
+    "bytes": 43719,
+    "has_parameter_contract": true,
+    "validate_contract": [],
+    "validate_round_spec_contract": [],
+    "kanban_task_id": "t_35b3e5da",
+    "counts_check_problems": []
+   },
+   "attempts": {
+    "ema-crossover-walkforward-momentum-long-short-v2-r1-u1": {
+     "files": [
+      "FAILED",
+      "artifacts",
+      "logs",
+      "run-spec.json",
+      "state.json"
+     ],
+     "run-spec.json_sha256": "sha256:e997ac6b9f7779c8e91163f2d3c9b11d34c11fe84d4d98cd14fe8954ab294162",
+     "FAILED_sha256": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d"
+    },
+    "ema-crossover-walkforward-momentum-long-short-v2-r1-u2": {
+     "files": [
+      "FAILED",
+      "artifacts",
+      "logs",
+      "run-spec.json",
+      "state.json"
+     ],
+     "run-spec.json_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+     "FAILED_sha256": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f"
+    }
+   },
+   "u3_attempt_dir_exists": false,
+   "incidents_file_exists": false
+  },
+  "engine_bytes_three_way_equal": {
+   "script_sha256": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+   "script_bytes": 81778,
+   "engine_selfcheck_sha256": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+   "locations": [
+    "repo container/scripts/30_strategy_b_run.py",
+    "host /Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py",
+    "container /scripts/30_strategy_b_run.py"
+   ],
+   "container_sha256sum": "d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05  /scripts/30_strategy_b_run.py\nac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc  /scripts/tests/test_strategy_b_engine.py",
+   "container_selfcheck_run": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py -> Ran 28 tests - OK"
+  },
+  "container": {
+   "container_id": "qlib-run",
+   "image": "qlib:0.9.7-arm64",
+   "state": "running",
+   "started": "2026-09-14T06:02:00Z",
+   "host_boot_id": "boot-1789359252",
+   "system_status_rc": 0,
+   "mounts": {
+    "/data/raw": "ro <- /Volumes/ExpansionDrive/market-data-raw",
+    "/results": "rw <- /Volumes/ExpansionDrive/qlib-results",
+    "/scripts": "ro <- /Users/hong/workspace/qlib-apple-container/scripts"
+   }
+  }
+ },
+ "instantiation": {
+  "command": "python3 runtime/instantiate_strategy_b_v2.py --results-root /Volumes/ExpansionDrive/qlib-results --task-id t_35b3e5da --round-id ema-crossover-walkforward-momentum-long-short-v2-r1 --run-id ema-crossover-walkforward-momentum-long-short-v2-r1-u3 [--dry-run] --json",
+  "dry_run": {
+   "action": "would_instantiate",
+   "problems": []
+  },
+  "applied": {
+   "action": "instantiated",
+   "problems": [],
+   "round_spec_reused": true,
+   "round_spec_sha256": "sha256:2c6d6f64bf864180c937c740db8ced2bd17c13f59e73e16f66d0183ea7c53ecf",
+   "run_spec_sha256": "sha256:58f28d8b72af955127a1382b03eacd7bc0b3e084e61d7c379321d642b912ef8a",
+   "run_spec_path": "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u3/run-spec.json",
+   "counts": {
+    "cohorts": 20,
+    "strategy_cases": 120,
+    "dca_configs": 48,
+    "base_combinations_per_cohort": 5760,
+    "case_evaluations_per_grid": 115200,
+    "expected_case_evaluations": 1152000
+   },
+   "counts_extra": {
+    "is_template": false,
+    "fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+    "domains_agree": true,
+    "counts_agree": true,
+    "versions_agree": true,
+    "split_agrees": true,
+    "provenance_agree": true,
+    "script_pinned": true,
+    "all_grid_outputs_declared": true,
+    "no_legacy_finalist": true,
+    "expected_outputs": 17
+   },
+   "created_at_utc": "2026-09-14T14:23:26Z"
+  },
+  "counts_validator": "runtime/strategy_b_v2_counts.py: cohorts=20 strategy=120 dca=48 base_per_cohort=5760 per_grid=115200 total=1152000 fingerprint=MATCH ok=True; 11/11 negative controls"
+ },
+ "preflight": {
+  "command": "python3 runtime/preflight.py --launch --attempt-dir <u3 attempt dir> --json",
+  "checked_at_utc": "2026-09-14T14:23:46Z",
+  "launch_gate": "evaluated",
+  "overall": "PASS",
+  "rc": 0,
+  "checks": {
+   "P1": "PASS",
+   "P2": "PASS",
+   "P3": "PASS",
+   "P4": "PASS",
+   "P5": "PASS",
+   "P6": "PASS",
+   "P7": "PASS",
+   "P8": "PASS",
+   "P9": "PASS",
+   "P10": "PASS"
+  },
+  "details": {
+   "P1": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)",
+   "P2": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)",
+   "P3": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-57562.tmp",
+   "P4": "container system status=running (rc=0)",
+   "P5": "qlib-run state=running",
+   "P6": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False",
+   "P7": "/qlib/work writable: work_ok",
+   "P8": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)",
+   "P9": "no terminal sentinel in /Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u3",
+   "P10": "run-spec present; script.sha256=sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05 recomputed=d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05 (/Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py)"
+  }
+ },
+ "launch": {
+  "exact_once": true,
+  "launch_mode": "container exec --detach (process runs inside qlib-run; no host-side supervisor)",
+  "launch_command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/30_strategy_b_run.py /results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u3/run-spec.json > /results/ema-crossover-walkforward-momentum-long-short-v2/rounds/ema-crossover-walkforward-momentum-long-short-v2-r1/attempts/ema-crossover-walkforward-momentum-long-short-v2-r1-u3/logs/run.log 2>&1\"",
+  "rc": 0,
+  "logs_dir_precreated": "attempt/logs/ created before the launch so the shell redirect target exists (engine also creates artifacts/ and logs/)"
+ },
+ "observed_after_launch": {
+  "state_json": {
+   "stage": "RUNNING_QLIB",
+   "updated_at_utc": "2026-09-14T14:23:52Z",
+   "note": "started"
+  },
+  "run_log_tail": [
+   "[2026-09-14T14:24:37Z] readback SOLUSDT 240min rows=10284 (raw 10284) first=2022-01-01 00:00:00 last=2026-09-10 20:00:00",
+   "[2026-09-14T14:24:37Z] bins build wall=40.0s bytes=79187392",
+   "[2026-09-14T14:24:38Z] cohort BTCUSDT/5m bars=493632 days=1714 funding_official=3137 modeled_excluded=2005"
+  ],
+  "bins_build_wall_seconds": 40.0,
+  "bins_bytes": 79187392,
+  "first_cohort": "BTCUSDT/5m bars=493632 days=1714 funding_official=3137 modeled_excluded=2005 (started 2026-09-14T14:24:38Z)",
+  "live_csv_rows_grid_historical": 1184,
+  "live_csv_sanity": "462/462 sampled rows at 14:26Z had n_steps>0 and pnl_decomp_ok=True (u1's empty-shell bug did not reproduce)",
+  "container_processes": [
+   "1 sleep infinity",
+   "400 sh -c nice -n 10 ... u3/run-spec.json",
+   "401 /opt/venv/bin/python /scripts/30_strategy_b_run.py ... u3/run-spec.json"
+  ],
+  "reconcile_dry_run_2026-09-14T14:26:08Z": {
+   "attempts_scanned": 10,
+   "would_unblock": [],
+   "incidents": 0,
+   "b_v2_r1": {
+    "u1": "superseded by u3",
+    "u2": "superseded by u3 (authoritative current attempt = u3, no terminal sentinel yet -> orphan_candidate, no unblock)"
+   }
+  },
+  "eta_note": "u2's mid-run measurement (5m cohort ~106 min, whole run ~11h) puts the r1-u3 terminal in the 2026-09-15T00:00-05:00Z window; the container does NOT publish its own sentinel - after state.json reaches ARTIFACT_READY the operator must publish DONE host-side (runtime/terminal_evidence.py publish) and release the parked card"
+ },
+ "guards_this_run": {
+  "qlib_launch_performed": true,
+  "launch_count": 1,
+  "writes_to_results": "the u3 attempt's own durable artifacts only (run-spec.json, state.json, logs/, artifacts/**)",
+  "u1_u2_and_family_round_pins_untouched": true,
+  "strategy_a_v2_or_b_v1_artifacts_modified": false,
+  "cron_touched": false,
+  "auditor_child_created": false,
+  "strategy_c_card_generated": false,
+  "second_engine_introduced": false
+ },
+ "next_step": "wait for attempts/<run_id>/state.json stage=ARTIFACT_READY + the run's result.json; then publish the terminal sentinel host-side and release the card so the next worker does the terminal readback, writes verdict.json and freezes the survivor bundle (contract 9.4 / 10.7 / 10.8)"
+}
