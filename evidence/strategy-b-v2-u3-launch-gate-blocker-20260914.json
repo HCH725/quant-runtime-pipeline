@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "kind": "b_v2_u3_launch_gate_blocker",
+  "contract_section": "9.2 / 16 / 8 / INV-2 / INV-4",
+  "family_id": "ema-crossover-walkforward-momentum-long-short-v2",
+  "round_id": "ema-crossover-walkforward-momentum-long-short-v2-r1",
+  "run_id_planned": "ema-crossover-walkforward-momentum-long-short-v2-r1-u3",
+  "kanban_task_id": "t_35b3e5da",
+  "kanban_board": "quant-strategy-research",
+  "checked_at_utc": "2026-09-14T11:43:38Z",
+  "checked_by": "Hermes default (kanban run 192, worker of t_35b3e5da)",
+  "authorization": {
+    "source": "ChatGPT (GPT-5.6 Sol) mandate relayed by the operator 2026-09-14T11:29Z (19:29 CST) into a default CLI session; card t_35b3e5da unblocked by the operator at 2026-09-14T11:32:29Z; dispatcher spawned run 192",
+    "mandate_steps_1_2": "fresh readback (card, family.json, v1.8 B template/parameter_contract, u1/u2 terminal/state); confirm no existing u3 and no open blocking incident; if consistent, return the same card to an executable state via a legal Kanban operation",
+    "mandate_steps_3_5": "create the new immutable r1-u3 round/run attempt from v1.8 current bytes; the round-spec MUST contain the generic parameter_contract; domain fixed at 20 cohorts x 120 strategy x 48 DCA x 10 phase grids = 1,152,000 case evaluations; pin current script sha; run preflight P1-P10; any gate failure => fail closed and report; if all green, exact-once launch and park the card back to scheduled",
+    "mandate_clause_invoked": "\u300c\u4efb\u4f55 gate fail \u5c31 fail-closed \u56de\u5831\u300d\u8207\u300c\u9664\u975e v1.8 preflight \u771f\u6b63\u63ed\u9732 blocker\uff0c\u5426\u524d\u4e0d\u8981\u65b0\u589e\u67b6\u69cb\u6216\u6539 contract\u300d"
+  },
+  "readback": {
+    "repo": {
+      "head": "8f72612ccbeded3bab61c4cf374b572a9cf5c41b",
+      "origin_main": "8f72612ccbeded3bab61c4cf374b572a9cf5c41b",
+      "worktree_clean": true
+    },
+    "results_artifacts": {
+      "family_json_sha256": "sha256:63ee6cb8b23a31be6abbf619aa3d29fd84dc2c7ab7c98b45123e7fa6e6f297cc",
+      "round_spec_sha256": "sha256:a3dd33a95e3fb307c91f5e07f5b486b3c51e8be4bbc214ae85d654a169bcaf22",
+      "u1_FAILED_sha256": "sha256:15d66daa041c59b81046fa063a5aecc2bb68432881750b1c3c4b720b2791f35d",
+      "u2_FAILED_sha256": "sha256:db29fdfb28db231ce54d259da721c097ab3fd05c9d07d2600e2045d9543a926f",
+      "u2_run_spec_sha256": "sha256:b20a8251b5406ed54d4db17659251fb9870e9ea6a2323f168f7ebe818fffd356",
+      "u3_attempt_dir_exists": false,
+      "incidents_file_exists": false,
+      "both_prior_attempts_immutable": true,
+      "note": "u1 and u2 both carry an immutable FAILED sentinel (card-local, class=script_bug, no scientific verdict); neither was modified by this run"
+    },
+    "engine_bytes_three_way_equal": {
+      "script": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+      "script_bytes": 81778,
+      "script_locations": ["repo container/scripts/30_strategy_b_run.py", "host /Users/hong/workspace/qlib-apple-container/scripts/30_strategy_b_run.py", "container /scripts/30_strategy_b_run.py"],
+      "engine_selfcheck": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+      "engine_selfcheck_run_in_container": "container exec qlib-run env SB_ENGINE_PATH=/scripts/30_strategy_b_run.py /opt/venv/bin/python /scripts/tests/test_strategy_b_engine.py -> Ran 28 tests in 0.299s - OK"
+    },
+    "container": {
+      "container_id": "qlib-run",
+      "image_id": "qlib:0.9.7-arm64",
+      "qlib_version": "0.9.7",
+      "state": "running",
+      "host_boot_id": "boot-1789359252",
+      "mounts_verified": ["/data/raw (ro)", "/results (rw)", "/scripts (ro)"]
+    },
+    "preflight_p1_p8": {
+      "command": "python3 runtime/preflight.py --json",
+      "overall": "PASS",
+      "rc": 0,
+      "checks": {"P1": "PASS", "P2": "PASS (raw READ_ONLY)", "P3": "PASS (results writable probe)", "P4": "PASS (container system running)", "P5": "PASS (qlib-run running)", "P6": "PASS (image/os/arch)", "P7": "PASS (/qlib/work writable)", "P8": "PASS (/opt/venv/bin/python import qlib 0.9.7)", "P9": "NA (no --attempt-dir)", "P10": "NA (no --attempt-dir)"},
+      "launch_gate": "not_evaluated (P9/P10 need the attempt dir; deliberately not published)"
+    },
+    "instantiation_dry_run": {
+      "command": "python3 runtime/instantiate_strategy_b_v2.py --results-root /Volumes/ExpansionDrive/qlib-results --task-id t_35b3e5da --round-id ...-r1 --run-id ...-r1-u3 --dry-run --json",
+      "action": "would_instantiate",
+      "problems": [],
+      "counts": {"cohorts": 20, "strategy_cases": 120, "dca_configs": 48, "base_combinations_per_cohort": 5760, "case_evaluations_per_grid": 115200, "expected_case_evaluations": 1152000},
+      "fingerprint_declared": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "fingerprint_computed": "sha256:1a809ebc1e993b80027df86293c8d58b4aa058c9c28358e00f7748bd193a7403",
+      "script_pinned": "sha256:d23811c1d4827d619b7bc1dd806063f64211a71ad649f96d5e505867c46bcb05",
+      "engine_selfcheck_pinned": "sha256:ac91830470d19299d2b714e01f557f61caac06f6f14fc89dfe5c22cf637b68dc",
+      "round_spec_handling": "the existing r1 round-spec would be reused verbatim (contract 8: a technical retry keeps the round and its immutable pre-registration); only the u3 run-spec would be published",
+      "note": "nothing was published (dry-run only); the u3 attempt directory does not exist"
+    }
+  },
+  "blocker": {
+    "gate": "v1.8 launch-time parameter-contract validation (runtime/parameter_contract.py: validate_round_spec_contract / load_contract_from_round_spec)",
+    "observed": "FAIL CLOSED",
+    "message": "round-spec has no parameter_contract and family 'ema-crossover-walkforward-momentum-long-short-v2' is not pre-schema 'close-vs-sma-mean-reversion-long-flat-v2': fail closed (v1.8+)",
+    "mandate_requirement_status": "UNMET: the u3 round-spec cannot contain the generic parameter_contract",
+    "root_cause_chain": [
+      "Contract v1.8 (audited PASS at 8f72612, t_26a67c20) makes the family parameter contract a property of the FROZEN round-spec: parameter_contract.load_contract_from_round_spec reads spec['parameter_contract']; only the pre-schema Strategy A v2 has the in-code LEGACY_A_CONTRACT bridge; every other family without a schema fails closed by design.",
+      "B v2's r1 round-spec was instantiated 2026-09-13T21:43:07Z from the frozen v1.4.0 template (round-spec template + run-spec template under runtime/templates/ carry no parameter_contract block; git history: templates last touched in the v1.4.0 commit 5a7c3c8).",
+      "content check: round-spec has no 'parameter_contract' key (0 occurrences of parameter_contract / research_axes_ordered / composite_map / row_fields); the B v2 round-spec template and the instantiated r1 copy are both v1.4.0-shaped.",
+      "the instantiator (runtime/instantiate_strategy_b_v2.py) reuses an existing round-spec verbatim for a same-round retry and only publishes the new attempt's run-spec, so the u3 attempt cannot acquire a schema by instantiation.",
+      "the v1.8 architecture review (t_63cba8ac, item 9.5) scoped the template parameter_contract block to FUTURE instantiations and explicitly kept the frozen r1 untouched; the v1.8 implementation cards (t_94517381 / t_ff7e2b04 / t_e79da38f and the two remediations) implemented the runtime consumers and the validator, but neither the template block nor a recorded minimal-safe-migration option exists in the repo or on the board.",
+      "INV-4 forbids rewriting rounds/<r1>/round-spec.json in place ('spec ... once published is immutable'); INV-2 forbids incrementing round_id for a technical retry (u1/u2 were script_bug failures of the same hypothesis/domain/split), so u3 may not be moved to a new round either."
+    ],
+    "blast_radius_if_launched_anyway": [
+      "the u3 compute itself would run (the engine does not read parameter_contract; strategy_b_v2_counts.check is clean and would not catch the gap)",
+      "the post-survivor chain would fail closed for B v2: survivor_index / survivor_evidence / survivor_leaderboard refuse a non-legacy family whose round-spec carries no parameter_contract, so the frozen survivor bundle -> index -> evidence -> leaderboard path (\u00a710.8 / \u00a727 / \u00a728) cannot complete",
+      "mandate step 3 ('round-spec \u5fc5\u9808\u542b generic parameter_contract') would be unmet at launch"
+    ],
+    "additional_finding": "the v1.8 launch-time validator is implemented and unit-tested but is NOT wired into runtime/preflight.py or runtime/instantiate_strategy_b_v2.py, so a P1-P10-only gate does not surface this condition (P9/P10 evaluate the attempt's run-spec, not the round-spec schema). Wiring it is the v1.8 architecture item 9.5/8 remainder and is a repo change (contract \u00a726 change control)."
+  },
+  "options": [
+    {
+      "id": "A",
+      "name": "one-time transparent additive schema migration of the frozen r1 round-spec (RECOMMENDED)",
+      "content": "under a minimal contract amendment (\u00a726), add exactly one top-level key `parameter_contract` to rounds/<r1>/round-spec.json, generated from that round-spec's OWN registered domains and validated with parameter_contract.validate_contract + validate_round_spec_contract (both must return zero problems); record before/after sha256 and a migration provenance block; prove no scientific field changed (byte-level diff limited to the added key; counts.check clean before/after; all pre-existing keys byte-identical).",
+      "why": "it is the only option that satisfies mandate step 3 and keeps u3 in r1; it makes the whole v1.8 post-survivor chain work for B v2; it is small, auditable and reversible in the sense that every pre-existing byte is preserved and provable.",
+      "must_happen_before": "the u3 launch (and, at the latest, before the round's survivor bundle is produced: the bundle records the round-spec checksum at bundle time).",
+      "conflict": "INV-4 as literally written (a published spec file is immutable); therefore it needs an explicit \u00a726 amendment/operator decision BEFORE execution, and a dedicated audited card."
+    },
+    {
+      "id": "B",
+      "name": "launch u3 now without the schema; resolve the schema before the survivor bundle",
+      "content": "publish the u3 run-spec against the frozen r1 round-spec as-is, launch, and perform option A (or another decision) during/after the ~11 h compute but before the bundle.",
+      "why": "no wall-clock is lost and the compute is agnostic to the schema (deterministic given the unchanged scientific fields).",
+      "conflict": "mandate step 3 is unmet at launch; a later migration changes the round-spec after the run started (the engine does not re-read it, so this is mechanically safe, but the launch record would carry a non-compliant round-spec)."
+    },
+    {
+      "id": "C",
+      "name": "v1.8 wiring completion (separate minimal card, recommended as follow-up)",
+      "content": "add the parameter_contract block to the A/B round-spec templates and wire parameter_contract.validate_round_spec_contract into runtime/preflight.py (launch gate) and runtime/instantiate_strategy_b_v2.py, so the schema is enforced before compute for every FUTURE family instantiations.",
+      "why": "closes the v1.8 architecture item 9.5/8 remainder and prevents the same class of gap for C/D/E.",
+      "note": "does not by itself fix B v2 r1 (an existing frozen round-spec is still untouched by template changes)."
+    },
+    {
+      "id": "D",
+      "name": "re-register B v2 as a new round r2 with a schema-carrying round-spec",
+      "content": "instantiate a fresh round-spec (with parameter_contract) into a new round id and run there.",
+      "conflict": "INV-2: a technical retry must not increment round_id; \u00a78 reserves a new round for semantic changes to hypothesis/domain/threshold/window. Flagged for completeness only."
+    }
+  ],
+  "recommendation": "A now, C as a small follow-up card in default's lane; B only if the operator prefers not to lose the compute window and accepts a later migration.",
+  "guards_this_run": {
+    "qlib_launch_performed": false,
+    "writes_to_results": "none by this run (the only write was the preflight P3 probe file, created and removed by runtime/preflight.py itself)",
+    "u3_spec_published": false,
+    "immutable_artifacts_modified": false,
+    "strategy_a_v2_or_b_v1_artifacts_modified": false,
+    "repo_code_changed": false,
+    "cron_touched": false,
+    "auditor_child_created": false,
+    "strategy_c_card_generated": false,
+    "second_engine_introduced": false,
+    "cards_created": []
+  },
+  "next_step_if_approved": "on an explicit decision: (A) run the contract-amended migration card + auditor, then instantiate r1-u3 (run-spec pinning script sha256:d23811c1... and selfcheck sha256:ac918304...), run the full launch gate (preflight P1-P10 with --launch --attempt-dir) and launch exact-once via container exec, park the card to scheduled; (B) instantiate and launch immediately and record the schema debt."
+}
