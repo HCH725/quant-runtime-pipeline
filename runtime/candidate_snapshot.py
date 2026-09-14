@@ -15,10 +15,20 @@ Sources
   (contract 9.4 v1.7.1), never a second current-pointer.  terminal DONE = 100%, no attempt yet =
   0%, otherwise the rows that attempt actually streamed into artifacts/grid_*.csv over the immutable
   round-spec `expected.expected_case_evaluations`, capped to 0..100.
+- cohort: the last data row of the newest grid_*.csv the authoritative attempt already streamed
+  (latest *observable* symbol / timeframe - an observation, not a per-second heartbeat).
+- research funnel: the canonical intake state (reviewed = the four current_snapshot buckets,
+  ingested = unique ingested_wiki_records), a read-only +N/24h taken from the intake cron's own
+  durable run reports, and the distinct registered / backtested families under the results root.
 - counts: live running / blocked task counts read back from the family's board.
+
+Output order is fixed: Leaderboard, Current, Research Funnel, Runtime health.
 """
+import csv
+import datetime
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -37,7 +47,14 @@ TOP_N = 5
 BAR_CELLS = 10
 HEADER = "\U0001F4CA Quant Candidate Hourly"
 TROPHY = "\U0001F3C6 Leaderboard"
+CURRENT = "\U0001F9EA Current"
+FUNNEL = "\U0001F52C Research Funnel"
 WARN = "\u26A0\uFE0F"
+RUNNING_STAGE = "RUNNING_QLIB"  # the in-flight stage default: a line repeating it carries nothing
+REVIEW_STATE = "/Users/hong/workspace/alpha-strategy-review-state.json"
+INTAKE_OUTPUT = "/Users/hong/.hermes/cron/output/a5ae89131299"
+INGESTED_RE = re.compile(r"Ingested records:\s*\d+\s*total\s*\(\+(\d+)\s*this run\)")
+DELTA_HOURS = 24
 
 
 def load_json(path):
@@ -65,12 +82,38 @@ def leaderboard_entries(results_root):
 
 def grid_rows(path):
     """Data rows already streamed into one phase grid (header excluded)."""
-    import csv
     try:
         with path.open(newline="") as fh:
             return max(0, sum(1 for _ in csv.reader(fh)) - 1)
     except OSError:
         return 0
+
+
+def latest_observable_cohort(attempt):
+    """(symbol, timeframe) of the attempt's newest streamed grid row; (None, None) when there is none.
+
+    Latest *observable*: the newest (mtime) grid_*.csv that already streamed a data row, read at its
+    last row - an observation of progress, not a second-level heartbeat.
+    """
+    newest, row = None, None
+    for path in sorted((attempt.path / "artifacts").glob("grid_*.csv")):
+        try:
+            with path.open(newline="") as fh:
+                reader = csv.reader(fh)
+                header = next(reader, None)
+                last = None
+                for last in reader:  # it streams row by row: keep the tail, never the whole grid
+                    pass
+            stamp = path.stat().st_mtime
+        except (OSError, csv.Error):
+            continue
+        if not header or last is None:  # header only: nothing observable streamed yet
+            continue
+        if newest is None or stamp > newest:
+            newest, row = stamp, dict(zip(header, last))
+    if row is None:
+        return None, None
+    return row.get("symbol") or None, row.get("timeframe") or None
 
 
 def expected_total(results_root, family_id, round_id):
@@ -92,18 +135,18 @@ def round_spec_total(results_root, family_id):
 
 
 def progress(results_root, family_id):
-    """(pct, done, total, stage, note) for the family's authoritative attempt."""
+    """(pct, done, total, stage, note, attempt) for the family's authoritative attempt."""
     rounds = [r for r in discover_rounds(results_root) if r[0] == family_id]
     if not rounds:
         total = round_spec_total(results_root, family_id)
         note = "no attempt yet" if total else "no round/attempt directory yet"
-        return 0.0, 0, total, "not launched", note
+        return 0.0, 0, total, "not launched", note, None
     best = None
     for _family, round_id, attempts in rounds:
         records = [attempt_metadata(a, family_id, round_id, a.name) for a in attempts]
         authoritative, _superseded, problem = select_authoritative(records)
         if problem or authoritative is None:
-            return 0.0, 0, None, "unknown", "attempt selection ambiguous: %s" % (problem or "?")
+            return 0.0, 0, None, "unknown", "attempt selection ambiguous: %s" % (problem or "?"), None
         if best is None or authoritative.created_at > best[0].created_at:
             best = (authoritative, round_id)
     attempt, round_id = best
@@ -111,14 +154,14 @@ def progress(results_root, family_id):
     total = expected_total(results_root, family_id, round_id)
     terminals = [t for t in TERMINALS if (attempt.path / t).exists()]
     if "DONE" in terminals:
-        return 100.0, total or 0, total, "DONE", "terminal DONE"
+        return 100.0, total or 0, total, "DONE", "terminal DONE", attempt
     if terminals:
-        return 0.0, 0, total, stage, "terminal %s (no verdict: family not completed)" % terminals[0]
+        return 0.0, 0, total, stage, "terminal %s (no verdict: family not completed)" % terminals[0], attempt
     done = sum(grid_rows(p) for p in sorted((attempt.path / "artifacts").glob("grid_*.csv")))
     note = attempt.run_id
     if total is None:
-        return 0.0, done, None, stage, note + " (round-spec expected total unavailable)"
-    return min(100.0, max(0.0, 100.0 * done / total)), done, total, stage, note
+        return 0.0, done, None, stage, note + " (round-spec expected total unavailable)", attempt
+    return min(100.0, max(0.0, 100.0 * done / total)), done, total, stage, note, attempt
 
 
 def board_counts(board):
@@ -136,6 +179,67 @@ def board_counts(board):
     return counts.get("running", 0), counts.get("blocked", 0)
 
 
+def backtested_counts(results_root):
+    """(backtested, registered) distinct strategy families under the results root.
+
+    Registered = <family_id>/family.json outside the `_*` dirs; backtested = some attempt streamed a
+    grid CSV with a data row (header + one line is enough, the grids are never read through).
+    """
+    families, backtested = [], 0
+    for doc in sorted(Path(results_root).glob("*/family.json")):
+        if doc.parent.name.startswith("_"):
+            continue
+        families.append(doc)
+        for grid in doc.parent.glob("rounds/*/attempts/*/artifacts/grid_*.csv"):
+            try:
+                with grid.open(newline="") as fh:
+                    if not (fh.readline() and fh.readline()):
+                        continue
+            except OSError:
+                continue
+            backtested += 1
+            break
+    return backtested, len(families)
+
+
+def research_counts(now=None):
+    """(reviewed, ingested, delta_24h) from the canonical intake state; all None when unreadable.
+
+    reviewed = the four current_snapshot buckets (Wiki duplicates never double-count), ingested =
+    unique ingested_wiki_records, delta_24h = what the intake cron's own durable run reports say it
+    completed inside DELTA_HOURS - read-only, and unavailable (not partial) when a report in the
+    window does not carry the canonical line, because then the window's total is unknowable.
+    """
+    doc = load_json(REVIEW_STATE)
+    if not isinstance(doc, dict):
+        return None, None, None
+    buckets = doc.get("current_snapshot") or {}
+    reviewed = sum(len(v) for v in buckets.values() if isinstance(v, list))
+    ingested = len(set(doc.get("ingested_wiki_records") or []))
+    cutoff = (now or datetime.datetime.now()) - datetime.timedelta(hours=DELTA_HOURS)
+    total, reports = 0, 0
+    for path in sorted(Path(INTAKE_OUTPUT).glob("*.md")):
+        try:
+            fresh = datetime.datetime.strptime(path.name[:19], "%Y-%m-%d_%H-%M-%S") >= cutoff
+            text = path.read_text(errors="replace")
+        except (OSError, ValueError):
+            continue
+        if not fresh:
+            continue
+        reports += 1
+        match = INGESTED_RE.search(text)
+        if not match:
+            return reviewed, ingested, None
+        total += int(match.group(1))
+    return reviewed, ingested, total if reports else None
+
+
+def bar(pct):
+    """The shared 10-cell progress bar."""
+    filled = int(round(pct / 100.0 * BAR_CELLS))
+    return "\u2588" * filled + "\u2591" * (BAR_CELLS - filled)
+
+
 def _num(value, digits=2, suffix=""):
     return "-" if not isinstance(value, (int, float)) else "%.*f%s" % (digits, value, suffix)
 
@@ -144,27 +248,12 @@ def render(results_root):
     lines = [HEADER]
     if not Path(results_root).is_dir():
         return "\n".join(lines + ["Results root not found: %s" % results_root,
-                                  "Progress: unavailable", "Card: unavailable", TROPHY + ": unavailable"])
+                                  TROPHY + ": unavailable", CURRENT + ": unavailable",
+                                  FUNNEL + ": unavailable",
+                                  "%s Running/Blocked: unavailable" % WARN])
     family = current_family(results_root)
     board = (family or {}).get("kanban_board") or DEFAULT_BOARD
     task_id = (family or {}).get("kanban_task_id")
-    lines.append("Current: %s" % (family["family_id"] if family else "unavailable"))
-
-    pct, done, total, stage, note = ((0.0, 0, None, "unknown", "")
-                                     if not family else progress(results_root, family["family_id"]))
-    if total:
-        filled = int(round(pct / 100.0 * BAR_CELLS))
-        bar = "\u2588" * filled + "\u2591" * (BAR_CELLS - filled)
-        lines.append("Progress: %s %.1f%% (%s / %s)" % (bar, pct, format(done, ","),
-                                                       format(total, ",")))
-    else:
-        lines.append("Progress: unavailable (%s)" % note)
-    if task_id:
-        status, why = card_status(board, task_id)
-        lines.append("Card: %s" % (status or "unreadable (%s)" % why))
-    else:
-        lines.append("Card: unavailable (no family.json with a kanban_task_id)")
-    lines.append("Stage: %s%s" % (stage, " (%s)" % note if total else ""))
 
     entries = leaderboard_entries(results_root)
     if entries:
@@ -178,7 +267,44 @@ def render(results_root):
     else:
         lines.append(TROPHY + ": unavailable (no entries)")
 
+    pct, done, total, stage, note, attempt = ((0.0, 0, None, "unknown", "", None) if not family
+                                             else progress(results_root, family["family_id"]))
+    lines += ["", CURRENT, family["family_id"] if family else "unavailable"]
+    if total:
+        lines.append("Progress: %s %.1f%% (%s / %s)" % (bar(pct), pct, format(done, ","),
+                                                       format(total, ",")))
+    else:
+        lines.append("Progress: unavailable (%s)" % note)
+    symbol, timeframe = latest_observable_cohort(attempt) if attempt else (None, None)
+    lines.append("Cohort: %s" % ("%s / %s" % (symbol, timeframe) if symbol and timeframe
+                                 else "unavailable"))
+    if task_id:
+        status, why = card_status(board, task_id)
+        lines.append("Card: %s" % (status or "unreadable (%s)" % why))
+    else:
+        lines.append("Card: unavailable (no family.json with a kanban_task_id)")
+    if stage != RUNNING_STAGE:  # the in-flight default is a constant, so its line carries nothing
+        lines.append("Stage: %s%s" % (stage, " (%s)" % note if total else ""))
+
+    reviewed, ingested, delta = research_counts()
+    lines += ["", FUNNEL]
+    if reviewed and ingested is not None:
+        share = 100.0 * ingested / reviewed
+        lines.append("%-10s %s %s / %s reviewed %.1f%% %s" % (
+            "Wiki Brain", bar(share), ingested, reviewed, share,
+            "+%d/24h" % delta if delta is not None else "delta unavailable"))
+    else:
+        lines.append("%-10s unavailable" % "Wiki Brain")
+    backtested, registered = backtested_counts(results_root)
+    if registered:
+        share = 100.0 * backtested / registered
+        lines.append("%-10s %s %d / %d registered families %.1f%%" % (
+            "Backtested", bar(share), backtested, registered, share))
+    else:
+        lines.append("%-10s unavailable" % "Backtested")
+
     running, blocked = board_counts(board)
+    lines.append("")
     if running is None:
         lines.append("%s Running/Blocked: unavailable" % WARN)
     else:
