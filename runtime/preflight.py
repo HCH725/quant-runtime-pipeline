@@ -338,7 +338,7 @@ def main():
                     help="host directory mounted read-only as the container's /scripts (P10 sha resolution)")
     ap.add_argument("--launch", action="store_true", help="require --attempt-dir (full launch gate)")
     ap.add_argument("--recover", action="store_true",
-                    help="opt-in reboot recovery before checks (ordered, fail-closed; default does not start system or auto-create)")
+                    help="opt-in reboot recovery before checks (ordered, fail-closed; default does not start system or auto-create but will start existing stopped containers)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 

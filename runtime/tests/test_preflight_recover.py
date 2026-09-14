@@ -162,6 +162,29 @@ class RecoverCase(unittest.TestCase):
         self.assertFalse(self.started("container", "start", "qlib-run"))
 
 
+class RecoverHelpText(unittest.TestCase):
+    """Minimal regression: --recover help must describe both sides of default mode
+    (no system start / no auto-create AND will start existing stopped containers)
+    to stay aligned with Contract §16.5."""
+
+    def test_recover_help_contains_required_phrases(self):
+        import io, contextlib
+        buf = io.StringIO()
+        old_argv = sys.argv
+        sys.argv = ["preflight.py", "--help"]
+        try:
+            with contextlib.redirect_stdout(buf):
+                with self.assertRaises(SystemExit):
+                    preflight.main()
+        finally:
+            sys.argv = old_argv
+        help_text = buf.getvalue()
+        self.assertIn("does not start system or auto-create", help_text,
+                       "--recover help must state default does not start system or auto-create")
+        self.assertIn("will start existing stopped containers", help_text,
+                       "--recover help must state default will start existing stopped containers")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Finding B regression: --recover fail-closed main-level
 # ══════════════════════════════════════════════════════════════════════════════
