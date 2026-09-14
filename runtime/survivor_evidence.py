@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Survivor evidence preservation (Contract v1.6.0 section 28).
+"""Survivor evidence preservation (Contract v1.8.0 section 28).
 
 Promotion rule (contract 28.1): a **leaderboard entry** is the evidence-preservation trigger -
 not a Top-10 slot, not a PASS gate.  For every survivor that is a formal leaderboard entry this
@@ -53,10 +53,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import survivor_index as si  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 
 SCHEMA_VERSION = 1
 KIND = "survivor_evidence_package"
-CONTRACT_VERSION = "v1.6.0"
+CONTRACT_VERSION = "v1.8.0"
 CONTRACT_SECTION = "28"
 EVIDENCE_DIRNAME = "evidence"
 STAGING_PREFIX = ".staging"
@@ -72,6 +73,7 @@ IDENTITY_EXCLUDED = ("package_identity_sha256", "generated_at_utc")
 # The replayed aggregate is emitted rounded to 6 decimals, so the ledger recomputation is
 # compared against it at the rounding quantum of the aggregate itself.
 TOL = 1e-6
+# Legacy A v2 grid axes (backward-compatible default when no parameter_contract is present).
 GRID_AXES = ("window", "discount", "spacing_pct", "size_multiplier", "breakeven_tp_pct",
              "invalidation_pct")
 EXIT_REASONS = (("TP", "tp_hits"), ("STOP", "stop_hits"), ("MARGIN_CALL", "margin_calls"),
@@ -153,20 +155,36 @@ def grid_row_identity(row):
     return si.digest({k: v for k, v in row.items()})
 
 
-def cell_params(entry):
-    """The winner cell's six registered coordinates (both param axes of an index entry)."""
+def cell_params(entry, contract=None):
+    """The winner cell's registered coordinates (strategy + DCA axes of an index entry).
+
+    When *contract* is provided, uses contract.row_fields; otherwise falls back to the
+    legacy GRID_AXES (backward-compatible for A v2).
+    """
     params = dict(entry.get("strategy_params") or {})
     params.update(entry.get("dca_params") or {})
-    missing = [k for k in GRID_AXES if k not in params]
+    if contract is not None:
+        axes = tuple(contract.get("row_fields", []))
+    else:
+        axes = GRID_AXES
+    missing = [k for k in axes if k not in params]
     if missing:
         raise ValueError("entry carries no value for registered axis/axes %r" % missing)
     return params
 
 
-def winner_row(rows, symbol, timeframe, params):
+def winner_row(rows, symbol, timeframe, params, contract=None):
+    """Find exactly one frozen grid row matching symbol/timeframe + full row_fields.
+
+    When *contract* is provided, uses contract.row_fields; otherwise GRID_AXES.
+    """
+    if contract is not None:
+        axes = tuple(contract.get("row_fields", []))
+    else:
+        axes = GRID_AXES
     hits = [r for r in rows
             if r.get("symbol") == symbol and r.get("timeframe") == timeframe
-            and all(num(r.get(k)) == float(params[k]) for k in GRID_AXES)]
+            and all(num(r.get(k)) == float(params[k]) for k in axes)]
     if len(hits) != 1:
         raise ValueError("expected exactly one frozen row for %s/%s %r, found %d"
                          % (symbol, timeframe, params, len(hits)))
@@ -295,6 +313,16 @@ def frozen_grids(results_root, entry):
         if sentinel.get(key) != want:
             raise ValueError("frozen attempt sentinel records %s %r, not %r"
                              % (key, sentinel.get(key), want))
+    # Load the parameter contract from the round-spec (sibling of the attempts directory).
+    round_dir = os.path.dirname(os.path.dirname(attempt_dir))
+    round_spec_path = os.path.join(round_dir, "round-spec.json")
+    contract = None
+    if os.path.isfile(round_spec_path):
+        try:
+            round_spec = si.load_json(round_spec_path)
+            contract, _problems, _is_legacy = pc.load_contract_from_round_spec(round_spec)
+        except (OSError, ValueError):
+            contract = None
     checksums = sentinel.get("artifact_checksums") or {}
     header = None
     out = {}
@@ -313,7 +341,8 @@ def frozen_grids(results_root, entry):
             header = columns
         elif columns != header:
             raise ValueError("frozen grid CSVs disagree on their column set")
-        row = winner_row(rows, entry["symbol"], entry["timeframe"], cell_params(entry))
+        row = winner_row(rows, entry["symbol"], entry["timeframe"],
+                         cell_params(entry, contract=contract), contract=contract)
         out[grid] = {"csv": path, "csv_sha256": actual, "sentinel_sha256": pinned, "row": row}
     return header, out, spec
 
@@ -608,6 +637,19 @@ def check_package(results_root, survivor_id, entry):
     if identity(manifest) != declared:
         problems.append("%s: package_identity_sha256 %r is not the contract 28.4 recipe applied "
                         "to the manifest (recomputes %r)" % (path, declared, identity(manifest)))
+    # Load the parameter contract from the round-spec (if available) for generic row matching.
+    contract = None
+    if entry is not None:
+        bundle_path = entry.get("bundle_path")
+        if bundle_path:
+            round_dir = os.path.dirname(os.path.dirname(bundle_path))
+            round_spec_path = os.path.join(round_dir, "round-spec.json")
+            if os.path.isfile(round_spec_path):
+                try:
+                    round_spec = si.load_json(round_spec_path)
+                    contract, _cp, _il = pc.load_contract_from_round_spec(round_spec)
+                except (OSError, ValueError):
+                    contract = None
     if entry is not None:
         for key in ("survivor_id", "family_id", "round_id", "run_id", "kanban_task_id",
                     "cohort", "params_sha256", "bundle_identity_sha256"):
@@ -646,7 +688,7 @@ def check_package(results_root, survivor_id, entry):
             continue
         columns, rows = read_csv(frozen_csv)
         row = winner_row(rows, manifest.get("symbol"), manifest.get("timeframe"),
-                         cell_params(manifest))
+                         cell_params(manifest, contract=contract), contract=contract)
         if grid_row_identity(row) != grid_doc.get("frozen_row_identity_sha256"):
             problems.append("%s: the frozen winner row no longer matches the identity recorded in "
                             "the package" % label)

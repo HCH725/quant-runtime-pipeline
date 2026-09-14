@@ -48,6 +48,7 @@ sys.path.insert(0, RUNTIME)
 
 import survivor_index as si  # noqa: E402
 import survivor_leaderboard as sl  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 from survivor_bundle import identity as bundle_identity  # noqa: E402
 
 A = "BTCUSDT/1h"
@@ -97,18 +98,65 @@ def write_json(path, doc):
 
 def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end="2026-09-10",
                 oos_start="2025-10-01", created="2026-09-13T00:44:48Z", challenger_of=None,
-                task_id="t_test", mutate=None, name_mismatch=False):
+                task_id="t_test", mutate=None, name_mismatch=False,
+                parameter_contract=None):
     """One family + one round + one frozen survivor bundle, in throwaway-results-root shape."""
     round_id = round_id or family_id + "-r1"
     run_id = run_id or round_id + "-u1"
     fam_dir = os.path.join(root, family_id)
     round_dir = os.path.join(fam_dir, "rounds", round_id)
-    spec_path = write_json(os.path.join(round_dir, "round-spec.json"), {
+    spec = {
         "schema_version": 1, "family_id": family_id, "round_id": round_id,
         "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.3.2",
         "data": {"data_start": "2022-01-01", "data_end": data_end,
                  "historical_end": "2025-09-30", "oos_start": oos_start, "oos_end": data_end},
-    })
+    }
+    # Include a parameter_contract in the round-spec.  Non-A families without one fail closed
+    # under v1.8+, so test helpers must always provide one.
+    if parameter_contract is not None:
+        spec["parameter_contract"] = parameter_contract
+    elif family_id == "close-vs-sma-mean-reversion-long-flat-v2":
+        # Legacy A v2: no parameter_contract needed (uses in-code bridge)
+        pass
+    else:
+        # Non-A test families: include a valid parameter_contract with matching family_id
+        # so the fail-closed path for "unknown family without schema" is tested separately.
+        spec["parameter_contract"] = {
+            "parameter_contract_version": 1,
+            "family_id": family_id,
+            "contract_ref": "test fixture for non-A families",
+            "research_axes_ordered": [
+                {"name": "window", "kind": "atomic", "members": ["window"],
+                 "registered_values": [20, 50, 100, 200], "row_fields": ["window"]},
+                {"name": "discount", "kind": "atomic", "members": ["discount"],
+                 "registered_values": [0.01, 0.02, 0.03], "row_fields": ["discount"]},
+                {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+                 "registered_values": [0.01, 0.02, 0.03, 0.04], "row_fields": ["spacing_pct"]},
+                {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"],
+                 "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+                {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"],
+                 "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+                {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"],
+                 "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+            ],
+            "row_fields": ["window", "discount", "spacing_pct", "size_multiplier",
+                           "breakeven_tp_pct", "invalidation_pct"],
+            "composite_map": {},
+            "strategy_param_fields": ["window", "discount"],
+            "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                                 "invalidation_pct"],
+            "canonical_recipe": {"sort_keys": True, "separators": (",", ":"),
+                                 "ensure_ascii": False,
+                                 "numeric_rule": "JSON number finite, bool excluded"},
+            "row_match_recipe": {"keys": ["symbol", "timeframe", "window", "discount",
+                                          "spacing_pct", "size_multiplier",
+                                          "breakeven_tp_pct", "invalidation_pct"],
+                                 "equality": "exact, numeric == float compare, rest bytewise"},
+            "non_params": ["symbol", "timeframe", "ema_pair_index", "walk_forward_index",
+                           "n_steps", "indices", "diagnostics", "metrics"],
+            "domain_cardinality": {"strategy": 12, "dca": 48, "per_cohort": 576},
+        }
+    spec_path = write_json(os.path.join(round_dir, "round-spec.json"), spec)
     write_json(os.path.join(fam_dir, "family.json"), {
         "schema_version": 1, "family_id": family_id,
         "kanban_task_id": "t_mismatched_family" if name_mismatch else task_id,
@@ -252,7 +300,7 @@ class TestSurvivorIndex(Base):
         self.assertEqual(si.measured(first), si.measured(second),
                          "a rebuild must reproduce the index byte for byte, clock aside")
         self.assertEqual(first["contract"], "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md "
-                                            "v1.6.0")
+                                            "v1.8.0")
         self.assertEqual(sorted(s["cohort"] for s in first["survivors"]), sorted([A, B]))
         self.assertEqual([s["survivor_id"] for s in first["survivors"]],
                          sorted(s["survivor_id"] for s in first["survivors"]),

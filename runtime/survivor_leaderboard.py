@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Forward evidence ingestion + survivor leaderboard (Contract v1.5.2, sections 27.3 / 27.5).
+"""Forward evidence ingestion + survivor leaderboard (Contract v1.8.0, sections 27.3 / 27.5).
 
 The post-survivor lifecycle is: full backtest -> frozen survivor bundle -> forward evidence ->
 survivor leaderboard -> champion candidate / challenger -> (future) paper/testnet/live.
@@ -56,10 +56,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import survivor_index as si  # noqa: E402
 import survivor_evidence as se  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 
 SCHEMA_VERSION = 1
 KIND = "survivor_leaderboard"
-CONTRACT_VERSION = "v1.6.0"
+CONTRACT_VERSION = "v1.8.0"
 CONTRACT_SECTION = "27.3 / 27.5"
 SLICE_SCHEMA_VERSION = 2
 TOP_N = 10
@@ -128,6 +129,31 @@ CSV_COLUMNS = [
     # rank, change a Top-10 membership, or feed `evidence_state`/`champion_candidate`.
     "evidence_package_status", "evidence_manifest_path", "evidence_manifest_sha256",
 ]
+
+# Legacy A v2 CSV columns (the family-specific per-param columns).
+LEGACY_CSV_PARAM_COLUMNS = [
+    "strategy_window", "strategy_discount",
+    "dca_spacing_pct", "dca_size_multiplier", "dca_breakeven_tp_pct", "dca_invalidation_pct",
+]
+
+# Generic CSV columns (replaces per-family param columns for non-A families).
+GENERIC_CSV_PARAM_COLUMNS = [
+    "strategy_params_canonical_json", "strategy_params_sha256",
+    "dca_params_canonical_json", "row_fields_json",
+]
+
+
+def csv_columns(contract=None):
+    """The CSV column set: legacy A v2 keeps its per-param columns; generic families use the
+    four generic columns.  The rest of the header is identical."""
+    base = [c for c in CSV_COLUMNS
+            if c not in ("strategy_window", "strategy_discount",
+                         "dca_spacing_pct", "dca_size_multiplier",
+                         "dca_breakeven_tp_pct", "dca_invalidation_pct")]
+    if contract is None or contract.get("family_id") == pc.LEGACY_A_FAMILY_ID:
+        # ponytail: insert legacy param columns at the same position as the original
+        return (base[:9] + LEGACY_CSV_PARAM_COLUMNS + base[9:])
+    return (base[:9] + GENERIC_CSV_PARAM_COLUMNS + base[9:])
 
 
 def is_number(value):
@@ -484,22 +510,34 @@ def build(results_root):
     return doc, rows, []
 
 
-def csv_rows(rows):
+def csv_rows(rows, contract=None):
+    """Generate CSV row dicts.  Legacy A v2 uses per-param columns; generic families use the
+    canonical JSON + sha256 columns."""
+    is_legacy = contract is None or contract.get("family_id") == pc.LEGACY_A_FAMILY_ID
     out = []
     for row in rows:
-        out.append({
+        base = {
             "rank": row["rank"], "in_top10": row["in_top10"],
             "champion_candidate": row["champion_candidate"],
             "evidence_state": row["evidence_state"], "survivor_id": row["survivor_id"],
-            "family_id": row["family_id"], "cohort": row["cohort"], "symbol": row["symbol"],
-            "timeframe": row["timeframe"],
-            "strategy_window": row["strategy_params"]["window"],
-            "strategy_discount": row["strategy_params"]["discount"],
-            "dca_spacing_pct": row["dca_params"]["spacing_pct"],
-            "dca_size_multiplier": row["dca_params"]["size_multiplier"],
-            "dca_breakeven_tp_pct": row["dca_params"]["breakeven_tp_pct"],
-            "dca_invalidation_pct": row["dca_params"]["invalidation_pct"],
-            "params_sha256": row["params_sha256"],
+            "family_id": row["family_id"], "cohort": row["cohort"],
+            "symbol": row["symbol"], "timeframe": row["timeframe"],
+        }
+        if is_legacy:
+            base["strategy_window"] = row["strategy_params"]["window"]
+            base["strategy_discount"] = row["strategy_params"]["discount"]
+            base["dca_spacing_pct"] = row["dca_params"]["spacing_pct"]
+            base["dca_size_multiplier"] = row["dca_params"]["size_multiplier"]
+            base["dca_breakeven_tp_pct"] = row["dca_params"]["breakeven_tp_pct"]
+            base["dca_invalidation_pct"] = row["dca_params"]["invalidation_pct"]
+        else:
+            base["strategy_params_canonical_json"] = pc.canonical(row["strategy_params"])
+            base["strategy_params_sha256"] = pc.digest(row["strategy_params"])
+            base["dca_params_canonical_json"] = pc.canonical(row["dca_params"])
+            base["row_fields_json"] = pc.canonical(
+                sorted(set(row["strategy_params"]) | set(row["dca_params"])))
+        base["params_sha256"] = row["params_sha256"]
+        base.update({
             "forward_slices": row["forward"].get("slices"),
             "forward_episodes": row["forward"].get("episodes"),
             "forward_net_pnl": row["forward"].get("net_pnl"),
@@ -519,15 +557,17 @@ def csv_rows(rows):
             "evidence_manifest_path": row["evidence_manifest_path"],
             "evidence_manifest_sha256": row["evidence_manifest_sha256"],
         })
+        out.append(base)
     return out
 
 
-def csv_text(rows):
+def csv_text(rows, contract=None):
     import io
+    columns = csv_columns(contract=contract)
     buf = io.StringIO()
-    writer = csv.DictWriter(buf, fieldnames=CSV_COLUMNS, lineterminator="\n")
+    writer = csv.DictWriter(buf, fieldnames=columns, lineterminator="\n")
     writer.writeheader()
-    for row in csv_rows(rows):
+    for row in csv_rows(rows, contract=contract):
         writer.writerow(row)
     return buf.getvalue()
 
@@ -635,6 +675,16 @@ def cmd_leaderboard(args, results_root):
         return 1
     assert doc is not None and rows is not None
 
+    # Determine the contract for CSV column generation.  If all rows are legacy A v2,
+    # use the legacy per-param columns; otherwise use generic columns.
+    first_family = rows[0]["family_id"] if rows else None
+    if first_family == pc.LEGACY_A_FAMILY_ID:
+        _contract, _cp, _il = pc.load_contract_from_round_spec(
+            {"family_id": first_family, "parameter_contract": pc.LEGACY_A_CONTRACT})
+        csv_contract = _contract
+    else:
+        csv_contract = None  # generic columns
+
     if args.check:
         if not (os.path.exists(json_path) and os.path.exists(csv_path)):
             sys.stderr.write("REFUSED: no leaderboard at %s\n" % out_dir)
@@ -643,15 +693,16 @@ def cmd_leaderboard(args, results_root):
         with open(csv_path) as fh:
             existing_csv = fh.read()
         drifted = si.measured(existing) != si.measured(doc)
-        if drifted or existing_csv != csv_text(rows):
+        if drifted or existing_csv != csv_text(rows, contract=csv_contract):
             sys.stderr.write("REFUSED: %s is not the rebuild of the index + forward evidence on "
                              "disk (leaderboard.json drift=%s, leaderboard.csv drift=%s)\n"
-                             % (out_dir, drifted, existing_csv != csv_text(rows)))
+                             % (out_dir, drifted,
+                                existing_csv != csv_text(rows, contract=csv_contract)))
             return 1
         result = "check_clean"
     else:
         write_atomic(json_path, json_text(doc))
-        write_atomic(csv_path, csv_text(rows))
+        write_atomic(csv_path, csv_text(rows, contract=csv_contract))
         result = "written"
 
     payload = {"ok": True, "result": result, "leaderboard_json": json_path,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""File-only frozen-survivor index (Contract v1.5.2, sections 27.2 / 27.7).
+"""File-only frozen-survivor index (Contract v1.8.0, sections 27.2 / 27.7).
 
 Contract v1.5.0 starts the post-survivor lifecycle: every survivor frozen into a
 `rounds/<round_id>/survivor-bundle.json` keeps accumulating unseen forward evidence and is
@@ -25,7 +25,8 @@ Fail-closed (never guessed, never repaired):
     `kanban_task_id` is missing on either side or disagrees with `family.json`, whose
     `source_artifacts` map is empty or malformed, or whose `round-spec.json` no longer hashes to
     the value the bundle recorded (source inconsistency),
-  * a survivor record whose param cell is not exactly the registered strategy + DCA axes,
+  * a survivor record whose param cell is not exactly the registered strategy + DCA axes
+    (per the round-spec's parameter_contract or the legacy A v2 bridge),
   * two entries claiming the same `survivor_id` (duplicate).
 
 Nothing here ranks, selects, promotes or rejects a survivor, and nothing here ever writes into
@@ -49,7 +50,7 @@ import time
 
 SCHEMA_VERSION = 1
 KIND = "survivor_index"
-CONTRACT_VERSION = "v1.6.0"
+CONTRACT_VERSION = "v1.8.0"
 CONTRACT_SECTION = "27.2"
 DEFAULT_RESULTS_ROOT = "/Volumes/ExpansionDrive/qlib-results"
 
@@ -59,10 +60,9 @@ FORWARD_DIRNAME = "forward"
 BUNDLE_NAME = "survivor-bundle.json"
 BUNDLE_KIND = "frozen_survivor_bundle"
 
-# The registered param axes the round-spec registers for Strategy A v2 (window x discount =
-# strategy; the four DCA axes = execution rail).  A survivor's winner cell must be exactly these
-# keys: an unknown key would mean the frozen cell no longer means what the leaderboard thinks
-# it means, so it is refused rather than ignored.
+# Legacy A v2 hardcoded param axes (backward-compatible default when no parameter_contract
+# is present in the round-spec).  The generic contract module is the authoritative source
+# for new families.
 STRATEGY_PARAM_KEYS = ("window", "discount")
 DCA_PARAM_KEYS = ("spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct")
 ROBUSTNESS_GRIDS = ("fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks")
@@ -73,6 +73,7 @@ GENERATED_KEY = "generated_at_utc"
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from survivor_bundle import identity as bundle_identity  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 
 
 def now_utc():
@@ -232,27 +233,38 @@ def num(value):
     return value if is_number(value) else None
 
 
-def param_cell(winner, label, problems):
-    """Split a frozen winner cell into its registered strategy + DCA axes (or refuse)."""
+def param_cell(winner, label, problems, contract=None):
+    """Split a frozen winner cell into its registered strategy + DCA axes (or refuse).
+
+    When *contract* is provided (from the round-spec's parameter_contract or the legacy
+    bridge), strategy_param_fields and dca_param_fields are read from it.  When None,
+    the hardcoded A v2 axes are used (backward-compatible default).
+    """
+    if contract is not None:
+        strat_keys = tuple(contract.get("strategy_param_fields", []))
+        dca_keys = tuple(contract.get("dca_param_fields", []))
+    else:
+        strat_keys = STRATEGY_PARAM_KEYS
+        dca_keys = DCA_PARAM_KEYS
     if not isinstance(winner, dict):
         problems.append("%s: winner cell is not an object" % label)
         return None, None
     keys = set(winner)
-    missing = [k for k in STRATEGY_PARAM_KEYS + DCA_PARAM_KEYS if k not in keys]
+    missing = [k for k in strat_keys + dca_keys if k not in keys]
     if missing:
         problems.append("%s: winner cell is missing registered param axis/axes %r" % (label, missing))
-    unknown = sorted(keys - set(STRATEGY_PARAM_KEYS) - set(DCA_PARAM_KEYS))
+    unknown = sorted(keys - set(strat_keys) - set(dca_keys))
     if unknown:
         problems.append("%s: winner cell carries param key(s) outside the registered axes %r"
                         % (label, unknown))
     if missing or unknown:
         return None, None
-    for key in STRATEGY_PARAM_KEYS + DCA_PARAM_KEYS:
+    for key in strat_keys + dca_keys:
         if not is_number(winner[key]):
             problems.append("%s: param %s is not numeric (%r)" % (label, key, winner[key]))
             return None, None
-    strategy = {k: winner[k] for k in STRATEGY_PARAM_KEYS}
-    dca = {k: winner[k] for k in DCA_PARAM_KEYS}
+    strategy = {k: winner[k] for k in strat_keys}
+    dca = {k: winner[k] for k in dca_keys}
     return strategy, dca
 
 
@@ -451,6 +463,13 @@ def entries_for_bundle(bundle_path, problems):
     challenger_of = challenger_problems(family if isinstance(family, dict) else {}, spec, label,
                                         problems)
 
+    # Load the parameter contract: generic families carry it in the round-spec; legacy A v2
+    # uses the in-code bridge.  Unknown families without a contract fail closed.
+    contract, contract_problems, _is_legacy = pc.load_contract_from_round_spec(spec)
+    if contract_problems:
+        for cp in contract_problems:
+            problems.append("%s: %s" % (label, cp))
+
     survivors = bundle.get("survivors")
     if not isinstance(survivors, list):
         problems.append("%s: survivors is not a list" % label)
@@ -476,7 +495,7 @@ def entries_for_bundle(bundle_path, problems):
                             % (label, cohort))
             continue
         cell_label = "%s %s" % (label, cohort)
-        strategy, dca = param_cell(rec.get("winner"), cell_label, problems)
+        strategy, dca = param_cell(rec.get("winner"), cell_label, problems, contract=contract)
         evidence = metrics_evidence(rec, cell_label, problems)
         if strategy is None or evidence is None:
             continue

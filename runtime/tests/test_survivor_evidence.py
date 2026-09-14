@@ -36,6 +36,7 @@ sys.path.insert(0, RUNTIME)
 import survivor_evidence as se  # noqa: E402
 import survivor_index as si  # noqa: E402
 import survivor_leaderboard as sl  # noqa: E402
+import parameter_contract as pc  # noqa: E402
 from survivor_bundle import identity as bundle_identity  # noqa: E402
 
 FAMILY = "fixture-family-v1"
@@ -155,7 +156,45 @@ class Fixture(object):
              {"family_id": FAMILY, "kanban_task_id": TASK, "created_at_utc":
               "2026-09-13T00:00:00Z", "parent_family": None})
         dump(os.path.join(self.round, "round-spec.json"),
-             {"family_id": FAMILY, "round_id": ROUND, "data": {"data_end": "2026-09-10"}})
+             {"family_id": FAMILY, "round_id": ROUND, "data": {"data_end": "2026-09-10"},
+              "parameter_contract": {
+                  "parameter_contract_version": 1, "family_id": FAMILY,
+                  "contract_ref": "test fixture",
+                  "research_axes_ordered": [
+                      {"name": "window", "kind": "atomic", "members": ["window"],
+                       "registered_values": [20, 50, 100, 200], "row_fields": ["window"]},
+                      {"name": "discount", "kind": "atomic", "members": ["discount"],
+                       "registered_values": [0.01, 0.02, 0.03], "row_fields": ["discount"]},
+                      {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+                       "registered_values": [0.01, 0.02, 0.03, 0.04],
+                       "row_fields": ["spacing_pct"]},
+                      {"name": "size_multiplier", "kind": "atomic",
+                       "members": ["size_multiplier"],
+                       "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+                      {"name": "breakeven_tp_pct", "kind": "atomic",
+                       "members": ["breakeven_tp_pct"],
+                       "registered_values": [0.01, 0.02, 0.03],
+                       "row_fields": ["breakeven_tp_pct"]},
+                      {"name": "invalidation_pct", "kind": "atomic",
+                       "members": ["invalidation_pct"],
+                       "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+                  ],
+                  "row_fields": ["window", "discount", "spacing_pct", "size_multiplier",
+                                 "breakeven_tp_pct", "invalidation_pct"],
+                  "composite_map": {},
+                  "strategy_param_fields": ["window", "discount"],
+                  "dca_param_fields": ["spacing_pct", "size_multiplier",
+                                       "breakeven_tp_pct", "invalidation_pct"],
+                  "canonical_recipe": {"sort_keys": True, "separators": (",", ":"),
+                                       "ensure_ascii": False,
+                                       "numeric_rule": "JSON number finite, bool excluded"},
+                  "row_match_recipe": {"keys": ["symbol", "timeframe", "window", "discount",
+                                                "spacing_pct", "size_multiplier",
+                                                "breakeven_tp_pct", "invalidation_pct"],
+                                       "equality": "exact, numeric == float compare, rest bytewise"},
+                  "non_params": ["symbol", "timeframe"],
+                  "domain_cardinality": {"strategy": 12, "dca": 48, "per_cohort": 576},
+              }})
         dump(os.path.join(self.round, "verdict.json"), {"verdict": "PASS"})
         dump(os.path.join(self.attempt, "run-spec.json"),
              {"family_id": FAMILY, "round_id": ROUND, "run_id": RUN,
@@ -512,7 +551,7 @@ class EvidenceTests(unittest.TestCase):
         disclosure = manifest["materialization"].lower()
         self.assertIn("replay", disclosure)
         self.assertIn("not the bytes", disclosure)
-        self.assertEqual(manifest["contract"].split()[-1], "v1.6.0")
+        self.assertEqual(manifest["contract"].split()[-1], "v1.8.0")
         self.assertEqual(manifest["aggregate"]["comparison"], "MATCH")
         self.assertEqual(manifest["aggregate"]["grids_compared"], len(GRIDS))
         self.assertEqual(manifest["source_runner"]["sha256"], "sha256:" + "c4" * 32)
