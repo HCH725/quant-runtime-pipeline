@@ -1,28 +1,16 @@
 #!/usr/bin/env python3
 """Hourly read-only snapshot of the current quant candidate (Discord #candidate).
 
-Monitoring only.  It prints one short mobile-sized line set every run - even when nothing changed,
-because the operator expects an hourly line - and it is read-only by construction: nothing under
-/results is ever written, the only Kanban verbs are the read-backs `show` / `list`, the leaderboard
-is consumed in the order the file already carries (no re-ranking, no recompute), and no launch /
-retry / unblock / verdict can happen here.
+Monitoring only: one short mobile-sized line set every run, read-only by construction - nothing under
+/results is written, the only Kanban verbs are read-backs, and no launch / retry / unblock / verdict can
+happen here.  Fixed output order: Leaderboard, Current, Research Funnel, Runtime health.
 
-Sources
-- leaderboard: <results>/_survivors/leaderboard.json, entries verbatim, top 5.
-- current family: the newest <results>/<family_id>/family.json (handoff-written, carries
-  kanban_task_id / kanban_board).
-- progress: the family's **authoritative current attempt** - selection reused from reconcile.py
-  (contract 9.4 v1.7.1), never a second current-pointer.  terminal DONE = 100%, no attempt yet =
-  0%, otherwise the rows that attempt actually streamed into artifacts/grid_*.csv over the immutable
-  round-spec `expected.expected_case_evaluations`, capped to 0..100.
-- cohort: the last data row of the newest grid_*.csv the authoritative attempt already streamed
-  (latest *observable* symbol / timeframe - an observation, not a per-second heartbeat).
-- research funnel: the canonical intake state (reviewed = the four current_snapshot buckets,
-  ingested = unique ingested_wiki_records), a read-only +N/24h taken from the intake cron's own
-  durable run reports, and the distinct registered / backtested families under the results root.
-- counts: live running / blocked task counts read back from the family's board.
-
-Output order is fixed: Leaderboard, Current, Research Funnel, Runtime health.
+Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the current family's newest
+`<family_id>/family.json`; its authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) for
+the progress and, while it is still RUNNING_QLIB, its latest *observable* cohort (newest streamed grid
+row); the canonical intake state for the funnel (reviewed = the four current_snapshot buckets,
+ingested = unique ingested_wiki_records, +N/24h read-only from the intake cron's own reports, distinct
+registered / backtested families); the board's live running / blocked counts.
 """
 import csv
 import datetime
@@ -37,9 +25,8 @@ from reconcile import (DEFAULT_RESULTS, attempt_metadata, card_status, discover_
                        select_authoritative, sh)
 from terminal_evidence import TERMINALS  # noqa: E402
 
-# The CLI fence refuses `kanban list` from inside a delegate_task / worker child context because it
-# guards mutation; every call below is a read, so drop just that marker and keep the snapshot usable
-# when a worker runs it by hand.  (No write verb exists in this file.)
+# `kanban list` is fence-blocked inside a worker child context (the fence guards mutation); every
+# call below is a read, so drop just that marker - no write verb exists in this file.
 os.environ.pop("HERMES_DELEGATED_CHILD_CONTEXT", None)
 
 DEFAULT_BOARD = "quant-strategy-research"
@@ -50,10 +37,12 @@ TROPHY = "\U0001F3C6 Leaderboard"
 CURRENT = "\U0001F9EA Current"
 FUNNEL = "\U0001F52C Research Funnel"
 WARN = "\u26A0\uFE0F"
-RUNNING_STAGE = "RUNNING_QLIB"  # the in-flight stage default: a line repeating it carries nothing
+RUNNING_STAGE = "RUNNING_QLIB"  # the in-flight stage default: only then is a cohort observable
 REVIEW_STATE = "/Users/hong/workspace/alpha-strategy-review-state.json"
 INTAKE_OUTPUT = "/Users/hong/.hermes/cron/output/a5ae89131299"
-INGESTED_RE = re.compile(r"Ingested records:\s*\d+\s*total\s*\(\+(\d+)\s*this run\)")
+# the only two ingestion lines the durable intake reports have carried lately (newest format first)
+INGESTED_RES = (re.compile(r"Ingested records:\s*\d+\s*total\s*\(\+(\d+)\s*this run\)"),
+                re.compile(r"Ingested:\s*\d+\s*\(\+(\d+)\s*\)"))
 DELTA_HOURS = 24
 
 
@@ -90,13 +79,17 @@ def grid_rows(path):
 
 
 def latest_observable_cohort(attempt):
-    """(symbol, timeframe) of the attempt's newest streamed grid row; (None, None) when there is none.
+    """(symbol, timeframe) of the attempt's newest already-streamed grid row; (None, None) if none.
 
-    Latest *observable*: the newest (mtime) grid_*.csv that already streamed a data row, read at its
-    last row - an observation of progress, not a second-level heartbeat.
+    Newest grid first (mtime): the first grid_*.csv with a data row wins, read at its last row.
     """
-    newest, row = None, None
-    for path in sorted((attempt.path / "artifacts").glob("grid_*.csv")):
+    stamped = []
+    for path in (attempt.path / "artifacts").glob("grid_*.csv"):
+        try:
+            stamped.append((path.stat().st_mtime, path))
+        except OSError:
+            continue
+    for _stamp, path in sorted(stamped, reverse=True):
         try:
             with path.open(newline="") as fh:
                 reader = csv.reader(fh)
@@ -104,16 +97,12 @@ def latest_observable_cohort(attempt):
                 last = None
                 for last in reader:  # it streams row by row: keep the tail, never the whole grid
                     pass
-            stamp = path.stat().st_mtime
         except (OSError, csv.Error):
             continue
-        if not header or last is None:  # header only: nothing observable streamed yet
-            continue
-        if newest is None or stamp > newest:
-            newest, row = stamp, dict(zip(header, last))
-    if row is None:
-        return None, None
-    return row.get("symbol") or None, row.get("timeframe") or None
+        if header and last is not None:
+            row = dict(zip(header, last))
+            return row.get("symbol") or None, row.get("timeframe") or None
+    return None, None
 
 
 def expected_total(results_root, family_id, round_id):
@@ -182,8 +171,8 @@ def board_counts(board):
 def backtested_counts(results_root):
     """(backtested, registered) distinct strategy families under the results root.
 
-    Registered = <family_id>/family.json outside the `_*` dirs; backtested = some attempt streamed a
-    grid CSV with a data row (header + one line is enough, the grids are never read through).
+    Registered = <family_id>/family.json outside `_*`; backtested = some attempt streamed a grid CSV
+    with a data row (two read lines are enough, the grids are never read through).
     """
     families, backtested = [], 0
     for doc in sorted(Path(results_root).glob("*/family.json")):
@@ -203,12 +192,11 @@ def backtested_counts(results_root):
 
 
 def research_counts(now=None):
-    """(reviewed, ingested, delta_24h) from the canonical intake state; all None when unreadable.
+    """(reviewed, ingested, delta_24h) from the canonical intake state; delta_24h None = unavailable.
 
-    reviewed = the four current_snapshot buckets (Wiki duplicates never double-count), ingested =
-    unique ingested_wiki_records, delta_24h = what the intake cron's own durable run reports say it
-    completed inside DELTA_HOURS - read-only, and unavailable (not partial) when a report in the
-    window does not carry the canonical line, because then the window's total is unknowable.
+    reviewed = the four current_snapshot buckets, ingested = unique ingested_wiki_records; delta_24h is
+    read-only from the intake cron's own durable reports, and unavailable (never partial) when one in
+    the window carries neither ingestion line.
     """
     doc = load_json(REVIEW_STATE)
     if not isinstance(doc, dict):
@@ -227,8 +215,8 @@ def research_counts(now=None):
         if not fresh:
             continue
         reports += 1
-        match = INGESTED_RE.search(text)
-        if not match:
+        match = next((m for m in (p.search(text) for p in INGESTED_RES) if m), None)
+        if match is None:
             return reviewed, ingested, None
         total += int(match.group(1))
     return reviewed, ingested, total if reports else None
@@ -275,16 +263,14 @@ def render(results_root):
                                                        format(total, ",")))
     else:
         lines.append("Progress: unavailable (%s)" % note)
-    symbol, timeframe = latest_observable_cohort(attempt) if attempt else (None, None)
-    lines.append("Cohort: %s" % ("%s / %s" % (symbol, timeframe) if symbol and timeframe
-                                 else "unavailable"))
+    # cohort replaces the stage line; only a live attempt has an observable one
+    cohort = latest_observable_cohort(attempt) if attempt and stage == RUNNING_STAGE else (None, None)
+    lines.append("Cohort: %s" % ("%s / %s" % cohort if all(cohort) else "unavailable"))
     if task_id:
         status, why = card_status(board, task_id)
         lines.append("Card: %s" % (status or "unreadable (%s)" % why))
     else:
         lines.append("Card: unavailable (no family.json with a kanban_task_id)")
-    if stage != RUNNING_STAGE:  # the in-flight default is a constant, so its line carries nothing
-        lines.append("Stage: %s%s" % (stage, " (%s)" % note if total else ""))
 
     reviewed, ingested, delta = research_counts()
     lines += ["", FUNNEL]

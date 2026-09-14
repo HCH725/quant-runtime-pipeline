@@ -124,7 +124,7 @@ class Harness(unittest.TestCase):
         out = self.snapshot()
         self.assertIn("Progress:", out)
         self.assertIn("25.0% (250 / 1,000)", out)
-        self.assertNotIn(snap.RUNNING_STAGE, out)   # the near-constant in-flight stage is dropped
+        self.assertNotIn("Stage:", out)   # the cohort line replaces the near-constant stage line
         self.assertIn("Cohort: BTCUSDT / 1h", out)
         self.assertIn("Card: scheduled", out)
         self.assertIn("Blocked: 0 | Running: 1", out)
@@ -143,7 +143,7 @@ class Harness(unittest.TestCase):
         self.family()
         out = self.snapshot()
         self.assertIn("0.0% (0 / 1,000)", out)
-        self.assertIn("Stage: not launched", out)
+        self.assertNotIn("Stage:", out)   # the stage line is gone: cohort carries the observation
         self.assertIn("Cohort: unavailable", out)
 
     def test_terminal_done_is_hundred_percent(self):
@@ -151,14 +151,16 @@ class Harness(unittest.TestCase):
         self.attempt(round_id, "fam-a-r1-u1", rows=400, terminal="DONE")
         out = self.snapshot()
         self.assertIn("100.0%", out)
-        self.assertIn("Stage: DONE", out)
+        # a finished attempt has no observable cohort: never show its last (stale) grid row
+        self.assertIn("Cohort: unavailable", out)
 
     def test_terminal_failure_is_not_completion(self):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=400, terminal="FAILED", stage="FAILED_SCRIPT")
         out = self.snapshot()
         self.assertIn("0.0% (0 / 1,000)", out)
-        self.assertIn("Stage: FAILED_SCRIPT", out)
+        self.assertNotIn("Stage:", out)
+        self.assertIn("Cohort: unavailable", out)
 
     def test_progress_is_capped_at_hundred(self):
         round_id = self.family()
@@ -200,8 +202,9 @@ class Harness(unittest.TestCase):
     def test_wiki_counts_and_24h_delta(self):
         self.review_state({"pass": ["p1", "p2"], "pass_with_caveat": ["c1"], "remediate": ["r1"],
                            "reject": []}, ["p1", "c1", "c1"])   # wiki duplicates never double-count
-        self.intake_report(5, "- Ingested records: 31 total (+5 this run)")
-        self.intake_report(20, "- Ingested records: 26 total (+4 this run)")
+        self.intake_report(5, "- \u2705 Ingested records: 31 total (+5 this run)")
+        # the older report carries the other canonical ingestion line: both formats must still sum
+        self.intake_report(20, "**State:** Checkpoint `x` | Ingested: 26 (+4) | Buckets: pass 1")
         self.intake_report(30, "- Ingested records: 17 total (+9 this run)")   # outside the window
         out = self.snapshot()
         self.assertIn("2 / 4 reviewed 50.0%", out)   # 4 buckets, 2 unique Wiki records
