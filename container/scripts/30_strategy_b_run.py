@@ -122,7 +122,8 @@ ROW_FIELDS = (
     "size_multiplier", "breakeven_tp_pct", "invalidation_pct", "base_quote",
     "net_pnl", "fees", "funding", "gross_pnl", "ending_equity", "episodes",
     "episodes_long", "episodes_short", "tp_hits", "stop_hits", "flips", "open_at_end",
-    "margin_calls", "halted", "capital_exhausted", "min_entry_equity", "sharpe",
+    "margin_calls", "halted", "capital_exhausted", "min_entry_equity",
+    "entries_after_exhaustion", "sharpe",
     "max_dd_usdt", "max_dd_pct", "max_effective_leverage", "capital_utilization",
     "bars_in_market", "traded_notional", "days", "years", "cagr", "total_return_pct",
     "annualized_return", "n_steps", "pnl_decomp_ok",
@@ -530,6 +531,12 @@ def simulate(cohort, window, dirs, rail, slip_ticks, fee_mult=1.0, funding_mult=
     max_lev = 0.0
     util_sum = 0.0
     min_entry_equity = base_equity
+    # `min_entry_equity` is only the equity AT the entry moments (and is seeded with the slice's
+    # carry-in equity), so it cannot say whether an entry happened on an exhausted account.  This
+    # counter is the direct measurement: entries executed while the account equity was <= 0.
+    # `simulate()` refuses a fresh episode on a nonpositive account (`halted`), so a nonzero count
+    # means that guard no longer holds on some path.
+    entries_after_exhaustion = 0
     halted = False
     capital_exhausted = base_equity <= 0.0
 
@@ -668,8 +675,13 @@ def simulate(cohort, window, dirs, rail, slip_ticks, fee_mult=1.0, funding_mult=
                 if eq0 + realized <= 0.0:
                     halted = True          # the account cannot lose more than itself
                 else:
-                    if eq0 + realized < min_entry_equity:
-                        min_entry_equity = eq0 + realized
+                    pre_entry_equity = eq0 + realized
+                    if pre_entry_equity <= 0.0:
+                        # the guard above cannot let this happen; a nonzero count means the guard
+                        # was weakened (registered rule: no new entry on an exhausted account)
+                        entries_after_exhaustion += 1
+                    if pre_entry_equity < min_entry_equity:
+                        min_entry_equity = pre_entry_equity
                     fpx = C[t] + nd * slip
                     q = notional[0] / fpx
                     qty = q
@@ -701,26 +713,34 @@ def simulate(cohort, window, dirs, rail, slip_ticks, fee_mult=1.0, funding_mult=
             last_closed_dir = d
             flips += 1
             d = 0
-            fpx = C[t] + nd * slip
-            q = notional[0] / fpx
-            qty = q
-            cost = q * fpx
-            traded += q * fpx
-            charge_fee(q * fpx * taf)
-            layers[0] += 1
-            p0 = fpx
-            d = nd
-            k_next = 1
-            lvl_next = p0 * (1.0 - d * d0)
-            avg = fpx
-            stop = avg * (1.0 - d * inval)
-            tp = avg * (1.0 + d * tp_pct)
-            entry_bar = t
-            episodes += 1
-            if d == 1:
-                episodes_long += 1
+            if eq0 + realized <= 0.0:
+                # the same exhaustion guard as the flat entry above: close_episode() settles the
+                # funding of the closed episode, so the flip can leave the account nonpositive on
+                # this bar although the margin backstop (which reads the equity BEFORE that
+                # settlement) passed.  The account cannot lose more than itself, so the flatten
+                # stands but no new episode is opened on the new side (card t_3c3f0a12).
+                halted = True
             else:
-                episodes_short += 1
+                fpx = C[t] + nd * slip
+                q = notional[0] / fpx
+                qty = q
+                cost = q * fpx
+                traded += q * fpx
+                charge_fee(q * fpx * taf)
+                layers[0] += 1
+                p0 = fpx
+                d = nd
+                k_next = 1
+                lvl_next = p0 * (1.0 - d * d0)
+                avg = fpx
+                stop = avg * (1.0 - d * inval)
+                tp = avg * (1.0 + d * tp_pct)
+                entry_bar = t
+                episodes += 1
+                if d == 1:
+                    episodes_long += 1
+                else:
+                    episodes_short += 1
         f = fper[t]
         if f != 0.0 and d != 0:
             ep_fund += d * qty * C[t] * f
@@ -749,6 +769,7 @@ def simulate(cohort, window, dirs, rail, slip_ticks, fee_mult=1.0, funding_mult=
         "tp_hits": tp_hits, "stop_hits": stop_hits, "flips": flips,
         "open_at_end": open_at_end, "margin_calls": margin_calls, "halted": halted,
         "capital_exhausted": capital_exhausted, "min_entry_equity": min_entry_equity,
+        "entries_after_exhaustion": entries_after_exhaustion,
         "bars_in_market": bars_in_market, "max_effective_leverage": max_lev,
         "capital_utilization": (util_sum / bars_in_market) if bars_in_market else 0.0,
         "layers": layers, "marks": marks,
@@ -862,6 +883,7 @@ def wf_case(cohort, days, cell, exec_index, dir_sets, rail, slip_ticks, fee_mult
     max_lev = 0.0
     util_num = 0.0
     min_entry_eq = float("inf")
+    entries_after_exhaustion = 0
     halted = capital_exhausted = False
     eq = base_equity
     trace = []
@@ -883,6 +905,7 @@ def wf_case(cohort, days, cell, exec_index, dir_sets, rail, slip_ticks, fee_mult
         max_lev = max(max_lev, te["max_effective_leverage"])
         util_num += te["capital_utilization"] * te["bars_in_market"]
         min_entry_eq = min(min_entry_eq, te["min_entry_equity"])
+        entries_after_exhaustion += te["entries_after_exhaustion"]
         eq = te["ending_equity"]
         halted = halted or te["halted"]
         capital_exhausted = capital_exhausted or te["capital_exhausted"]
@@ -906,6 +929,7 @@ def wf_case(cohort, days, cell, exec_index, dir_sets, rail, slip_ticks, fee_mult
         "open_at_end": tot["open_at_end"], "margin_calls": tot["margin_calls"],
         "halted": halted, "capital_exhausted": capital_exhausted,
         "min_entry_equity": min_entry_eq if min_entry_eq != float("inf") else base_equity,
+        "entries_after_exhaustion": entries_after_exhaustion,
         "sharpe": sharpe_of(series), "max_dd_usdt": dd_usdt, "max_dd_pct": dd_pct,
         "max_effective_leverage": max_lev,
         "capital_utilization": (util_num / bars) if bars else 0.0,
@@ -937,6 +961,7 @@ def record(cohort, pair, pair_index, cell, cell_index, dca, kind, m):
            "margin_calls": m["margin_calls"], "halted": m["halted"],
            "capital_exhausted": m["capital_exhausted"],
            "min_entry_equity": round(m["min_entry_equity"], 6),
+           "entries_after_exhaustion": m["entries_after_exhaustion"],
            "sharpe": None if m["sharpe"] is None else round(m["sharpe"], 6),
            "max_dd_usdt": round(m["max_dd_usdt"], 6), "max_dd_pct": round(m["max_dd_pct"], 6),
            "max_effective_leverage": round(m["max_effective_leverage"], 6),
@@ -1054,7 +1079,8 @@ def run_cohort(spec, cohort, run_log, writers, agg):
                         row["episodes"] == row["tp_hits"] + row["stop_hits"]
                         + row["open_at_end"] + row["margin_calls"] + row["flips"])
                     agg["no_entry_after_exhaustion"] = agg["no_entry_after_exhaustion"] and (
-                        row["min_entry_equity"] > 0.0)
+                        row["entries_after_exhaustion"] == 0)
+                    agg["entries_after_exhaustion_total"] += row["entries_after_exhaustion"]
                     agg["ending_equity_floor"] = agg["ending_equity_floor"] and (
                         row["ending_equity"] > -1.5 * START_EQUITY)
                     agg["episodes_long_total"] += row["episodes_long"]
@@ -1273,6 +1299,7 @@ def evaluate_cohort(spec, cohort_label, winner, reason, hist_rows, winner_rows):
     oos = grid_row("oos")
     full = grid_row("full")
     stress = {s: grid_row(s) for s, _ in STRESS}
+    cost_attrition = grid_row("cost_attrition_40bps")
     out["winner"] = _pick(winner, AXES + ("ema_pair_index", "walk_forward_index", "n_steps"))
     out["metrics"] = {
         "historical": _pick(winner, WINNER_METRIC_KEYS),
@@ -1281,7 +1308,7 @@ def evaluate_cohort(spec, cohort_label, winner, reason, hist_rows, winner_rows):
         "robustness": {s: _pick(stress[s], WINNER_METRIC_KEYS) for s in stress},
         "no_funding_reference": _pick(grid_row("no_funding"), WINNER_METRIC_KEYS),
         "no_funding_full_reference": _pick(grid_row("no_funding_full"), WINNER_METRIC_KEYS),
-        "cost_attrition_40bps": _pick(grid_row("cost_attrition_40bps"), WINNER_METRIC_KEYS),
+        "cost_attrition_40bps": _pick(cost_attrition, WINNER_METRIC_KEYS),
     }
     out["neighbourhood"] = nb
     reasons = []
@@ -1292,6 +1319,14 @@ def evaluate_cohort(spec, cohort_label, winner, reason, hist_rows, winner_rows):
     failing_stress = [s for s, _ in STRESS if not (stress[s]["net_pnl"] > 0.0)]
     if failing_stress:
         reasons.append("robustness_economic:" + ",".join(failing_stress))
+    # G8_cohort_cost_attrition (round-spec `gates`; robustness_plan R4): the verdict rule counts
+    # the cohorts passing G3-G8, so the 40 bps-per-fill attrition grid is a registered gate and
+    # not a diagnostic.  The measurement was always taken (and is reported below), but it was
+    # missing from the cull reasons, so a winner whose attrition cell is non-positive was still
+    # elected SURVIVOR (card t_3c3f0a12).  The reason stays inside the registered
+    # `robustness_economic:<grids>` vocabulary (runtime/strategy_b_v2_counts.py checks the set).
+    if not (cost_attrition["net_pnl"] > 0.0):
+        reasons.append("robustness_economic:cost_attrition_40bps")
     if not nb["passed"]:
         reasons.append("parameter_neighbourhood")
     out["cull_reasons"] = reasons
@@ -1426,6 +1461,10 @@ def summarize(spec, agg, cohort_results):
                              "medians are never a gate",
         "dca_layer_histogram": {"level_%02d" % k: agg["layer_totals"][k] for k in range(12)},
         "assertions": assertions,
+        # the measured count behind the `no_entry_after_exhaustion` assertion: `assertions.json` is
+        # contractually "every entry is exactly true" (runtime/survivor_bundle.py), so the numeric
+        # diagnostic is reported here instead of inside that dict.
+        "no_entry_after_exhaustion_entries": agg["entries_after_exhaustion_total"],
     }
 
 
@@ -1504,6 +1543,7 @@ def main():
                "strategy_cells": set(), "dca_cells": set(),
                "pnl_decomp_all": True, "partition_all": True, "selector_stable": True,
                "no_entry_after_exhaustion": True, "ending_equity_floor": True,
+               "entries_after_exhaustion_total": 0,
                "episodes_long_total": 0, "episodes_short_total": 0, "episodes_full_total": 0,
                "layer_totals": [0] * 12, "stress_delta": {k: 0 for k in
                                                           ("fee_2x", "funding_2x",

@@ -433,6 +433,7 @@ class TestRunCohortSynthetic(unittest.TestCase):
                    "strategy_cells": set(), "dca_cells": set(), "pnl_decomp_all": True,
                    "partition_all": True, "selector_stable": True,
                    "no_entry_after_exhaustion": True, "ending_equity_floor": True,
+                   "entries_after_exhaustion_total": 0,
                    "episodes_long_total": 0, "episodes_short_total": 0,
                    "episodes_full_total": 0, "layer_totals": [0] * 12,
                    "stress_delta": {k: 0 for k in ("fee_2x", "funding_2x",
@@ -460,6 +461,11 @@ class TestRunCohortSynthetic(unittest.TestCase):
                 self.assertIn("SYNTH/5m", agg["winner_traces"])
             self.assertTrue(agg["pnl_decomp_all"])
             self.assertTrue(agg["partition_all"])
+            # the exhaustion assertion is wired to the measured entry count (row field), not to
+            # the carry-in-seeded `min_entry_equity` diagnostic (card t_3c3f0a12)
+            self.assertTrue(agg["no_entry_after_exhaustion"])
+            self.assertEqual(agg["entries_after_exhaustion_total"], 0)
+            self.assertIn("entries_after_exhaustion", hist[0])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -707,6 +713,89 @@ class TestRegisteredAxisNeighbourhood(unittest.TestCase):
         winner = rows[0]
         with self.assertRaises(ValueError):
             sb.cohort_neighbourhood(rows, winner, spec)
+
+
+# ---------------------------------------------------------------------------
+# G8 cost-attrition cohort gate + the exhaustion measurement (card t_3c3f0a12)
+# ---------------------------------------------------------------------------
+# `gates.verdict_rule` counts the cohorts passing G3-G8 and `robustness_plan` R4 registers
+# `cost_attrition_40bps` as a robustness gate (not a diagnostic).  The engine measured that grid
+# but never added it to `cull_reasons`, so a winner whose 40 bps attrition cell is net-negative
+# was still elected SURVIVOR.  The assertion `no_entry_after_exhaustion` had the mirror-image
+# defect: it read `min_entry_equity > 0`, a minimum over entry-moment equities that is *seeded
+# with the slice's carry-in equity*, so a walk-forward step opened on a negative carry looked
+# like an entry although the engine had halted.
+
+
+class TestCohortCostAttritionGate(unittest.TestCase):
+    """t_3c3f0a12: G8 is wired into the registered `cull_reasons` vocabulary."""
+
+    CELL = (10, 50, 7, 7, 0.02, 1.1, 0.02, 0.1)     # interior on every registered axis
+
+    def evaluate(self, attrition_net_pnl):
+        spec, rows = registered_spec(), registered_rows()  # every historical cell net_pnl = +1.0
+        winner = cell_row(rows, self.CELL)
+        # the winner's cell clears every other registered gate on its own grid: the attrition
+        # cell is the only variable under test
+        winner_rows = {k: dict(winner, window_kind=k, net_pnl=1.0)
+                       for k in sb.COHORT_GRID_KINDS if k != "historical"}
+        winner_rows["cost_attrition_40bps"] = dict(winner, window_kind="cost_attrition_40bps",
+                                                  net_pnl=attrition_net_pnl)
+        return sb.evaluate_cohort(spec, "SYNTH/5m", winner, "selected", rows, winner_rows)
+
+    def test_attrition_cell_sign_decides_the_cohort(self):
+        for attrition, expected in ((0.0, ["robustness_economic:cost_attrition_40bps"]),
+                                    (-1.0, ["robustness_economic:cost_attrition_40bps"]),
+                                    (1.0, [])):             # the gate is strict `net_pnl > 0`
+            out = self.evaluate(attrition)
+            self.assertEqual(out["cull_reasons"], expected)
+            self.assertEqual(out["outcome"], "CULLED" if expected else "SURVIVOR")
+            # the measurement stays reported for the audit trail
+            self.assertEqual(out["metrics"]["cost_attrition_40bps"]["net_pnl"], attrition)
+
+
+class TestNoEntryAfterExhaustionMetric(unittest.TestCase):
+    """t_3c3f0a12: the assertion counts entries on an exhausted account, and no path re-enters."""
+
+    def make_cohort(self, funding=None):
+        """4 days x 2 bars at a flat price: isolates the funding settlement of a flip close."""
+        rows = [(100, 100, 100, 100)] * 8
+        c = FakeCohort(rows, taf=0.0, tick=0.0, funding=funding, day_bars=2)
+        start = sb.utc_ms("2022-01-01")
+        c.open_time_ms = np.array([start + i * 86400000 // 2 for i in range(len(rows))],
+                                  dtype=np.int64)
+        c.rebuild_days()
+        return c
+
+    def test_nonpositive_carry_in_is_not_an_entry(self):
+        """A step opened on a nonpositive carry-in is a halt, not an entry: the pre-fix row
+        expression (`min_entry_equity > 0`) is false on this very row."""
+        c = self.make_cohort()
+        d_long = dirs(*([0, 0] + [1] * (c.n - 2)))
+        sel = sb.select_train_pairs(c, (0, 4, c.day_start), (1, 1), [(5, 40)], DCA, 0.0, 1.0,
+                                    1.0, True, [d_long])
+        m = sb.wf_case(c, (0, 4, c.day_start), (1, 1), 0, [d_long], RAIL, 0.0, 1.0, 1.0, True,
+                       -1000.0, sel)                # the previous step blew the account up
+        self.assertEqual(m["episodes"], 0)              # the engine halted: no entry happened
+        self.assertLessEqual(m["min_entry_equity"], 0.0)  # the polluted carry-in diagnostic
+        self.assertEqual(m["entries_after_exhaustion"], 0)  # the direct count stays clean
+
+    def test_flip_close_below_zero_does_not_re_enter(self):
+        """`close_episode()` settles the funding of the closed episode, so a flip can leave the
+        account nonpositive on that bar although the margin backstop (which reads the equity
+        BEFORE that settlement) passed: the re-establishment needs the flat entry's exhaustion
+        guard (card t_3c3f0a12, the single-point execution bug)."""
+        # bar 2 opens the long, bar 3 flips it to short; the funding accrued over bar 2 is
+        # settled (and only settled) when the flip closes that episode
+        funding = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        c = self.make_cohort(funding=funding)
+        d_flip = dirs(0, 0, 1, -1, 0, 0, 0, 0)
+        te = sb.simulate(c, (2, 4), d_flip, RAIL, 0.0, 1.0, 1.0, True, 1100.0)
+        self.assertEqual(te["flips"], 1)                # the flip still flattens ...
+        self.assertLess(te["ending_equity"], 0.0)       # ... on a nonpositive account ...
+        self.assertEqual(te["episodes"], 1)             # ... and does not re-enter
+        self.assertTrue(te["halted"])
+        self.assertEqual(te["entries_after_exhaustion"], 0)
 
 
 if __name__ == "__main__":
