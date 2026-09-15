@@ -1,0 +1,895 @@
+{
+  "schema_version": 1,
+  "document_kind": "round-spec template (Strategy C v1; cohort-survivor semantics: >=1 survivor passes, all survivors advance; instantiate to /results/<family_id>/rounds/<round_id>/round-spec.json BEFORE any computation)",
+  "template_instantiation": {
+    "placeholders": [
+      "{{round_id}}",
+      "{{kanban_task_id}}",
+      "{{created_at_utc}}"
+    ],
+    "rule": "Every scientific field in this template is FROZEN before the first run. Instantiation may only substitute the three placeholders; it must not touch the domains, the split, the selector/disposition versions, the gates, the registered family-level falsification landings or the falsification list (contract INV-4).",
+    "instantiated_to": "/results/<family_id>/rounds/<round_id>/round-spec.json",
+    "validated_by": "python3 runtime/strategy_c_v1_counts.py --spec runtime/templates/strategy_c_v1_round_spec.template.json",
+    "status": "PREREGISTRATION ONLY / NOT LAUNCHED - authored before any Strategy C computation; the launch card instantiates it and lands the immutable copy in /results."
+  },
+  "family_id": "funding-decile-extreme-contrarian-btc-v1",
+  "family_title": "Production Strategy C - funding-decile extreme contrarian (BTCUSDT USD-M perp, 24h)",
+  "round_id": "{{round_id}}",
+  "kanban_task_id": "{{kanban_task_id}}",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "{{created_at_utc}}",
+  "authored_by": "Hermes default (Xiaoqian) - Contract v1.7.0 production card t_56ca0634",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.7.0 (cohort survivor semantics of sections 7.2 / 7.3; the v1.8.0 launch gate additionally requires this document's generic parameter_contract, which is generated below from the domains registered here)",
+  "implementation_status": {
+    "engine": "IMPLEMENTED: container/scripts/40_strategy_c_run.py (deployed byte-identical to the host /scripts mount; the run-spec pins its sha256)",
+    "engine_selfcheck": "container/scripts/tests/test_strategy_c_engine.py - run in qlib-run before launch",
+    "no_launch_in_this_template": "This template is authored without launching anything; the launch is performed by card t_56ca0634 and lands in the instantiated copy."
+  },
+  "semantic_fingerprint": {
+    "fingerprint_input": "funding-decile-extreme-contrarian-btc-v1|decile=0.10;funding_interval=8h;hold=24h;lookback=180d|breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10;size_multiplier=1.0,1.1;spacing_pct=0.01,0.02,0.03,0.04|2022-01-01..2026-09-11|15m|long-only|symbols=BTCUSDT|selector=cohort-selector-v1;disposition=cohort-disposition-v1",
+    "normalisation": "The frozen handoff value (contract 14.2 step 7 / 14.4): family_id | signal family and its source-specified mechanics | DCA domain (axes alphabetically) | data window | timeframe | direction | symbols | selector;disposition version. It was written into the immutable /results family.json by the automatic production handoff and is copied here VERBATIM; this template never rewrites it.",
+    "semantic_fingerprint": "TO_BE_RECOMPUTED",
+    "registered_axis_vs_family_fingerprint": "Disclosure (no silent widening): the frozen fingerprint_input records the source-specified primary threshold (`decile=0.10`) plus the fixed signal mechanics; this round-spec registers the source's own perturbation tracks (5th / 20th percentile) as search values of the SAME family. The family record is immutable (INV-4) and was published by the handoff before this round-spec existed, so the delta is disclosed here - in the pre-registration, before the first computation - rather than hidden. The primary threshold definition itself is unchanged and is never replaced by a sensitivity result."
+  },
+  "parent_family": null,
+  "lineage_note": "Independent family (signal family = perpetual funding, a positioning COST, not a price signal). The Kanban parent edge is scheduling/order only; scientific lineage is null: this family does not refine, inherit parameters from, or shrink the universe of Strategy A (close-vs-SMA mean reversion) or Strategy B (EMA-crossover momentum), neither of which uses funding data at all. Source: the reviewed wiki record quant/extreme-negative-funding-contrarian-btc-return-2026-09-06.md (status research-only, implementation_status not-implemented, adoption not-approved at handoff time).",
+  "hypothesis": {
+    "statement": "When the 8h funding settlement rate of the BTCUSDT USD-M perpetual falls into the lowest registered decile of its own trailing 180-day mid-rank distribution (crowded short positioning: shorts pay longs), the subsequent 24h is expected to be POSITIVE for a long position.",
+    "mechanism": "Perpetual funding is a recurring cost of holding a position, so it is a positioning signal. Deeply negative funding means leveraged shorts are crowded and their carry cost is high, which is the condition for short covering / liquidation cascades. The source reports the effect as asymmetric: only the negative tail is informative at the 24h horizon.",
+    "direction": "LONG-only. No short leg, no short mirroring: the source reports no reliable short signal at 24h and the card forbids adding one (a short leg would be a new hypothesis requiring a new round).",
+    "test_statistic": "The single registered cohort (BTCUSDT/15m): the deterministic historical-only winner cell is carried unchanged into OOS, the full window, eleven registered phase grids and its historical parameter neighbourhood. The family statistic is the COUNT of cohort survivors (0 or 1 here), never a cross-cohort median.",
+    "source": "Memon, Anklesaria-Dalal & Mishra (2026), AIJMR 4(4), DOI 10.62127/aijmr.2026.v04i04.1493 (working-paper-tier journal; treated as such)."
+  },
+  "eligible_universe": {
+    "symbols": [
+      "BTCUSDT"
+    ],
+    "symbol_source": "BINANCE USD-M perpetual, canonical raw store (/data/raw, read-only)",
+    "timeframes": [
+      {
+        "raw_interval": "15m",
+        "qlib_freq": "15min"
+      }
+    ],
+    "cohort_count": 1,
+    "cohort_definition": "one cohort = one (symbol, timeframe) pair = BTCUSDT/15m; it is the v1.3.0 disposition unit",
+    "excluded": [
+      "every other symbol and every other timeframe present in raw (the source studies a single instrument at 15-minute resolution)"
+    ],
+    "universe_immutability": "Registered here, before computation. Must not be narrowed or widened after seeing results (contract 7.2). The 15m timeframe is the source-specified price reference; the 8h funding settlement is the signal grid, not a cohort."
+  },
+  "signal_domain": {
+    "kind": "registered signal mechanics (fixed; NOT searched)",
+    "settlement_frequency": "8h at 00:00 / 08:00 / 16:00 UTC (Binance standard, source-specified)",
+    "percentile_definition": "mid-rank percentile of the current funding rate within its own trailing window: rank = (observations STRICTLY below the current value + 0.5) / observations in the window",
+    "window_rule": "the trailing window is [t - lookback_days, t] and includes the current observation at t; only observations at or before t enter it, so the value can never be a look-ahead",
+    "warmup_rule": "a percentile exists only once the trailing window is FULLY covered by the loaded funding series (t - lookback >= the first observation of that series); before that the signal is undefined and can never trigger an entry",
+    "entry_timing": "the settlement is observable AT t; the entry fills on the close of the bar that STARTS at t (the next executable price, one bar lagged, no look-ahead). The structure is asserted at run time (entry_never_before_signal)",
+    "holding": "time exit 24h after the settlement that created the position: the position is reduce-only flattened on the close of the bar that ends exactly at T + 24h, after which the book is FLAT until the next qualifying signal",
+    "overlap_handling": "NON-overlapping primary protocol: a settlement that fires while a position is open is skipped. The overlapping variant is reported as a non-gating diagnostic only and is never mixed into the primary",
+    "no_extra_exits": "no signal-level stop-loss, take profit or trailing stop is added (the source specifies none): the only exits are the registered DCA rail's breakeven-anchored TP, its resting invalidation, the 24h time exit and the inherited capital-exhaustion backstop"
+  },
+  "parameter_domain": {
+    "kind": "strategy parameter domain (the signal threshold), two registered axes",
+    "decile": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "lookback_days": [
+      180
+    ],
+    "legal_cases_per_cohort": 3,
+    "grid_deciles": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "grid_lookbacks": [
+      180
+    ],
+    "grid": [
+      {
+        "decile": 0.05,
+        "lookback_days": 180
+      },
+      {
+        "decile": 0.1,
+        "lookback_days": 180
+      },
+      {
+        "decile": 0.2,
+        "lookback_days": 180
+      }
+    ],
+    "primary_threshold": 0.1,
+    "primary_threshold_role": "source-specified primary value; the headline hypothesis is stated at decile = 0.10 and that definition is never replaced by a sensitivity result. All three registered values are evaluated on every phase grid.",
+    "decile_status": "SOURCE_SPECIFIED_PRIMARY_AND_SOURCE_REPORTED_SENSITIVITY_TRACKS - the 10th percentile is the source-specified primary threshold (Memon et al. 2026: 'lower decile of the 180-day rolling mid-rank distribution'); the 5th and 20th percentile tracks are the source's own parameter-perturbation set (the wiki record's falsification item 4). Both extra tracks are registered HERE, before any computation, because contract 7.2 requires a complete strategy parameter domain rather than a single-point trial, because the card's robustness item 2 requires the three tracks to be measured, and because the registered tie-break axis order lists `decile` as a joint-space axis. A sensitivity result never replaces or redefines the primary 10th-percentile threshold (card: 'not to replace the primary'), it is only compared against it.",
+    "lookback_status": "SOURCE_SPECIFIED - 180 days, a singleton axis of the joint space. It is registered (not inferred) so that the neighbourhood/tie-break axis order is the registered one; it is never searched and never tuned afterwards.",
+    "domain_immutability": "The domain is complete and bounded; no post-hoc parameter additions, no selection on OOS (contract 7.3)."
+  },
+  "dca_domain": {
+    "kind": "DCA parameter domain (the execution rail), four axes - contract 7.2 item 4",
+    "base_quote": 1000,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant: no operator evidence fixes it at 1000. It is a project pre-registration choice, frozen here before any computation (contract 7.2 v1.3.1).",
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "config_count": 48,
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      }
+    ],
+    "domain_provenance": {
+      "checked_first": "Searched the reviewed Hermes records that could carry a stronger, already-audited DCA parameter domain: the quant/dca-* family of 2026-09-03/04 records.",
+      "finding": "Those records register the DCA/scale-in BOUNDEDNESS requirements, the price/size/breakeven arithmetic and synthetic sweeps, but no audited DCA search DOMAIN for this ladder/TP/invalidation family. The minimal bounded domain of the card is therefore adopted verbatim (not widened, not narrowed).",
+      "declared_differences_from_those_records": [
+        "the reviewed records describe invalidation as a boundary 'beyond the last safety order'; Strategy C anchors the resting stop on the running average cost, inherited verbatim from the Strategy A/B engine family. Declared before the run, not chosen after seeing results.",
+        "the reviewed records allow size multipliers up to 1.5-2.0 on synthetic bars; this round searches {1.0, 1.1}, where 1.1 is the project's historical progression value. Both values are pre-registered search candidates."
+      ],
+      "no_post_hoc_resizing": "The domain was fixed before any Strategy C computation and must not be narrowed or widened afterwards (contract 7.2)."
+    }
+  },
+  "dca_execution_semantics": {
+    "authorization": "Inherited verbatim from the Strategy A/B engine family (the ladder geometry, breakeven-anchored TP and resting invalidation semantics); this round parametrises the four axes and bounds the rail by the 24h signal window - it does not re-interpret the execution semantics.",
+    "trigger_anchoring": "the LADDER is anchored on the INITIAL ENTRY FILL PRICE of the episode",
+    "invalidation_anchoring": "the resting invalidation is anchored on the running AVERAGE COST, the same reference as the breakeven-anchored TP",
+    "window_bounded": "tranche #1 is the initial entry after the settlement; adverse-price scale-ins follow the ladder inside the window (level_k price = initial_entry_price x (1 - spacing_pct x k), k = 1..10, so at most 11 routine active levels of the 12-tranche rail); the 24h time exit reduce-only flattens every layer, then the book is FLAT and no layer may be added again before the next qualifying signal",
+    "engine_semantics": {
+      "entry": "the close of the bar that starts at the settlement (one bar lagged), taker fill with adverse slippage",
+      "sizing": "non-compounding fixed-quote basis on the pre-registered starting equity: level k margin = base_quote x size_multiplier^k (k = 0..10); level notional = margin x leverage",
+      "take_profit": "reduce-only full flatten of the whole episode when the bar high >= running_average_cost x (1 + breakeven_tp_pct)",
+      "invalidation": "a RESTING stop at running_average_cost x (1 - invalidation_pct), anchored on the same reference as the take profit",
+      "intrabar_ordering": "Descending-price trigger walk with the bar LOW reached first, then the bar HIGH. Walking down from the bar open, the next trigger is whichever of the next ladder level and the resting stop is HIGHER; ladder levels below the resting stop are never reachable. The stop fills at min(stop price, bar open) - a gap through the stop cannot fill at the stop price. Deterministic and never flattering.",
+      "capital_exhaustion": "backstop only: forced full flatten at the bar close if unrealised equity <= margin_maint x notional; evaluated after the down-walk and after the resting stop",
+      "concurrency": "one position episode at a time; no new entry while a position is open (non-overlapping protocol); no pyramiding beyond the ladder; no short side; no add after FLAT/kill"
+    }
+  },
+  "selector_and_disposition": {
+    "selector_version": "cohort-selector-v1",
+    "disposition_version": "cohort-disposition-v1",
+    "selection_protocol": "Deterministic, historical window ONLY; OOS must never be used to select parameters.",
+    "selection_steps": [
+      "1. Sufficiency: if the cohort's best historical case has fewer episodes than gates.min_episodes_is, the cohort is culled with reason insufficient_trades.",
+      "2. Eligibility: a case is a candidate iff historical net_pnl > 0 AND historical sharpe > 0 AND historical episodes >= gates.min_episodes_is.",
+      "3. If no case is a candidate, the cohort is culled with reason no_qualifying_candidate.",
+      "4. Ranking: Sharpe descending, then net_pnl descending, then a fixed lexical tie-break over the REGISTERED INDEX of each axis in the fixed order (decile, lookback_days, spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct). The first case is the cohort winner.",
+      "5. The winner's exact strategy+DCA cell is carried unchanged into OOS, full, every robustness grid, the official-only provenance rerun and the neighbourhood test. No cell may be swapped after OOS has been seen."
+    ],
+    "cohort_survivor_requirements": [
+      "a) a historical winner exists (steps 1-4)",
+      "b) OOS: net_pnl > 0 AND sharpe > 0 for the winner's cell",
+      "c) full window: net_pnl > 0 for the winner's cell",
+      "d) robustness: the SAME winner cell has net_pnl > 0 in each of fee_2x, funding_2x, entry_delay_1_bar, slippage_2ticks",
+      "e) parameter neighbourhood: at least 60% of the winner cell's legal face-adjacent neighbours (one +-1 step on exactly one registered axis, in-domain) agree with the winner's historical net-PnL sign. The neighbourhood judgement uses HISTORICAL rows only - never OOS."
+    ],
+    "cohort_outcomes": [
+      "SURVIVOR",
+      "CULLED"
+    ],
+    "cull_reasons": [
+      "insufficient_trades",
+      "no_qualifying_candidate",
+      "oos_economic",
+      "full_economic",
+      "robustness_economic:<grids>",
+      "parameter_neighbourhood"
+    ],
+    "family_disposition": {
+      "0 cohort survivors": "REJECT / NO_SURVIVOR (verdict REJECT, performance_claimable false)",
+      "1 cohort survivor": "SURVIVOR_FOUND (verdict PASS; performance_claimable still requires the full contract 9.6 condition set)",
+      ">1 cohort survivors": "MULTIPLE_SURVIVORS (unreachable for this family: the eligible universe is a single cohort; kept registered so the mapping is the contract's own)",
+      "coverage or technical incompleteness": "TECHNICAL_INCOMPLETE (no cohort is judged at all)"
+    },
+    "cross_cohort_medians": "not applicable and never a gate (this family has one cohort); any all-case median reported in the artifacts is descriptive and marked non_gating"
+  },
+  "registered_family_level_falsification": {
+    "note": "The card's falsification battery lands in the current cohort-survivor semantics as follows (no threshold is lowered and no item is deleted). The two items below are FAMILY-level: they never cull a cohort and they can never be recorded as PASS.",
+    "threshold-instability": {
+      "definition": "the three registered decile tracks (5th / 10th / 20th percentile) evaluated at the winner's remaining parameters on the OOS window must agree in net-PnL sign",
+      "landing": "descriptive robustness disclosure; a hit must NEVER be recorded as PASS (the runner recommends DEFERRED)"
+    },
+    "funding-provenance": {
+      "definition": "the OOS Sharpe of the cell selected on the primary (full, modeled+official) funding series vs the OOS Sharpe of the cell selected on the official-only subsample (>= 2023-11-01, the registered provenance rerun) differ in sign, or differ by more than 50% of the larger magnitude",
+      "landing": "TECHNICAL_INCOMPLETE or DEFERRED per the evidence; NEVER PASS",
+      "note": "the OOS window itself carries official funding observations only, so the two configurations are identical there by construction; the check measures whether the modelled-funding era changes the SELECTION"
+    }
+  },
+  "data": {
+    "source": "/data/raw (host /Volumes/ExpansionDrive/market-data-raw), read-only",
+    "venue": "BINANCE USD-M perpetual",
+    "data_start": "2022-01-01",
+    "data_end": "2026-09-11",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "official_only_start": "2023-11-01",
+    "official_only_end": "2025-09-30",
+    "split_immutability": "The split is fixed here, before any computation, and must not be moved afterwards.",
+    "derived_store": "Built per attempt from raw into the rebuildable /qlib/work area via upstream qlib dump_bin.py; read back exclusively through the qlib data layer. Never written to /results. Bars are never resampled or gap-filled: a missing bar stays missing.",
+    "funding_series_contract": {
+      "registered_window": "2022-01-01T00:00:00Z .. 2026-09-11T23:59:59Z (the registered data window; the raw file now extends past it and is not used beyond data_end)",
+      "measured_at_pre_registration": {
+        "observations": 5145,
+        "modeled_funding": 2005,
+        "official": 3140,
+        "modeled_first": "2022-01-01T00:00:00Z",
+        "modeled_last": "2023-10-31T00:00:00Z",
+        "official_first": "2023-10-31T08:00:00Z",
+        "official_last": "2026-09-11T16:00:00Z",
+        "official_mark_price_null": 0,
+        "modeled_mark_price_null": 2005,
+        "flat_rate_share_modeled": 0.3177,
+        "flat_rate_share_official": 0.2618,
+        "interval": "strict 8h grid (28,800,000 ms) with ms-level timestamp jitter only; no missing or extra settlement"
+      },
+      "card_authored_figures": "the card body records 2,005 modeled / 3,142 official columns over its own window; the numbers above are the values measured on the raw file at pre-registration time and are the ones this round evaluates. The modelled segment is a reconstruction and is never presented as official funding.",
+      "primary_use": "the PRIMARY run uses the complete series from 2022-01-01 (the registered window) both for the percentile signal and for the funding cost, exactly as the card registers it; the official-only subsample is re-measured as a registered robustness grid",
+      "no_fabrication": "the artifacts must disclose the modelled/official split; no modelled row may be relabelled official",
+      "official_only_rerun": "the registered provenance grid re-runs the same protocol on the official-only era: funding series restricted to truth_status == official, historical window 2023-11-01 .. 2025-09-30, OOS slice unchanged 2025-10-01 .. 2026-09-11, full window 2023-11-01 .. 2026-09-11"
+    }
+  },
+  "costs": {
+    "source": "canonical instrument metadata (raw binance/usdm/instruments/usdm-perp-instruments.json), read at run time, never hard-coded",
+    "maker_fee": 0.0002,
+    "taker_fee": 0.0005,
+    "margin_init": 0.1,
+    "margin_maint": 0.1,
+    "apply_rule": "every fill is a market order: taker fee on the full traded notional, plus adverse slippage of baseline_slippage_ticks instrument ticks (1 tick = price_increment). No maker fills are assumed anywhere.",
+    "baseline_slippage_ticks": 1,
+    "baseline_slippage_provenance": "research assumption of this round (NOT user-specified); robustness re-measures it at 2 ticks",
+    "funding": "the registered funding series of the evaluated configuration is charged at each settlement inside the holding window (rate x position notional at that bar's close, inherited convention); a negative rate is a CREDIT to a long position. The no_funding / no_funding_full grids re-measure the same cells with the funding cost zeroed (descriptive), and funding_2x doubles it.",
+    "cost_attrition_grid": "cost_attrition_40bps applies 8x the registered taker fee = 40 bps per fill, the registered attrition stress of the original falsification battery (G8)",
+    "funding_immutability": "the funding baseline must not be swapped for a modelled series to improve the outcome, nor vice versa"
+  },
+  "authorization_invariants": {
+    "provenance_class": "USER_FIXED - only items with explicit operator evidence (the operator's stated rail definition, inherited verbatim from the A/B registration). A searched axis or a project pre-registration constant must NOT be listed here.",
+    "starting_equity_usdt": 30000,
+    "numeraire": "USDT (sole)",
+    "venue": "BINANCE USD-M linear perpetual",
+    "leverage": "10x (1 / margin_init)",
+    "tranches": 12,
+    "tranche_12": "reserve/buffer, never routinely deployed",
+    "routine_active_levels": 11,
+    "side": "LONG-only (initial entry + adverse-price scale-ins); no short leg",
+    "exit": "reduce-only",
+    "no_add_after_flat_or_kill": true,
+    "same_bar_multi_level_ordering": "deterministic and conservative - see dca_execution_semantics.engine_semantics.intrabar_ordering"
+  },
+  "metrics_definitions": {
+    "equity": "30000 + cumulative realised net PnL (USDT); unrealised marked at bar closes",
+    "daily_series": "end-of-UTC-day equity marks, forward-filled across flat stretches",
+    "sharpe": "mean/std (ddof=1) of daily returns x sqrt(365); risk-free 0",
+    "max_dd": "peak-to-trough of the daily equity series, reported in % and USDT",
+    "cagr": "(ending_equity / 30000) ^ (1/years) - 1, years from the actual bar span",
+    "max_effective_leverage": "max of (position notional / unrealised equity), sampled every in-market bar",
+    "capital_utilization": "mean of (deployed margin / unrealised equity) over in-market bars",
+    "turnover": "sum of |fill notional| over every entry / DCA add / exit fill of the cell",
+    "dca_layer_histogram": "count of fills per ladder level, aggregated over all full-window base cases (144 cells); direct evidence of how much of the 12-tranche rail is reachable under resting-stop sequencing",
+    "cohort_winner": "the historical-only selector output for the BTCUSDT/15m cohort"
+  },
+  "robustness_plan": {
+    "declared_before_first_run": true,
+    "must_not_narrow_universe_or_lower_gates": true,
+    "items": [
+      {
+        "id": "R1",
+        "name": "parameter-neighbourhood robustness",
+        "method": "for the cohort winner, compare the winner's historical net-PnL sign against its legal face-adjacent neighbours in the registered joint space (decile, lookback_days, spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct); require >= 60% sign agreement; historical rows only"
+      },
+      {
+        "id": "R2",
+        "name": "execution stress reruns",
+        "method": "full-window evaluation of all registered cells under fee_2x, funding_2x, entry_delay_1_bar, slippage_2ticks; the winner's cell must stay net_pnl > 0 in all four"
+      },
+      {
+        "id": "R3",
+        "name": "funding baseline diagnostics",
+        "method": "no_funding (historical window) and no_funding_full (full window) grids for all cells; descriptive only, never a gate"
+      },
+      {
+        "id": "R4",
+        "name": "cost attrition (G8)",
+        "method": "cost_attrition_40bps grid for all cells; the winner's cell must stay net_pnl > 0, otherwise the cohort is culled with reason robustness_economic:cost_attrition_40bps"
+      },
+      {
+        "id": "R5",
+        "name": "official-only provenance rerun",
+        "method": "the same protocol re-run on the official-funding era (>= 2023-11-01); family-level provenance check; never PASS on a mismatch"
+      },
+      {
+        "id": "R6",
+        "name": "decile sensitivity (threshold instability)",
+        "method": "the 5th/10th/20th percentile tracks at the winner's remaining parameters on the OOS window; a sign disagreement is disclosed and can never be PASS"
+      },
+      {
+        "id": "R7",
+        "name": "per-year and per-settlement-phase stability",
+        "method": "the winner cell's net PnL by calendar year and by settlement phase (00/08/16 UTC); descriptive (non-gating) diagnostics"
+      }
+    ]
+  },
+  "gates": {
+    "G1_coverage": "every one of the 11 registered phase grids must contain exactly 144 cases (1 cohort x 3 strategy cases x 48 DCA configs), the measured strategy/DCA cell sets must equal the registered cartesian products, and the case evaluation total must equal 1,584; otherwise TECHNICAL_INCOMPLETE and no cohort is judged",
+    "G2_insufficient_trades": "per cohort only: fewer than min_episodes_is historical episodes in the cohort's best case culls the cohort (insufficient_trades)",
+    "G3_cohort_selector": "historical net_pnl > 0 AND sharpe > 0 AND episodes >= min_episodes_is, ranked by Sharpe desc, net_pnl desc, registered-index lexical tie-break",
+    "G4_cohort_oos": "the registered OOS economic gate is STRICTER than the contract minimum: OOS net_pnl > 0 AND sharpe > 0 AND annualized Sharpe >= min_oos_sharpe (0.40) AND annualized return >= min_oos_annualized_return (0.0)",
+    "G5_cohort_full": "full-window net_pnl > 0 for the winner's cell",
+    "G6_cohort_robustness": "the winner's cell has net_pnl > 0 in all four execution stress reruns",
+    "G7_cohort_neighbourhood": "at least 60% of legal face-adjacent neighbours agree in historical net-PnL sign",
+    "G8_cohort_cost_attrition": "the winner's cell has net_pnl > 0 in the cost_attrition_40bps grid",
+    "verdict_rule": "TECHNICAL_INCOMPLETE if G1 fails; else the cohort passing G3-G8 is a SURVIVOR: 0 survivors -> REJECT, 1 survivor -> PASS (band SURVIVOR_FOUND). The two registered family-level falsification items then forbid PASS (see registered_family_level_falsification). No post-hoc threshold edits, no tuning to pass.",
+    "min_episodes_is": 20,
+    "min_episodes_is_provenance": "the source's no-signal / failure threshold is expressed as an OOS mean-return criterion, not an episode count; the project's already-registered no-signal floor for a historical-selection window is 20 episodes (Strategy A v2 / B v2). 20 is adopted verbatim here - it is not lowered and it is disclosed as the project precedent rather than presented as a source-specified number.",
+    "neighborhood_min_same_sign_fraction": 0.6,
+    "min_oos_sharpe": 0.4,
+    "min_oos_annualized_return": 0.0,
+    "max_provenance_relative_difference": 0.5,
+    "known_gate_set_limitation": "The registered gate set contains no benchmark-relative test. A long-only strategy can show positive PnL purely through the sample's upward drift. This limitation is declared BEFORE the run and is NOT patched afterwards; a buy-and-hold comparison remains a non-gating diagnostic."
+  },
+  "falsification": [
+    "no signal / insufficient trades (G2; culls the cohort)",
+    "no qualifying historical candidate (G3)",
+    "OOS economic rejection of the winner cell (G4: annualized Sharpe < 0.40 or annualized return < 0)",
+    "full-window economic rejection of the winner cell (G5)",
+    "robustness economic failure of the winner cell (G6)",
+    "parameter-neighbourhood fragility of the winner cell (G7)",
+    "cost attrition: the winner cell turns negative under 40 bps per fill (G8)",
+    "funding-provenance rejection (primary vs official_only sign mismatch or > 50% difference) -> TECHNICAL_INCOMPLETE / DEFERRED, never PASS",
+    "threshold instability (5th/10th/20th percentile tracks disagree in OOS sign) -> descriptive disclosure, never PASS",
+    "DCA execution incomplete or not true order-fill accounting (see assertions.json; any false assertion = TECHNICAL_INCOMPLETE)",
+    "coverage incomplete in any registered phase grid (G1)"
+  ],
+  "performance_claimable_rule": "true only when the family verdict == PASS (>=1 cohort survivor) and contract 9.6 holds (canonical raw, no look-ahead, explicit OOS, declared costs, full section 7.2 coverage including the DCA parameter domain) and neither registered family-level falsification item has fired. The number of survivors is never itself a reason to claim false.",
+  "survivor_bundle": {
+    "artifact": "rounds/<round_id>/survivor-bundle.json (round level, immutable, contract 10.8)",
+    "produced_by": "runtime/survivor_bundle.py (host-side, pure stdlib, deterministic; run once the attempt is terminally DONE)",
+    "rule": "the bundle freezes EVERY survivor of the round, in the order the run recorded them (that order is not a ranking). It is only produced from a coverage_complete=true attempt whose assertions are all true, and it is never rewritten once written."
+  },
+  "expected": {
+    "cohorts": 1,
+    "strategy_cases_per_cohort": 3,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 144,
+    "cohort_grid_kinds": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps",
+      "official_only"
+    ],
+    "phase_grid_count": 11,
+    "case_evaluations_per_cohort_per_grid": 144,
+    "case_evaluations_per_cohort_all_grids": 1584,
+    "case_evaluations_per_grid": 144,
+    "expected_case_evaluations": 1584,
+    "arithmetic": "1 cohort x 3 strategy cases x 48 DCA configs = 144 base combinations per phase grid; x 11 phase grids = 1,584 full case evaluations. A case evaluation = one engine simulation of one joint parameter cell of the cohort on one phase grid.",
+    "runtime_expectation": {
+      "basis": "Strategy A v2 measured 103,680 case evaluations in 1,302 s inside qlib-run on the same host/container (~12.6 ms per case); Strategy C evaluates 1,584 cases on a single 15m cohort.",
+      "estimate": "~30-60 s of engine time plus the ~40 s bin rebuild, i.e. a few minutes end to end",
+      "status": "estimate only, extrapolated from a measured run of a different family; not a guarantee. The worker still parks nothing and waits for the terminal state.json stage inside the run."
+    }
+  },
+  "non_goals": [
+    "no parameter search beyond the registered strategy grid and the registered DCA domain",
+    "no OOS-based selection of any parameter",
+    "no short leg and no short mirroring",
+    "no stop-loss / take-profit beyond the registered rail (the source specifies none)",
+    "no Paper or Live trading",
+    "no second backtester or engine",
+    "no new Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
+    "no legacy Nautilus runtime, gate or performance truth",
+    "no narrowing or widening of the eligible universe after seeing results"
+  ],
+  "parameter_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "funding-decile-extreme-contrarian-btc-v1",
+    "contract_ref": "v1.8 generic family parameter contract (runtime/parameter_contract.py); generated from this document's registered parameter_domain / dca_domain",
+    "research_axes_ordered": [
+      {
+        "name": "decile",
+        "kind": "atomic",
+        "members": [
+          "decile"
+        ],
+        "registered_values": [
+          0.05,
+          0.1,
+          0.2
+        ],
+        "row_fields": [
+          "decile"
+        ]
+      },
+      {
+        "name": "lookback_days",
+        "kind": "atomic",
+        "members": [
+          "lookback_days"
+        ],
+        "registered_values": [
+          180
+        ],
+        "row_fields": [
+          "lookback_days"
+        ]
+      },
+      {
+        "name": "spacing_pct",
+        "kind": "atomic",
+        "members": [
+          "spacing_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03,
+          0.04
+        ],
+        "row_fields": [
+          "spacing_pct"
+        ]
+      },
+      {
+        "name": "size_multiplier",
+        "kind": "atomic",
+        "members": [
+          "size_multiplier"
+        ],
+        "registered_values": [
+          1.0,
+          1.1
+        ],
+        "row_fields": [
+          "size_multiplier"
+        ]
+      },
+      {
+        "name": "breakeven_tp_pct",
+        "kind": "atomic",
+        "members": [
+          "breakeven_tp_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03
+        ],
+        "row_fields": [
+          "breakeven_tp_pct"
+        ]
+      },
+      {
+        "name": "invalidation_pct",
+        "kind": "atomic",
+        "members": [
+          "invalidation_pct"
+        ],
+        "registered_values": [
+          0.05,
+          0.1
+        ],
+        "row_fields": [
+          "invalidation_pct"
+        ]
+      }
+    ],
+    "row_fields": [
+      "decile",
+      "lookback_days",
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "composite_map": {},
+    "strategy_param_fields": [
+      "decile",
+      "lookback_days"
+    ],
+    "dca_param_fields": [
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "canonical_recipe": {
+      "sort_keys": true,
+      "separators": [
+        ",",
+        ":"
+      ],
+      "ensure_ascii": false,
+      "numeric_rule": "JSON number finite, bool excluded"
+    },
+    "row_match_recipe": {
+      "keys": [
+        "symbol",
+        "timeframe",
+        "decile",
+        "lookback_days",
+        "spacing_pct",
+        "size_multiplier",
+        "breakeven_tp_pct",
+        "invalidation_pct"
+      ],
+      "equality": "exact, numeric == float compare, rest bytewise"
+    },
+    "non_params": [
+      "symbol",
+      "timeframe",
+      "window_kind",
+      "base_quote",
+      "signals_seen",
+      "signals_entered",
+      "diagnostics",
+      "metrics"
+    ],
+    "domain_cardinality": {
+      "strategy": 3,
+      "dca": 48,
+      "per_cohort": 144
+    }
+  }
+}

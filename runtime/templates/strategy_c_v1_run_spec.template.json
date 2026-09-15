@@ -1,0 +1,548 @@
+{
+  "schema_version": 1,
+  "document_kind": "run-spec template (Strategy C v1; instantiate to /results/<family_id>/rounds/<round_id>/attempts/<run_id>/run-spec.json BEFORE launch)",
+  "template_instantiation": {
+    "placeholders": [
+      "{{round_id}}",
+      "{{run_id}}",
+      "{{task_id}}",
+      "{{created_at_utc}}",
+      "{{script_sha256}}",
+      "{{engine_selfcheck_sha256}}",
+      "{{round_spec_path}}"
+    ],
+    "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/40_strategy_c_run.py (contract 16.2 P10 recomputes it); the run fails closed if the deployed script does not match.",
+    "validated_by": "python3 runtime/strategy_c_v1_counts.py --spec runtime/templates/strategy_c_v1_round_spec.template.json --run-spec runtime/templates/strategy_c_v1_run_spec.template.json",
+    "status": "PREREGISTRATION ONLY / NOT LAUNCHED"
+  },
+  "family_id": "funding-decile-extreme-contrarian-btc-v1",
+  "round_id": "{{round_id}}",
+  "run_id": "{{run_id}}",
+  "task_id": "{{task_id}}",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "{{created_at_utc}}",
+  "round_spec_path": "{{round_spec_path}}",
+  "selector_version": "cohort-selector-v1",
+  "disposition_version": "cohort-disposition-v1",
+  "data": {
+    "source": "/data/raw",
+    "read_only": true,
+    "symbols": [
+      "BTCUSDT"
+    ],
+    "timeframes": [
+      {
+        "raw_interval": "15m",
+        "qlib_freq": "15min"
+      }
+    ],
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "official_only_start": "2023-11-01",
+    "official_only_end": "2025-09-30",
+    "funding_truth_status_windows": {
+      "modeled_funding": "2022-01-01T00:00:00Z .. 2023-10-31T00:00:00Z (2,005 observations, mark_price null)",
+      "official": "2023-10-31T08:00:00Z .. 2026-09-11T16:00:00Z (3,140 observations, Binance mark price present)",
+      "primary_uses": "the complete registered series (modelled + official)",
+      "official_only_grid_uses": "truth_status == official rows only"
+    }
+  },
+  "parameter_domain": {
+    "grid_deciles": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "grid_lookbacks": [
+      180
+    ],
+    "primary_threshold": 0.1,
+    "decile_status": "SOURCE_SPECIFIED_PRIMARY_AND_SOURCE_REPORTED_SENSITIVITY_TRACKS - the 10th percentile is the source-specified primary threshold (Memon et al. 2026: 'lower decile of the 180-day rolling mid-rank distribution'); the 5th and 20th percentile tracks are the source's own parameter-perturbation set (the wiki record's falsification item 4). Both extra tracks are registered HERE, before any computation, because contract 7.2 requires a complete strategy parameter domain rather than a single-point trial, because the card's robustness item 2 requires the three tracks to be measured, and because the registered tie-break axis order lists `decile` as a joint-space axis. A sensitivity result never replaces or redefines the primary 10th-percentile threshold (card: 'not to replace the primary'), it is only compared against it.",
+    "lookback_status": "SOURCE_SPECIFIED - 180 days, a singleton axis of the joint space. It is registered (not inferred) so that the neighbourhood/tie-break axis order is the registered one; it is never searched and never tuned afterwards.",
+    "grid": [
+      {
+        "decile": 0.05,
+        "lookback_days": 180
+      },
+      {
+        "decile": 0.1,
+        "lookback_days": 180
+      },
+      {
+        "decile": 0.2,
+        "lookback_days": 180
+      }
+    ]
+  },
+  "dca_domain": {
+    "base_quote": 1000,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant: no operator evidence fixes it at 1000. It is a project pre-registration choice, frozen here before any computation (contract 7.2 v1.3.1).",
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      }
+    ]
+  },
+  "costs": {
+    "fee_bps": 5,
+    "slippage_bps": null,
+    "baseline_slippage_ticks": 1,
+    "fee_source": "canonical instrument metadata (taker_fee=0.0005, maker_fee=0.0002 unused)",
+    "funding_source": "/data/raw funding; the evaluated configuration's registered series",
+    "cost_attrition_fee_mult": 8.0
+  },
+  "gates": {
+    "min_episodes_is": 20,
+    "neighborhood_min_same_sign_fraction": 0.6,
+    "min_oos_sharpe": 0.4,
+    "min_oos_annualized_return": 0.0,
+    "max_provenance_relative_difference": 0.5,
+    "verdict_rule": "TECHNICAL_INCOMPLETE if coverage fails; else 0 cohort survivors -> REJECT, 1 -> PASS (band SURVIVOR_FOUND). The registered family-level falsification items (threshold instability, funding provenance) forbid PASS (contract 7.2/7.3 + the card's registered battery)."
+  },
+  "expected": {
+    "cohorts": 1,
+    "strategy_cases_per_cohort": 3,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 144,
+    "case_evaluations_per_cohort_per_grid": 144,
+    "case_evaluations_per_grid": 144,
+    "case_evaluations_per_cohort_all_grids": 1584,
+    "expected_case_evaluations": 1584,
+    "cohort_grid_kinds": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps",
+      "official_only"
+    ],
+    "phase_grid_count": 11
+  },
+  "provenance_mirror": {
+    "note": "byte-identical copies of the round-spec provenance classes (contract 7.2 v1.3.1: the round-spec and run-spec classifications must agree)",
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant: no operator evidence fixes it at 1000. It is a project pre-registration choice, frozen here before any computation (contract 7.2 v1.3.1).",
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "decile_status": "SOURCE_SPECIFIED_PRIMARY_AND_SOURCE_REPORTED_SENSITIVITY_TRACKS - the 10th percentile is the source-specified primary threshold (Memon et al. 2026: 'lower decile of the 180-day rolling mid-rank distribution'); the 5th and 20th percentile tracks are the source's own parameter-perturbation set (the wiki record's falsification item 4). Both extra tracks are registered HERE, before any computation, because contract 7.2 requires a complete strategy parameter domain rather than a single-point trial, because the card's robustness item 2 requires the three tracks to be measured, and because the registered tie-break axis order lists `decile` as a joint-space axis. A sensitivity result never replaces or redefines the primary 10th-percentile threshold (card: 'not to replace the primary'), it is only compared against it.",
+    "lookback_status": "SOURCE_SPECIFIED - 180 days, a singleton axis of the joint space. It is registered (not inferred) so that the neighbourhood/tie-break axis order is the registered one; it is never searched and never tuned afterwards."
+  },
+  "script": {
+    "path": "/scripts/40_strategy_c_run.py",
+    "sha256": "{{script_sha256}}"
+  },
+  "engine_selfcheck": {
+    "script": "/scripts/tests/test_strategy_c_engine.py",
+    "sha256": "{{engine_selfcheck_sha256}}",
+    "must_run_before_launch": true
+  },
+  "expected_outputs": [
+    "result.json",
+    "artifacts/bins_build.json",
+    "artifacts/input_manifest.json",
+    "artifacts/funding_series.json",
+    "artifacts/grid_historical.csv",
+    "artifacts/grid_oos.csv",
+    "artifacts/grid_full.csv",
+    "artifacts/grid_fee_2x.csv",
+    "artifacts/grid_funding_2x.csv",
+    "artifacts/grid_entry_delay_1_bar.csv",
+    "artifacts/grid_slippage_2ticks.csv",
+    "artifacts/grid_no_funding.csv",
+    "artifacts/grid_no_funding_full.csv",
+    "artifacts/grid_cost_attrition_40bps.csv",
+    "artifacts/grid_official_only.csv",
+    "artifacts/dca_layer_histogram.json",
+    "artifacts/assertions.json",
+    "artifacts/cohort_results.json",
+    "artifacts/cohort_survivors.json",
+    "artifacts/funding_provenance.json",
+    "artifacts/robustness_diagnostics.json",
+    "artifacts/progress.json"
+  ],
+  "round_level_outputs": [
+    "rounds/<round_id>/round-spec.json (immutable preregistration)",
+    "rounds/<round_id>/verdict.json (written by Hermes default after the terminal readback)",
+    "rounds/<round_id>/survivor-bundle.json (written by runtime/survivor_bundle.py when >=1 survivor)"
+  ],
+  "falsification": [
+    "coverage incomplete in any registered phase grid (G1)",
+    "no signal / insufficient trades (G2)",
+    "no qualifying historical candidate (G3)",
+    "OOS economic rejection (G4: annualized Sharpe < 0.40 or annualized return < 0)",
+    "full-window economic rejection (G5)",
+    "robustness economic failure (G6)",
+    "parameter-neighbourhood fragility (G7)",
+    "cost attrition under 40 bps per fill (G8)",
+    "funding-provenance rejection (never PASS)",
+    "threshold instability (never PASS)",
+    "DCA execution incomplete / not true order-fill accounting"
+  ],
+  "notes": "Strategy C run-spec: the full backtest covers the registered symbol x timeframe x strategy parameter domain x DCA parameter domain over 11 phase grids, including the official-only funding-provenance rerun and the G8 cost-attrition grid. The family verdict comes from the cohort-survivor disposition (0 -> REJECT, 1 -> PASS), with the two registered family-level falsification items able to forbid PASS. The round's frozen survivor bundle is written host-side from this attempt's artifacts once it is terminally DONE (contract 10.8)."
+}
