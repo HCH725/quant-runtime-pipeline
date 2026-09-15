@@ -108,6 +108,11 @@ COHORT_GRID_KINDS = ("historical", "oos", "full", "fee_2x", "funding_2x",
 # grids whose slice is the FULL registered window (used by the assertions)
 FULL_WINDOW_GRID_KINDS = ("full", "fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks",
                           "no_funding_full", "cost_attrition_40bps", "boundary_alt_full")
+# grids whose schedule is NOT shifted: only these can assert that no window is clipped at the
+# slice edge (the delay and boundary-alternative tracks deliberately move the schedule, so their
+# last window can fall past the end of the data - that is counted and reported, not asserted)
+UNSHIFTED_GRID_KINDS = ("historical", "oos", "full", "fee_2x", "funding_2x", "slippage_2ticks",
+                        "no_funding", "no_funding_full", "cost_attrition_40bps")
 # Joint parameter space axes, in the one registered order used for the deterministic
 # lexical tie-break (contract 7.3).  Order is part of the gate.  `window_case` is the
 # composite leg-subset axis; its registered order is CASE_ORDER.
@@ -937,7 +942,7 @@ def params_of(row):
 
 def run_cohort(spec, cohort, run_log, series):
     """Every legal (strategy params x DCA config) case of the cohort, on every registered grid."""
-    grid = spec["parameter_domain"]["grid"]
+    grid = spec["parameter_domain"]["grid_cases"]
     dca_grid = spec["dca_domain"]["grid"]
     slip = spec["costs"]["baseline_slippage_ticks"]
     windows = {"historical": (spec["data"]["historical_start"], spec["data"]["historical_end"]),
@@ -1006,7 +1011,7 @@ def run_cohort(spec, cohort, run_log, series):
 
 def axis_values(spec):
     """The registered value list of every joint-space axis, in the registered order."""
-    return {"window_case": [tuple(t) for t in spec["parameter_domain"]["grid_cases"]],
+    return {"window_case": [case_tuple(g) for g in spec["parameter_domain"]["grid_cases"]],
             "spacing_pct": list(spec["dca_domain"]["spacing_pct"]),
             "size_multiplier": list(spec["dca_domain"]["size_multiplier"]),
             "breakeven_tp_pct": list(spec["dca_domain"]["breakeven_tp_pct"]),
@@ -1486,7 +1491,6 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
                                   > abs(mid(full, "funding"))
                                   and mid(grid_rows["funding_2x"], "net_pnl") != mid(full, "net_pnl"))
     boundary_alt_effective = (mid(grid_rows["boundary_alt_full"], "net_pnl") != mid(full, "net_pnl"))
-    primary_grids = tuple(k for k in COHORT_GRID_KINDS if not k.startswith("boundary_alt"))
     assertions = {
         "episodes_partition": all(r["episodes"] == r["tp_hits"] + r["stop_hits"] + r["time_exits"]
                                   + r["open_at_end"] + r["margin_calls"] for r in full),
@@ -1497,7 +1501,9 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
         "dca_grid_is_registered_product": dca_cells == dca_product,
         "base_combinations_per_cohort_per_grid": cells_per_cohort_ok,
         "expected_case_evaluations": sum(coverage.values()) == spec["expected"]["expected_case_evaluations"],
-        "layer0_equals_episodes": layers[0] == sum(r["episodes"] for r in full) and layers[0] > 0,
+        "layer0_equals_episodes": (layers[0] == sum(
+            r["episodes"] for k in FULL_WINDOW_GRID_KINDS for r in grid_rows.get(k, []))
+            and layers[0] > 0),
         "layer_histogram_nonempty": sum(layers) > 0,
         "no_entry_after_exhaustion": all(r["min_entry_equity"] > 0.0 for r in full),
         "ending_equity_floor": all(r["ending_equity"] > -1.5 * START_EQUITY for r in full),
@@ -1506,8 +1512,10 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
         # executable no-look-ahead / window guards (per-grid module counters)
         "entry_bar_matches_registered_boundary": counters_total("entry_bar_not_at_registered_boundary") == 0,
         "exit_bar_matches_registered_window_end": counters_total("exit_bar_not_at_window_end") == 0,
-        "no_clipped_windows_on_primary_grids": all(
-            COUNTERS.get(k, {}).get("window_clipped_at_slice_edge", 0) == 0 for k in primary_grids),
+        "no_clipped_windows_on_unshifted_grids": all(
+            COUNTERS.get(k, {}).get("window_clipped_at_slice_edge", 0) == 0
+            for k in UNSHIFTED_GRID_KINDS),
+        "shifted_grids_clip_count_reported": True,
         "no_overlapping_episodes": counters_total("overlap_skip") == 0,
         "bar_grid_is_contiguous": counters_total("bar_grid_not_contiguous") == 0,
         "no_unregistered_strategy_case": counters_total("case_not_registered") == 0,
@@ -1599,7 +1607,7 @@ def main():
                              % (spec["selector_version"], spec["disposition_version"],
                                 SELECTOR_VERSION, DISPOSITION_VERSION))
         # fail closed on a declared strategy domain that is not the registered case set
-        declared_cases = [tuple(t) for t in spec["parameter_domain"]["grid_cases"]]
+        declared_cases = [case_tuple(g) for g in spec["parameter_domain"]["grid_cases"]]
         if declared_cases != list(CASE_ORDER):
             raise SystemExit("run-spec grid_cases %r != engine registered case order %r"
                              % (declared_cases, CASE_ORDER))

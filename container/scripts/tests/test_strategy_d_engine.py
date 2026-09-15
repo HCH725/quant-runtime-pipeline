@@ -417,7 +417,7 @@ def synth_row(cohort, case, spacing, mult, tp, inval, net_pnl, sharpe, episodes,
 
 SPEC = {
     "family_id": "synthetic", "round_id": "synthetic-r1", "run_id": "synthetic-r1-u1",
-    "parameter_domain": {"grid_cases": [list(t) for t in sd.CASE_ORDER]},
+    "parameter_domain": {"grid_cases": [dict(zip(sd.CASE_FIELDS, c)) for c in sd.CASE_ORDER]},
     "dca_domain": {"base_quote": 1000, "spacing_pct": [0.01, 0.02],
                    "size_multiplier": [1.0, 1.1], "breakeven_tp_pct": [0.01, 0.02],
                    "invalidation_pct": [0.05, 0.10]},
@@ -611,6 +611,22 @@ class TestDisposition(unittest.TestCase):
 
 
 class TestEngineConstants(unittest.TestCase):
+
+    def test_axis_values_reads_grid_cases_as_dicts(self):
+        """The registered case axis must be the case tuples, never a dict's key names."""
+        spec = {"parameter_domain": {
+                    "grid_cases": [dict(zip(sd.CASE_FIELDS, c)) for c in sd.CASE_ORDER]},
+                "dca_domain": {"spacing_pct": [0.01, 0.02], "size_multiplier": [1.0],
+                               "breakeven_tp_pct": [0.01], "invalidation_pct": [0.05]}}
+        axes = sd.axis_values(spec)
+        self.assertEqual(axes["window_case"], [tuple(c) for c in sd.CASE_ORDER])
+        self.assertEqual(axes["window_case"][0], (1, 0, 0))
+
+    def test_case_tuple_accepts_spec_dicts_and_grid_rows(self):
+        self.assertEqual(sd.case_tuple({"leg_long": 1, "leg_short": 0, "leg_secondary": 0}),
+                         (1, 0, 0))
+        self.assertEqual(sd.case_tuple(dict(zip(sd.CASE_FIELDS, (0, 1, 1)), symbol="BTCUSDT")),
+                         (0, 1, 1))
 
     def test_registered_case_order_is_all_non_empty_subsets(self):
         self.assertEqual(len(sd.CASE_ORDER), 7)
