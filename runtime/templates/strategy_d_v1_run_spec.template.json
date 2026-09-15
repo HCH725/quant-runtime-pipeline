@@ -1,0 +1,604 @@
+{
+  "schema_version": 1,
+  "document_kind": "run-spec template (Strategy D v1; instantiate to /results/<family_id>/rounds/<round_id>/attempts/<run_id>/run-spec.json BEFORE launch)",
+  "template_instantiation": {
+    "placeholders": [
+      "{{round_id}}",
+      "{{run_id}}",
+      "{{task_id}}",
+      "{{created_at_utc}}",
+      "{{script_sha256}}",
+      "{{engine_selfcheck_sha256}}",
+      "{{round_spec_path}}"
+    ],
+    "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/40_strategy_d_run.py (contract 16.2 P10 recomputes it); the run fails closed if the deployed script does not match.",
+    "validated_by": "python3 runtime/strategy_d_v1_counts.py --spec runtime/templates/strategy_d_v1_round_spec.template.json --run-spec runtime/templates/strategy_d_v1_run_spec.template.json",
+    "status": "PREREGISTRATION ONLY / NOT LAUNCHED"
+  },
+  "family_id": "utc-clock-hour-seasonality-perp-panel-v1",
+  "round_id": "{{round_id}}",
+  "run_id": "{{run_id}}",
+  "task_id": "{{task_id}}",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "{{created_at_utc}}",
+  "round_spec_path": "{{round_spec_path}}",
+  "selector_version": "cohort-selector-v1",
+  "disposition_version": "cohort-disposition-v1",
+  "data": {
+    "source": "/data/raw",
+    "read_only": true,
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "timeframes": [
+      {
+        "raw_interval": "1h",
+        "qlib_freq": "60min"
+      }
+    ],
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "bar_labelling": "VERIFIED open_time_ms = bar START (UTC); contiguous 3,600,000 ms grid, close_time_ms = open_time_ms + 3,599,999 ms; measured on all four registered symbols over the registered window before this pre-registration was instantiated",
+    "funding_truth_status_windows": {
+      "modeled_funding": "2022-01-01T00:00:00Z .. 2023-10-31 (reconstruction; mark_price null)",
+      "official": "2023-10-31T08:00:00Z .. 2026-09-11T23:59:59Z (Binance mark price present)",
+      "primary_uses": "the complete registered series (modelled + official), as a COST only",
+      "engine_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1s, exit instant + 1s]. The measured raw jitter of the settlement timestamps is 0..28 ms LATE and never early (all four symbols), so a settlement sitting on a window boundary is charged to the window that holds the position at that instant: the long 15:00-16:00 window pays the 16:00 settlement, the secondary 21:00-24:00 window pays the 00:00 settlement, and the short 01:00-05:00 window pays any settlement inside it (the 0/8/16h grid carries none, but SOLUSDT's early-2022 2h/4h schedule does). A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the window, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged."
+    }
+  },
+  "parameter_domain": {
+    "grid_cases": [
+      {
+        "leg_long": 1,
+        "leg_short": 0,
+        "leg_secondary": 0
+      },
+      {
+        "leg_long": 0,
+        "leg_short": 1,
+        "leg_secondary": 0
+      },
+      {
+        "leg_long": 0,
+        "leg_short": 0,
+        "leg_secondary": 1
+      },
+      {
+        "leg_long": 1,
+        "leg_short": 1,
+        "leg_secondary": 0
+      },
+      {
+        "leg_long": 1,
+        "leg_short": 0,
+        "leg_secondary": 1
+      },
+      {
+        "leg_long": 0,
+        "leg_short": 1,
+        "leg_secondary": 1
+      },
+      {
+        "leg_long": 1,
+        "leg_short": 1,
+        "leg_secondary": 1
+      }
+    ],
+    "grid_case_names": [
+      "long_only",
+      "short_only",
+      "secondary_long_only",
+      "long_short",
+      "long_secondary_long",
+      "short_secondary_long",
+      "all_legs"
+    ],
+    "legs": {
+      "long": {
+        "name": "long",
+        "side": "LONG",
+        "start_hour_utc": 15,
+        "end_hour_utc": 16,
+        "window_bars_1h": 1,
+        "direction": 1
+      },
+      "short": {
+        "name": "short",
+        "side": "SHORT",
+        "start_hour_utc": 1,
+        "end_hour_utc": 5,
+        "window_bars_1h": 4,
+        "direction": -1
+      },
+      "secondary_long": {
+        "name": "secondary_long",
+        "side": "LONG",
+        "start_hour_utc": 21,
+        "end_hour_utc": 24,
+        "window_bars_1h": 3,
+        "direction": 1
+      }
+    },
+    "legal_cases_per_cohort": 7
+  },
+  "dca_domain": {
+    "base_quote": 1000,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant: no operator evidence fixes it at 1000. It is a project pre-registration choice, frozen here before any computation (contract 7.2 v1.3.1).",
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      }
+    ]
+  },
+  "provenance_mirror": {
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant: no operator evidence fixes it at 1000. It is a project pre-registration choice, frozen here before any computation (contract 7.2 v1.3.1).",
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values. The axis is a pre-registered search DOMAIN of this round, not an immutable user-fixed invariant (contract 7.2 v1.3.1).",
+    "legs_status": "SOURCE_NORMALIZED - the three clock windows are the source record's own seasonality cells (01:00-05:00 UTC weak, 15:00-16:00 UTC strong, the last three hours of the UTC day positive), normalised to this venue's 1h bar grid. The source studies 38 CEX pair markets, not perpetual futures; the normalisation is registered here and is never re-tuned after seeing results.",
+    "entry_timing_status": "RESEARCH_PROPOSED - the source estimates hourly seasonality only and does not specify an entry/exit convention. This round registers: entry fills at the OPEN of the bar that starts at the window's UTC boundary (the boundary is known ex ante, so the boundary price is executable and no look-ahead is introduced), and the window end is a HARD reduce-only flatten at the close of the bar that ends at the window's closing boundary. Every phase grid uses the same convention; the boundary-alternative track is the registered exception."
+  },
+  "gates": {
+    "min_episodes_is": 200,
+    "min_episodes_oos": 60,
+    "neighborhood_min_same_sign_fraction": 0.6,
+    "min_oos_sharpe": 0.4,
+    "min_oos_annualized_return": 0.0
+  },
+  "costs": {
+    "source": "canonical instrument metadata, read at run time from /data/raw",
+    "maker_fee": 0.0002,
+    "taker_fee": 0.0005,
+    "fee_bps": 5,
+    "baseline_slippage_ticks": 1,
+    "cost_attrition_fee_mult": 8.0,
+    "funding": "charged per settlement inside the window's closed exposure interval; funding_2x doubles it and the no_funding grids zero it (descriptive)",
+    "funding_exposure_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1s, exit instant + 1s]. The measured raw jitter of the settlement timestamps is 0..28 ms LATE and never early (all four symbols), so a settlement sitting on a window boundary is charged to the window that holds the position at that instant: the long 15:00-16:00 window pays the 16:00 settlement, the secondary 21:00-24:00 window pays the 00:00 settlement, and the short 01:00-05:00 window pays any settlement inside it (the 0/8/16h grid carries none, but SOLUSDT's early-2022 2h/4h schedule does). A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the window, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged."
+  },
+  "boundary_alt_track": "REGISTERED: BOUNDARY_ALT_GRIDS = boundary_alt_oos (OOS slice) and boundary_alt_full (full window); each re-runs the whole registered product with the schedule mapped one bar earlier, and the OOS variant is the family-level timezone-fragility reader",
+  "expected": {
+    "cohorts": 4,
+    "strategy_cases_per_cohort": 7,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 336,
+    "cohort_grid_kinds": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps",
+      "boundary_alt_oos",
+      "boundary_alt_full"
+    ],
+    "phase_grid_count": 12,
+    "case_evaluations_per_cohort_per_grid": 336,
+    "case_evaluations_per_cohort_all_grids": 4032,
+    "case_evaluations_per_grid": 1344,
+    "expected_case_evaluations": 16128,
+    "arithmetic": "4 cohorts (BNBUSDT/BTCUSDT/ETHUSDT/SOLUSDT at 1h) x 7 registered strategy cases x 48 DCA configs = 1,344 base combinations per phase grid; x 12 phase grids = 16,128 full case evaluations. A case evaluation = one engine simulation of one joint parameter cell of one cohort on one phase grid.",
+    "runtime_expectation": {
+      "basis": "Strategy A v2 measured 103,680 case evaluations in 1,302 s in qlib-run (~12.6 ms per case); Strategy C measured 1,584 cases in 29 s on a single 15m cohort. This family evaluates 16,128 cases on four 1h cohorts, each case holding only the registered clock windows (1-4 bars each).",
+      "estimate": "tens of minutes of engine time plus the 1h bin rebuild for four symbols, i.e. well inside the detached-run budget",
+      "status": "estimate only, extrapolated from measured runs of other families; not a guarantee. The run is launched detached inside the container and its progress is read from the attempt state.json stage plus the run log."
+    }
+  },
+  "script": {
+    "path": "/scripts/40_strategy_d_run.py",
+    "sha256": "{{script_sha256}}",
+    "deployed_from": "HCH725/quant-runtime-pipeline container/scripts/40_strategy_d_run.py (byte-identical, P10 recomputes it host side)"
+  },
+  "engine_selfcheck": {
+    "script": "/scripts/tests/test_strategy_d_engine.py",
+    "sha256": "{{engine_selfcheck_sha256}}",
+    "must_run_before_launch": true
+  },
+  "expected_outputs": [
+    "result.json",
+    "artifacts/assertions.json",
+    "artifacts/cohort_results.json",
+    "artifacts/cohort_survivors.json",
+    "artifacts/family_falsification.json",
+    "artifacts/panel_diagnostic.json",
+    "artifacts/robustness_diagnostics.json",
+    "artifacts/funding_series.json",
+    "artifacts/input_manifest.json",
+    "artifacts/bins_build.json",
+    "artifacts/dca_layer_histogram.json",
+    "artifacts/progress.json",
+    "artifacts/grid_historical.csv",
+    "artifacts/grid_oos.csv",
+    "artifacts/grid_full.csv",
+    "artifacts/grid_fee_2x.csv",
+    "artifacts/grid_funding_2x.csv",
+    "artifacts/grid_entry_delay_1_bar.csv",
+    "artifacts/grid_slippage_2ticks.csv",
+    "artifacts/grid_no_funding.csv",
+    "artifacts/grid_no_funding_full.csv",
+    "artifacts/grid_cost_attrition_40bps.csv",
+    "artifacts/grid_boundary_alt_oos.csv",
+    "artifacts/grid_boundary_alt_full.csv"
+  ],
+  "falsification": [
+    "no signal / insufficient trades (G2)",
+    "no qualifying historical candidate (G3)",
+    "OOS economic rejection (G4)",
+    "full-window economic rejection (G5)",
+    "robustness economic failure (G6)",
+    "parameter-neighbourhood fragility (G7)",
+    "cost attrition (G8)",
+    "timezone/boundary fragility -> family-level, never PASS",
+    "window instability -> family-level, never PASS",
+    "coverage incomplete in any registered phase grid (G1)",
+    "any false assertion in assertions.json (TECHNICAL_INCOMPLETE)"
+  ],
+  "notes": "One attempt of round {{round_id}}. The engine rebuilds the qlib .bin store from the read-only raw store, evaluates 4 cohorts x 7 strategy cases x 48 DCA configs on 12 registered phase grids, and writes the registered artifacts. The runner's verdict_recommendation is a recommendation; the final verdict.json is written by the Hermes default card after reading the artifacts back (contract 10.7)."
+}
