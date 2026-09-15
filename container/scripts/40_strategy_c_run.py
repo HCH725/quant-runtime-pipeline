@@ -115,10 +115,10 @@ ROW_FIELDS = ("symbol", "timeframe", "window_kind", "decile", "lookback_days",
 LAYER_TOTALS = {}
 # Structural counters (module level so `summarize` can assert them over every grid).
 # The raw funding timestamps carry ms-level jitter around the nominal 8h boundary
-# (measured on BTCUSDT: settlement gaps of 28,799,999 .. 28,800,004 ms), so a settlement is
-# mapped to the bar that starts at the nominal boundary and every structural comparison is
-# allowed one second of tolerance against a 15-minute bar and a 24-hour window.  A larger
-# deviation is a real mapping defect and trips the counter.
+# (measured on BTCUSDT: 0 .. 31 ms late, never earlier, never missing), so a settlement is
+# mapped to the bar that OPENS at its own boundary and every structural comparison is allowed
+# one second of tolerance against a 15-minute bar and a 24-hour window.  A larger deviation is
+# a real mapping defect and trips the counter.
 MS_JITTER_TOLERANCE_MS = 1000
 COUNTERS = {"entry_before_signal": 0, "hold_over_24h": 0, "signal_bar_mismatch": 0}
 
@@ -437,10 +437,15 @@ def trailing_midrank_percentiles(times, rates, lookback_days):
 def build_signal_series(cohort, times, rates, lookbacks, counts, label):
     """Per-lookback percentile + the bar each observation would enter on.
 
-    `sig_bar[k]` is the first bar whose open time is >= the settlement instant - the bar
-    that STARTS at the settlement.  The entry fills on that bar's close (the next
-    executable price after the signal), so `entry_bar >= sig_bar` always holds and the
-    module-level `COUNTERS["entry_before_signal"]` guard can assert it.
+    `sig_bar[k]` is the bar that OPENS at the settlement's nominal 8h boundary (the bar the
+    settlement instant belongs to).  The entry then fills on that bar's CLOSE - the first
+    executable price strictly after the observation - so `entry_bar >= sig_bar` always holds
+    and the module-level `COUNTERS["entry_before_signal"]` guard can assert it.  The raw
+    exchange timestamps carry up to a few tens of ms of jitter around the boundary
+    (measured on BTCUSDT: 0..31 ms), so the mapping uses the containing bar (floor) rather
+    than the next bar (ceil); otherwise a 6 ms late timestamp would silently push 43% of the
+    entries one whole bar out, which is not what "the next executable price after the
+    settlement" registers.  `window_geometry_ok` asserts the mapping at run time.
     """
     per_bar = np.zeros(cohort.n, dtype=np.float64)
     if len(times):
@@ -454,7 +459,10 @@ def build_signal_series(cohort, times, rates, lookbacks, counts, label):
            "funding_per_bar": per_bar, "first_obs_ms": int(times[0]) if len(times) else None,
            "last_obs_ms": int(times[-1]) if len(times) else None, "sig_bar": {}, "sig_pct": {},
            "sig_time": {}}
-    bars = np.searchsorted(cohort.open_time_ms, times, side="left") if len(times) else np.array([], dtype=np.int64)
+    if len(times):
+        bars = np.searchsorted(cohort.open_time_ms, times, side="right") - 1
+    else:
+        bars = np.array([], dtype=np.int64)
     for lb in lookbacks:
         pct = trailing_midrank_percentiles(times, rates, lb)
         out["sig_pct"][lb] = pct
@@ -468,15 +476,17 @@ def window_geometry_ok(sig_ms, bar_open_ms, exit_close_ms, bar_ms, hold_bars=Non
     """Executable geometry guard for one episode (contract: no look-ahead, 24h window).
 
     Returns (mapped_ok, hold_ok):
-      * mapped_ok - the settlement observation maps to the bar that STARTS at the settlement
-        boundary (tolerance: the raw settlement timestamps jitter by a few ms around it);
+      * mapped_ok - the settlement observation belongs to its own bar: it sits at or just
+        after that bar's open, inside the registered jitter tolerance (the exchange
+        timestamps carry up to a few tens of ms of jitter around the 8h boundary);
       * hold_ok   - the exit bar is inside [T, T + hold_bars bars] (or is the last bar of the
         evaluated slice, which is always earlier).
     Extracted so the guard itself is unit-testable: a guard that can never fail proves nothing.
     """
     hold_bars = HOLD_BARS if hold_bars is None else hold_bars
     tol = MS_JITTER_TOLERANCE_MS if tol is None else tol
-    mapped_ok = abs(int(bar_open_ms) - int(sig_ms)) <= tol
+    offset = int(sig_ms) - int(bar_open_ms)
+    mapped_ok = 0 <= offset <= tol
     hold_ok = (int(exit_close_ms) - int(bar_open_ms)) <= hold_bars * int(bar_ms) + tol
     return mapped_ok, hold_ok
 

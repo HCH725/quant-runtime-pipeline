@@ -276,9 +276,9 @@ class TestStructuralGuards(unittest.TestCase):
     """The two executable window guards tolerate the raw ms-level settlement jitter and still
     trip on a real mapping defect (a guard that can never fail proves nothing)."""
 
-    def test_settlement_jitter_does_not_trip_the_guards(self):
+    def test_observed_settlement_jitter_does_not_trip_the_guards(self):
         c = flat(200)
-        for delta in (-900, 900, 4):
+        for delta in (1, 4, 31, 900):     # the measured BTCUSDT range is 0..31 ms late
             s = mk_series(c, [(10, 0.05, -0.0001)])
             s["obs_times"] = s["obs_times"] + delta
             before = dict(sc.COUNTERS)
@@ -289,7 +289,7 @@ class TestStructuralGuards(unittest.TestCase):
     def test_a_settlement_off_its_own_bar_trips_the_mapping_guard(self):
         c = flat(200)
         s = mk_series(c, [(10, 0.05, -0.0001)])
-        s["obs_times"] = s["obs_times"] + 60000        # a whole minute off the 8h boundary
+        s["obs_times"] = s["obs_times"] + 60000        # a whole minute into the next bar
         saved = dict(sc.COUNTERS)
         try:
             sc.simulate(c, PARAMS, RAIL, (0, c.n), {}, 0.0, "full", s)
@@ -297,15 +297,27 @@ class TestStructuralGuards(unittest.TestCase):
         finally:
             sc.COUNTERS.update(saved)
 
+    def test_ms_late_settlements_map_to_their_own_bar(self):
+        """Regression (card t_56ca0634): the exchange timestamps run up to ~31 ms late, and a
+        ceil mapping would push 43% of the entries one whole bar out."""
+        c = flat(64)
+        times = np.array([10 * BAR_MS, 10 * BAR_MS + 1, 10 * BAR_MS + 6, 10 * BAR_MS + 31,
+                          34 * BAR_MS, 34 * BAR_MS + 26], dtype=np.int64)
+        rates = np.full(len(times), -0.0002)
+        series = sc.build_signal_series(c, times, rates, [LOOKBACK], {}, "synthetic")
+        self.assertEqual(list(series["sig_bar"][LOOKBACK]), [10, 10, 10, 10, 34, 34])
+
     def test_the_geometry_guard_trips_on_a_late_exit_and_on_a_stray_settlement(self):
         bar = 900000
         t = 10 * bar
         # healthy geometry: settlement at the boundary, exit closes exactly 24h later
         self.assertEqual(sc.window_geometry_ok(t, t, t + 96 * bar, bar), (True, True))
-        # jitter around the boundary stays inside the registered tolerance
+        # the observed late jitter stays inside the registered tolerance
+        self.assertEqual(sc.window_geometry_ok(t + 31, t, t + 96 * bar, bar), (True, True))
         self.assertEqual(sc.window_geometry_ok(t + 900, t, t + 96 * bar, bar), (True, True))
-        self.assertEqual(sc.window_geometry_ok(t - 900, t, t + 96 * bar, bar), (True, True))
-        # a settlement a minute off its own bar is a mapping defect
+        # an EARLY timestamp would map into the previous bar (a look-ahead) -> fail closed
+        self.assertEqual(sc.window_geometry_ok(t - 1, t, t + 96 * bar, bar)[0], False)
+        # a settlement a minute into the next bar is a mapping defect
         self.assertEqual(sc.window_geometry_ok(t + 60000, t, t + 96 * bar, bar)[0], False)
         # an exit one bar late violates the registered 24h window
         self.assertEqual(sc.window_geometry_ok(t, t, t + 97 * bar, bar)[1], False)
