@@ -6,6 +6,14 @@ Only legal action: `scheduled -> ready` (kernel `unblock`), taken **only** after
 verification list passes for an *unconsumed* terminal sentinel. Anything conflicting is fail-closed:
 no unblock, no block, an append-only incident line, and a card comment.
 
+Second, narrower entry point (contract 9.4 v1.9.0): an authoritative attempt whose `state.json`
+stage is compute-finished (`ARTIFACT_READY` / `FAILED_SCRIPT`) has no terminal sentinel yet - the
+container's compute phase stopped, and the sentinel is published host-side afterwards by default
+(§9.2 step 6). A parked card in that state would otherwise wait forever, so the same
+`scheduled -> ready` unblock wakes default to dispose of it. That is still not a verdict and not a
+terminal: this path writes no terminal file, no artifact, no incident of its own; default decides
+DONE / retry / INCOMPLETE host-side.
+
 Only the round's **authoritative current attempt** (contract 9.4 v1.7.1) may ever drive a Kanban
 transition: the valid `run-spec.json` identity with the greatest (`created_at_utc`, `uN` ordinal).
 An older attempt is *superseded* - its sentinel stays readable provenance, but it is a descriptive
@@ -37,6 +45,10 @@ from terminal_evidence import TERMINALS, host_boot_id, now_utc, sha256_file  # n
 DEFAULT_RESULTS = "/Volumes/ExpansionDrive/qlib-results"
 INCIDENT_DIRNAME = "_incidents"
 INCIDENT_FILE = "reconciliation_incident.jsonl"
+# Compute-finished stages (contract 9.4 v1.9.0): the container runner writes state.json
+# stage=ARTIFACT_READY - or FAILED_SCRIPT when the script itself raised - and exits. Neither is a
+# verdict: the terminal sentinel is published host-side by default (§9.2 step 6).
+COMPUTE_FINISHED_STAGES = ("ARTIFACT_READY", "FAILED_SCRIPT")
 
 
 def sh(cmd, timeout=120):
@@ -451,12 +463,68 @@ def validate(res, results_root, board, dry_run, detector):
     return sentinel
 
 
+def wake_default(res, spec_doc, results_root, board, dry_run, detector):
+    """Compute-finished stage, no terminal sentinel -> wake default (contract 9.4 v1.9.0).
+
+    `ARTIFACT_READY` / `FAILED_SCRIPT` only says the container's compute phase stopped; the terminal
+    sentinel is still published host-side by default (§9.2 step 6), which then decides DONE / retry /
+    INCOMPLETE (contract 12.2). So this path writes no terminal file, no artifact, no verdict and no
+    incident of its own - the only legal action is the existing `scheduled -> ready` unblock.
+    Anything it cannot verify stays fail-closed to the caller's descriptive orphan report: no
+    non-empty run-spec `task_id`/`kanban_board`, unreadable card read-back, card not `scheduled`.
+    An issued-but-unconfirmed board operation (unblock rc != 0, read-back not `ready`/`todo`) is the
+    existing invariant_break incident, exactly as in the terminal path.
+    """
+    task_id = spec_doc.get("task_id")
+    spec_board = spec_doc.get("kanban_board")
+    if not (isinstance(task_id, str) and task_id and isinstance(spec_board, str) and spec_board):
+        res.detail["wake"] = "run-spec task_id/kanban_board unreadable -> fail-closed, no wake"
+        return None
+    res.task_id = task_id
+    board = spec_board or board
+    status, why = card_status(board, task_id)
+    if status is None:
+        res.detail["kanban_readback"] = why
+        res.detail["wake"] = "card read-back failed -> fail-closed, no wake"
+        return None
+    res.status_before = status
+    if status != "scheduled":
+        res.detail["wake"] = "card status=%s is not scheduled -> no wake" % status
+        return None
+    stage = res.detail.get("stage")
+    if dry_run:
+        res.action = "would_unblock"
+        res.reason = ("compute finished (stage=%s, no terminal sentinel) and card is scheduled -> "
+                      "would wake default for host-side disposition" % stage)
+        return res
+
+    rc, out, err = sh(["hermes", "kanban", "--board", board, "unblock", res.task_id,
+                       "--reason", "reconciler: compute finished (stage=%s) for %s; default decides "
+                                   "DONE/retry/INCOMPLETE host-side (contract 9.4 v1.9.0)"
+                                   % (stage, res.run_id)])
+    if rc != 0:
+        res.detail["unblock_stderr"] = (err or out).strip()[:200]
+        return fail(res, results_root, "invariant_break", detector, dry_run, [str(res.attempt_dir)], board)
+    status_after, why2 = card_status(board, res.task_id)
+    res.status_after = status_after
+    if status_after not in ("ready", "todo"):
+        res.detail["kanban_readback_after"] = why2
+        return fail(res, results_root, "invariant_break", detector, dry_run, [str(res.attempt_dir)], board)
+    res.action = "unblocked"
+    res.reason = ("compute finished (stage=%s), no terminal sentinel; card %s -> %s (DB read-back); "
+                  "default decides DONE/retry/INCOMPLETE host-side" % (stage, status, status_after))
+    return res
+
+
 def handle(res, results_root, board, dry_run, detector):
     attempt = Path(res.attempt_dir)
     terminals = [t for t in TERMINALS if (attempt / t).exists()]
 
     if not terminals:
-        # Orphan candidate (contract 12.2 item 2/4): report only, default decides.
+        # Orphan candidate (contract 12.2 item 2/4): report only, default decides. One exception
+        # (9.4 v1.9.0): a compute-finished stage means compute is over while the card is still
+        # parked - the missing wake of the automatic completion loop - so default is woken instead;
+        # every unverifiable case keeps the descriptive report below.
         state = attempt / "state.json"
         stage = None
         if state.is_file():
@@ -465,13 +533,19 @@ def handle(res, results_root, board, dry_run, detector):
             except ValueError:
                 stage = "unparsable"
         spec = attempt / "run-spec.json"
+        spec_doc = {}
         if spec.is_file():
             try:
-                res.task_id = json.loads(spec.read_text()).get("task_id")
+                spec_doc = json.loads(spec.read_text())
             except ValueError:
-                pass
+                spec_doc = {}
         res.detail["stage"] = stage
         res.detail["has_run_spec"] = spec.is_file()
+        res.task_id = spec_doc.get("task_id")
+        if stage in COMPUTE_FINISHED_STAGES:
+            woke = wake_default(res, spec_doc, results_root, board, dry_run, detector)
+            if woke is not None:
+                return woke
         res.action = "orphan_candidate"
         res.reason = ("no terminal sentinel; stage=%s -> contract 12.2: host/default publishes "
                       "INCOMPLETE via runtime/terminal_evidence.py, then reconcile again" % stage)

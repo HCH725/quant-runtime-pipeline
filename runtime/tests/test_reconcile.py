@@ -590,6 +590,136 @@ class Harness(unittest.TestCase):
         self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "incident")
         self.assertEqual(self.row(report, "fam-a-r1-u2")["reason"], "checksum_mismatch")
 
+    # --- v1.9.0: compute-finished stage wakes default (no terminal sentinel yet) -----------
+    # The container runner writes state.json stage=ARTIFACT_READY (or FAILED_SCRIPT) and exits; the
+    # sentinel is published host-side by default afterwards. A parked card in that state used to stay
+    # `orphan_candidate` forever (Strategy D r1-u2 was exactly this), so the reconciler now wakes
+    # default with the same `scheduled -> ready` unblock - never a verdict, never a terminal file,
+    # never an incident. Everything unverifiable keeps the descriptive orphan report.
+    def terminal_files(self, rnd, run_id):
+        attempt = rnd / "attempts" / run_id
+        return [t for t in ("DONE", "FAILED", "INCOMPLETE") if (attempt / t).exists()]
+
+    def test_compute_finished_stage_wakes_scheduled_card(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="ARTIFACT_READY")
+
+        rc, report = self.run_root(dry_run=True)
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["would_unblock"], [TASK])
+        self.assertEqual(report["unblocked"], [])
+        self.assertEqual(self.unblock_calls(), [])
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "would_unblock")
+        self.assertEqual(row["detail"]["stage"], "ARTIFACT_READY")
+        self.assert_no_incident_no_comment()
+
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(report["would_unblock"], [])
+        self.assertEqual(len(self.unblock_calls()), 1)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "unblocked")
+        self.assertEqual((row["status_before"], row["status_after"]), ("scheduled", "ready"))
+        self.assertEqual(self.terminal_files(rnd, "fam-a-r1-u1"), [],
+                         "the wake must never write a terminal sentinel")
+        self.assert_no_incident_no_comment()
+
+    def test_failed_script_stage_wakes_scheduled_card(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="FAILED_SCRIPT")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assertEqual(report["unblocked"], [TASK])
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["detail"]["stage"], "FAILED_SCRIPT")
+        self.assertEqual(self.terminal_files(rnd, "fam-a-r1-u1"), [])
+        self.assert_no_incident_no_comment()
+
+    def test_running_qlib_stage_is_still_report_only(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "orphan_candidate")
+        self.assertEqual(row["detail"]["stage"], "RUNNING_QLIB")
+        self.assertNotIn("wake", row["detail"])
+        self.assert_no_incident_no_comment()
+
+    def test_compute_finished_wake_requires_a_parsable_stage(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        attempt = self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z")
+        (attempt / "state.json").write_text("{not json")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "orphan_candidate")
+        self.assertEqual(row["detail"]["stage"], "unparsable")
+        self.assertNotIn("wake", row["detail"])
+        self.assert_no_incident_no_comment()
+
+    def test_compute_finished_on_non_scheduled_card_is_noop(self):
+        self.install_fakes()
+        self.fake_status = "done"
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="ARTIFACT_READY")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "orphan_candidate")
+        self.assertIn("is not scheduled", row["detail"]["wake"])
+        self.assert_no_incident_no_comment()
+
+    def test_superseded_compute_finished_attempt_never_wakes(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="ARTIFACT_READY")
+        self.add_attempt(rnd, "fam-a-r1-u2", created="2026-09-13T00:10:00Z", stage="RUNNING_QLIB")
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        self.assertEqual(self.row(report, "fam-a-r1-u1")["action"], "superseded")
+        self.assertEqual(self.row(report, "fam-a-r1-u2")["action"], "orphan_candidate")
+        self.assert_no_incident_no_comment()
+
+    def test_compute_finished_without_run_spec_identity_is_fail_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="ARTIFACT_READY",
+                         spec_over={"task_id": "", "kanban_board": ""})
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "orphan_candidate")
+        self.assertIn("fail-closed", row["detail"]["wake"])
+        self.assert_no_incident_no_comment()
+
+    def test_compute_finished_with_unreadable_card_readback_is_fail_closed(self):
+        self.install_fakes()
+        rnd = self.round_setup()
+        self.add_attempt(rnd, "fam-a-r1-u1", created="2026-09-13T00:00:00Z", stage="ARTIFACT_READY")
+
+        def dead_card_status(board, task_id):
+            return None, "kanban show rc=1: boom"
+
+        reconcile.card_status = dead_card_status
+        rc, report = self.run_root()
+        self.assertEqual(rc, 0)
+        self.assert_no_release(report)
+        row = self.row(report, "fam-a-r1-u1")
+        self.assertEqual(row["action"], "orphan_candidate")
+        self.assertIn("fail-closed", row["detail"]["wake"])
+        self.assert_no_incident_no_comment()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
