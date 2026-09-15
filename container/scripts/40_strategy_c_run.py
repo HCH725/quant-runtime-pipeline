@@ -113,9 +113,14 @@ ROW_FIELDS = ("symbol", "timeframe", "window_kind", "decile", "lookback_days",
               "fills", "turnover_usdt", "signals_seen", "signals_entered",
               "days", "years", "cagr", "total_return_pct", "annualized_return")
 LAYER_TOTALS = {}
-# Structural counters (module level so `summarize` can assert them over every grid):
-# both must stay 0 - they are the executable no-look-ahead / 24h-window guards.
-COUNTERS = {"entry_before_signal": 0, "hold_over_24h": 0}
+# Structural counters (module level so `summarize` can assert them over every grid).
+# The raw funding timestamps carry ms-level jitter around the nominal 8h boundary
+# (measured on BTCUSDT: settlement gaps of 28,799,999 .. 28,800,004 ms), so a settlement is
+# mapped to the bar that starts at the nominal boundary and every structural comparison is
+# allowed one second of tolerance against a 15-minute bar and a 24-hour window.  A larger
+# deviation is a real mapping defect and trips the counter.
+MS_JITTER_TOLERANCE_MS = 1000
+COUNTERS = {"entry_before_signal": 0, "hold_over_24h": 0, "signal_bar_mismatch": 0}
 
 
 def log(msg):
@@ -458,6 +463,24 @@ def build_signal_series(cohort, times, rates, lookbacks, counts, label):
     return out
 
 
+def window_geometry_ok(sig_ms, bar_open_ms, exit_close_ms, bar_ms, hold_bars=None,
+                       tol=None):
+    """Executable geometry guard for one episode (contract: no look-ahead, 24h window).
+
+    Returns (mapped_ok, hold_ok):
+      * mapped_ok - the settlement observation maps to the bar that STARTS at the settlement
+        boundary (tolerance: the raw settlement timestamps jitter by a few ms around it);
+      * hold_ok   - the exit bar is inside [T, T + hold_bars bars] (or is the last bar of the
+        evaluated slice, which is always earlier).
+    Extracted so the guard itself is unit-testable: a guard that can never fail proves nothing.
+    """
+    hold_bars = HOLD_BARS if hold_bars is None else hold_bars
+    tol = MS_JITTER_TOLERANCE_MS if tol is None else tol
+    mapped_ok = abs(int(bar_open_ms) - int(sig_ms)) <= tol
+    hold_ok = (int(exit_close_ms) - int(bar_open_ms)) <= hold_bars * int(bar_ms) + tol
+    return mapped_ok, hold_ok
+
+
 def exit_price_pnl(proceeds, basis):
     """Pure price PnL of one closing fill: exit proceeds minus cost basis.
 
@@ -688,13 +711,20 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         funding_paid += ep_fund
         realized -= ep_fund
         episodes += 1
-        # executable 24h-window guard: the exit bar is the last bar of [T, T+24h] (or the end
-        # of the evaluated slice), so the hold can never outlive its registered window.
+        # Executable structural guards (tolerance: the raw settlement timestamps jitter by up
+        # to a few ms around the nominal 8h boundary):
+        #   1. the settlement must map to its own bar (the bar starting at the boundary);
+        #   2. the exit bar is the last bar of [T, T+24h] (or the end of the evaluated slice),
+        #      so the hold can never outlive its registered window.
         sig_ms = int(series["obs_times"][k])
-        exit_close_ms = int(cohort.open_time_ms[i0 + t_end]) + (cohort.open_time_ms[1] - cohort.open_time_ms[0] if cohort.n > 1 else 0)
-        if exit_close_ms - sig_ms > HOLD_BARS * (cohort.open_time_ms[1] - cohort.open_time_ms[0] if cohort.n > 1 else 0):
+        bar_open_ms = int(cohort.open_time_ms[i0 + b])
+        bar_ms = int(cohort.open_time_ms[i0 + 1] - cohort.open_time_ms[i0]) if n > 1 else 0
+        exit_close_ms = int(cohort.open_time_ms[i0 + t_end]) + bar_ms
+        mapped_ok, hold_ok = window_geometry_ok(sig_ms, bar_open_ms, exit_close_ms, bar_ms)
+        if not mapped_ok:
+            COUNTERS["signal_bar_mismatch"] += 1
+        if not hold_ok:
             COUNTERS["hold_over_24h"] += 1
-        # the exit is never before the signal bar; the hold never outlives the 24h window
         last_exit_bar = t_end
         day_equity[day_of_bar[t_end]] = START_EQUITY + realized
         if diag:
@@ -1270,6 +1300,7 @@ def summarize(spec, grid_rows, layers):
         "selector_historical_only": True,
         # executable no-look-ahead / window guards (module counters, every grid)
         "entry_never_before_signal": COUNTERS["entry_before_signal"] == 0,
+        "signal_maps_to_its_own_bar": COUNTERS["signal_bar_mismatch"] == 0,
         "hold_never_over_24h": COUNTERS["hold_over_24h"] == 0,
         "no_funding_grid_is_cost_free": all(r["funding"] == 0.0 for r in grid_rows["no_funding"]),
         "cost_pressure_not_a_noop": cost_pressure_effective,
@@ -1312,6 +1343,8 @@ def summarize(spec, grid_rows, layers):
         "dca_layer_histogram": {"level_%02d" % k: layers[k] for k in range(12)},
         "funding_provenance": provenance,
         "assertions": assertions,
+        "structural_counters": dict(COUNTERS),
+        "structural_counter_tolerance_ms": MS_JITTER_TOLERANCE_MS,
     }
 
 

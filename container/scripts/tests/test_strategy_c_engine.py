@@ -272,6 +272,45 @@ class TestSignalAndWindow(unittest.TestCase):
         self.assertEqual(m["episodes"], 2)
 
 
+class TestStructuralGuards(unittest.TestCase):
+    """The two executable window guards tolerate the raw ms-level settlement jitter and still
+    trip on a real mapping defect (a guard that can never fail proves nothing)."""
+
+    def test_settlement_jitter_does_not_trip_the_guards(self):
+        c = flat(200)
+        for delta in (-900, 900, 4):
+            s = mk_series(c, [(10, 0.05, -0.0001)])
+            s["obs_times"] = s["obs_times"] + delta
+            before = dict(sc.COUNTERS)
+            sc.simulate(c, PARAMS, RAIL, (0, c.n), {}, 0.0, "full", s)
+            self.assertEqual(sc.COUNTERS["hold_over_24h"], before["hold_over_24h"])
+            self.assertEqual(sc.COUNTERS["signal_bar_mismatch"], before["signal_bar_mismatch"])
+
+    def test_a_settlement_off_its_own_bar_trips_the_mapping_guard(self):
+        c = flat(200)
+        s = mk_series(c, [(10, 0.05, -0.0001)])
+        s["obs_times"] = s["obs_times"] + 60000        # a whole minute off the 8h boundary
+        saved = dict(sc.COUNTERS)
+        try:
+            sc.simulate(c, PARAMS, RAIL, (0, c.n), {}, 0.0, "full", s)
+            self.assertGreaterEqual(sc.COUNTERS["signal_bar_mismatch"], 1)
+        finally:
+            sc.COUNTERS.update(saved)
+
+    def test_the_geometry_guard_trips_on_a_late_exit_and_on_a_stray_settlement(self):
+        bar = 900000
+        t = 10 * bar
+        # healthy geometry: settlement at the boundary, exit closes exactly 24h later
+        self.assertEqual(sc.window_geometry_ok(t, t, t + 96 * bar, bar), (True, True))
+        # jitter around the boundary stays inside the registered tolerance
+        self.assertEqual(sc.window_geometry_ok(t + 900, t, t + 96 * bar, bar), (True, True))
+        self.assertEqual(sc.window_geometry_ok(t - 900, t, t + 96 * bar, bar), (True, True))
+        # a settlement a minute off its own bar is a mapping defect
+        self.assertEqual(sc.window_geometry_ok(t + 60000, t, t + 96 * bar, bar)[0], False)
+        # an exit one bar late violates the registered 24h window
+        self.assertEqual(sc.window_geometry_ok(t, t, t + 97 * bar, bar)[1], False)
+
+
 # ---------------------------------------------------------------------------
 # 4. the window-bounded rail: ladder, TP, resting stop, per-fill fees
 # ---------------------------------------------------------------------------
