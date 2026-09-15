@@ -1,0 +1,616 @@
+{
+ "snapshot_kind": "strategy-e-v1 round 1 execution record (launch -> detector remediation -> terminal -> verdict)",
+ "snapshot_taken_at_utc": "2026-09-15T09:40:36Z",
+ "snapshot_boundary": "Read-back of the immutable /results tree plus the repo at the time of writing. Not runtime state: whether the container, mounts or cron are healthy now must be queried live, never inferred from this file.",
+ "card": {
+  "kanban_task_id": "t_57ecd99e",
+  "board": "quant-strategy-research",
+  "family_id": "copula-cmi-pairs-relative-value-perp-v1",
+  "round_id": "copula-cmi-pairs-relative-value-perp-v1-r1",
+  "assignee": "default",
+  "origin": "created by the Contract v1.7.0 section 14.4 automatic production handoff"
+ },
+ "family": {
+  "title": "Copula-CMI pairs relative value (market neutral), BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT 1h USD-M perpetuals",
+  "mechanism": "relative-value statistical arbitrage: two cointegrated perpetuals, the copula conditional CDF deviation CMI_t = h_{1|2}(U1|U2) - 0.5 in [-0.5, 0.5] measures the current dislocation; extreme CMI enters a beta-hedged, market-neutral spread trade and exits on reversion / PT / SL / max holding",
+  "signal_family": "statistical-arbitrage / pairs (NOT single-asset reversion or momentum)",
+  "scientific_lineage": "family.json parent_family=null; the Kanban parent edge is scheduling only",
+  "provenance": "wiki brain quant/copula-cmi-crypto-perpetual-pairs-trading-market-overlay-2026-09-07.md (research-only intake; source's primary finding is NEGATIVE after realistic costs)",
+  "registered_grids": 11,
+  "registered_grid_names": [
+   "historical",
+   "oos",
+   "full",
+   "fee_2x",
+   "funding_2x",
+   "entry_delay_1_bar",
+   "slippage_2ticks",
+   "no_funding",
+   "no_funding_full",
+   "cost_attrition_40bps",
+   "source_cost_0p12pct"
+  ],
+  "cohort_count": 6,
+  "cohorts": [
+   "BNBUSDT-SOLUSDT",
+   "BTCUSDT-BNBUSDT",
+   "BTCUSDT-ETHUSDT",
+   "BTCUSDT-SOLUSDT",
+   "ETHUSDT-BNBUSDT",
+   "ETHUSDT-SOLUSDT"
+  ],
+  "case_evaluations_per_grid": 5760,
+  "case_evaluations_per_cohort_per_grid": 960,
+  "case_evaluations_total": 63360,
+  "expected_case_evaluations": 63360,
+  "selector_disposition": "selector=cohort-selector-v1; disposition=cohort-disposition-v1",
+  "universe_reduction_disclosed_before_computation": "source used 10 perpetuals; the local canonical raw holds 4 symbols, so the pair universe is all 6 of their pairs"
+ },
+ "preregistration": {
+  "family_json": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/family.json",
+   "sha256": "sha256:a9fe0e289845a9ec385b8ed5eb3fab290c14f71831029f13187a18a5ec7a8b90",
+   "kanban_task_id": "t_57ecd99e",
+   "semantic_fingerprint": "sha256:33d1fa76a6dba9b8de1a025eed99e465dcbe893fd50e792e76509e33997cd2a1"
+  },
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/rounds/copula-cmi-pairs-relative-value-perp-v1-r1/round-spec.json",
+   "sha256": "sha256:d58983758f2741dab13f84e3e2a8832e8712b1463cc30142c05b8a98840c3fb2",
+   "reused_verbatim_for_u2": true,
+   "note": "frozen before any computation (INV-4); u2 is a technical retry inside the same round, so the pre-registration was NOT rewritten. Its implementation-status prose names the u1 engine sha; the authoritative engine pin for u2 is the u2 run-spec script.sha256."
+  },
+  "run_spec": {
+   "u1": {
+    "sha256": "sha256:82534c122f549efa5239c3157d1b27f5d82b46c0c5e59083734e704eb0983ec9",
+    "engine": "sha256:7e50bf6c6baf726d1e9ef3dce54d6b5be55288c1a6696d1dfb38c9156be2dd8f"
+   },
+   "u2": {
+    "sha256": "sha256:7c4ece33f1883387bba8bd4874840c98281ced3988015cb889ed830aed6d52a8",
+    "engine": "sha256:4897412c0c2734cd4fec678743faf8867c913b381316df6ca6cadd0eaaf5faf2",
+    "engine_selfcheck": "sha256:3c86d0a956bf6336232e03305e5c44c16f2f74e32e9901a5f830c091f3ce67c3"
+   }
+  },
+  "engine": {
+   "path": "/scripts/50_strategy_e_run.py",
+   "repo_path": "container/scripts/50_strategy_e_run.py",
+   "u1_version": "e-v1-engine-1.0.0",
+   "u1_sha256": "sha256:7e50bf6c6baf726d1e9ef3dce54d6b5be55288c1a6696d1dfb38c9156be2dd8f",
+   "u2_version": "e-v1-engine-1.0.1",
+   "u2_sha256": "sha256:4897412c0c2734cd4fec678743faf8867c913b381316df6ca6cadd0eaaf5faf2",
+   "three_way_identical": "repo == host deploy == container /scripts (sha256)"
+  },
+  "split": {
+   "historical": "2022-01-01..2025-09-30",
+   "oos": "2025-10-01..2026-09-11",
+   "full": "2022-01-01..2026-09-11"
+  },
+  "data": {
+   "raw": "/data/raw (host /Volumes/ExpansionDrive/market-data-raw, read-only)",
+   "bars": "1h",
+   "usage": "canonical /data/raw only; nothing written back"
+  }
+ },
+ "preflight": {
+  "command": "python3 runtime/preflight.py --attempt-dir <u1 attempt dir> --launch --json",
+  "ok": true,
+  "checks": "P1-P10 all PASS",
+  "P10": "run-spec script.sha256 recomputed host side and matched",
+  "host_boot_id": "boot-1789359252"
+ },
+ "attempts": [
+  {
+   "run_id": "copula-cmi-pairs-relative-value-perp-v1-r1-u1",
+   "started_at_utc": "2026-09-15T09:22:13Z",
+   "terminal": null,
+   "state": "ARTIFACT_READY",
+   "runtime_seconds": 76,
+   "container_id": "qlib-run",
+   "engine_version": "e-v1-engine-1.0.0",
+   "engine_sha256": "sha256:7e50bf6c6baf726d1e9ef3dce54d6b5be55288c1a6696d1dfb38c9156be2dd8f",
+   "coverage": {
+    "coverage_complete": true,
+    "case_evaluations_total": 63360
+   },
+   "assertions_false": [
+    "cmi_within_registered_range",
+    "cost_pressure_not_a_noop",
+    "funding_pressure_not_a_noop",
+    "source_cost_track_is_not_a_noop"
+   ],
+   "defects": [
+    "cmi_within_registered_range: 2 raw conditional-CDF excursions > 1.0 (ETHUSDT-BNBUSDT cycle 70, frank, up to 2.812e-07 at u1 = 1.0, u2 = 0.9907)",
+    "cost/funding/source-cost no-op detectors: medians over all 5,760 cells saturate at exactly 0.0 because 2,400 cells never trade, so every comparison degenerated"
+   ],
+   "terminal_sentinel_published": false,
+   "carries_independent_measurement": false,
+   "neutrality_proof": "11/11 grid CSVs byte-identical to u2"
+  },
+  {
+   "run_id": "copula-cmi-pairs-relative-value-perp-v1-r1-u1-diag-replay",
+   "terminal": null,
+   "state": "out-of-tree replay (results/_diag, outside the family tree)",
+   "purpose": "measure the cmi excursion magnitude and prove the instrumentation is measurement-neutral",
+   "result": "11/11 grids byte-identical to u1; 2 signal-counter hits recorded (frank, max overshoot 2.812e-07); synthetic probe shows the same branch returns ~1.4e+283 at theta = 40",
+   "artifacts": [
+    "/Volumes/ExpansionDrive/qlib-results/_diag/tools/50e_diag.py",
+    "/Volumes/ExpansionDrive/qlib-results/_diag/tools/probe_frank.py",
+    "/Volumes/ExpansionDrive/qlib-results/_diag/tools/probe_frank2.py",
+    "/Volumes/ExpansionDrive/qlib-results/_diag/se-v1-u1-replay/cmi_hits.jsonl",
+    "/Volumes/ExpansionDrive/qlib-results/_diag/tools/50e_u1_engine.py"
+   ]
+  },
+  {
+   "run_id": "copula-cmi-pairs-relative-value-perp-v1-r1-u2",
+   "started_at_utc": "2026-09-15T09:35:07Z",
+   "terminal": "DONE",
+   "state": "ARTIFACT_READY",
+   "runtime_seconds": 73,
+   "container_id": "qlib-run",
+   "image_id": "qlib:0.9.7-arm64",
+   "qlib_version": "0.9.7",
+   "engine_version": "e-v1-engine-1.0.1",
+   "engine_sha256": "sha256:4897412c0c2734cd4fec678743faf8867c913b381316df6ca6cadd0eaaf5faf2",
+   "launch": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/50_strategy_e_run.py <container run-spec path> > <container attempt>/logs/run.log 2>&1\" (every path container-side, per SOP)",
+   "self_check_in_container": "55/55 OK (51 pre-existing + 4 new regressions)",
+   "coverage": {
+    "coverage_complete": true,
+    "case_evaluations_total": 63360,
+    "coverage_per_grid": {
+     "historical": 5760,
+     "oos": 5760,
+     "full": 5760,
+     "fee_2x": 5760,
+     "funding_2x": 5760,
+     "entry_delay_1_bar": 5760,
+     "slippage_2ticks": 5760,
+     "no_funding": 5760,
+     "no_funding_full": 5760,
+     "cost_attrition_40bps": 5760,
+     "source_cost_0p12pct": 5760
+    }
+   },
+   "assertions_all_true": true,
+   "assertion_count": 32,
+   "structural_counters_signal": {
+    "cycle_boundary_misaligned": 0,
+    "cycle_window_truncated": 0,
+    "leg_bars_not_aligned": 0,
+    "case_not_registered": 0,
+    "bar_grid_not_contiguous": 0,
+    "funding_bar_out_of_hold": 0,
+    "non_qualifying_cycle_traded": 0,
+    "cmi_out_of_range": 0,
+    "marginal_not_frozen": 0,
+    "traded_cycle_without_gof": 0,
+    "unhedged_entry_notional": 0,
+    "episodes_overlap": 0,
+    "cmi_raw_float_excursion": 4
+   },
+   "cmi_raw_float_excursion": {
+    "hits": 4,
+    "max_abs_overshoot": 2.8123540318780726e-07
+   },
+   "disposition": "REJECT / NO_SURVIVOR",
+   "cohort_results": [
+    {
+     "cohort": "BNBUSDT-SOLUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    },
+    {
+     "cohort": "BTCUSDT-BNBUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    },
+    {
+     "cohort": "BTCUSDT-ETHUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    },
+    {
+     "cohort": "BTCUSDT-SOLUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    },
+    {
+     "cohort": "ETHUSDT-BNBUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    },
+    {
+     "cohort": "ETHUSDT-SOLUSDT",
+     "outcome": "CULLED",
+     "cull_reasons": [
+      "insufficient_trades"
+     ]
+    }
+   ]
+  }
+ ],
+ "remediation": {
+  "what_changed": "engine e-v1-engine-1.0.0 -> 1.0.1, two detector-layer fixes only",
+  "fix_1": "cmi_series(): the closed-form conditional CDF the SIGNAL consumes is clipped into its definitional [0, 1] range; the raw excursion is still counted (cmi_raw_float_excursion) so the numeric defect stays disclosed; the GOF path keeps the unclipped primitive",
+  "fix_2": "track_effectiveness(): the three registered cost/funding no-op detectors read aggregate sums instead of medians that saturate at 0.0, and fail closed when nothing traded (an unexercised track is indistinguishable from a no-op one)",
+  "regressions": "container/scripts/tests/test_strategy_e_engine.py::TestV101DetectorFixes (4 tests)",
+  "red_proof": "the 4 new tests run against the u1 engine (results/_diag/tools/50e_u1_engine.py, sha256 7e50bf6c...) -> FAILED (failures=1, errors=3); against the fixed engine -> OK",
+  "measurement_neutrality": {
+   "method": "sha256 of each of the 11 phase-grid CSVs, u1 vs u2",
+   "result": "11/11 byte-identical",
+   "grid_sha256_u2": {
+    "historical": "sha256:65cea85fb7ea6137380a6f7d7640f2fef6e82a5b40a54153c0413796209f8e2b",
+    "oos": "sha256:7fb45fc11fc3b8db7d8154eb2d33059e41702c1329758c70b045cbc7485c6adb",
+    "full": "sha256:8ee163506a65e3f5fc4c4df45b35001f2a9c19544f67d0942625a69d97a5807c",
+    "fee_2x": "sha256:16a9c66ea160af952137c9c171ac84fa5fdf036c28205549ba7a0778549ea747",
+    "funding_2x": "sha256:a58c731ce5cee7ba5dfe4c3535bcfe6945b9d6a7aad863ebb67578416a7b837f",
+    "entry_delay_1_bar": "sha256:297bb011790ad54d661a47255e5482d094e4edaa60db2fe2de64a0942a869d43",
+    "slippage_2ticks": "sha256:d54c153be1626d98b09a0171a10e43d787e4f7e0273cff3240653126582a6bca",
+    "no_funding": "sha256:431949aa68623cabd68c32571e5e3c4db37c867fb2e833a9d490d72e0eb582a6",
+    "no_funding_full": "sha256:0e10cd3cbec8fcb9789ddcc74573703fb20e538fad4f47df7db3612fd8466286",
+    "cost_attrition_40bps": "sha256:8ffe0aef1cb0aa76d16c5fab84b34817a63b70b832c92e07c8611f2d511ca895",
+    "source_cost_0p12pct": "sha256:59a2692b516a054b930272052abd8affd9f5efc7d3ae360507d6d69f8e4edd5f"
+   },
+   "grid_sha256_u1": {
+    "historical": "sha256:65cea85fb7ea6137380a6f7d7640f2fef6e82a5b40a54153c0413796209f8e2b",
+    "oos": "sha256:7fb45fc11fc3b8db7d8154eb2d33059e41702c1329758c70b045cbc7485c6adb",
+    "full": "sha256:8ee163506a65e3f5fc4c4df45b35001f2a9c19544f67d0942625a69d97a5807c",
+    "fee_2x": "sha256:16a9c66ea160af952137c9c171ac84fa5fdf036c28205549ba7a0778549ea747",
+    "funding_2x": "sha256:a58c731ce5cee7ba5dfe4c3535bcfe6945b9d6a7aad863ebb67578416a7b837f",
+    "entry_delay_1_bar": "sha256:297bb011790ad54d661a47255e5482d094e4edaa60db2fe2de64a0942a869d43",
+    "slippage_2ticks": "sha256:d54c153be1626d98b09a0171a10e43d787e4f7e0273cff3240653126582a6bca",
+    "no_funding": "sha256:431949aa68623cabd68c32571e5e3c4db37c867fb2e833a9d490d72e0eb582a6",
+    "no_funding_full": "sha256:0e10cd3cbec8fcb9789ddcc74573703fb20e538fad4f47df7db3612fd8466286",
+    "cost_attrition_40bps": "sha256:8ffe0aef1cb0aa76d16c5fab84b34817a63b70b832c92e07c8611f2d511ca895",
+    "source_cost_0p12pct": "sha256:59a2692b516a054b930272052abd8affd9f5efc7d3ae360507d6d69f8e4edd5f"
+   },
+   "result_json_field_diff_count": 13,
+   "result_json_field_diff_classes": [
+    "the four fixed assertions (False -> True)",
+    "engine_version, run_id, generated_at_utc, runtime_seconds, bins wall seconds",
+    "structural_counters.signal.cmi_out_of_range 2 -> 0 and the new cmi_raw_float_excursion block"
+   ]
+  }
+ },
+ "screen_and_cycles": {
+  "note": "the binding constraint of the round; the full per-cycle table (AIC table, GOF p-values, half-life, beta) is in the attempt's artifacts/cycle_diagnostics.json",
+  "per_pair": {
+   "BNBUSDT-SOLUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 89,
+    "cycles_qualifying": 4,
+    "skipped_gof": 4,
+    "cycles_tradable": 0,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 1,
+     "clayton": 0,
+     "gumbel": 1,
+     "frank": 2
+    }
+   },
+   "BTCUSDT-BNBUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 107,
+    "cycles_qualifying": 3,
+    "skipped_gof": 1,
+    "cycles_tradable": 2,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 1,
+     "clayton": 0,
+     "gumbel": 0,
+     "frank": 2
+    }
+   },
+   "BTCUSDT-ETHUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 105,
+    "cycles_qualifying": 4,
+    "skipped_gof": 4,
+    "cycles_tradable": 0,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 0,
+     "clayton": 2,
+     "gumbel": 0,
+     "frank": 2
+    }
+   },
+   "BTCUSDT-SOLUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 95,
+    "cycles_qualifying": 7,
+    "skipped_gof": 5,
+    "cycles_tradable": 2,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 3,
+     "clayton": 0,
+     "gumbel": 0,
+     "frank": 4
+    }
+   },
+   "ETHUSDT-BNBUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 103,
+    "cycles_qualifying": 4,
+    "skipped_gof": 1,
+    "cycles_tradable": 3,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 0,
+     "clayton": 0,
+     "gumbel": 0,
+     "frank": 4
+    }
+   },
+   "ETHUSDT-SOLUSDT": {
+    "cycles_total": 116,
+    "skipped_cointegration": 101,
+    "cycles_qualifying": 5,
+    "skipped_gof": 4,
+    "cycles_tradable": 1,
+    "aic_selection_wins": {
+     "gaussian": 0,
+     "student_t": 0,
+     "clayton": 1,
+     "gumbel": 0,
+     "frank": 4
+    }
+   }
+  },
+  "registered_floors": {
+   "min_episodes_is": 60,
+   "min_episodes_oos": 20,
+   "source": "round-spec no-signal floor; NOT relaxed"
+  }
+ },
+ "economics": {
+  "note": "each cell is an independent 30,000 USDT case; the sums are a scale indicator, not a portfolio return, and with 0 survivors there is no elected winner cell",
+  "aggregate_per_grid": {
+   "historical": {
+    "cells": 5760,
+    "cells_with_episodes": 1920,
+    "sum_net_pnl": -979446.78523,
+    "sum_fees": 186011.951938,
+    "sum_funding": 2154.402658,
+    "sum_gross_pnl": -791280.430714,
+    "sum_episodes": 3792,
+    "sum_fills": 22016,
+    "sum_turnover_usdt": 372023904.010558,
+    "max_max_effective_leverage": 4.365346,
+    "max_capital_utilization": 0.327746
+   },
+   "oos": {
+    "cells": 5760,
+    "cells_with_episodes": 2400,
+    "sum_net_pnl": 403671.274598,
+    "sum_fees": 86761.29795,
+    "sum_funding": -768.95494,
+    "sum_gross_pnl": 489663.61749,
+    "sum_episodes": 3360,
+    "sum_fills": 15552,
+    "sum_turnover_usdt": 173522596.070418,
+    "max_max_effective_leverage": 3.247722,
+    "max_capital_utilization": 0.234779
+   },
+   "full": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -575775.510622,
+    "sum_fees": 272773.250108,
+    "sum_funding": 1385.44754,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.365346,
+    "max_capital_utilization": 0.268976
+   },
+   "fee_2x": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -848548.760552,
+    "sum_fees": 545546.500056,
+    "sum_funding": 1385.44754,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.374926,
+    "max_capital_utilization": 0.272725
+   },
+   "funding_2x": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -577160.957848,
+    "sum_fees": 272773.250108,
+    "sum_funding": 2770.894164,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.365346,
+    "max_capital_utilization": 0.269028
+   },
+   "entry_delay_1_bar": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -441479.951338,
+    "sum_fees": 269553.740686,
+    "sum_funding": 1105.66235,
+    "sum_gross_pnl": -170820.548182,
+    "sum_episodes": 7152,
+    "sum_fills": 37336,
+    "sum_turnover_usdt": 539107481.700822,
+    "max_max_effective_leverage": 3.500516,
+    "max_capital_utilization": 0.313195
+   },
+   "slippage_2ticks": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -584276.424432,
+    "sum_fees": 272768.856268,
+    "sum_funding": 1385.430004,
+    "sum_gross_pnl": -310122.138288,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545537712.552514,
+    "max_max_effective_leverage": 4.365498,
+    "max_capital_utilization": 0.268981
+   },
+   "no_funding": {
+    "cells": 5760,
+    "cells_with_episodes": 1920,
+    "sum_net_pnl": -977292.382734,
+    "sum_fees": 186011.951938,
+    "sum_funding": 0.0,
+    "sum_gross_pnl": -791280.430714,
+    "sum_episodes": 3792,
+    "sum_fills": 22016,
+    "sum_turnover_usdt": 372023904.010558,
+    "max_max_effective_leverage": 4.365346,
+    "max_capital_utilization": 0.327738
+   },
+   "no_funding_full": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -574390.063414,
+    "sum_fees": 272773.250108,
+    "sum_funding": 0.0,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.365346,
+    "max_capital_utilization": 0.268925
+   },
+   "cost_attrition_40bps": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -2485188.260976,
+    "sum_fees": 2182186.000316,
+    "sum_funding": 1385.44754,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.433303,
+    "max_capital_utilization": 0.297985
+   },
+   "source_cost_0p12pct": {
+    "cells": 5760,
+    "cells_with_episodes": 3360,
+    "sum_net_pnl": -466666.21048,
+    "sum_fees": 163663.94996,
+    "sum_funding": 1385.44754,
+    "sum_gross_pnl": -301616.813252,
+    "sum_episodes": 7152,
+    "sum_fills": 37568,
+    "sum_turnover_usdt": 545546500.080884,
+    "max_max_effective_leverage": 4.361526,
+    "max_capital_utilization": 0.267509
+   }
+  },
+  "descriptive_medians_all_base_cases": {
+   "net_pnl": 0.0,
+   "fees": 26.484826,
+   "funding": 0.0,
+   "gross_pnl": 0.0,
+   "ending_equity": 30000.0,
+   "sharpe": 0.0,
+   "max_dd_pct": 0.0,
+   "max_dd_usdt": 0.0,
+   "max_effective_leverage": 0.442717,
+   "capital_utilization": 0.04405,
+   "cagr": 0.0,
+   "total_return_pct": 0.0,
+   "episodes": 1.5,
+   "fills": 8.0,
+   "turnover_usdt": 52969.651533
+  },
+  "dca_layer_histogram": {
+   "level_00": 57216,
+   "level_01": 20708,
+   "level_02": 8576,
+   "level_03": 3020,
+   "level_04": 2300,
+   "level_05": 1120,
+   "level_06": 0,
+   "level_07": 0,
+   "level_08": 0,
+   "level_09": 0,
+   "level_10": 0,
+   "level_11": 0
+  },
+  "source_consistency": "aggregate net PnL is negative on every full-window grid, the same sign as the source's primary finding; recorded as REJECT"
+ },
+ "terminal": {
+  "sentinel": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/rounds/copula-cmi-pairs-relative-value-perp-v1-r1/attempts/copula-cmi-pairs-relative-value-perp-v1-r1-u2/DONE",
+   "status": "DONE",
+   "sha256": "sha256:d4b1dc88ac6c9f32e5dc0ee25863b22ebb5d17149a2b8ecce2afd8fe6a24789e",
+   "artifact_manifest_entries": 25,
+   "check": "python3 runtime/terminal_evidence.py check --attempt-dir <u2> -> problems=[]"
+  },
+  "state_json": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/rounds/copula-cmi-pairs-relative-value-perp-v1-r1/attempts/copula-cmi-pairs-relative-value-perp-v1-r1-u2/state.json",
+   "stage": "ARTIFACT_READY"
+  },
+  "result_json": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/rounds/copula-cmi-pairs-relative-value-perp-v1-r1/attempts/copula-cmi-pairs-relative-value-perp-v1-r1-u2/result.json",
+   "sha256": "sha256:92ff011348201116ed6f48968bf7ef076390fc7e6148b2c27bd59db36b71518e"
+  }
+ },
+ "verdict": {
+  "path": "/Volumes/ExpansionDrive/qlib-results/copula-cmi-pairs-relative-value-perp-v1/rounds/copula-cmi-pairs-relative-value-perp-v1-r1/verdict.json",
+  "sha256": "sha256:89e21bd9cb9915cad23cffd1f7f7568c67123f81839815979c4790f75599de3d",
+  "verdict": "REJECT",
+  "performance_claimable": false,
+  "disposition": "REJECT / NO_SURVIVOR",
+  "disposition_band": "NO_SURVIVOR",
+  "cohort_survivors": [],
+  "cohort_count": 6,
+  "failure": {
+   "layer": null,
+   "class": null
+  },
+  "yield_decision": "STOP_REJECT",
+  "survivor_bundle": "not written (contract 10.8 requires >=1 survivor; 0 survivors -> no bundle)",
+  "written_by": "Hermes default (card t_57ecd99e) per contract 10.7; the runner's own verdict_recommendation is a hint only"
+ },
+ "cross_checks": [
+  {
+   "script": "runtime/_e_verify_u2.py",
+   "purpose": "terminal read-back: state/assertions/coverage + u1-vs-u2 grid byte comparison + result.json field diff",
+   "result": "32/32 assertions true, coverage complete, 11/11 grids identical, 13 differing result fields (all identity/version/counter)"
+  },
+  {
+   "script": "runtime/_e_verify_verdict.py",
+   "purpose": "assert every factual claim in verdict.json against the attempt artifacts (coverage, cull reasons, screen ranges, aggregate sign, accounting identity, neutrality proof)",
+   "result": "29 PASS / 0 FAIL (rc=0)"
+  }
+ ],
+ "repo_changes": [
+  "container/scripts/50_strategy_e_run.py (new + v1.0.1 detector fixes)",
+  "container/scripts/tests/test_strategy_e_engine.py (new + 4 regressions)",
+  "runtime/instantiate_strategy_e_v1.py, runtime/strategy_e_v1_counts.py (new)",
+  "runtime/templates/strategy_e_v1_round_spec.template.json, runtime/templates/strategy_e_v1_run_spec.template.json (new)",
+  "runtime/_author_strategy_e_template.py, runtime/_make_e_preflight_spec.py (new)",
+  "evidence/strategy-e-v1-r1-run-20260915.json + evidence/README.md row"
+ ],
+ "open_items": [
+  "the raw conditional-CDF float excursion is a disclosed defect of the registered primitive, not fixed here: repairing the primitive would move the signal and needs its own pre-registration",
+  "all six cohorts are culled by the G2 no-signal floor, so the family's economics are never exercised; a future registration that wants to test the economics needs a mechanism whose screen passes more often (or a registered relaxation of the floors, which this round explicitly did not do)",
+  "section 14.4 appends the next production family only after this card reaches done"
+ ]
+}
