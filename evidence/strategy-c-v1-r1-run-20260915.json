@@ -1,0 +1,521 @@
+{
+  "snapshot_kind": "strategy-c-v1 round 1 execution record (launch -> terminal -> verdict)",
+  "snapshot_taken_at_utc": "2026-09-15T06:10:37Z",
+  "snapshot_boundary": "Read-back of the immutable /results tree on the run host at the time of writing. Not runtime state: whether the container, mounts or cron are healthy now must be queried live, never inferred from this file.",
+  "host_paths_redacted": "<EXPANSION> = the external results volume mount; <HOME> = the user home",
+  "card": {
+    "kanban_task_id": "t_56ca0634",
+    "board": "quant-strategy-research",
+    "family_id": "funding-decile-extreme-contrarian-btc-v1",
+    "round_id": "funding-decile-extreme-contrarian-btc-v1-r1"
+  },
+  "family": {
+    "title": "Funding-extreme contrarian (decile) BTCUSDT USD-M perpetual, 24h DCA episode",
+    "hypothesis": "When the 8h funding settlement rate of the BTCUSDT USD-M perpetual falls into the lowest registered decile of its own trailing 180-day mid-rank distribution (crowded short positioning: shorts pay longs), the subsequent 24h is expected to be POSITIVE for a long position.",
+    "side": "long-only",
+    "registered_grids": 11,
+    "cohort_count": 1,
+    "case_evaluations_total": 1584,
+    "expected_case_evaluations": 1584,
+    "case_evaluations_per_grid": 144,
+    "round_spec_sha256": "sha256:8d91ad0c6f8d9a5b3f787dff2a68b60a7eae3934dcec35094c0f4e947025b800",
+    "round_spec_bytes": 45944,
+    "run_spec_sha256": "sha256:f90ff3f3c4862689dea6e2d2150ca72ecfdee06b46fa3232c5f4124f2ad396f7",
+    "run_spec_pinned_script_sha256": "sha256:1999a4cf1a6fb97d1a5eca1bc8e7c69a244bcdfe05e44b99dbfefe84c5260e7c"
+  },
+  "attempts": [
+    {
+      "run_id": "funding-decile-extreme-contrarian-btc-v1-r1-u1",
+      "terminal": "INCOMPLETE",
+      "failure_layer": "card-local",
+      "failure_class": "script_bug",
+      "detail": "structural guard hold_never_over_24h was miscalibrated: it compared the exit close against the raw settlement timestamp (ms-level jitter). 18/19 assertions; no measurement artifact was ever released for this attempt."
+    },
+    {
+      "run_id": "funding-decile-extreme-contrarian-btc-v1-r1-u2",
+      "terminal": "INCOMPLETE",
+      "failure_layer": "card-local",
+      "failure_class": "script_bug",
+      "detail": "the newly added structural guard signal_maps_to_its_own_bar caught a real mapping defect: the settlement->bar lookup used the NEXT bar boundary while the raw exchange timestamps run up to 31 ms late (2,192 of 5,142 registered-window observations, never early), so ~43% of entries were delayed by one 15-minute bar. Mapping corrected to the containing bar; u3 is the authoritative measurement of this round."
+    },
+    {
+      "run_id": "funding-decile-extreme-contrarian-btc-v1-r1-u3",
+      "terminal": "DONE",
+      "state": "ARTIFACT_READY",
+      "container_id": "qlib-run",
+      "image_id": "qlib:0.9.7-arm64",
+      "qlib_version": "0.9.7",
+      "verdict_hint": "CANDIDATE_REJECT",
+      "runtime_seconds": 29,
+      "terminal_sentinel_sha256": "sha256:7a58ebe81aaa34c057af1684492719d820876ed68c27b7b0bbcbc0c6c6463571",
+      "result_json_sha256": "sha256:da4cb4b318d45271ee076f49c10113432298ffe42f71c77ef3bea18975ec9691",
+      "sentinel_artifacts_verified": 21,
+      "terminal_evidence_check": {
+        "rc": 0,
+        "problems": [],
+        "host_boot_id": "boot-1789359253"
+      }
+    }
+  ],
+  "script_fixes_this_round": [
+    {
+      "commit": "f05fcd8",
+      "detail": "settlement-jitter calibration of the structural guards + the pure window_geometry_ok unit; engine self-check 42/42"
+    },
+    {
+      "commit": "de487f0",
+      "detail": "settlements map to the bar that OPENS at their own boundary (side=right - 1) instead of the next boundary; guard 0 <= settlement - bar_open <= 1 s; regression test test_ms_late_settlements_map_to_their_own_bar; engine self-check 43/43 (host and qlib-run), host suite 293/293"
+    }
+  ],
+  "measurement": {
+    "coverage_complete": true,
+    "coverage_per_grid": {
+      "historical": 144,
+      "oos": 144,
+      "full": 144,
+      "fee_2x": 144,
+      "funding_2x": 144,
+      "entry_delay_1_bar": 144,
+      "slippage_2ticks": 144,
+      "no_funding": 144,
+      "no_funding_full": 144,
+      "cost_attrition_40bps": 144,
+      "official_only": 144
+    },
+    "assertions_all_true": true,
+    "assertions": {
+      "episodes_partition": true,
+      "pnl_decomposition": true,
+      "coverage_complete": true,
+      "cohort_count_matches_registered": true,
+      "strategy_grid_is_registered_product": true,
+      "dca_grid_is_registered_product": true,
+      "base_combinations_per_cohort_per_grid": true,
+      "expected_case_evaluations": true,
+      "layer0_equals_episodes": true,
+      "layer_histogram_nonempty": true,
+      "no_entry_after_exhaustion": true,
+      "ending_equity_floor": true,
+      "selector_deterministic": true,
+      "selector_historical_only": true,
+      "entry_never_before_signal": true,
+      "signal_maps_to_its_own_bar": true,
+      "hold_never_over_24h": true,
+      "no_funding_grid_is_cost_free": true,
+      "cost_pressure_not_a_noop": true,
+      "official_only_rows_use_official_funding": true
+    },
+    "structural_counters": {
+      "entry_before_signal": 0,
+      "hold_over_24h": 0,
+      "signal_bar_mismatch": 0
+    },
+    "structural_counter_tolerance_ms": 1000,
+    "dca_layer_histogram": {
+      "level_00": 45471,
+      "level_01": 79209,
+      "level_02": 6390,
+      "level_03": 1068,
+      "level_04": 185,
+      "level_05": 50,
+      "level_06": 8,
+      "level_07": 8,
+      "level_08": 6,
+      "level_09": 4,
+      "level_10": 4,
+      "level_11": 0
+    },
+    "funding_series": {
+      "modelled_observations": 2005,
+      "official_observations": 3140,
+      "official_only_observations": 3140
+    }
+  },
+  "cohort_decision": {
+    "cohort": "BTCUSDT/15m",
+    "outcome": "CULLED",
+    "cull_reasons": [
+      "oos_economic",
+      "full_economic",
+      "robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+      "robustness_economic:cost_attrition_40bps",
+      "parameter_neighbourhood"
+    ],
+    "winner_cell": {
+      "decile": 0.05,
+      "lookback_days": 180,
+      "spacing_pct": 0.04,
+      "size_multiplier": 1.1,
+      "breakeven_tp_pct": 0.03,
+      "invalidation_pct": 0.05
+    },
+    "neighbourhood": {
+      "neighbours": 5,
+      "agreeing": 2,
+      "same_sign_fraction": 0.4,
+      "winner_net_pnl_positive": true,
+      "threshold": 0.6,
+      "passed": false
+    },
+    "survivors": [],
+    "metrics": {
+      "historical": {
+        "net_pnl": 2536.071292,
+        "sharpe": 0.197261,
+        "episodes": 128,
+        "ending_equity": 32536.071292,
+        "fees": 3550.165202,
+        "funding": 44.166966,
+        "max_dd_usdt": -10626.19211,
+        "max_dd_pct": -0.338946,
+        "max_effective_leverage": 9.931588,
+        "capital_utilization": 0.045495,
+        "annualized_return": 0.02255434837533356,
+        "cagr": 0.021887655825216346
+      },
+      "oos": {
+        "net_pnl": -10409.301417,
+        "sharpe": -0.608496,
+        "episodes": 49,
+        "ending_equity": 19590.698583,
+        "fees": 1498.622878,
+        "funding": -43.566406,
+        "max_dd_usdt": -13732.038936,
+        "max_dd_pct": -0.423371,
+        "max_effective_leverage": 9.794821,
+        "capital_utilization": 0.06287,
+        "annualized_return": -0.3662920817627055,
+        "cagr": -0.362285653314399
+      },
+      "full": {
+        "net_pnl": -7539.587501,
+        "sharpe": -0.087774,
+        "episodes": 177,
+        "ending_equity": 22460.412499,
+        "fees": 5070.96599,
+        "funding": 0.60056,
+        "max_dd_usdt": -18861.914935,
+        "max_dd_pct": -0.46648,
+        "max_effective_leverage": 9.931588,
+        "capital_utilization": 0.048839,
+        "annualized_return": -0.05352480196851847,
+        "cagr": -0.059782599080413834
+      },
+      "robustness": {
+        "fee_2x": {
+          "net_pnl": -14147.418217,
+          "sharpe": -0.308473,
+          "episodes": 177,
+          "ending_equity": 15852.581783,
+          "fees": 9876.100731,
+          "funding": -27.951653,
+          "max_dd_usdt": -21519.916657,
+          "max_dd_pct": -0.582479,
+          "max_effective_leverage": 10.308221,
+          "capital_utilization": 0.054874,
+          "annualized_return": -0.10043490553642352,
+          "cagr": -0.12702585028869018
+        },
+        "funding_2x": {
+          "net_pnl": -7540.188061,
+          "sharpe": -0.087547,
+          "episodes": 177,
+          "ending_equity": 22459.811939,
+          "fees": 5070.96599,
+          "funding": 1.201121,
+          "max_dd_usdt": -18866.010623,
+          "max_dd_pct": -0.466882,
+          "max_effective_leverage": 9.947707,
+          "capital_utilization": 0.048877,
+          "annualized_return": -0.053529065447048094,
+          "cagr": -0.059787953352800294
+        },
+        "entry_delay_1_bar": {
+          "net_pnl": -17673.35736,
+          "sharpe": -0.375566,
+          "episodes": 177,
+          "ending_equity": 12326.64264,
+          "fees": 4209.67161,
+          "funding": 6.904856,
+          "max_dd_usdt": -19132.608609,
+          "max_dd_pct": -0.610232,
+          "max_effective_leverage": 14.547303,
+          "capital_utilization": 0.074981,
+          "annualized_return": -0.1254661415697322,
+          "cagr": -0.17256716272776418
+        },
+        "slippage_2ticks": {
+          "net_pnl": -7565.222299,
+          "sharpe": -0.088466,
+          "episodes": 177,
+          "ending_equity": 22434.777701,
+          "fees": 5070.953166,
+          "funding": 0.60065,
+          "max_dd_usdt": -18866.989552,
+          "max_dd_pct": -0.466825,
+          "max_effective_leverage": 9.936549,
+          "capital_utilization": 0.048869,
+          "annualized_return": -0.05370678772057611,
+          "cagr": -0.060011245466720986
+        }
+      },
+      "no_funding_reference": {
+        "net_pnl": 2580.238259,
+        "sharpe": 0.198418,
+        "episodes": 128,
+        "ending_equity": 32580.238259,
+        "fees": 3550.165202,
+        "funding": 0.0,
+        "max_dd_usdt": -10631.163967,
+        "max_dd_pct": -0.339147,
+        "max_effective_leverage": 9.915522,
+        "capital_utilization": 0.045466,
+        "annualized_return": 0.022947143778921077,
+        "cagr": 0.022257577418647756
+      },
+      "no_funding_full_reference": {
+        "net_pnl": -7538.986941,
+        "sharpe": -0.087997,
+        "episodes": 177,
+        "ending_equity": 22461.013059,
+        "fees": 5070.96599,
+        "funding": 0.0,
+        "max_dd_usdt": -18857.819247,
+        "max_dd_pct": -0.466077,
+        "max_effective_leverage": 9.915522,
+        "capital_utilization": 0.048801,
+        "annualized_return": -0.0535205384899888,
+        "cagr": -0.059777244920701245
+      },
+      "cost_attrition_40bps": {
+        "net_pnl": -29780.66425,
+        "sharpe": -1.854348,
+        "episodes": 177,
+        "ending_equity": 219.33575,
+        "fees": 27801.032663,
+        "funding": 37.797337,
+        "max_dd_usdt": -30706.415294,
+        "max_dd_pct": -0.992908,
+        "max_effective_leverage": 9.852317,
+        "capital_utilization": 0.150899,
+        "annualized_return": -0.211417953066952,
+        "cagr": -0.6491812764360654
+      },
+      "official_only_reference": {
+        "net_pnl": 1661.874991,
+        "sharpe": 0.15737,
+        "episodes": 71,
+        "ending_equity": 31661.874991,
+        "fees": 1899.783034,
+        "funding": 4.410814,
+        "max_dd_usdt": -9819.45355,
+        "max_dd_pct": -0.248006,
+        "max_effective_leverage": 9.729945,
+        "capital_utilization": 0.046092,
+        "annualized_return": 0.02890518445072739,
+        "cagr": 0.0285324308344852
+      }
+    }
+  },
+  "family_level_falsification": {
+    "threshold_instability": {
+      "registered_item": "threshold-instability",
+      "definition": "the registered decile tracks must agree in OOS net-PnL sign",
+      "tracks": [
+        {
+          "decile": 0.05,
+          "net_pnl": -10409.301417,
+          "sharpe": -0.608496,
+          "episodes": 49,
+          "positive": false
+        },
+        {
+          "decile": 0.1,
+          "net_pnl": -10136.404855,
+          "sharpe": -0.577039,
+          "episodes": 83,
+          "positive": false
+        },
+        {
+          "decile": 0.2,
+          "net_pnl": -15817.958539,
+          "sharpe": -0.672113,
+          "episodes": 133,
+          "positive": false
+        }
+      ],
+      "signs_agree": true,
+      "hit": false,
+      "landing": "descriptive robustness disclosure; a hit must never be recorded as PASS",
+      "non_gating_band": false
+    },
+    "funding_provenance": {
+      "registered_item": "funding-provenance",
+      "evaluated": true,
+      "primary_winner_cell": {
+        "decile": 0.05,
+        "lookback_days": 180,
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      "official_only_winner_cell": {
+        "decile": 0.05,
+        "lookback_days": 180,
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      "same_cell_selected": true,
+      "primary_oos_sharpe": -0.608496,
+      "official_only_oos_sharpe": -0.608496,
+      "primary_oos_net_pnl": -10409.301417,
+      "official_only_oos_net_pnl": -10409.301417,
+      "same_sign": true,
+      "relative_difference": 0.0,
+      "max_relative_difference": 0.5,
+      "fail": false,
+      "hit": false,
+      "landing": "card: primary vs official_only sign mismatch or >50% difference -> TECHNICAL_INCOMPLETE / DEFERRED, never PASS",
+      "notice": "both Sharpes are read from the primary OOS grid for the two selected cells; the OOS window contains official funding observations only, so an official-only rerun of that window is identical by construction",
+      "official_only_selection": {
+        "winner": {
+          "decile": 0.05,
+          "lookback_days": 180,
+          "spacing_pct": 0.04,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.03,
+          "invalidation_pct": 0.05
+        },
+        "reason": "selected",
+        "official_only_historical_window": [
+          "2023-11-01",
+          "2025-09-30"
+        ],
+        "registered_roles": "historical window of the official-funding era; the OOS slice is unchanged (the OOS window carries official funding only, so the two configurations are identical there by construction)"
+      }
+    }
+  },
+  "robustness_diagnostics": {
+    "non_gating": true,
+    "note": "per-calendar-year and per-settlement-phase net PnL of the elected winner cell (and of the official-only winner). Descriptive only - never a gate.",
+    "registered_item": "non_overlapping_24h_subsample_and_per_year_stability",
+    "winner_cell": {
+      "decile": 0.05,
+      "lookback_days": 180,
+      "spacing_pct": 0.04,
+      "size_multiplier": 1.1,
+      "breakeven_tp_pct": 0.03,
+      "invalidation_pct": 0.05
+    },
+    "pnl_by_year": {
+      "2022": {
+        "episodes": 13,
+        "net_pnl": -2494.198214,
+        "fees": 801.247671,
+        "funding": -11.706557
+      },
+      "2023": {
+        "episodes": 32,
+        "net_pnl": 789.851863,
+        "fees": 320.559968,
+        "funding": 9.523832
+      },
+      "2024": {
+        "episodes": 50,
+        "net_pnl": 7239.27507,
+        "fees": 1549.404555,
+        "funding": 20.43088
+      },
+      "2025": {
+        "episodes": 45,
+        "net_pnl": -880.615504,
+        "fees": 1110.127081,
+        "funding": 24.650223
+      },
+      "2026": {
+        "episodes": 37,
+        "net_pnl": -12193.900716,
+        "fees": 1289.626714,
+        "funding": -42.297818
+      }
+    },
+    "pnl_by_entry_phase": {
+      "00": {
+        "episodes": 80,
+        "net_pnl": -10693.738226
+      },
+      "08": {
+        "episodes": 45,
+        "net_pnl": 6362.665205
+      },
+      "16": {
+        "episodes": 52,
+        "net_pnl": -3208.51448
+      }
+    },
+    "winner_diagnostics_match_full_row": true,
+    "official_only_winner_cell": {
+      "decile": 0.05,
+      "lookback_days": 180,
+      "spacing_pct": 0.04,
+      "size_multiplier": 1.1,
+      "breakeven_tp_pct": 0.03,
+      "invalidation_pct": 0.05
+    },
+    "official_only_pnl_by_year": {
+      "2024": {
+        "episodes": 38,
+        "net_pnl": 4693.95052,
+        "fees": 1031.858264,
+        "funding": -9.280506
+      },
+      "2025": {
+        "episodes": 33,
+        "net_pnl": -3032.075529,
+        "fees": 867.92477,
+        "funding": 13.69132
+      }
+    },
+    "official_only_diagnostics_match_grid_row": true
+  },
+  "verdict": {
+    "verdict": "REJECT",
+    "performance_claimable": false,
+    "disposition": "REJECT",
+    "disposition_band": "NO_SURVIVOR",
+    "yield": {
+      "rounds_used": 1,
+      "max_rounds": 3,
+      "no_progress_rounds": 0,
+      "progress_evidence": [
+        "artifacts/cohort_results.json - the single cohort adjudicated by cohort-selector-v1 / cohort-disposition-v1 with every cull reason recorded (falsification battery G3-G8 triggered)",
+        "artifacts/funding_provenance.json - the registered official-only provenance rerun selected the same cell and reproduced the OOS numbers exactly, so the modelled-funding segment is not what kills the signal",
+        "artifacts/robustness_diagnostics.json - per-year and per-settlement-phase breakdown of the winner cell plus the same on the official-funding era",
+        "contract 15.3 item 3: a triggered pre-registered falsification counts as progress, so this round is not a no-progress round (STOP_REJECT at round 1 of 3)"
+      ],
+      "yield_decision": "STOP_REJECT",
+      "decided_at_utc": "2026-09-15T06:07:35Z"
+    },
+    "missing_conditions": [
+      "verdict != PASS: the family disposition is REJECT / NO_SURVIVOR (0 cohort survivors). The single registered cohort (BTCUSDT/15m) produced a qualifying historical winner (decile 0.05, lookback 180d, spacing_pct 0.04, size_multiplier 1.1, breakeven_tp_pct 0.03, invalidation_pct 0.05; historical net_pnl +2536.07, sharpe 0.197, 128 episodes) which then failed the pre-registered gates: G4 oos_economic (OOS net_pnl -10409.30, annualized Sharpe -0.61 < the registered 0.40 floor), G5 full_economic (full net_pnl -7539.59), G6 robustness_economic (all four stress grids negative), G8 cost_attrition_40bps (-29780.66) and G7 parameter_neighbourhood (0.40 < 0.60). Contract 9.6 requires verdict == PASS for performance_claimable=true; nothing else is missing (canonical /data/raw, no look-ahead (20/20 assertions incl. the two structural window guards), an explicit OOS window, declared cost/funding/slippage assumptions and the full section 7.2 coverage of symbol x timeframe x strategy domain x DCA domain x historical/OOS/robustness are all satisfied and recorded in the u3 attempt artifacts)."
+    ],
+    "failed_gates": [
+      "oos_economic",
+      "full_economic",
+      "robustness_economic (fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks)",
+      "robustness_economic (cost_attrition_40bps)",
+      "parameter_neighbourhood"
+    ],
+    "verdict_json_sha256": "sha256:009cafd6296b95387107d3f6034b7512d0cd0851bb0596de0f3442500a865b89",
+    "survivor_bundle": "not written (0 survivors; contract 10.8 requires >=1)",
+    "contract_9_6_note": "performance_claimable stays false because verdict != PASS even though every other 9.6 condition (canonical data, no look-ahead, explicit OOS window, declared costs/funding/slippage, section 7.2 coverage) is satisfied"
+  },
+  "not_done_by_this_card": [
+    "Strategy D was NOT appended (the section 14.4 handoff appends it after this card is done, and the handoff/reconciler crons are paused)",
+    "no survivor bundle, no post-survivor index/leaderboard entry (this round has 0 survivors)",
+    "no forward slice, no champion selection, no operationalisation"
+  ]
+}
