@@ -1,0 +1,1024 @@
+{
+  "snapshot_kind": "strategy-d-v1 round 1 execution record (launch -> terminal -> verdict)",
+  "snapshot_taken_at_utc": "2026-09-15T08:30:00Z",
+  "snapshot_boundary": "Read-back of the immutable /results tree on the run host at the time of writing. Not runtime state: whether the container, mounts or cron are healthy now must be queried live, never inferred from this file.",
+  "host_paths_redacted": "<EXPANSION> = the external results volume mount; <HOME> = the user home",
+  "card": {
+    "kanban_task_id": "t_50c28da5",
+    "board": "quant-strategy-research",
+    "family_id": "utc-clock-hour-seasonality-perp-panel-v1",
+    "round_id": "utc-clock-hour-seasonality-perp-panel-v1-r1"
+  },
+  "family": {
+    "title": "UTC clock-hour return seasonality panel (BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT 1h USD-M perpetuals)",
+    "hypothesis": "Clock-time seasonality in 24/7 crypto: the UTC hour of day carries return differences because activity/liquidity/settlement overlap with fiat market hours - 01:00-05:00 UTC weak, 15:00-16:00 UTC strong, the last three hours of the day positive. The signal depends on clock time only (no price history, no trend or mean-reversion estimate), so it is information-set orthogonal to Strategy A and B.",
+    "registered_legs": {
+      "long": "15:00-16:00 UTC, +1 unit",
+      "short": "01:00-05:00 UTC, -1 unit (sym-directionally mirrored DCA rail)",
+      "secondary_long": "21:00-24:00 UTC, +1 unit (evaluated separately; only advances with the primary if it adds OOS value under a pre-written rule)"
+    },
+    "registered_grids": 12,
+    "registered_grid_names": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps",
+      "boundary_alt_oos",
+      "boundary_alt_full"
+    ],
+    "cohort_count": 4,
+    "case_evaluations_per_grid": 1344,
+    "case_evaluations_per_cohort_per_grid": 336,
+    "case_evaluations_total": 16128,
+    "expected_case_evaluations": 16128,
+    "provenance": "wiki brain quant/crypto-intraday-utc-return-seasonality-tea-time-2026-09-03.md (research-only intake); the source's 38-venue pair evidence does not cover perpetual futures and this card IS the registered portability test; scope limited to Binance USD-M perp, 4 symbols, 2022-01-01..2026-09-11",
+    "selector_disposition": "selector=cohort-selector-v1; disposition=cohort-disposition-v1"
+  },
+  "preregistration": {
+    "family_json_sha256": "sha256:fa1a5bb806259690890a8ac53613791314a4515c09b3c4544fa329aff00c44f2",
+    "family_json_kanban_task_id": "t_50c28da5",
+    "semantic_fingerprint": "sha256:b1b1dccbffe207fb42aaa9a4bc944f4791c709a9ef34f333cabf403c4fe69b13",
+    "round_spec_sha256": "sha256:f33b3cb0eeb2bd4d376931aa27f0491faeb1a0a4bb2ce5102c1b55dcab9c2135",
+    "round_spec_reused_verbatim": true,
+    "run_spec_sha256": "sha256:6097c4a120e688c85e0288520655f8d7867f7bcdef037c8e2e10a656e0af4bc5",
+    "engine_script": "/scripts/40_strategy_d_run.py",
+    "engine_sha256": "sha256:78b590a9904f41288a920ae312a87be93607d13229abdeb769e3f8743a8bdc9a",
+    "engine_selfcheck_sha256": "sha256:ad65ccbe133ed66c81235a307a5e00e92592121197580467132c73264c444332",
+    "engine_version": "d-v1-engine-1.0.0",
+    "engine_semantics": "UTC clock-hour seasonality legs (long 15:00-16:00, short 01:00-05:00, secondary long 21:00-24:00), boundary-open entry, window-bounded DCA rail, hard window-end flatten (see module docstring)",
+    "split": {
+      "historical": "2022-01-01..2025-09-30 (1369 days)",
+      "oos": "2025-10-01..2026-09-11 (346 days)",
+      "full": "2022-01-01..2026-09-11 (1715 days)"
+    }
+  },
+  "attempts": [
+    {
+      "run_id": "utc-clock-hour-seasonality-perp-panel-v1-r1-u1",
+      "terminal": "INCOMPLETE",
+      "failure_layer": "card-local",
+      "failure_class": "script_bug",
+      "detail": "summarize() re-read the elected winner's frozen full-window row from the global cross-cohort accumulation, so same_cell refused ('expected exactly one row for cell ..., found 4'). The 3-month smoke run could not see it because every smoke cohort was culled at selection, so the winner-diagnostics loop was skipped - a production-only path. Fixed in 1ac2542; no measurement artifact released."
+    },
+    {
+      "run_id": "utc-clock-hour-seasonality-perp-panel-v1-r1-u2",
+      "terminal": null,
+      "failure_layer": "card-local",
+      "failure_class": "script_bug (accounting + detector; fixed in 3732230)",
+      "detail": "ARTIFACT_READY with 16,128/16,128 case evaluations and coverage complete, but layer0_equals_episodes=false (the full-window ladder histogram double-counted the winner/singleton-leg diagnostics by exactly 29,155 episodes) and funding_bar_never_out_of_hold=false (768 events, all on the boundary-alternative OOS track: its shifted short window opens on the OOS slice's first bar, where the raw 2025-10-01T00:00Z settlement sits exactly on the boundary with 0 ms jitter). No terminal sentinel was ever published for u2; its 12 grid CSVs are byte-identical to u3's, so it carries no independent measurement."
+    },
+    {
+      "run_id": "utc-clock-hour-seasonality-perp-panel-v1-r1-u3",
+      "terminal": "DONE",
+      "state": "ARTIFACT_READY",
+      "container_id": "qlib-run",
+      "image_id": "qlib:0.9.7-arm64",
+      "qlib_version": "0.9.7",
+      "verdict_hint": "CANDIDATE_REJECT",
+      "runtime_seconds": 182,
+      "terminal_sentinel_sha256": "sha256:745635a614fd78a777534af7c7a521286d6ea8ac326ffa1b54feef8020a4282f",
+      "result_json_sha256": "sha256:6be477e5a9907540a1446eeaa9f117d90c2ea2a241d6e6032262a705302bcafd",
+      "sentinel_artifacts_verified": 25,
+      "terminal_evidence_check": {
+        "rc": 0,
+        "problems": []
+      },
+      "reconcile_readback": {
+        "dry_run_rc": 0,
+        "action": "consumed (sentinel already consumed (card status=running); idempotent)",
+        "incidents": []
+      }
+    }
+  ],
+  "script_fixes_this_round": [
+    {
+      "commit": "1ac2542",
+      "detail": "the winner-diagnostics cell lookup stays inside the cohort's own rows (fixes the u1 failure)"
+    },
+    {
+      "commit": "3732230",
+      "detail": "two accounting/detector defects, both found by u2 asserting on itself: (1) simulate(..., count_layers=True) with the two winner/singleton-leg diagnostic call sites passing count_layers=False, so the reported full-window ladder histogram counts GRID cells only and the registered identity (level 00 == sum of episodes over the eight full-window grids) holds; (2) build_funding_index additionally returns settle_bar_closed (the bar that CONTAINS the instant, half-open) which ONLY the out-of-hold guard reads, so an exactly-on-boundary settlement is not pushed one bar out of the hold while the scheduling array settle_bar - and therefore every charge - stays untouched. Regression tests 49/49 in qlib-run (was 45); RED-proved against a /tmp copy with the two production lines reverted (1 != 0 and [2,0,...] != [1,0,...]); the u3 grid CSVs are byte-identical to u2's, which is the measurement-neutrality proof."
+    }
+  ],
+  "measurement_neutrality_proof": {
+    "claim": "the two fixes change no charge, gate or grid row",
+    "method": "sha256 of each of the 12 grid CSVs, u2 vs u3",
+    "result": "12/12 byte-identical",
+    "corroboration": [
+      "cohort_results metrics identical to u2",
+      "panel_diagnostic identical to u2",
+      "timezone_fragility identical to u2",
+      "window_instability identical to u2",
+      "the only intended numeric delta anywhere is the corrected dca_layer_histogram: level_00 22,601,301 -> 22,572,146 (=-29,155)"
+    ]
+  },
+  "measurement": {
+    "coverage_complete": true,
+    "coverage_per_grid": {
+      "historical": 1344,
+      "oos": 1344,
+      "full": 1344,
+      "fee_2x": 1344,
+      "funding_2x": 1344,
+      "entry_delay_1_bar": 1344,
+      "slippage_2ticks": 1344,
+      "no_funding": 1344,
+      "no_funding_full": 1344,
+      "cost_attrition_40bps": 1344,
+      "boundary_alt_oos": 1344,
+      "boundary_alt_full": 1344
+    },
+    "assertions_all_true": true,
+    "assertions": {
+      "episodes_partition": true,
+      "pnl_decomposition": true,
+      "coverage_complete": true,
+      "cohort_count_matches_registered": true,
+      "strategy_grid_is_registered_product": true,
+      "dca_grid_is_registered_product": true,
+      "base_combinations_per_cohort_per_grid": true,
+      "expected_case_evaluations": true,
+      "layer0_equals_episodes": true,
+      "layer_histogram_nonempty": true,
+      "no_entry_after_exhaustion": true,
+      "ending_equity_floor": true,
+      "selector_deterministic": true,
+      "selector_historical_only": true,
+      "entry_bar_matches_registered_boundary": true,
+      "exit_bar_matches_registered_window_end": true,
+      "no_clipped_windows_on_unshifted_grids": true,
+      "shifted_grids_clip_count_reported": true,
+      "no_overlapping_episodes": true,
+      "bar_grid_is_contiguous": true,
+      "no_unregistered_strategy_case": true,
+      "funding_bar_never_out_of_hold": true,
+      "no_funding_grid_is_cost_free": true,
+      "cost_pressure_not_a_noop": true,
+      "funding_pressure_not_a_noop": true,
+      "boundary_alt_grid_is_not_a_noop": true,
+      "long_and_short_legs_evaluated_separately": true,
+      "daily_series_is_slice_scoped": true
+    },
+    "structural_counters": {
+      "entry_delay_1_bar": {
+        "entry_bar_not_at_registered_boundary": 0,
+        "exit_bar_not_at_window_end": 0,
+        "window_clipped_at_slice_edge": 768,
+        "overlap_skip": 0,
+        "funding_bar_out_of_hold": 0,
+        "case_not_registered": 0,
+        "bar_grid_not_contiguous": 0
+      }
+    },
+    "structural_counter_tolerance_ms": 1000,
+    "dca_layer_histogram": {
+      "level_00": 22572146,
+      "level_01": 3044190,
+      "level_02": 664166,
+      "level_03": 208150,
+      "level_04": 79497,
+      "level_05": 36150,
+      "level_06": 15969,
+      "level_07": 8495,
+      "level_08": 4688,
+      "level_09": 2391,
+      "level_10": 1430,
+      "level_11": 0
+    },
+    "cohort_outcome_counts": {
+      "SURVIVOR": 0,
+      "CULLED": 4
+    },
+    "cohort_survivor_count": 0,
+    "disposition": "REJECT / NO_SURVIVOR",
+    "family_level_falsification": {
+      "flags": {
+        "timezone_fragility": false,
+        "window_instability": false
+      },
+      "timezone_fragility": {
+        "hit": false,
+        "evaluated": true,
+        "landing": "family-level: a hit must NEVER be recorded as PASS (the runner recommends DEFERRED); evidence decides REJECT vs DEFERRED",
+        "non_gating_band": false
+      },
+      "window_instability": {
+        "hit": false,
+        "evaluated": true,
+        "landing": "family-level: a hit must NEVER be recorded as PASS (the runner recommends DEFERRED); evidence decides REJECT vs DEFERRED",
+        "non_gating_band": false
+      }
+    },
+    "panel_diagnostic_equal_notional": {
+      "non_gating": true,
+      "all_members_ending_equity": 85923.528371,
+      "all_members_net_pnl": 55923.528371
+    },
+    "cohorts": [
+      {
+        "cohort": "BNBUSDT/1h",
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner_case_label": "long",
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "neighbourhood": {
+          "neighbours": 5,
+          "agreeing": 4,
+          "same_sign_fraction": 0.8,
+          "threshold": 0.6,
+          "winner_net_pnl_positive": true,
+          "passed": true
+        },
+        "historical": {
+          "net_pnl": 16024.936777,
+          "sharpe": 2.38586,
+          "episodes": 1369,
+          "ending_equity": 46024.936777,
+          "fees": 17131.758825,
+          "funding": -1010.783995,
+          "max_dd_usdt": -2249.213121,
+          "max_dd_pct": -0.046592,
+          "max_effective_leverage": 3.829836,
+          "capital_utilization": 0.030771,
+          "annualized_return": 0.14251541655423172,
+          "cagr": 0.12096162130072496
+        },
+        "oos": {
+          "net_pnl": 8427.884317,
+          "sharpe": 4.823711,
+          "episodes": 346,
+          "ending_equity": 38427.884317,
+          "fees": 4223.887747,
+          "funding": 58.301851,
+          "max_dd_usdt": -447.398908,
+          "max_dd_pct": -0.011764,
+          "max_effective_leverage": 3.031971,
+          "capital_utilization": 0.033962,
+          "annualized_return": 0.29655922416364694,
+          "cagr": 0.2986959185014757
+        },
+        "full": {
+          "net_pnl": 24452.821094,
+          "sharpe": 2.764305,
+          "episodes": 1715,
+          "ending_equity": 54452.821094,
+          "fees": 21355.646572,
+          "funding": -952.482144,
+          "max_dd_usdt": -2287.080852,
+          "max_dd_pct": -0.047377,
+          "max_effective_leverage": 3.829836,
+          "capital_utilization": 0.029294,
+          "annualized_return": 0.17359364246260348,
+          "cagr": 0.13537341626351385
+        },
+        "full_winner_cell_turnover": {
+          "fills": "3793",
+          "turnover_usdt": "42711293.143723",
+          "windows_seen": "1715"
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 3097.174522,
+            "sharpe": 0.399608,
+            "episodes": 1715
+          },
+          "funding_2x": {
+            "net_pnl": 25405.303238,
+            "sharpe": 2.866896,
+            "episodes": 1715
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 15699.710732,
+            "sharpe": 2.198924,
+            "episodes": 1715
+          },
+          "slippage_2ticks": {
+            "net_pnl": 24279.12597,
+            "sharpe": 2.749635,
+            "episodes": 1715
+          }
+        },
+        "cost_attrition_40bps": {
+          "net_pnl": -30007.197286,
+          "sharpe": -1.287213,
+          "episodes": 415,
+          "ending_equity": -7.197286
+        },
+        "no_funding_full_reference": {
+          "net_pnl": 23500.338951,
+          "sharpe": 2.657929,
+          "episodes": 1715
+        },
+        "boundary_alt_oos_reference": {
+          "net_pnl": 1877.43153,
+          "sharpe": 1.286901,
+          "episodes": 346
+        },
+        "boundary_alt_full_reference": {
+          "net_pnl": 27961.085029,
+          "sharpe": 3.343925,
+          "episodes": 1715
+        }
+      },
+      {
+        "cohort": "BTCUSDT/1h",
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "robustness_economic:fee_2x",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner_case_label": "long",
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "neighbourhood": {
+          "neighbours": 5,
+          "agreeing": 2,
+          "same_sign_fraction": 0.4,
+          "threshold": 0.6,
+          "winner_net_pnl_positive": true,
+          "passed": false
+        },
+        "historical": {
+          "net_pnl": 12200.919909,
+          "sharpe": 1.924662,
+          "episodes": 1369,
+          "ending_equity": 42200.919909,
+          "fees": 16498.403703,
+          "funding": 1006.31962,
+          "max_dd_usdt": -1739.783074,
+          "max_dd_pct": -0.045205,
+          "max_effective_leverage": 3.544503,
+          "capital_utilization": 0.032956,
+          "annualized_return": 0.10850708538927753,
+          "cagr": 0.09531749259402589
+        },
+        "oos": {
+          "net_pnl": 2494.256225,
+          "sharpe": 1.644278,
+          "episodes": 346,
+          "ending_equity": 32494.256225,
+          "fees": 4127.984257,
+          "funding": 106.273398,
+          "max_dd_usdt": -1214.57139,
+          "max_dd_pct": -0.036376,
+          "max_effective_leverage": 1.475892,
+          "capital_utilization": 0.037407,
+          "annualized_return": 0.0877675420097124,
+          "cagr": 0.0879654257858864
+        },
+        "full": {
+          "net_pnl": 14695.176134,
+          "sharpe": 1.868923,
+          "episodes": 1715,
+          "ending_equity": 44695.176134,
+          "fees": 20626.38796,
+          "funding": 1112.593018,
+          "max_dd_usdt": -2262.723815,
+          "max_dd_pct": -0.051495,
+          "max_effective_leverage": 3.544503,
+          "capital_utilization": 0.031763,
+          "annualized_return": 0.10432289762873562,
+          "cagr": 0.08861458560096325
+        },
+        "full_winner_cell_turnover": {
+          "fills": "3734",
+          "turnover_usdt": "41252775.919112",
+          "windows_seen": "1715"
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": -5931.211825,
+            "sharpe": -0.783422,
+            "episodes": 1715
+          },
+          "funding_2x": {
+            "net_pnl": 13582.583116,
+            "sharpe": 1.732191,
+            "episodes": 1715
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 2741.192774,
+            "sharpe": 0.479062,
+            "episodes": 1715
+          },
+          "slippage_2ticks": {
+            "net_pnl": 14691.117523,
+            "sharpe": 1.868362,
+            "episodes": 1715
+          }
+        },
+        "cost_attrition_40bps": {
+          "net_pnl": -30109.605923,
+          "sharpe": -1.788874,
+          "episodes": 383,
+          "ending_equity": -109.605923
+        },
+        "no_funding_full_reference": {
+          "net_pnl": 15807.769152,
+          "sharpe": 2.004617,
+          "episodes": 1715
+        },
+        "boundary_alt_oos_reference": {
+          "net_pnl": 1241.442881,
+          "sharpe": 0.905631,
+          "episodes": 346
+        },
+        "boundary_alt_full_reference": {
+          "net_pnl": 22298.857176,
+          "sharpe": 2.843728,
+          "episodes": 1715
+        }
+      },
+      {
+        "cohort": "ETHUSDT/1h",
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner_case_label": "long+secondary_long",
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 1
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 6,
+          "same_sign_fraction": 1.0,
+          "threshold": 0.6,
+          "winner_net_pnl_positive": true,
+          "passed": true
+        },
+        "historical": {
+          "net_pnl": 74494.358998,
+          "sharpe": 4.399491,
+          "episodes": 2738,
+          "ending_equity": 104494.358998,
+          "fees": 41218.159537,
+          "funding": 1961.867583,
+          "max_dd_usdt": -2678.819361,
+          "max_dd_pct": -0.060622,
+          "max_effective_leverage": 3.057075,
+          "capital_utilization": 0.021528,
+          "annualized_return": 0.6625046170932458,
+          "cagr": 0.39507750935244346
+        },
+        "oos": {
+          "net_pnl": 21865.488585,
+          "sharpe": 5.176022,
+          "episodes": 692,
+          "ending_equity": 51865.488585,
+          "fees": 9984.801057,
+          "funding": 174.083606,
+          "max_dd_usdt": -1839.564683,
+          "max_dd_pct": -0.035455,
+          "max_effective_leverage": 4.303108,
+          "capital_utilization": 0.029638,
+          "annualized_return": 0.7693997789773032,
+          "cagr": 0.7823173748815249
+        },
+        "full": {
+          "net_pnl": 96359.847583,
+          "sharpe": 4.395162,
+          "episodes": 3430,
+          "ending_equity": 126359.847583,
+          "fees": 51202.960594,
+          "funding": 2135.951189,
+          "max_dd_usdt": -2678.819361,
+          "max_dd_pct": -0.060622,
+          "max_effective_leverage": 3.057075,
+          "capital_utilization": 0.019334,
+          "annualized_return": 0.6840706380914279,
+          "cagr": 0.35831195676191974
+        },
+        "full_winner_cell_turnover": {
+          "fills": "8309",
+          "turnover_usdt": "102405921.18781",
+          "windows_seen": "3430"
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 45156.886989,
+            "sharpe": 2.271685,
+            "episodes": 3430
+          },
+          "funding_2x": {
+            "net_pnl": 94223.896394,
+            "sharpe": 4.300969,
+            "episodes": 3430
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 72132.437436,
+            "sharpe": 3.287977,
+            "episodes": 3429
+          },
+          "slippage_2ticks": {
+            "net_pnl": 96242.491213,
+            "sharpe": 4.390812,
+            "episodes": 3430
+          }
+        },
+        "cost_attrition_40bps": {
+          "net_pnl": -30160.24359,
+          "sharpe": -1.303664,
+          "episodes": 424,
+          "ending_equity": -160.24359
+        },
+        "no_funding_full_reference": {
+          "net_pnl": 98495.798772,
+          "sharpe": 4.488092,
+          "episodes": 3430
+        },
+        "boundary_alt_oos_reference": {
+          "net_pnl": 21532.096868,
+          "sharpe": 6.693782,
+          "episodes": 692
+        },
+        "boundary_alt_full_reference": {
+          "net_pnl": 127710.594277,
+          "sharpe": 5.807416,
+          "episodes": 3430
+        }
+      },
+      {
+        "cohort": "SOLUSDT/1h",
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner_case_label": "long",
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "neighbourhood": {
+          "neighbours": 5,
+          "agreeing": 5,
+          "same_sign_fraction": 1.0,
+          "threshold": 0.6,
+          "winner_net_pnl_positive": true,
+          "passed": true
+        },
+        "historical": {
+          "net_pnl": 74098.186709,
+          "sharpe": 4.741851,
+          "episodes": 1369,
+          "ending_equity": 104098.186709,
+          "fees": 21006.958301,
+          "funding": -1188.542913,
+          "max_dd_usdt": -4556.082603,
+          "max_dd_pct": -0.083137,
+          "max_effective_leverage": 2.006034,
+          "capital_utilization": 0.024927,
+          "annualized_return": 0.6589813171523196,
+          "cagr": 0.39366438333409115
+        },
+        "oos": {
+          "net_pnl": 14088.081963,
+          "sharpe": 6.633097,
+          "episodes": 346,
+          "ending_equity": 44088.081963,
+          "fees": 4729.36775,
+          "funding": -81.949437,
+          "max_dd_usdt": -602.487599,
+          "max_dd_pct": -0.019112,
+          "max_effective_leverage": 2.339402,
+          "capital_utilization": 0.036233,
+          "annualized_return": 0.49572947369146564,
+          "cagr": 0.50142021915428
+        },
+        "full": {
+          "net_pnl": 88186.268672,
+          "sharpe": 4.610967,
+          "episodes": 1715,
+          "ending_equity": 118186.268672,
+          "fees": 25736.326051,
+          "funding": -1270.492349,
+          "max_dd_usdt": -4556.082603,
+          "max_dd_pct": -0.083137,
+          "max_effective_leverage": 2.006034,
+          "capital_utilization": 0.022352,
+          "annualized_return": 0.6260453767223173,
+          "cagr": 0.3391040526342324
+        },
+        "full_winner_cell_turnover": {
+          "fills": "4283",
+          "turnover_usdt": "51472652.102374",
+          "windows_seen": "1715"
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 62449.942621,
+            "sharpe": 3.439387,
+            "episodes": 1715
+          },
+          "funding_2x": {
+            "net_pnl": 89456.761021,
+            "sharpe": 5.023074,
+            "episodes": 1715
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 65628.532946,
+            "sharpe": 4.719771,
+            "episodes": 1715
+          },
+          "slippage_2ticks": {
+            "net_pnl": 82133.73336,
+            "sharpe": 4.380109,
+            "episodes": 1715
+          }
+        },
+        "cost_attrition_40bps": {
+          "net_pnl": -30040.889934,
+          "sharpe": -1.613329,
+          "episodes": 472,
+          "ending_equity": -40.889934
+        },
+        "no_funding_full_reference": {
+          "net_pnl": 86915.776323,
+          "sharpe": 4.1818,
+          "episodes": 1715
+        },
+        "boundary_alt_oos_reference": {
+          "net_pnl": 12074.138327,
+          "sharpe": 6.139196,
+          "episodes": 346
+        },
+        "boundary_alt_full_reference": {
+          "net_pnl": 96936.733889,
+          "sharpe": 5.907844,
+          "episodes": 1715
+        }
+      }
+    ],
+    "leg_decomposition": {
+      "BNBUSDT/1h": {
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "singleton_leg_totals": {
+          "long_only": {
+            "net_pnl_by_year": {
+              "2022": 8198.206975,
+              "2023": 4336.855941,
+              "2024": 4131.571444,
+              "2025": 4873.933052,
+              "2026": 2912.253683
+            },
+            "net_pnl_total": 24452.8211
+          },
+          "short_only": {
+            "net_pnl_by_year": {
+              "2022": -2522.204924,
+              "2023": -5481.637879,
+              "2024": -1139.313506,
+              "2025": -7431.888692,
+              "2026": -181.808675
+            },
+            "net_pnl_total": -16756.8537
+          },
+          "secondary_long_only": {
+            "net_pnl_by_year": {
+              "2022": 5596.120546,
+              "2023": 1822.240128,
+              "2024": 7450.86267,
+              "2025": -4971.763279,
+              "2026": -2656.270251
+            },
+            "net_pnl_total": 7241.1898
+          }
+        },
+        "winner_diagnostics_match_full_row": true
+      },
+      "BTCUSDT/1h": {
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "singleton_leg_totals": {
+          "long_only": {
+            "net_pnl_by_year": {
+              "2022": 4790.576005,
+              "2023": 1350.186704,
+              "2024": 3636.58517,
+              "2025": 3849.83151,
+              "2026": 1067.996744
+            },
+            "net_pnl_total": 14695.1761
+          },
+          "short_only": {
+            "net_pnl_by_year": {
+              "2022": 744.98695,
+              "2023": -459.781806,
+              "2024": 1242.618778,
+              "2025": -8719.079752,
+              "2026": -315.986911
+            },
+            "net_pnl_total": -7507.2427
+          },
+          "secondary_long_only": {
+            "net_pnl_by_year": {
+              "2022": 2171.931959,
+              "2023": -6410.483043,
+              "2024": 5383.235472,
+              "2025": -10562.821129,
+              "2026": -708.207614
+            },
+            "net_pnl_total": -10126.3444
+          }
+        },
+        "winner_diagnostics_match_full_row": true
+      },
+      "ETHUSDT/1h": {
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 1
+        },
+        "singleton_leg_totals": {
+          "long_only": {
+            "net_pnl_by_year": {
+              "2022": 14549.893662,
+              "2023": 3135.333849,
+              "2024": 6391.392632,
+              "2025": 15544.524149,
+              "2026": 6716.764548
+            },
+            "net_pnl_total": 46337.9088
+          },
+          "short_only": {
+            "net_pnl_by_year": {
+              "2022": 8769.461995,
+              "2023": -4275.708662,
+              "2024": -539.201797,
+              "2025": -1819.344151,
+              "2026": 1606.963969
+            },
+            "net_pnl_total": 3742.1714
+          },
+          "secondary_long_only": {
+            "net_pnl_by_year": {
+              "2022": 13532.354367,
+              "2023": 6668.192856,
+              "2024": 8929.021427,
+              "2025": 16594.977568,
+              "2026": 4297.392526
+            },
+            "net_pnl_total": 50021.9387
+          }
+        },
+        "winner_diagnostics_match_full_row": true
+      },
+      "SOLUSDT/1h": {
+        "winner_cell": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "leg_long": 1,
+          "leg_short": 0,
+          "leg_secondary": 0
+        },
+        "singleton_leg_totals": {
+          "long_only": {
+            "net_pnl_by_year": {
+              "2022": 22666.662057,
+              "2023": 16697.153331,
+              "2024": 23459.501466,
+              "2025": 17016.769512,
+              "2026": 8346.182306
+            },
+            "net_pnl_total": 88186.2687
+          },
+          "short_only": {
+            "net_pnl_by_year": {
+              "2022": 14950.319113,
+              "2023": 15232.131205,
+              "2024": 10056.809886,
+              "2025": -12250.066125,
+              "2026": 4008.416916
+            },
+            "net_pnl_total": 31997.611
+          },
+          "secondary_long_only": {
+            "net_pnl_by_year": {
+              "2022": 8087.397635,
+              "2023": 9792.918406,
+              "2024": 1380.370962,
+              "2025": -1376.180094,
+              "2026": 2376.841964
+            },
+            "net_pnl_total": 20261.3489
+          }
+        },
+        "winner_diagnostics_match_full_row": true
+      }
+    },
+    "stress_summary_medians_non_gating": {
+      "fee_2x": {
+        "median_net_pnl": -30019.633703,
+        "median_sharpe": -1.207589,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "funding_2x": {
+        "median_net_pnl": -18226.5393505,
+        "median_sharpe": -0.8968715,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "entry_delay_1_bar": {
+        "median_net_pnl": -18723.932737000003,
+        "median_sharpe": -0.954201,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "slippage_2ticks": {
+        "median_net_pnl": -18293.861946999998,
+        "median_sharpe": -0.8737189999999999,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "cost_attrition_40bps": {
+        "median_net_pnl": -30058.885102,
+        "median_sharpe": -1.417999,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "no_funding": {
+        "median_net_pnl": -14205.048732,
+        "median_sharpe": -0.993823,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "no_funding_full": {
+        "median_net_pnl": -17719.661803,
+        "median_sharpe": -0.88271,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "boundary_alt_oos": {
+        "median_net_pnl": -3267.971391,
+        "median_sharpe": -1.3350985,
+        "cases": 1344,
+        "non_gating": true
+      },
+      "boundary_alt_full": {
+        "median_net_pnl": -11501.072855,
+        "median_sharpe": -0.5305789999999999,
+        "cases": 1344,
+        "non_gating": true
+      }
+    },
+    "funding_series_readback": {
+      "BNBUSDT/1h": {
+        "observations": 5145,
+        "truth_status_counts": {
+          "official": 3140,
+          "modeled_funding": 2005,
+          "other": 0,
+          "out_of_window": 10
+        },
+        "first": "2022-01-01T00:00:00Z",
+        "last": "2026-09-11T16:00:00Z"
+      },
+      "BTCUSDT/1h": {
+        "observations": 5145,
+        "truth_status_counts": {
+          "official": 3140,
+          "modeled_funding": 2005,
+          "other": 0,
+          "out_of_window": 10
+        },
+        "first": "2022-01-01T00:00:00Z",
+        "last": "2026-09-11T16:00:00Z"
+      },
+      "ETHUSDT/1h": {
+        "observations": 5145,
+        "truth_status_counts": {
+          "official": 3140,
+          "modeled_funding": 2005,
+          "other": 0,
+          "out_of_window": 10
+        },
+        "first": "2022-01-01T00:00:00Z",
+        "last": "2026-09-11T16:00:00Z"
+      },
+      "SOLUSDT/1h": {
+        "observations": 5220,
+        "truth_status_counts": {
+          "official": 3140,
+          "modeled_funding": 2080,
+          "other": 0,
+          "out_of_window": 10
+        },
+        "first": "2022-01-01T00:00:00Z",
+        "last": "2026-09-11T16:00:00Z"
+      }
+    }
+  },
+  "verdict": {
+    "verdict": "REJECT",
+    "performance_claimable": false,
+    "disposition": "REJECT",
+    "disposition_band": "NO_SURVIVOR",
+    "yield": {
+      "rounds_used": 1,
+      "max_rounds": 3,
+      "no_progress_rounds": 0,
+      "progress_evidence": [
+        "artifacts/cohort_results.json - all four cohorts adjudicated by cohort-selector-v1 / cohort-disposition-v1 with every cull reason recorded",
+        "contract 15.3 item 3: a triggered pre-registered falsification counts as progress, so this round is not a no-progress round (STOP_REJECT at round 1 of 3)"
+      ],
+      "yield_decision": "STOP_REJECT",
+      "decided_at_utc": "2026-09-15T08:29:03Z"
+    },
+    "missing_conditions": [
+      "verdict != PASS: the family disposition is REJECT / NO_SURVIVOR (0 of 4 cohort survivors). Each cohort produced a qualifying historical winner under cohort-selector-v1, and every one of them was culled by the pre-registered falsification battery:\n  - BNBUSDT/1h: robustness_economic:cost_attrition_40bps\n  - BTCUSDT/1h: robustness_economic:fee_2x, robustness_economic:cost_attrition_40bps, parameter_neighbourhood\n  - ETHUSDT/1h: robustness_economic:cost_attrition_40bps\n  - SOLUSDT/1h: robustness_economic:cost_attrition_40bps\nContract 9.6 requires verdict == PASS for performance_claimable=true. Nothing else is missing: canonical read-only /data/raw, no look-ahead (28/28 assertions incl. the two clock-window structural guards and the funding/coverage guards), an explicit OOS split written into the immutable round-spec before any computation, declared cost/funding/slippage assumptions, and full section 7.2 coverage (4 cohorts x 7 registered strategy cases x 48 DCA configs x 12 phase grids = 16,128 case evaluations) are all satisfied and recorded in the u3 attempt artifacts."
+    ],
+    "failed_gates": [
+      "robustness_economic (cost_attrition_40bps) for all four cohorts",
+      "robustness_economic (fee_2x) for BTCUSDT/1h",
+      "parameter_neighbourhood for BTCUSDT/1h (0.40 < 0.60)"
+    ],
+    "verdict_json_sha256": "sha256:d6992d7012d2562c0142441eb9f0d606387befd2f137a6829215ca3fc559037d",
+    "verdict_json_rewrite": {
+      "reason": "the first write of this attempt's verdict.json carried null fills/turnover in turnover_and_leverage_full_window_winner_cell (the cohort metrics block does not carry them). It was replaced minutes later - before any board transition, with the single-file diff reviewed (only the turnover blocks and the regenerated decided_at_utc timestamps differ) - by the values read from artifacts/grid_full.csv for each winner cell.",
+      "old_sha256": "sha256:6663da6fff61cb1debc246cabc411cf5c616cfeac1208a56e215b986ab89c1ab",
+      "authoritative_sha256": "sha256:d6992d7012d2562c0142441eb9f0d606387befd2f137a6829215ca3fc559037d"
+    },
+    "survivor_bundle": "not written (0 survivors; contract 10.8 requires >=1)",
+    "contract_9_6_note": "performance_claimable stays false because verdict != PASS even though every other 9.6 condition (canonical data, no look-ahead, explicit OOS window, declared costs/funding/slippage, section 7.2 coverage) is satisfied",
+    "registered_semantics_notes": [
+      {
+        "item": "slice-scoped daily equity series",
+        "disclosed_in": "round-spec before launch (registered measurement deviation from the sealed C engine)",
+        "detail": "the daily equity series of a grid is scoped to the evaluated slice; a cohort-wide series padded with pre-window days would dilute Sharpe by sqrt(slice/cohort) and silently weaken the G4 floor."
+      },
+      {
+        "item": "entry_delay_1_bar shifts the whole episode",
+        "disclosed_in": "round-spec before launch (registered measurement deviation)",
+        "detail": "delaying only the entry inside a fixed window would delete every 1-bar leg; the registered stress moves the episode and keeps the registered holding length. Its 768 clipped slice-edge windows are reported, not asserted."
+      },
+      {
+        "item": "funding mark for a settlement landing exactly ON an interior bar open",
+        "disclosed_in": "verdict (documentation note; NOT one of the two assertion findings, no remediation in this round)",
+        "detail": "the engine charges the close of the bar ENDING at the settlement instant (the mark at the instant). For an instant exactly on an INTERIOR bar open the registered wording ('the close of the bar that contains it inside the window') can also be read as the bar STARTING there, i.e. one bar later. The readings are identical for entry- and exit-boundary settlements (the only boundary instants the 0/8/16h grid puts inside a hold). They differ only for SOLUSDT's early-2022 2h/4h-era on-boundary settlements at 02:00/04:00/22:00 (9 raw observations, all Nov 2022). Upper bound on the whole effect, computed from raw closes at the full 11-level ladder notional: 20.43 USDT over the 4.5-year window (0.07% of the 30,000 USDT starting equity); the realised figure is smaller. Changing the convention would move money, so it is a candidate for a future registration, not for this round."
+      }
+    ]
+  },
+  "not_done_by_this_card": [
+    "no survivor bundle, no post-survivor index/leaderboard entry, no evidence package (this round has 0 survivors, so no leaderboard entry exists to trigger contract 28)",
+    "no forward slice, no champion selection, no operationalisation, no Paper/Live",
+    "no Strategy A/B artifacts touched (all immutable)",
+    "the next family is NOT appended by this card: the section 14.4 automatic handoff appends it after this card reaches done"
+  ]
+}
