@@ -68,13 +68,19 @@ def mk_series(cohort, settlements=()):
     rates = np.array([float(r) for _t, r in settlements], dtype=np.float64)
     containing = (np.searchsorted(cohort.open_time_ms, times, side="left") - 1
                   if len(times) else np.array([], dtype=np.int64))
+    # the guard-only containment mapping: an instant exactly on a bar open belongs to that bar
+    closed = (np.searchsorted(cohort.open_time_ms, times, side="right") - 1
+              if len(times) else np.array([], dtype=np.int64))
     return {"label": "synthetic", "counts": {}, "obs_times": times, "obs_rates": rates,
-            "settle_bar": containing.astype(np.int64), "first_obs_ms": None, "last_obs_ms": None}
+            "settle_bar": containing.astype(np.int64),
+            "settle_bar_closed": closed.astype(np.int64),
+            "first_obs_ms": None, "last_obs_ms": None}
 
 
-def run(cohort, params, rail=None, series=None, slip=0.0, stress=None, kind="full", diag=False):
+def run(cohort, params, rail=None, series=None, slip=0.0, stress=None, kind="full", diag=False,
+        count_layers=True):
     return sd.simulate(cohort, params, rail or RAIL, (0, cohort.n), stress or {}, slip, kind,
-                       series or mk_series(cohort), diag=diag)
+                       series or mk_series(cohort), diag=diag, count_layers=count_layers)
 
 
 def flat(n=48, price=P0):
@@ -366,6 +372,56 @@ class TestFundingExposure(unittest.TestCase):
         self.assertEqual(m3["funding"], 0.0)
         # dropping a cost raises the net result by exactly that cost
         self.assertAlmostEqual(m3["net_pnl"] - m["net_pnl"], m["funding"], places=6)
+
+    def test_on_time_settlement_on_the_opening_boundary_is_not_out_of_hold(self):
+        """A settlement exactly ON the hold's opening boundary belongs to the window that opens there.
+
+        Raw fact (measured on all four symbols, 2025-10-01T00:00Z): the settlement is exactly 0 ms
+        late, and the boundary-alternative track opens its short window on that same bar.  The charge
+        is real and is scheduled on a held bar, so the guard must not call it out of hold.
+        """
+        c = flat(24)
+        series = mk_series(c, [(BASE_MS, 0.0001)])        # exactly ON the slice's first bar open
+        m = run(c, SHORT, series=series, stress={"bar_shift": -1})
+        qty = 1000 * LEV / P0
+        self.assertAlmostEqual(m["funding"], -qty * P0 * 0.0001, places=6)
+        self.assertEqual(sd.COUNTERS.get("full", {}).get("funding_bar_out_of_hold", 0), 0)
+
+    def test_early_settlement_before_the_opening_boundary_still_reports_out_of_hold(self):
+        """The allowance is the 0 ms boundary case only: the raw model is 0..28 ms LATE, never early."""
+        c = flat(24)
+        series = mk_series(c, [(BASE_MS - 500, 0.0001)])  # 500 ms EARLY: outside the model
+        run(c, SHORT, series=series, stress={"bar_shift": -1})
+        self.assertEqual(sd.COUNTERS.get("full", {}).get("funding_bar_out_of_hold", 0), 1)
+
+
+class TestLayerAccounting(unittest.TestCase):
+    """The full-window ladder histogram counts GRID cells only (card t_50c28da5)."""
+
+    def setUp(self):
+        reset_counters()
+        sd.LAYER_TOTALS.clear()
+
+    def test_only_grid_cells_feed_the_ladder_histogram(self):
+        c = flat(24)
+        series = mk_series(c)
+        run(c, LONG, series=series)
+        after_cell = list(sd.LAYER_TOTALS["full"])
+        self.assertGreater(after_cell[0], 0)
+        # the winner / singleton-leg diagnostics re-run the very same cell, so the registered
+        # identity (level 00 == sum of episodes over the full-window grids) only holds if those
+        # re-runs stay out of the histogram
+        run(c, LONG, series=series, diag=True, count_layers=False)
+        self.assertEqual(sd.LAYER_TOTALS["full"], after_cell)
+
+    def test_the_diagnostic_flag_is_not_a_silent_no_op(self):
+        """A counted call must still accumulate, or the test above could pass by doing nothing."""
+        c = flat(24)
+        series = mk_series(c)
+        run(c, LONG, series=series)
+        after_cell = list(sd.LAYER_TOTALS["full"])
+        run(c, LONG, series=series, diag=True)
+        self.assertGreater(sd.LAYER_TOTALS["full"][0], after_cell[0])
 
 
 # ---------------------------------------------------------------------------

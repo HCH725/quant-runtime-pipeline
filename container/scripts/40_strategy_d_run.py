@@ -483,8 +483,20 @@ def build_funding_index(cohort, times, rates, counts, label):
     every settlement is charged on its own instant.
     """
     containing = np.searchsorted(cohort.open_time_ms, times, side="left") - 1
+    # Two bar mappings, because they answer two different questions; only `settle_bar` schedules a
+    # charge, so the charge can never move because of the guard:
+    #   settle_bar        - the bar whose CLOSE is the mark price at the settlement instant (the bar
+    #                       that ENDS at it): the charge scheduling of `simulate`, unchanged.
+    #   settle_bar_closed - the bar that CONTAINS the instant, half-open [open, open + 1h).  The two
+    #                       differ only for an instant landing EXACTLY on a bar open, which the raw
+    #                       data really does (0 ms jitter, measured 2025-10-01T00:00Z on all four
+    #                       symbols): an ON-TIME settlement belongs to the bar it opens, so the
+    #                       out-of-hold guard must not push it one bar out of the hold (card
+    #                       t_50c28da5, boundary-alternative track).  The guard reads this one only.
+    closed = np.searchsorted(cohort.open_time_ms, times, side="right") - 1
     return {"label": label, "counts": counts, "obs_times": times, "obs_rates": rates,
             "settle_bar": containing.astype(np.int64),
+            "settle_bar_closed": closed.astype(np.int64),
             "first_obs_ms": int(times[0]) if len(times) else None,
             "last_obs_ms": int(times[-1]) if len(times) else None}
 
@@ -538,12 +550,16 @@ def pnl_decomposition_ok(m, tol=1e-3):
     return abs(m["gross_pnl"] - m["fees"] - m["funding"] - m["net_pnl"]) <= tol
 
 
-def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=False):
+def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=False,
+             count_layers=True):
     """One pre-registered parameter case over one window slice (i0, i1).
 
     `stress` may carry: fee_mult / funding_mult / entry_delay_1_bar / slip_ticks /
     no_funding / bar_shift.  Long episodes walk the bar LOW first then the HIGH; short
     episodes mirror that sym-directionally (HIGH first, then LOW).
+
+    `count_layers=False` keeps one call out of the full-window DCA ladder histogram: the winner and
+    singleton-leg diagnostics re-run cells the grid already counted (card t_50c28da5).
     """
     i0, i1 = window
     C = cohort.close[i0:i1].tolist()
@@ -576,10 +592,13 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         fund_times = np.array([], dtype=np.int64)
         fund_rates = np.array([], dtype=np.float64)
         settle_bar = np.array([], dtype=np.int64)
+        settle_bar_closed = np.array([], dtype=np.int64)
     else:
         fund_times = series["obs_times"]
         fund_rates = series["obs_rates"] * stress.get("funding_mult", 1.0)
         settle_bar = series["settle_bar"]
+        # guard-only containment mapping; a caller that predates it falls back to the scheduling bar
+        settle_bar_closed = series.get("settle_bar_closed", series["settle_bar"])
 
     # slice-local day index, so the daily equity series is scoped to the EVALUATED slice and
     # never padded with the pre-window history (a padded series would dilute Sharpe by
@@ -664,8 +683,9 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         t = b
         for t in range(b, b_last + 1):
             while kptr < kend and int(settle_bar[kptr]) <= i0 + t:
-                kb = int(settle_bar[kptr])
-                if kb < i0:
+                # the guard reads the CONTAINMENT bar (an on-time settlement belongs to the bar it
+                # opens); the charge below keeps using the scheduling bar, so no charge moves.
+                if int(settle_bar_closed[kptr]) < i0:
                     counter(kind, "funding_bar_out_of_hold")
                 ep_fund += sign * qty * C[t] * fund_rates[kptr]
                 kptr += 1
@@ -791,8 +811,9 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         # settlements at the exit instant itself (the window's closing boundary) are charged
         # on the exit notional, which is the price at risk when the settlement lands
         while kptr < kend:
-            kb = int(settle_bar[kptr])
-            if kb > i0 + b_last + 1:
+            # containment bar again: an on-time settlement exactly on the exit boundary belongs to
+            # the bar it opens, i.e. the first bar after the hold - that is no defect to report.
+            if int(settle_bar_closed[kptr]) > i0 + b_last + 1:
                 counter(kind, "funding_bar_out_of_hold")
             ep_fund += sign * qty * C[b_last] * fund_rates[kptr]
             kptr += 1
@@ -813,7 +834,10 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
             slot["episodes"] += 1
             slot["net_pnl"] += ep_net
     episodes_total = windows_entered
-    if kind in FULL_WINDOW_GRID_KINDS:
+    # only GRID cells feed the full-window ladder histogram: the winner and singleton-leg
+    # diagnostics re-run cells the grid already counted, so they must not inflate the level counts
+    # (card t_50c28da5: the histogram over-counted level 0 by exactly the diagnostic episodes).
+    if kind in FULL_WINDOW_GRID_KINDS and count_layers:
         acc = LAYER_TOTALS.setdefault("full", [0] * 12)
         for kk in range(12):
             acc[kk] += layers[kk]
@@ -1408,7 +1432,7 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
             dca["base_quote"] = spec["dca_domain"]["base_quote"]
             p_win = params_of(c["winner"])
             m_win = simulate(cohort, p_win, rail_for(dca), full_slice, {}, slip0, "full", series,
-                             diag=True)
+                             diag=True, count_layers=False)
             row = record(cohort, p_win, dca, "full", m_win)
             # the cell lookup must stay inside THIS cohort's rows: grid_rows is the global
             # accumulation over all four cohorts, so the same cell appears once per symbol
@@ -1419,7 +1443,8 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
                 p_leg = {"leg_long": 0, "leg_short": 0, "leg_secondary": 0}
                 p_leg[CASE_FIELDS[i]] = 1
                 leg_runs[leg_case] = simulate(cohort, p_leg, rail_for(dca), full_slice, {},
-                                              slip0, "full", series, diag=True)
+                                              slip0, "full", series, diag=True,
+                                              count_layers=False)
             diag_by_cohort[c["cohort"]] = {"winner_full": m_win, "leg_runs": leg_runs,
                                            "row": row}
             robustness_diagnostics.setdefault("cohorts", {})[c["cohort"]] = {
