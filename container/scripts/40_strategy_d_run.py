@@ -1410,7 +1410,9 @@ def summarize(spec, grid_rows, layers, diag_inputs, slice_days):
             m_win = simulate(cohort, p_win, rail_for(dca), full_slice, {}, slip0, "full", series,
                              diag=True)
             row = record(cohort, p_win, dca, "full", m_win)
-            grid_row = same_cell(grid_rows["full"],
+            # the cell lookup must stay inside THIS cohort's rows: grid_rows is the global
+            # accumulation over all four cohorts, so the same cell appears once per symbol
+            grid_row = same_cell(per_cohort[c["cohort"]]["full"],
                                  tuple([case_tuple(c["winner"])] + [c["winner"][a] for a in DCA_AXES]))
             leg_runs = {}
             for leg_case, i in (("long_only", 0), ("short_only", 1), ("secondary_long_only", 2)):
