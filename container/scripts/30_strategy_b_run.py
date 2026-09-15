@@ -720,6 +720,7 @@ def simulate(cohort, window, dirs, rail, slip_ticks, fee_mult=1.0, funding_mult=
                 # settlement) passed.  The account cannot lose more than itself, so the flatten
                 # stands but no new episode is opened on the new side (card t_3c3f0a12).
                 halted = True
+                capital_exhausted = True
             else:
                 fpx = C[t] + nd * slip
                 q = notional[0] / fpx

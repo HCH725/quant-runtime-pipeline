@@ -795,6 +795,7 @@ class TestNoEntryAfterExhaustionMetric(unittest.TestCase):
         self.assertLess(te["ending_equity"], 0.0)       # ... on a nonpositive account ...
         self.assertEqual(te["episodes"], 1)             # ... and does not re-enter
         self.assertTrue(te["halted"])
+        self.assertTrue(te["capital_exhausted"])        # the flip left the account nonpositive
         self.assertEqual(te["entries_after_exhaustion"], 0)
 
 
