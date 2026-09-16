@@ -1,0 +1,2176 @@
+{
+  "snapshot_kind": "prerequisite-gate determination snapshot (contract 6.4 / 13 / 14.4)",
+  "snapshot_taken_at_utc": "2026-09-16T22:20:58Z",
+  "snapshot_boundary": "snapshot, not runtime state: it records the measured raw, the registered requirement matrix, the terminal artifacts and the executable controls. It is not read back by any gate and it writes nothing into the round.",
+  "card": {
+    "kanban_task_id": "t_b3ac2c5d",
+    "kanban_board": "quant-strategy-research",
+    "family_id": "crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31",
+    "round_id": "crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31-r1",
+    "title": "Production Candidate — Crypto Quarter-Hour Opening Order-Imbalance Medium-Horizon Predictability (full backtest)",
+    "parent_card": "t_010232b7 (kanban scheduling parent only; family.json parent_family=null - no scientific lineage)",
+    "creator": "production-handoff (contract 14.4 automatic production handoff; not hand-created)",
+    "candidate_origin": "Research Intake Review PASS-WITH-CAVEAT decision's sibling output, candidateized once from the canonical review backlog (card t_86d04b09 backfill)",
+    "frozen_candidate_body_sha256": "sha256:42745cef27abe53907b2018af5a872beeab7cf12b3048bafb476569b81f37413",
+    "frozen_candidate_body_bytes": 19982,
+    "lifecycle_footer": "appended by runtime/production_handoff.py; system-owned and not part of the candidate specification"
+  },
+  "contract_basis": {
+    "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.9.0",
+    "contract_sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "contract_clause_verbatim": "- `[C]`（**文件對齊；卡片 `t_2acfd339`，2026-09-16；不改任何 gate／stage／append 條件**）**prerequisite-missing 的終結語意**：必要 prerequisite（資料／市場／universe）客觀不存在、且該缺席已由 measured evidence 證實，是 §13 `card-local` failure 的一個例子；此時本節的 `TECHNICAL_INCOMPLETE`（附 failure 層級、last run_id、terminal evidence 路徑、未完成原因）就是誠實且合法的終結，required terminal evidence（`round-spec.json` ＋ `verdict.json`）齊備後該卡即 `done`，**不得**僅因 full-backtest outputs 不可能存在而形成 human gate（不 `blocked`、不 `needs_input`）；`kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 human decision 的情況（§12.6）。為讓 goal-completion judge 在卡片本身上讀到這條，`runtime/production_handoff.py` 於 append 時在 candidate body **之後**追加一段固定、system-owned 的 lifecycle footer（candidate body 逐位元不改、`fingerprint_input` 不變、append 條件不變）；卡片 terminal 後 §14.4 handoff 照既有條件（無 active／無 `blocked`／無未結案 incident／tail terminal）append 下一張。",
+    "contract_verdict_semantics_verbatim": "- `[C]` `TECHNICAL_INCOMPLETE` 必須附：失敗層級（card-local vs shared-layer）、最後一次 run_id、terminal evidence 路徑、未完成原因；寫入該 round 的 `/results/…/verdict.json`，comment 只放人類摘要。",
+    "contract_layer_criterion_verbatim": "- `[C]` 判定層級的判準：**「同一動作在另一張卡上是否也會失敗？」** 會 → shared-layer；只在此卡 → card-local。",
+    "contract_data_window_invalid_row_verbatim": "| `data_window_invalid` | card-local | 區間內無 bar、instrument 缺失 | 新 round（若窗改）或新 run（若僅參數） | REJECT / DEFERRED |",
+    "lifecycle_footer_rule_verbatim": "LIFECYCLE FOOTER（system-owned；append 時由 production_handoff 注入，非 candidate 規格的一部分；contract §6.4／§14.4）",
+    "termination_rule": "contract 6.4 / 13: an unfixable card-local prerequisite failure terminalises the round as TECHNICAL_INCOMPLETE with the failure layer, the last run_id, the terminal evidence paths and the incomplete reason",
+    "family_gate_note": "contract 7.3 v1.4.0: 0 survivors -> REJECT; >=1 -> PASS; coverage/technical incompleteness -> TECHNICAL_INCOMPLETE. No cohort exists here, so neither PASS nor REJECT applies."
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure": {
+      "layer": "card-local",
+      "class": "data_window_invalid",
+      "detail": "the record's required prerequisites - trade-level Binance USD-M data carrying an aggressor side at 10-second-or-finer resolution (the signal's own input), the aggressor-side fields (millisecond trade timestamp, trade price, quantity, isBuyerMaker), three of the six registered perpetual contracts (XRPUSDT, DOGEUSDT, ADAUSDT), a second venue for the cross-exchange leg and a quote/book dataset for the appendix mid-price anchor - do not exist in the canonical raw, which holds one venue's USD-M perpetual klines/funding/instruments for four contracts with the seven-field OHLCV bar shape only. Nothing was launched.",
+      "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; the data_window_invalid row ('區間內無 bar、instrument 缺失') is the closest registered row and its use is recorded as an operator/contract decision inside the round-spec"
+    },
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "run_id": null,
+    "attempts_launched": 0,
+    "terminal_sentinels": 0,
+    "evidence_run_ids": [],
+    "not_a_scientific_reject": "the candidate is neither validated nor refuted; a missing prerequisite is explicitly not a rejection",
+    "why_technical": "the failure is a data/market absence, not a research result",
+    "why_card_local": "the criterion asks whether the SAME ACTION would fail on another card. The absence is a property of this record's required data and instruments, and no shared-layer component (container, runner, reconciler, deploy or board) was exercised at all: nothing was launched.",
+    "incomplete_reason": "required prerequisites absent from the canonical raw (measured); no attempt was ever launched"
+  },
+  "measured_canonical_raw": {
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "top_level_dirs": [
+      "_meta",
+      "_tools",
+      "binance"
+    ],
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "binance_usdm_subdirs": [
+      "funding",
+      "instruments",
+      "klines"
+    ],
+    "raw_paths": [
+      "_meta",
+      "_tools",
+      "_tools/__pycache__",
+      "binance",
+      "binance/usdm",
+      "binance/usdm/funding",
+      "binance/usdm/instruments",
+      "binance/usdm/klines"
+    ],
+    "paths_named_other_market": [],
+    "non_binance_paths": [],
+    "venue": "BINANCE",
+    "market_type": "usdm_perp",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_end_rule": "last completed UTC day (no partial-day data)",
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_interval_set": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_interval_set_by_symbol": {
+      "BNBUSDT": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ],
+      "BTCUSDT": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ],
+      "ETHUSDT": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ],
+      "SOLUSDT": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ]
+    },
+    "klines_interval_seconds": [
+      300,
+      900,
+      1800,
+      3600,
+      14400,
+      86400,
+      604800
+    ],
+    "finest_stored_interval_seconds": 300,
+    "finest_stored_interval_to_window_ratio": 30.0,
+    "quarter_hour_bar_seconds": 900,
+    "quarter_hour_bar_to_window_ratio": 90.0,
+    "usdm_dataset_dirs": [
+      "funding",
+      "instruments",
+      "klines"
+    ],
+    "trades_dataset_dirs": [],
+    "klines_row_field_set": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "klines_1d_first_open_utc": "2022-01-01T00:00:00+00:00",
+    "klines_1d_last_open_utc": "2026-09-15T00:00:00+00:00",
+    "klines_1d_first_open_mod_86400_seconds": [
+      0,
+      0,
+      0
+    ],
+    "klines_1d_open_step_seconds": [
+      86400
+    ],
+    "klines_15m_grid_seconds": 900,
+    "klines_15m_first_open_utc": "2026-09-01T00:00:00+00:00",
+    "klines_15m_last_open_utc": "2026-09-15T23:45:00+00:00",
+    "klines_15m_last3_open_mod_grid_seconds": [
+      0,
+      0,
+      0
+    ],
+    "klines_5m_grid_seconds": 300,
+    "klines_5m_first_open_utc": "2026-09-01T00:00:00+00:00",
+    "klines_5m_last_open_utc": "2026-09-15T23:55:00+00:00",
+    "klines_5m_last3_open_mod_grid_seconds": [
+      0,
+      0,
+      0
+    ],
+    "klines_1h_first_by_symbol": {
+      "BNBUSDT": "2022-01-01T00:00:00+00:00",
+      "BTCUSDT": "2022-01-01T00:00:00+00:00",
+      "ETHUSDT": "2022-01-01T00:00:00+00:00",
+      "SOLUSDT": "2022-01-01T00:00:00+00:00"
+    },
+    "klines_1h_last_by_symbol": {
+      "BNBUSDT": "2026-09-15T23:00:00+00:00",
+      "BTCUSDT": "2026-09-15T23:00:00+00:00",
+      "ETHUSDT": "2026-09-15T23:00:00+00:00",
+      "SOLUSDT": "2026-09-15T23:00:00+00:00"
+    },
+    "raw_window_utc": [
+      "2022-01-01T00:00:00+00:00",
+      "2026-09-15T23:00:00+00:00"
+    ],
+    "card_registered_raw_window": "klines 2022-01-01→2026-09-11",
+    "card_registered_funding_window": "funding 2022-01-01T00:00Z→2026-09-12T08:00Z",
+    "raw_window_starts_at_or_after_card_registration": true,
+    "raw_history_days": 1718,
+    "raw_window_covers_record_source_sample": false,
+    "record_source_sample": [
+      "2021-01-01",
+      "2024-10-31"
+    ],
+    "record_source_sample_missing_locally": [
+      "2021-01-01",
+      "2022-01-01"
+    ],
+    "registered_instruments": [
+      "ADA",
+      "BTC",
+      "DOGE",
+      "ETH",
+      "SOL",
+      "XRP"
+    ],
+    "registered_instruments_present_local": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "registered_instruments_absent_local": [
+      "ADAUSDT",
+      "DOGEUSDT",
+      "XRPUSDT"
+    ],
+    "local_contracts_not_in_record_universe": [
+      "BNBUSDT"
+    ],
+    "registered_instrument_coverage": "3/6",
+    "forward_horizons_required_hours": [
+      4,
+      8,
+      12
+    ],
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "funding_has_official_truth_rows": true,
+    "funding_row_keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+    ],
+    "funding_truth_status_values": [
+      "modeled_funding",
+      "official"
+    ],
+    "funding_venues": [
+      "BINANCE"
+    ],
+    "funding_first_ms": "2022-01-01T00:00:00.006000+00:00",
+    "funding_last_ms": "2026-09-16T08:00:00.002000+00:00",
+    "funding_row_has_trade_field": false,
+    "instrument_count": 4,
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_quote_currencies": [
+      "USDT"
+    ],
+    "instrument_settlement_currencies": [
+      "USDT"
+    ],
+    "instrument_field_names": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_trade_field_hits": [],
+    "instrument_fee_fields_only": [
+      "maker_fee",
+      "taker_fee"
+    ],
+    "kline_row_has_trade_field": false,
+    "schema_sha256": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+    "schema_dataset_sections": [
+      "funding",
+      "instruments",
+      "klines (Binance USD-M perpetual futures, UTC)"
+    ],
+    "schema_documents_trade_dataset": false,
+    "schema_documents_missing_splits": true,
+    "schema_documented_intervals": [
+      "1d",
+      "1h",
+      "1m",
+      "1w",
+      "30m",
+      "4h",
+      "5m",
+      "15m"
+    ],
+    "schema_documented_finest_interval_seconds": 60,
+    "schema_documented_bar_store_only": true,
+    "schema_single_venue": true,
+    "schema_no_silent_gapfill": true,
+    "schema_trade_word_lines": [
+      "import came from a bar store that kept only OHLCV, so `quote_volume`,",
+      "trade count and taker-buy splits are **not** present. Binance's"
+    ],
+    "inventory_sha256": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+    "inventory_declares_no_other_store_found": true,
+    "inventory_declares_bars_only_migration": true,
+    "inventory_lean_minute_note": "| `lean-system/workspace/data/cryptofuture/binance/{minute,hour,daily}` | LEAN day-partitioned zips. **Note: the `minute/` files actually hold 30-minute trade b",
+    "inventory_launchd_updater_line": "Updated by: `_tools/market_data_sync.py`, daily via launchd `ai.marketdata.raw-sync`",
+    "retired_store_paths_absent": {
+      "/Volumes/ExpansionDrive/nautilus-system": true,
+      "/Volumes/ExpansionDrive/lean-system": true,
+      "/Volumes/ExpansionDrive/microsoft-quant-stack": true
+    },
+    "all_retired_stores_absent": true,
+    "raw_entry_name_count": 1633,
+    "probe_tokens_tested": [
+      "aggtrade",
+      "agg_trade",
+      "aggtrades",
+      "trades",
+      "trade",
+      "trade_ticks",
+      "tick_data",
+      "tickdata",
+      "raw_trades",
+      "trade_data",
+      "isbuyermaker",
+      "buyermaker",
+      "buyer_maker",
+      "aggressor",
+      "trade_side",
+      "signed_flow",
+      "orderflow",
+      "order_flow",
+      "quotes",
+      "bidask",
+      "bid_ask",
+      "bookticker",
+      "book_ticker",
+      "orderbook",
+      "order_book",
+      "level2",
+      "l2book",
+      "microsecond",
+      "millisecond",
+      "first_10_seconds",
+      "quarter_hour",
+      "quarterhour",
+      "imbalance",
+      "trade_tape",
+      "xrpusdt",
+      "dogeusdt",
+      "adausdt",
+      "bybit",
+      "okx"
+    ],
+    "trade_token_hits_in_entry_names": [],
+    "excluded_token_raw_tree_collisions": {},
+    "raw_entry_names_sample": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m",
+      "__pycache__",
+      "_meta",
+      "_tools",
+      "binance",
+      "binance_public.cpython-314.pyc",
+      "binance_public.py",
+      "bnbusdt",
+      "bnbusdt-15m-2022-01.jsonl.gz",
+      "bnbusdt-15m-2022-02.jsonl.gz",
+      "bnbusdt-15m-2022-03.jsonl.gz",
+      "bnbusdt-15m-2022-04.jsonl.gz",
+      "bnbusdt-15m-2022-05.jsonl.gz",
+      "bnbusdt-15m-2022-06.jsonl.gz",
+      "bnbusdt-15m-2022-07.jsonl.gz",
+      "bnbusdt-15m-2022-08.jsonl.gz",
+      "bnbusdt-15m-2022-09.jsonl.gz",
+      "bnbusdt-15m-2022-10.jsonl.gz",
+      "bnbusdt-15m-2022-11.jsonl.gz",
+      "bnbusdt-15m-2022-12.jsonl.gz",
+      "bnbusdt-15m-2023-01.jsonl.gz",
+      "bnbusdt-15m-2023-02.jsonl.gz",
+      "bnbusdt-15m-2023-03.jsonl.gz",
+      "bnbusdt-15m-2023-04.jsonl.gz",
+      "bnbusdt-15m-2023-05.jsonl.gz",
+      "bnbusdt-15m-2023-06.jsonl.gz",
+      "bnbusdt-15m-2023-07.jsonl.gz",
+      "bnbusdt-15m-2023-08.jsonl.gz",
+      "bnbusdt-15m-2023-09.jsonl.gz",
+      "bnbusdt-15m-2023-10.jsonl.gz",
+      "bnbusdt-15m-2023-11.jsonl.gz",
+      "bnbusdt-15m-2023-12.jsonl.gz",
+      "bnbusdt-15m-2024-01.jsonl.gz",
+      "bnbusdt-15m-2024-02.jsonl.gz"
+    ],
+    "probe_exclusions": {
+      "tick": "substring of the ordinary word 'sticker' (Telegram .tgs sticker exports under dr-profit-distillation/**/stickers/) and of the Hermes gateway socket names (gateway.loop-tick.<pid>.sock)",
+      "ticks": "a strict substring of this pipeline's own registered stress-grid name `slippage_2ticks` (grid_slippage_2ticks.csv under /Volumes/ExpansionDrive/qlib-results/**)",
+      "ticker": "substring of 'sticker' (.tgs exports) and of the Hermes cron heartbeat files ~/.hermes/cron/ticker_*",
+      "quote": "substring of ordinary source identifiers and prose: Cargo build artefacts (`libquote-*.rlib`), test-module names (`test_..._quote.py`), the wiki record slug `...-finite-quotes-...`, and a daily quote-VOLUME csv",
+      "bid": "substring of the ordinary words 'forbid'/'forbidden' and of bidirectional identifiers (`bidirectional`, `bidi.ts`, `libident`/`libidna` build artefacts)",
+      "ask": "substring of 'task' (kanban task ids), 'masked', 'metamask' and of ordinary contributor e-mail addresses",
+      "match": "substring of 'mismatch'/'unmatched'/'matcher' in the Hermes test suite (test_*_mismatch*.py) and of Cargo `libmatch*` build artefacts",
+      "depth": "substring of `markdown-html-depth.ts` (an unrelated desktop-module name) and of a one-off xianxia image in ~/.hermes/tmp",
+      "boundary": "substring of `error-boundary.tsx`, `prompt_cache_boundary.py` and this pipeline's own `grid_boundary_alt_*.csv` artifacts",
+      "microstructure": "names US-equities research projects and a local copy of the `ml4t` book source (case_studies/nasdaq100_microstructure), not a crypto trade-data surface; the two data-bearing hit directories are measured and disclosed as out-of-scope"
+    },
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "INVENTORY.md": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "TRANSCODE_MANIFEST.json": "sha256:04a842159aa4a6fd7da9d4af2109cd01ca3ced6f9587f8ee8aa2106a9c878065",
+      "FUNDING_EXPORT.json": "sha256:8ceb7bcbf2fc0cc1fe6c56f0b41b418711f33b2b74edac10923f2162c939be2f"
+    },
+    "note": "single venue (BINANCE USD-M perpetual), four fixed contracts, three dataset families: klines whose rows carry the seven-field OHLCV shape only, that venue's funding, and its instrument definitions. No trade, aggTrade, tick, quote or book dataset of any kind; the finest stored interval is 300 (300s) and the only quarter-hour-aligned bars are 15m bars covering 900s, against a registered measurement window of 10s. The record's six-contract universe is present at 3/6 (BTCUSDT, ETHUSDT, SOLUSDT); XRPUSDT, DOGEUSDT and ADAUSDT do not exist locally and BNBUSDT is not in the record's universe."
+  },
+  "requirement_vs_available": {
+    "matrix": [
+      {
+        "item": "universe_six_registered_perpetual_contracts",
+        "status": "PARTIAL_3_OF_6",
+        "detail": "Required data item 1 (DECISIVE): 'Instruments: BTC, ETH, XRP, SOL, DOGE, ADA perpetual futures for direct source reproduction.' Locally only three of the six exist (BTCUSDT,ETHUSDT,SOLUSDT); ADAUSDT, DOGEUSDT, XRPUSDT do not exist at any interval or depth, and BNBUSDT is present although the record does not register it. The record's universe is therefore not expressible without shrinking it, which the card forbids."
+      },
+      {
+        "item": "instrument_btc_perpetual",
+        "status": "PRESENT",
+        "detail": "BTCUSDT exists as a BINANCE USD-M CryptoPerpetual at seven intervals (15m/1d/1h/1w/30m/4h/5m), window 2022-01-01T00:00:00+00:00 .. 2026-09-15T23:00:00+00:00, quote and settlement currency USDT."
+      },
+      {
+        "item": "instrument_eth_perpetual",
+        "status": "PRESENT",
+        "detail": "ETHUSDT exists as a BINANCE USD-M CryptoPerpetual; one of the six registered contracts and one of the four local ones."
+      },
+      {
+        "item": "instrument_sol_perpetual",
+        "status": "PRESENT",
+        "detail": "SOLUSDT exists as a BINANCE USD-M CryptoPerpetual; the record itself marks SOL as the weakest contract at some horizons (8h insignificant), which cannot be examined here either."
+      },
+      {
+        "item": "instrument_xrp_perpetual",
+        "status": "ABSENT",
+        "detail": "Required data item 1 (DECISIVE): XRPUSDT does not exist in the canonical raw - no klines directory, no funding file and no instrument definition (measured: local klines dirs BNBUSDT,BTCUSDT,ETHUSDT,SOLUSDT). Without it the source's 'every market' result cannot be reproduced or falsified per asset."
+      },
+      {
+        "item": "instrument_doge_perpetual",
+        "status": "ABSENT",
+        "detail": "Required data item 1 (DECISIVE): DOGEUSDT does not exist in the canonical raw (no klines/funding/instrument entry). DOGE carries the largest source-reported slopes (11.33 bps at 12h), so this absence alone removes the strongest contract from any local reproduction."
+      },
+      {
+        "item": "instrument_ada_perpetual",
+        "status": "ABSENT",
+        "detail": "Required data item 1 (DECISIVE): ADAUSDT does not exist in the canonical raw. The source's evidence includes ADA (weaker cells), so a three-contract run would estimate a different population."
+      },
+      {
+        "item": "venue_binance_usdm_perpetual",
+        "status": "PRESENT",
+        "detail": "The registered venue is present: BINANCE, market_type usdm_perp, four CryptoPerpetual instruments, quote/settlement USDT, funding rows from the same venue (2022-01-01T00:00:00.006000+00:00 .. 2026-09-16T08:00:00.002000+00:00, truth_status values modeled_funding,official)."
+      },
+      {
+        "item": "venue_bybit_cross_exchange_robustness",
+        "status": "ABSENT",
+        "detail": "Required data item 2 (DECISIVE for falsification item 6): the record registers Bybit as the cross-exchange robustness leg ('Bybit is relevant only to reported cross-exchange robustness of the periodic structure'). No second venue of any kind exists in the raw tree: market dirs ['usdm'], non-binance paths [], funding venues ['BINANCE']. Locally Bybit exists only as two cached web pages under ~/.hermes/cache/web/. The retired engine stacks, which the store's own INVENTORY.md lists as holding LEAN sample data for bybit/coinbase/bitfinex crypto, are gone from disk (measured: True)."
+      },
+      {
+        "item": "trade_level_data_with_aggressor_side",
+        "status": "ABSENT",
+        "detail": "Required data items 3-4 (DECISIVE): 'Time resolution: individual trades or data granular enough to reconstruct the first 10 seconds of every quarter-hour boundary' and 'Required fields: millisecond timestamp, trade price, quantity, aggressor side / isBuyerMaker equivalent'. The store holds three dataset families ['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] and no trade/aggTrade/tick/quote dataset at any depth (39 probe tokens over 1633 entry names: 0 hits), no row shape carries an aggressor side or taker split, and the store's own SCHEMA.md documents the coverage limit: the import kept OHLCV only, so `quote_volume`, trade count and taker-buy splits are not present. The missing prerequisite is the signal's own input, not an auxiliary filter."
+      },
+      {
+        "item": "ten_second_quarter_hour_measurement_window",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "The registered measurement window is the first 10s of each quarter-hour opening. The finest stored interval is 300s (30.0x the window) and the only quarter-hour-aligned bars are 15m bars covering 900s (90.0x the window); the store's documented ladder bottoms out at 1m (60s) and is bars-only. Bars are OHLCV aggregates, so the first-10-second signed flow cannot be recovered at any interval. Boundary alignment itself is present (aligned bars open exactly on :00/:15/:30/:45), so alignment is not the missing part."
+      },
+      {
+        "item": "required_fields_ms_timestamp_price_quantity_isbuyermaker",
+        "status": "ABSENT",
+        "detail": "Required data item 4 (DECISIVE): the stored kline row shape is ['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] and the funding row keys are ['funding_price_source', 'funding_rate', 'funding_time_ms', 'mark_price', 'market_type', 'rate_type', 'symbol', 'truth_status', 'venue'] - neither carries a millisecond trade timestamp, a trade price, a trade quantity or an isBuyerMaker/aggressor field. The instrument export carries maker_fee/taker_fee only (no trade-side field)."
+      },
+      {
+        "item": "signed_order_flow_and_total_volume_derivation",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "Required data item 5: 'Derived fields: buyer-initiated and seller-initiated volume, signed order flow, total volume, quarter-hour phase, forward returns.' The first three need aggressor-side trade rows; only bar VOLUME and the phase are expressible locally, and a bar volume cannot be split by aggressor."
+      },
+      {
+        "item": "transaction_price_anchor",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "Required data item 6: 'Price anchor: source main tests use transaction-price anchoring'. The only local prices are bar open/high/low/close strings - bar aggregates, not transaction prices - and the source additionally measures forward log return 'from the price immediately after the signal interval', which needs the last trade of the 10-second window."
+      },
+      {
+        "item": "bid_ask_mid_price_anchor_appendix",
+        "status": "ABSENT",
+        "detail": "Required data item 6 (appendix leg): 'appendix robustness also examines bid-ask mid-price anchoring over the period where quote data are available'. No quote, book, depth or bid/ask dataset exists anywhere in the tree (probe tokens bidask/bid_ask/bookticker/book_ticker/orderbook/level2/l2book: 0 hits) and none appears in the documented dataset families ['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)']."
+      },
+      {
+        "item": "binance_exchange_timestamp_convention_preserved",
+        "status": "PARTIAL_BAR_OPEN_TIME_ONLY",
+        "detail": "Required data item 7: 'exact Binance exchange timestamp convention must be preserved; boundary alignment errors are a first-order risk'. Local klines carry open_time_ms/close_time_ms in UTC and are exactly grid-aligned (15m opens mod 900 = [0, 0, 0]; 5m opens mod 300 = [0, 0, 0]; daily opens mod 86400 = [0, 0, 0]), so the clock convention is reconstructible for BARS - but there is no trade timestamp stream to align, which is where the record's first-order risk lives."
+      },
+      {
+        "item": "point_in_time_signal_window_only",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "Required data item 8 (restored from the record; the card's excerpt stops at item 7): 'only trades observed inside the completed first 10-second signal window may enter the signal'. There are no trade observations at all, so the discipline has no substrate."
+      },
+      {
+        "item": "missing_boundary_windows_excluded_not_imputed",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "Required data item 9 (restored from the record): 'missing or incomplete boundary windows should be excluded rather than imputed silently'. No boundary window is observable, so there is neither an exclusion nor an imputation decision to make - and nothing was imputed."
+      },
+      {
+        "item": "forward_return_horizons_4h_8h_12h",
+        "status": "PRESENT_AS_LOCAL_PROXY",
+        "detail": "The forward-return horizons exist locally as bars (1h/4h klines for the four local contracts), but only as bar closes: the return is registered to start from the price immediately after the signal interval, which cannot be identified. Registered as a local proxy, not as the record's measurement."
+      },
+      {
+        "item": "funding_settlement_exclusion_control",
+        "status": "PRESENT",
+        "detail": "The record reports that excluding quarter-hours coinciding with funding settlement leaves the pattern intact; the funding rows needed for that control exist locally for the four contracts (2022-01-01T00:00:00.006000+00:00 .. 2026-09-16T08:00:00.002000+00:00, truth_status modeled_funding,official, venue BINANCE)."
+      },
+      {
+        "item": "shifted_placebo_phase_grids_01_16_31_46",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "Record falsification item 2 requires shifted placebo grids (01/16/31/46) built from the same 10-second measurement. With no trade stream the placebo and the treatment are both undefined, so the quarter-hour conditioning mechanism cannot be tested either way."
+      },
+      {
+        "item": "contemporaneous_controls_oi_returns_vol_volume_bid_ask_bounce",
+        "status": "PARTIAL_LOCAL_PROXY",
+        "detail": "Record falsification item 3 needs controls for ordinary contemporaneous order imbalance, recent returns, volatility, volume and bid-ask-bounce proxies. Returns, volatility and volume are derivable from local bars; order imbalance and the bid-ask-bounce proxy are not (no trades, no quotes), so the control set is structurally incomplete."
+      },
+      {
+        "item": "falsification_battery_8_items",
+        "status": "NOT_EVALUABLE",
+        "detail": "The record's falsification plan is 8 items (the card's excerpt carries 7; item 8 is restored verbatim in the round-spec). Items 1, 2, 3, 4, 6 and 8 all need the trade-level measurement; item 5 needs it too plus the record's post-2024 window; item 7 needs a feasible execution rule over the same signal. None is evaluable here, and the missing prerequisite is recorded, not scored: the candidate is neither validated nor refuted."
+      },
+      {
+        "item": "record_reported_source_sample_2021_2022",
+        "status": "PARTIAL_2021_NOT_LOCAL",
+        "detail": "Required-data window: the record reports its regression sample as 2021-01-01 .. 2024-10-31. The raw's own window is 2022-01-01T00:00:00+00:00 .. 2026-09-15T23:00:00+00:00 (1718 days), so the record's first year is not covered locally either. Registered rather than resolved: under either window the deciding absence is the same."
+      },
+      {
+        "item": "strategy_rule_threshold_horizon_overlap_sizing",
+        "status": "UNSPECIFIED_BY_RECORD",
+        "detail": "The record states the source 'does not prescribe a single production threshold for |OI_t|, a mandatory holding horizon among 4/8/12 hours, whether overlapping signals should stack or replace one another, position sizing, or a transaction-cost-aware entry filter'. Registered as read from the record; no default was invented in its place."
+      },
+      {
+        "item": "transaction_cost_convention",
+        "status": "REGISTERED_NOT_APPLIED",
+        "detail": "Registered from the card: canonical instrument metadata (maker/taker), actual funding per fill, slippage baseline 1 tick adverse with a 2-tick robustness cell. Nothing was priced because nothing traded."
+      },
+      {
+        "item": "instrument_metadata_maker_taker_fees",
+        "status": "PRESENT",
+        "detail": "The instrument export carries maker_fee/taker_fee, price_increment and size_increment for the four local perpetuals (fields: maker_fee,taker_fee), which is what the card's cost rail would consume."
+      },
+      {
+        "item": "per_fill_cost_accounting_rail",
+        "status": "REGISTERED_NOT_APPLIED",
+        "detail": "The card's per-fill accounting rail (fee + funding at each fill instant, independent gross-PnL accumulator) is registered verbatim in the round-spec; no fill exists to account for."
+      }
+    ],
+    "decisive_items": [
+      "universe_six_registered_perpetual_contracts",
+      "instrument_xrp_perpetual",
+      "instrument_doge_perpetual",
+      "instrument_ada_perpetual",
+      "trade_level_data_with_aggressor_side",
+      "ten_second_quarter_hour_measurement_window",
+      "required_fields_ms_timestamp_price_quantity_isbuyermaker",
+      "transaction_price_anchor",
+      "bid_ask_mid_price_anchor_appendix",
+      "venue_bybit_cross_exchange_robustness",
+      "shifted_placebo_phase_grids_01_16_31_46"
+    ],
+    "missing": [
+      "trade-level Binance USD-M data carrying an aggressor side (isBuyerMaker) at 10-second-or-finer resolution - the signal's own input - is absent from the canonical raw, which holds only klines/funding/instruments",
+      "three of the six registered perpetual contracts (XRPUSDT, DOGEUSDT, ADAUSDT) are absent, so the record's universe cannot be expressed without shrinking it",
+      "the first-10-second quarter-hour measurement window cannot be reconstructed from 5m bars (30x) or 15m bars (90x), and no 1m-or-finer trade stream exists",
+      "the Bybit cross-exchange leg (falsification item 6) has no second venue locally",
+      "the appendix bid-ask mid-price anchor has no quote/book dataset",
+      "0 case evaluations: G1 coverage is empty by construction, not by failure"
+    ],
+    "note": "each required-data item carries its own measured status (ABSENT / ABSENT_AS_REGISTERED_SOURCE / NOT_CONSTRUCTIBLE / NOT_EVALUABLE / NOT_COMPUTABLE / PARTIAL_* / PRESENT_*) rather than a blanket claim, and the read-back checker re-asserts the decisive subset live",
+    "enumerated_counts": {
+      "matrix_items": 28,
+      "decisive_items": 11,
+      "missing_conditions": 6,
+      "registered_instruments": 6,
+      "registered_instruments_present_local": 3,
+      "registered_instruments_absent_local": 3,
+      "registration_required_items": 9,
+      "card_excerpt_items": 7,
+      "restored_required_items": 2,
+      "falsification_battery_items": 8,
+      "falsification_card_excerpt_items": 7,
+      "limitations_items": {
+        "record": 7,
+        "card_excerpt": 6
+      },
+      "dca_configs": 48
+    }
+  },
+  "host_wide_data_store_scan": {
+    "raw_name_probe": {
+      "tokens_tested": [
+        "aggtrade",
+        "agg_trade",
+        "aggtrades",
+        "trades",
+        "trade",
+        "trade_ticks",
+        "tick_data",
+        "tickdata",
+        "raw_trades",
+        "trade_data",
+        "isbuyermaker",
+        "buyermaker",
+        "buyer_maker",
+        "aggressor",
+        "trade_side",
+        "signed_flow",
+        "orderflow",
+        "order_flow",
+        "quotes",
+        "bidask",
+        "bid_ask",
+        "bookticker",
+        "book_ticker",
+        "orderbook",
+        "order_book",
+        "level2",
+        "l2book",
+        "microsecond",
+        "millisecond",
+        "first_10_seconds",
+        "quarter_hour",
+        "quarterhour",
+        "imbalance",
+        "trade_tape",
+        "xrpusdt",
+        "dogeusdt",
+        "adausdt",
+        "bybit",
+        "okx"
+      ],
+      "tokens_tested_count": 39,
+      "entry_names_scanned": 1633,
+      "probe_depth_bound": 8,
+      "hits": [],
+      "probe_exclusions": {
+        "tick": "substring of the ordinary word 'sticker' (Telegram .tgs sticker exports under dr-profit-distillation/**/stickers/) and of the Hermes gateway socket names (gateway.loop-tick.<pid>.sock)",
+        "ticks": "a strict substring of this pipeline's own registered stress-grid name `slippage_2ticks` (grid_slippage_2ticks.csv under /Volumes/ExpansionDrive/qlib-results/**)",
+        "ticker": "substring of 'sticker' (.tgs exports) and of the Hermes cron heartbeat files ~/.hermes/cron/ticker_*",
+        "quote": "substring of ordinary source identifiers and prose: Cargo build artefacts (`libquote-*.rlib`), test-module names (`test_..._quote.py`), the wiki record slug `...-finite-quotes-...`, and a daily quote-VOLUME csv",
+        "bid": "substring of the ordinary words 'forbid'/'forbidden' and of bidirectional identifiers (`bidirectional`, `bidi.ts`, `libident`/`libidna` build artefacts)",
+        "ask": "substring of 'task' (kanban task ids), 'masked', 'metamask' and of ordinary contributor e-mail addresses",
+        "match": "substring of 'mismatch'/'unmatched'/'matcher' in the Hermes test suite (test_*_mismatch*.py) and of Cargo `libmatch*` build artefacts",
+        "depth": "substring of `markdown-html-depth.ts` (an unrelated desktop-module name) and of a one-off xianxia image in ~/.hermes/tmp",
+        "boundary": "substring of `error-boundary.tsx`, `prompt_cache_boundary.py` and this pipeline's own `grid_boundary_alt_*.csv` artifacts",
+        "microstructure": "names US-equities research projects and a local copy of the `ml4t` book source (case_studies/nasdaq100_microstructure), not a crypto trade-data surface; the two data-bearing hit directories are measured and disclosed as out-of-scope"
+      },
+      "probe_excluded_token_raw_tree_collisions": {}
+    },
+    "house_wide_probe": {
+      "roots_scanned": [
+        "/Users/hong/workspace",
+        "/Volumes/ExpansionDrive",
+        "/Volumes/ResearchData",
+        "/Users/hong/.hermes",
+        "/Users/hong/workspace/qlib-apple-container"
+      ],
+      "skipped_roots": [],
+      "probe_tokens": [
+        "aggtrade",
+        "agg_trade",
+        "aggtrades",
+        "trades",
+        "trade",
+        "trade_ticks",
+        "tick_data",
+        "tickdata",
+        "raw_trades",
+        "trade_data",
+        "isbuyermaker",
+        "buyermaker",
+        "buyer_maker",
+        "aggressor",
+        "trade_side",
+        "signed_flow",
+        "orderflow",
+        "order_flow",
+        "quotes",
+        "bidask",
+        "bid_ask",
+        "bookticker",
+        "book_ticker",
+        "orderbook",
+        "order_book",
+        "level2",
+        "l2book",
+        "microsecond",
+        "millisecond",
+        "first_10_seconds",
+        "quarter_hour",
+        "quarterhour",
+        "imbalance",
+        "trade_tape",
+        "xrpusdt",
+        "dogeusdt",
+        "adausdt",
+        "bybit",
+        "okx"
+      ],
+      "probe_exclusions": {
+        "tick": "substring of the ordinary word 'sticker' (Telegram .tgs sticker exports under dr-profit-distillation/**/stickers/) and of the Hermes gateway socket names (gateway.loop-tick.<pid>.sock)",
+        "ticks": "a strict substring of this pipeline's own registered stress-grid name `slippage_2ticks` (grid_slippage_2ticks.csv under /Volumes/ExpansionDrive/qlib-results/**)",
+        "ticker": "substring of 'sticker' (.tgs exports) and of the Hermes cron heartbeat files ~/.hermes/cron/ticker_*",
+        "quote": "substring of ordinary source identifiers and prose: Cargo build artefacts (`libquote-*.rlib`), test-module names (`test_..._quote.py`), the wiki record slug `...-finite-quotes-...`, and a daily quote-VOLUME csv",
+        "bid": "substring of the ordinary words 'forbid'/'forbidden' and of bidirectional identifiers (`bidirectional`, `bidi.ts`, `libident`/`libidna` build artefacts)",
+        "ask": "substring of 'task' (kanban task ids), 'masked', 'metamask' and of ordinary contributor e-mail addresses",
+        "match": "substring of 'mismatch'/'unmatched'/'matcher' in the Hermes test suite (test_*_mismatch*.py) and of Cargo `libmatch*` build artefacts",
+        "depth": "substring of `markdown-html-depth.ts` (an unrelated desktop-module name) and of a one-off xianxia image in ~/.hermes/tmp",
+        "boundary": "substring of `error-boundary.tsx`, `prompt_cache_boundary.py` and this pipeline's own `grid_boundary_alt_*.csv` artifacts",
+        "microstructure": "names US-equities research projects and a local copy of the `ml4t` book source (case_studies/nasdaq100_microstructure), not a crypto trade-data surface; the two data-bearing hit directories are measured and disclosed as out-of-scope"
+      },
+      "probe_exclusion_demonstration": {
+        "tick": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/platforms/yuanbao_sticker.py",
+          "house_hit_count": 169,
+          "reason": "substring of the ordinary word 'sticker' (Telegram .tgs sticker exports under dr-profit-distillation/**/stickers/) and of the Hermes gateway socket names (gateway.loop-tick.<pid>.sock)"
+        },
+        "ticks": {
+          "house_collision_example": "/Volumes/ExpansionDrive/qlib-results/_diag/se-v1-u1-replay/attempt-1/artifacts/grid_slippage_2ticks.csv",
+          "house_hit_count": 8,
+          "reason": "a strict substring of this pipeline's own registered stress-grid name `slippage_2ticks` (grid_slippage_2ticks.csv under /Volumes/ExpansionDrive/qlib-results/**)"
+        },
+        "ticker": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/platforms/yuanbao_sticker.py",
+          "house_hit_count": 135,
+          "reason": "substring of 'sticker' (.tgs exports) and of the Hermes cron heartbeat files ~/.hermes/cron/ticker_*"
+        },
+        "quote": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/gateway/test_telegram_reply_quote.py",
+          "house_hit_count": 29,
+          "reason": "substring of ordinary source identifiers and prose: Cargo build artefacts (`libquote-*.rlib`), test-module names (`test_..._quote.py`), the wiki record slug `...-finite-quotes-...`, and a daily quote-VOLUME csv"
+        },
+        "bid": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/tools/test_mcp_oauth_bidirectional.py",
+          "house_hit_count": 24,
+          "reason": "substring of the ordinary words 'forbid'/'forbidden' and of bidirectional identifiers (`bidirectional`, `bidi.ts`, `libident`/`libidna` build artefacts)"
+        },
+        "ask": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/bbasketballer75@gmail.com",
+          "house_hit_count": 134,
+          "reason": "substring of 'task' (kanban task ids), 'masked', 'metamask' and of ordinary contributor e-mail addresses"
+        },
+        "match": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_context_route_mismatch.py",
+          "house_hit_count": 63,
+          "reason": "substring of 'mismatch'/'unmatched'/'matcher' in the Hermes test suite (test_*_mismatch*.py) and of Cargo `libmatch*` build artefacts"
+        },
+        "depth": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/markdown-html-depth.test.ts",
+          "house_hit_count": 14,
+          "reason": "substring of `markdown-html-depth.ts` (an unrelated desktop-module name) and of a one-off xianxia image in ~/.hermes/tmp"
+        },
+        "boundary": {
+          "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/agent/prompt_cache_boundary.py",
+          "house_hit_count": 68,
+          "reason": "substring of `error-boundary.tsx`, `prompt_cache_boundary.py` and this pipeline's own `grid_boundary_alt_*.csv` artifacts"
+        },
+        "microstructure": {
+          "house_collision_example": "/Users/hong/.hermes/wiki/quant/crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01.md",
+          "house_hit_count": 45,
+          "reason": "names US-equities research projects and a local copy of the `ml4t` book source (case_studies/nasdaq100_microstructure), not a crypto trade-data surface; the two data-bearing hit directories are measured and disclosed as out-of-scope"
+        }
+      },
+      "excluded_token_scan": {
+        "tick": {
+          "hit_count": 169,
+          "classification_counts": {
+            "telegram_sticker_export_false_positive": 119,
+            "non_canonical_staging_copy_false_positive": 12,
+            "agent_session_or_log_false_positive": 14,
+            "source_code_false_positive": 8,
+            "gateway_socket_false_positive": 2,
+            "related_wiki_document": 2,
+            "repo_documentation_false_positive": 4,
+            "own_pipeline_grid_artifact_false_positive": 8
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/platforms/yuanbao_sticker.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/sticker_cache.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/hermes_cli/dashboard_auth/ws_tickets.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cron/test_idle_tick_config_skip.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cron/test_ticker_stall_60703.py"
+          ]
+        },
+        "ticks": {
+          "hit_count": 8,
+          "classification_counts": {
+            "own_pipeline_grid_artifact_false_positive": 8
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Volumes/ExpansionDrive/qlib-results/_diag/se-v1-u1-replay/attempt-1/artifacts/grid_slippage_2ticks.csv",
+            "/Volumes/ExpansionDrive/qlib-results/_preflight/se-v1-smoke/attempt-1/artifacts/grid_slippage_2ticks.csv",
+            "/Volumes/ExpansionDrive/qlib-results/_selftest/attempts/_selftest-strategyA-r0-u1/artifacts/grid_slippage_2ticks.csv",
+            "/Volumes/ExpansionDrive/qlib-results/_selftest/strategy-h-smoke-u2/artifacts/grid_slippage_2ticks.csv",
+            "/Volumes/ExpansionDrive/qlib-results/_selftest/strategy-h-smoke/artifacts/grid_slippage_2ticks.csv"
+          ]
+        },
+        "ticker": {
+          "hit_count": 135,
+          "classification_counts": {
+            "telegram_sticker_export_false_positive": 119,
+            "non_canonical_staging_copy_false_positive": 6,
+            "agent_session_or_log_false_positive": 8,
+            "source_code_false_positive": 2
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/platforms/yuanbao_sticker.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/gateway/sticker_cache.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cron/test_ticker_stall_60703.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/gateway/test_sticker_cache.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/ui-tui/src/__tests__/statusBarTicker.test.ts"
+          ]
+        },
+        "quote": {
+          "hit_count": 29,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 2,
+            "source_code_false_positive": 7,
+            "related_wiki_document": 1,
+            "build_artifact_false_positive": 15,
+            "repo_documentation_false_positive": 4
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/gateway/test_telegram_reply_quote.py",
+            "/Users/hong/.hermes/hermes-agent/tests/gateway/test_telegram_reply_quote.py",
+            "/Users/hong/.hermes/hermes-agent/tests/tools/test_allowlist_quoted_metachars.py",
+            "/Users/hong/.hermes/hermes-agent/tests/tools/test_hardline_escaped_quote_state.py",
+            "/Users/hong/.hermes/wiki/quant/options-physical-crash-frontier-socp-finite-quotes-2026-09-02.md"
+          ]
+        },
+        "bid": {
+          "hit_count": 24,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 1,
+            "source_code_false_positive": 4,
+            "related_wiki_document": 1,
+            "repo_documentation_false_positive": 3,
+            "repo_fixture_false_positive": 1,
+            "build_artifact_false_positive": 14
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/tools/test_mcp_oauth_bidirectional.py",
+            "/Users/hong/.hermes/hermes-agent/apps/desktop/dist/assets/dist-BIDuaTo0.js",
+            "/Users/hong/.hermes/hermes-agent/apps/desktop/dist/assets/webidl-D5jiJvOU.js",
+            "/Users/hong/.hermes/hermes-agent/tests/tools/test_mcp_oauth_bidirectional.py",
+            "/Users/hong/.hermes/hermes-agent/ui-tui/packages/hermes-ink/src/ink/bidi.ts"
+          ]
+        },
+        "ask": {
+          "hit_count": 134,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 20,
+            "hermes_cache_false_positive": 38,
+            "source_code_false_positive": 27,
+            "repo_fixture_false_positive": 3,
+            "contributor_metadata_false_positive": 2,
+            "dataset_stub_directory_false_positive": 3,
+            "hermes_skill_or_catalog_false_positive": 2,
+            "repo_documentation_false_positive": 19,
+            "agent_session_or_log_false_positive": 3,
+            "related_wiki_document": 4,
+            "tool_output_log_false_positive": 1,
+            "out_of_scope_market_research_false_positive": 3,
+            "build_artifact_false_positive": 9
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/bbasketballer75@gmail.com",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/lucaskvasir@duck.com",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/datagen-config-examples/example_browser_tasks.jsonl",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/datagen-config-examples/run_browser_tasks.sh",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/evals/readtool/tasks.py"
+          ]
+        },
+        "match": {
+          "hit_count": 63,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 14,
+            "source_code_false_positive": 15,
+            "agent_session_or_log_false_positive": 3,
+            "related_wiki_document": 2,
+            "repo_documentation_false_positive": 6,
+            "out_of_scope_market_research_false_positive": 4,
+            "build_artifact_false_positive": 19
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_context_route_mismatch.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_credential_pool_unmatched_rotation_bound.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_custom_pool_mismatch_guard.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_custom_provider_extra_body_matching.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cli/test_cli_prefix_matching.py"
+          ]
+        },
+        "depth": {
+          "hit_count": 14,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 2,
+            "source_code_false_positive": 5,
+            "hermes_tmp_artifact_false_positive": 1,
+            "related_wiki_document": 1,
+            "repo_documentation_false_positive": 5
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/markdown-html-depth.test.ts",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/markdown-html-depth.ts",
+            "/Users/hong/.hermes/hermes-agent/apps/desktop/src/lib/markdown-html-depth.test.ts",
+            "/Users/hong/.hermes/hermes-agent/apps/desktop/src/lib/markdown-html-depth.ts",
+            "/Users/hong/.hermes/tmp/xianxia_depth_spike_20260712_030116_comparison.png"
+          ]
+        },
+        "boundary": {
+          "hit_count": 68,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 16,
+            "source_code_false_positive": 33,
+            "agent_session_or_log_false_positive": 2,
+            "repo_documentation_false_positive": 10,
+            "related_wiki_document": 4,
+            "out_of_scope_market_research_false_positive": 1,
+            "own_pipeline_grid_artifact_false_positive": 2
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/agent/prompt_cache_boundary.py",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/e2e/queue-turn-boundary.spec.ts",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/components/error-boundary.test.tsx",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/components/error-boundary.tsx",
+            "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_credential_pool_provider_boundary.py"
+          ]
+        },
+        "microstructure": {
+          "hit_count": 45,
+          "classification_counts": {
+            "related_wiki_document": 9,
+            "repo_documentation_false_positive": 27,
+            "out_of_scope_market_research_false_positive": 9
+          },
+          "unclassified_data_candidates": [],
+          "examples": [
+            "/Users/hong/.hermes/wiki/quant/crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01.md",
+            "/Users/hong/.hermes/wiki/quant/crypto-microstructure-complexity-measures-wash-trading-filter-2026-09-01.md",
+            "/Users/hong/.hermes/wiki/quant/crypto-perp-crowded-flush-reversal-microstructure-2026-09-12.md",
+            "/Users/hong/.hermes/wiki/quant/crypto-regime-dependent-distress-microstructure-next-quarter-2026-09-04.md",
+            "/Users/hong/.hermes/wiki/quant/edgeflow-composite-lob-microstructure-alpha-binance-spot-2026-09-09.md"
+          ]
+        }
+      },
+      "hit_count": 91,
+      "classification_counts": {
+        "hermes_cache_false_positive": 15,
+        "related_wiki_document": 17,
+        "canonical_record_document": 1,
+        "non_canonical_staging_copy_false_positive": 4,
+        "repo_documentation_false_positive": 32,
+        "source_code_false_positive": 6,
+        "own_checker_source_false_positive": 2,
+        "out_of_scope_market_research_false_positive": 9,
+        "build_artifact_false_positive": 1,
+        "own_family_directory_false_positive": 3,
+        "own_round_artifact_false_positive": 1
+      },
+      "hits_listed": 91,
+      "hits_capped_by": 0,
+      "hits": [
+        {
+          "path": "/Users/hong/.hermes/cache/.mcp_schema_cache_v6mqdokx.tmp",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/cache/web/docs.jesse.trade-61576677b9aa575b.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/cache/web/docs.jesse.trade-de49ede0f5ef9b74.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/cache/web/www.bybit.com-2af7a49036e315ec.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/cache/web/www.bybit.com-f0d6febc42b98a56.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-08ef03eb3e.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-1483f82dbaf9768b.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-6118d8cbd9b27ca9.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-759afd01c5.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-961a3ab0307bf621.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-d41ba447370d032f.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-d9b6980fe8.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/nautilustrader.io-e4de84d9ebd74f32.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/www.bybit.com-2af7a49036e315ec.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/profiles/auditor/cache/web/www.bybit.com-f0d6febc42b98a56.cache.md",
+          "classification": "hermes_cache_false_positive"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/beta-times-quantity-noise-trader-flow-factor-pricing-2026-09-07.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/crypto-otc-order-imbalance-skew-width-symmetry-2026-09-02.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/crypto-public-wallet-identity-trader-informativeness-adverse-selection-2026-09-02.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31.md",
+          "classification": "canonical_record_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/explainable-deep-learning-price-trade-dynamics-shap-parametric-2026-09-11.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/hawkes-order-flow-imbalance-self-excitation-microstructure-2026-09-12.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/nautilustrader-adapters-developer-deep-notes-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/nautilustrader-foundation-domain-deep-notes-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/nautilustrader-official-latest-coverage-proof-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/nautilustrader-official-latest-integrated-synthesis-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/nautilustrader-runtime-risk-deep-notes-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/options-physical-crash-frontier-socp-finite-quotes-2026-09-02.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/quant/order-flow-imbalance-predictive-decoupling-cost-falsification-2026-09-12.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/queries/nautilustrader-official-docs-reconnaissance-2026-08-10.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/raw/articles/binance-academy/etf-contracts-you-can-trade-on-binance-futures.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/raw/articles/binance-academy/how-to-trade-stock-perpetual-contracts-on-binance.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/.hermes/wiki/raw/articles/binance-academy/tradfi-assets-you-can-trade-on-binance-futures.md",
+          "classification": "related_wiki_document"
+        },
+        {
+          "path": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_adausdt_1d_index.raw",
+          "classification": "non_canonical_staging_copy_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_dogeusdt_1d_index.raw",
+          "classification": "non_canonical_staging_copy_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_xrpusdt_1d_index.raw",
+          "classification": "non_canonical_staging_copy_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/archetype-trader-vq-rl-hierarchical-crypto-perpetual-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/beta-times-quantity-noise-trader-flow-factor-pricing-2026-09-07.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/binance-perpetual-order-flow-imbalance-horizon-decay-queue-imbalance-falsification-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/btcusdt-ppo-continuation-audit-imbalance-override-2026-09-14.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/china-ashare-l2-burst-volume-recency-imbalance-intraday-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/china-ashare-l3-eaten-order-age-imbalance-execution-timing-falsification-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/clusterlob-order-flow-imbalance-trader-behavior-clustering-2026-09-03.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-bitcoin-option-dynamic-hedging-whalley-wilmott-no-trade-band-2026-09-01.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-multilevel-order-flow-imbalance-intraday-2026-08-31.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-otc-order-imbalance-skew-width-symmetry-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-prediction-market-onchain-trade-misattribution-longshot-spread-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-public-wallet-identity-trader-informativeness-adverse-selection-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/explainable-deep-learning-price-trade-dynamics-shap-parametric-2026-09-11.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/hawkes-order-flow-imbalance-self-excitation-microstructure-2026-09-12.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/nasdaq-l3-order-book-imbalance-leakage-falsification-2026-09-13.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/options-physical-crash-frontier-socp-finite-quotes-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/order-flow-filtration-trade-grounded-imbalance-hawkes-2026-09-17.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/order-flow-imbalance-predictive-decoupling-cost-falsification-2026-09-12.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/questrader-self-supervised-auxiliary-task-discovery-rl-trading-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/alpha-strategy-research/tradingview-algoros-btc-eth-sentiment-trader-sopr-premium-usdtd-regime-2026-09-16.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase11-options-volatility/data/real_valid_quotes.json",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/raw/binance_futures_aggtrades_btcusdt_limit20.json",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-aggregate-trades-docs-extracted.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-aggregate-trades-docs.html",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase7-alpha-research/raw/binance_klines/ADAUSDT.json",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase7-alpha-research/raw/binance_klines/DOGEUSDT.json",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/phase7-alpha-research/raw/binance_klines/XRPUSDT.json",
+          "classification": "source_code_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_quarter_hour_order_imbalance_prerequisite_check.py",
+          "classification": "own_checker_source_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_world_order_flow_prerequisite_check.py",
+          "classification": "own_checker_source_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/03_market_microstructure/limit_orderbook.py",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/16_strategy_simulation/17_backtrader_zipline_engine_parity.ipynb",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/16_strategy_simulation/17_backtrader_zipline_engine_parity.py",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/16_strategy_simulation/resources/backtrader_zipline_parity_results.json",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/18_transaction_costs/09_frequency_tradeoff.ipynb",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/18_transaction_costs/09_frequency_tradeoff.py",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/19_risk_management/05_trade_shap_diagnostics.ipynb",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/19_risk_management/05_trade_shap_diagnostics.py",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/tests/test_etf_traded_price.py",
+          "classification": "out_of_scope_market_research_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/Hermes/Cchiiann/profile_backup_20260911/cache/web/tradersunion.com-ae44fe5f0d.md",
+          "classification": "non_canonical_staging_copy_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/build-cache/catdesk/target/debug/deps/catdesk-c7e99d3d959eb078.ctwsdt5k0p9ig59zbrc5okxr0.1jy2taq.rcgu.o",
+          "classification": "build_artifact_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/beta-times-quantity-noise-trader-flow-factor-pricing-2026-09-07.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-otc-order-imbalance-skew-width-symmetry-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-public-wallet-identity-trader-informativeness-adverse-selection-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31.md",
+          "classification": "own_family_directory_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/explainable-deep-learning-price-trade-dynamics-shap-parametric-2026-09-11.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/hawkes-order-flow-imbalance-self-excitation-microstructure-2026-09-12.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/options-physical-crash-frontier-socp-finite-quotes-2026-09-02.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/order-flow-imbalance-predictive-decoupling-cost-falsification.md",
+          "classification": "repo_documentation_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31",
+          "classification": "own_family_directory_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31/rounds",
+          "classification": "own_family_directory_false_positive"
+        },
+        {
+          "path": "/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31/rounds/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31-r1",
+          "classification": "own_round_artifact_false_positive"
+        }
+      ],
+      "unclassified_hits": [],
+      "note": "a house-wide name probe with the same 39-token list used for the raw tree was run over 5 roots; it returned 91 hit(s) in 11 classification(s), 0 of them unclassified, and no hit class is a trade-level market-data store for the registered instruments. A separate disclosed pass re-ran the 10 excluded token(s) - excluded because each is a substring of a word or name the host already uses (an ordinary English word, a source identifier, a build artefact or this pipeline's own grid name), so a hit could never distinguish a trade dataset from those artefacts - and returned 689 hit(s) in 17 classification(s), 0 of them unclassified."
+    },
+    "non_canonical_artifacts_found_and_not_used": {
+      "a1_1_binance_vision_s3_listings": {
+        "dir": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw",
+        "file_count": 12,
+        "symbols": [
+          "adausdt",
+          "avaxusdt",
+          "bchusdt",
+          "bnbusdt",
+          "btcusdt",
+          "dogeusdt",
+          "etcusdt",
+          "ethusdt",
+          "linkusdt",
+          "ltcusdt",
+          "solusdt",
+          "xrpusdt"
+        ],
+        "prefixes": [
+          "data/futures/um/daily/klines/ADAUSDT/1d/",
+          "data/futures/um/daily/klines/AVAXUSDT/1d/",
+          "data/futures/um/daily/klines/BCHUSDT/1d/",
+          "data/futures/um/daily/klines/BNBUSDT/1d/",
+          "data/futures/um/daily/klines/BTCUSDT/1d/",
+          "data/futures/um/daily/klines/DOGEUSDT/1d/",
+          "data/futures/um/daily/klines/ETCUSDT/1d/",
+          "data/futures/um/daily/klines/ETHUSDT/1d/",
+          "data/futures/um/daily/klines/LINKUSDT/1d/",
+          "data/futures/um/daily/klines/LTCUSDT/1d/",
+          "data/futures/um/daily/klines/SOLUSDT/1d/",
+          "data/futures/um/daily/klines/XRPUSDT/1d/"
+        ],
+        "aggTrade_occurrences_total": 0,
+        "daily_kline_prefix_only": true,
+        "per_file": {
+          "vision_um_daily_klines_adausdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/ADAUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/ADAUSDT/1d/ADAUSDT-1d-2020-01-31.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_avaxusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/AVAXUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/AVAXUSDT/1d/AVAXUSDT-1d-2020-09-23.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_bchusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/BCHUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/BCHUSDT/1d/BCHUSDT-1d-2019-12-31.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_bnbusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/BNBUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/BNBUSDT/1d/BNBUSDT-1d-2020-02-10.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_btcusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/BTCUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/BTCUSDT/1d/BTCUSDT-1d-2019-12-31.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_dogeusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/DOGEUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/DOGEUSDT/1d/DOGEUSDT-1d-2020-07-10.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_etcusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/ETCUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/ETCUSDT/1d/ETCUSDT-1d-2020-01-16.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_ethusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/ETHUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/ETHUSDT/1d/ETHUSDT-1d-2019-12-31.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_linkusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/LINKUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/LINKUSDT/1d/LINKUSDT-1d-2020-01-17.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_ltcusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/LTCUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/LTCUSDT/1d/LTCUSDT-1d-2020-01-09.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_solusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/SOLUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/SOLUSDT/1d/SOLUSDT-1d-2020-09-14.zip",
+            "aggTrade_occurrences": 0
+          },
+          "vision_um_daily_klines_xrpusdt_1d_index.raw": {
+            "listing_keys": 1000,
+            "prefix": [
+              "data/futures/um/daily/klines/XRPUSDT/1d/"
+            ],
+            "first_key": "data/futures/um/daily/klines/XRPUSDT/1d/XRPUSDT-1d-2020-01-06.zip",
+            "aggTrade_occurrences": 0
+          }
+        },
+        "what_it_is": "data.binance.vision S3 ListBucketResult XML listings (1000 keys each) for the `data/futures/um/daily/klines/<SYMBOL>/1d/` prefixes - key listings, not market data rows, and daily klines only: no aggTrade prefix and no 1m/10s surface appears in any listing.",
+        "used": false
+      },
+      "phase7_daily_quote_volume_wide": {
+        "path": "/Users/hong/workspace/phase7-alpha-research/data/derived/quote_volume_wide.csv",
+        "bytes": 244773,
+        "header": "date,BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT,AVAXUSDT,LINKUSDT,LTCUSDT,BCHUSDT,ETCUSDT",
+        "first_data_row": "2022-01-01,8461832661.65729,2815651909.34339,313448234.1823,410438730.487,277100412.40748,326510736.475,162661661.97672,",
+        "what_it_is": "a DAILY quote-volume matrix (one column per contract, one row per UTC day) - daily aggregates, not quote, book or trade data, and not the canonical raw.",
+        "used": false
+      },
+      "phase4_merged_daily_ohlcv": {
+        "path": "/Users/hong/workspace/phase4-market-microstructure/data/merged_daily_ohlcv.csv",
+        "bytes": 149130,
+        "header": "date,btc_close,btc_high,btc_low,btc_volume,btc_qvol,eth_close,eth_high,eth_low,eth_volume,eth_qvol",
+        "first_data_row": "2022-01-01,47722.65,47954.63,46208.37,19604.46325,924155159.5834866,3765.54,3776.45,3673.46,154143.8968,574718328.452744",
+        "what_it_is": "a DAILY OHLCV matrix for BTC/ETH from a non-canonical equities/microstructure research project (Nasdaq study); daily bars only, unused.",
+        "used": false
+      },
+      "ml4t_nasdaq100_case_study": {
+        "dir": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/nasdaq100_microstructure",
+        "benchmark_files": [
+          "fwd_ret_15m.json",
+          "fwd_ret_15m.parquet",
+          "fwd_ret_5m.json",
+          "fwd_ret_5m.parquet",
+          "fwd_ret_60m.json",
+          "fwd_ret_60m.parquet"
+        ],
+        "what_it_is": "a local copy of the `ml4t` book source tree's NASDAQ-100 case study (US equities, AlgoSeek archive): a different market from the record's crypto perpetuals, non-canonical, unused.",
+        "used": false
+      },
+      "none_is_a_trade_level_source": true
+    },
+    "conclusion": "the registered 39-token probe returns 0 hits under the canonical raw tree (1633 entry names, depth <= 8) and the same list over 5 host roots returns 91 classified hits with 0 unclassified; a disclosed second pass over the 10 excluded tokens returns 0 unclassified as well. No hit is a trade-level market-data store for the registered instruments: the non-canonical artefacts found (Binance Vision S3 key listings, two daily-frequency project matrices, a US-equities case study) are measured and unused, and the retired engine stacks that the store's own inventory lists are absent from disk."
+  },
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json",
+    "overall": "PASS",
+    "host_boot_id": "boot-1789570820",
+    "checked_at_utc": "2026-09-16T22:20:03Z",
+    "launch_gate": "not_evaluated",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+      },
+      {
+        "id": "P2",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+      },
+      {
+        "id": "P3",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-50714.tmp"
+      },
+      {
+        "id": "P4",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "container system status=running (rc=0)"
+      },
+      {
+        "id": "P5",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "qlib-run state=running"
+      },
+      {
+        "id": "P6",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+      },
+      {
+        "id": "P7",
+        "status": "PASS",
+        "layer": "card-local",
+        "detail": "/qlib/work writable: work_ok"
+      },
+      {
+        "id": "P8",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+      },
+      {
+        "id": "P9",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      },
+      {
+        "id": "P10",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      }
+    ],
+    "meaning": "environment-only readback (P9/P10 are NA because no --attempt-dir was given). The block is on the record's required data, not on the execution environment, so no shared-layer freeze (contract 12.5) is triggered."
+  },
+  "artifact_hashes": {
+    "round_spec_json": "sha256:daedf17bd56ec8fd54b330db91ed935239aab2d40fc81da046703329f3b53619",
+    "round_spec_bytes": 157481,
+    "verdict_json": "sha256:64daaa440f68f1339a56189fd1a4f52ccd2773c003a9f38386034186f9d4ab5e",
+    "verdict_bytes": 6005,
+    "checker_script": "sha256:e9130d7f2f32b789a5a615d83922bd0c8ba1b82269077ad9194581bcae912d71",
+    "checker_script_bytes": 92482,
+    "family_json": "sha256:a367f04064c9f3298a03e6f90f65bbd39f3ee7781dc1f7141e9bd5190d70d560",
+    "record_sha256": "sha256:851e0168d4a633351c7c1f5ea3d5f62f6293aba84b5bf6677b82dee19c500a98",
+    "frozen_candidate_body_sha256": "sha256:42745cef27abe53907b2018af5a872beeab7cf12b3048bafb476569b81f37413",
+    "note": "read back from disk at snapshot time; no value was typed from memory"
+  },
+  "executable_verification": {
+    "checker_live": {
+      "command": "python3 runtime/crypto_quarter_hour_order_imbalance_prerequisite_check.py",
+      "exit_code": 0,
+      "overall": "PASS",
+      "checks": [
+        {
+          "id": "C1",
+          "status": "PASS",
+          "detail": "binance market dirs=['usdm'] venue=BINANCE market_type=usdm_perp other_market_paths=[] non_binance_paths=[] usdm_dataset_dirs=['funding', 'instruments', 'klines'] trade_like_dirs=[]"
+        },
+        {
+          "id": "C2",
+          "status": "PASS",
+          "detail": "klines=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual'] count=4 quote=['USDT'] settle=['USDT']"
+        },
+        {
+          "id": "C3",
+          "status": "PASS",
+          "detail": "trade_token_hits=[] kline_row_has_trade_field=False funding_row_has_trade_field=False instrument_trade_fields=[] schema_documents_trade_dataset=False schema_documents_missing_splits=True documented_dataset_families=['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] inventory_no_other_store=True inventory_bars_only=True (39 probe tokens over 1633 entry names, depth<=8)"
+        },
+        {
+          "id": "C4",
+          "status": "PASS",
+          "detail": "interval_seconds=[300, 900, 1800, 3600, 14400, 86400, 604800] finest=300s window=10s ratio=30.0x quarter_hour_bar=900s documented_finest=60s bar_store_only=True aligned_bars_open_mod_grid={'15m': [0, 0, 0], '5m': [0, 0, 0]} trade_token_hits=[]"
+        },
+        {
+          "id": "C5",
+          "status": "PASS",
+          "detail": "registered=['ADA', 'BTC', 'DOGE', 'ETH', 'SOL', 'XRP'] present_local=['BTCUSDT', 'ETHUSDT', 'SOLUSDT'] absent_local=['ADAUSDT', 'DOGEUSDT', 'XRPUSDT'] coverage=3/6 local_not_registered=['BNBUSDT'] local_klines=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT']"
+        },
+        {
+          "id": "C6",
+          "status": "PASS",
+          "detail": "other_market_paths=[] non_binance_paths=[] funding_venues=['BINANCE'] funding_truth=['modeled_funding', 'official'] retired_stores_absent=True kline_row_has_trade_field=False schema_single_venue=True schema_no_silent_gapfill=True instrument_fee_fields=['maker_fee', 'taker_fee'] open_mod_86400=[0, 0, 0]"
+        },
+        {
+          "id": "C7",
+          "status": "PASS",
+          "detail": "house_hits_stored=91 classification_counts={'hermes_cache_false_positive': 15, 'related_wiki_document': 17, 'canonical_record_document': 1, 'non_canonical_staging_copy_false_positive': 4, 'repo_documentation_false_positive': 32, 'source_code_false_positive': 6, 'own_checker_source_false_positive': 2, 'out_of_scope_market_research_false_positive': 9, 'build_artifact_false_positive': 1, 'own_family_directory_false_positive': 3, 'own_round_artifact_false_positive': 1} unclassified=[] hits_listed=91 capped_by=0 raw_name_probe_hits(artifact)=[] (live)=[] excluded_token_unclassified=0 excluded_token_raw_collisions={} | live_house_hits=91 live_only=[] stored_only=[] drift_all_own_artifacts=True | noncanonical_measured_match=True a1_1_aggTrade=0"
+        },
+        {
+          "id": "C8",
+          "status": "PASS",
+          "detail": "round-spec ids/gate=PREREQUISITE_MISSING required_available=False decisive={'universe_six_registered_perpetual_contracts': 'PARTIAL_3_OF_6', 'instrument_xrp_perpetual': 'ABSENT', 'instrument_doge_perpetual': 'ABSENT', 'instrument_ada_perpetual': 'ABSENT', 'trade_level_data_with_aggressor_side': 'ABSENT', 'ten_second_quarter_hour_measurement_window': 'NOT_CONSTRUCTIBLE', 'required_fields_ms_timestamp_price_quantity_isbuyermaker': 'ABSENT', 'transaction_price_anchor': 'NOT_CONSTRUCTIBLE', 'bid_ask_mid_price_anchor_appendix': 'ABSENT', 'venue_bybit_cross_exchange_robustness': 'ABSENT', 'shifted_placebo_phase_grids_01_16_31_46': 'NOT_CONSTRUCTIBLE'} shrunk=False trade_available=False quote_available=False second_venue=False matrix_items=28 probe_tokens_equal=True"
+        },
+        {
+          "id": "C9",
+          "status": "PASS",
+          "detail": "verdict=TECHNICAL_INCOMPLETE run_id=None layer=card-local class=data_window_invalid yield=STOP_TECHNICAL_INCOMPLETE run_ids=[] trade_dataset_available=False coverage=3/6"
+        },
+        {
+          "id": "C10",
+          "status": "PASS",
+          "detail": "attempts_dir_exists=False terminal_sentinels=[]"
+        },
+        {
+          "id": "C11",
+          "status": "PASS",
+          "detail": "family.kanban_task_id=t_b3ac2c5d round_dir_files=['round-spec.json', 'verdict.json']"
+        },
+        {
+          "id": "C12",
+          "status": "PASS",
+          "detail": "dca provenance/grid+bounded invariants: ok"
+        },
+        {
+          "id": "C13",
+          "status": "PASS",
+          "detail": "verbatim_leaves=57 sources={'record': 14, 'card': 38, 'contract': 4, 'footer': 1} misses=[] problems=[] digest_mismatches=[] orphan_map_entries=[] source_sha_ok=True"
+        }
+      ]
+    },
+    "checker_self_test": {
+      "command": "... --self-test",
+      "variants": 22,
+      "refused": 22,
+      "overall": "PASS",
+      "per_variant": [
+        {
+          "variant": "verdict_tampered_to_PASS",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "layer_flipped_to_shared",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "variant": "required_data_available_flipped_true",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "trade_dataset_matrix_item_claimed_present",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "ten_second_window_claimed_constructible",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "trade_dataset_claimed_available",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "universe_shrunk_to_the_local_four_contract_list",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "missing_instruments_claimed_present_locally",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "coverage_claimed_six_of_six",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "resolution_gate_relabelled",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "probe_token_list_narrowed",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "searched_axis_mislabelled_user_fixed",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated_to_47",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "zero_attempt_claim_replaced_by_an_attempt_dir",
+          "refused": true,
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "variant": "verbatim_leaf_replaced_by_a_paraphrase",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "verbatim_digest_removed_from_the_map",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "verbatim_source_repointed",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "verbatim_chars_field_falsified",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "verbatim_leaf_relabelled_as_authored_prose",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "required_excerpt_items_claimed_nine",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        }
+      ]
+    },
+    "checker_raw_fixture_control": {
+      "command": "... --raw-fixture-control",
+      "failed_checks": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8"
+      ],
+      "expected": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7",
+        "C8"
+      ],
+      "overall": "PASS",
+      "why": "the fixture plants what this record needs (aggTrade datasets with an `isBuyerMaker` flag for all six registered contracts, 1m klines for the missing instruments, a spot market, a bookTicker quote surface and a second venue); C1-C6 re-measure the raw and C7-C8 re-assert the artifact-to-live-raw agreement, so all eight must flip."
+    },
+    "checker_host_scan": {
+      "command": "... --host-scan",
+      "hit_count": 91,
+      "classification_counts": {
+        "hermes_cache_false_positive": 15,
+        "related_wiki_document": 17,
+        "canonical_record_document": 1,
+        "non_canonical_staging_copy_false_positive": 4,
+        "repo_documentation_false_positive": 32,
+        "source_code_false_positive": 6,
+        "own_checker_source_false_positive": 2,
+        "out_of_scope_market_research_false_positive": 9,
+        "build_artifact_false_positive": 1,
+        "own_family_directory_false_positive": 3,
+        "own_round_artifact_false_positive": 1
+      },
+      "unclassified_hits": [],
+      "excluded_token_scan_summary": {
+        "tick": {
+          "hit_count": 169,
+          "classification_counts": {
+            "telegram_sticker_export_false_positive": 119,
+            "non_canonical_staging_copy_false_positive": 12,
+            "agent_session_or_log_false_positive": 14,
+            "source_code_false_positive": 8,
+            "gateway_socket_false_positive": 2,
+            "related_wiki_document": 2,
+            "repo_documentation_false_positive": 4,
+            "own_pipeline_grid_artifact_false_positive": 8
+          },
+          "unclassified": 0
+        },
+        "ticks": {
+          "hit_count": 8,
+          "classification_counts": {
+            "own_pipeline_grid_artifact_false_positive": 8
+          },
+          "unclassified": 0
+        },
+        "ticker": {
+          "hit_count": 135,
+          "classification_counts": {
+            "telegram_sticker_export_false_positive": 119,
+            "non_canonical_staging_copy_false_positive": 6,
+            "agent_session_or_log_false_positive": 8,
+            "source_code_false_positive": 2
+          },
+          "unclassified": 0
+        },
+        "quote": {
+          "hit_count": 29,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 2,
+            "source_code_false_positive": 7,
+            "related_wiki_document": 1,
+            "build_artifact_false_positive": 15,
+            "repo_documentation_false_positive": 4
+          },
+          "unclassified": 0
+        },
+        "bid": {
+          "hit_count": 24,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 1,
+            "source_code_false_positive": 4,
+            "related_wiki_document": 1,
+            "repo_documentation_false_positive": 3,
+            "repo_fixture_false_positive": 1,
+            "build_artifact_false_positive": 14
+          },
+          "unclassified": 0
+        },
+        "ask": {
+          "hit_count": 134,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 20,
+            "hermes_cache_false_positive": 38,
+            "source_code_false_positive": 27,
+            "repo_fixture_false_positive": 3,
+            "contributor_metadata_false_positive": 2,
+            "dataset_stub_directory_false_positive": 3,
+            "hermes_skill_or_catalog_false_positive": 2,
+            "repo_documentation_false_positive": 19,
+            "agent_session_or_log_false_positive": 3,
+            "related_wiki_document": 4,
+            "tool_output_log_false_positive": 1,
+            "out_of_scope_market_research_false_positive": 3,
+            "build_artifact_false_positive": 9
+          },
+          "unclassified": 0
+        },
+        "match": {
+          "hit_count": 63,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 14,
+            "source_code_false_positive": 15,
+            "agent_session_or_log_false_positive": 3,
+            "related_wiki_document": 2,
+            "repo_documentation_false_positive": 6,
+            "out_of_scope_market_research_false_positive": 4,
+            "build_artifact_false_positive": 19
+          },
+          "unclassified": 0
+        },
+        "depth": {
+          "hit_count": 14,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 2,
+            "source_code_false_positive": 5,
+            "hermes_tmp_artifact_false_positive": 1,
+            "related_wiki_document": 1,
+            "repo_documentation_false_positive": 5
+          },
+          "unclassified": 0
+        },
+        "boundary": {
+          "hit_count": 68,
+          "classification_counts": {
+            "non_canonical_staging_copy_false_positive": 16,
+            "source_code_false_positive": 33,
+            "agent_session_or_log_false_positive": 2,
+            "repo_documentation_false_positive": 10,
+            "related_wiki_document": 4,
+            "out_of_scope_market_research_false_positive": 1,
+            "own_pipeline_grid_artifact_false_positive": 2
+          },
+          "unclassified": 0
+        },
+        "microstructure": {
+          "hit_count": 45,
+          "classification_counts": {
+            "related_wiki_document": 9,
+            "repo_documentation_false_positive": 27,
+            "out_of_scope_market_research_false_positive": 9
+          },
+          "unclassified": 0
+        }
+      },
+      "note": "a house-wide name probe with the same 39-token list used for the raw tree was run over 5 roots; it returned 91 hit(s) in 11 classification(s), 0 of them unclassified, and no hit class is a trade-level market-data store for the registered instruments. A separate disclosed pass re-ran the 10 excluded token(s) - excluded because each is a substring of a word or name the host already uses (an ordinary English word, a source identifier, a build artefact or this pipeline's own grid name), so a hit could never distinguish a trade dataset from those artefacts - and returned 689 hit(s) in 17 classification(s), 0 of them unclassified."
+    },
+    "postwrite_verbatim_verification": {
+      "verbatim_strings_on_disk": 57,
+      "strings_with_declared_source": 57,
+      "misses": [],
+      "unclassified_verbatim_paths": [],
+      "declared_source_counts": {
+        "record": 14,
+        "card": 38,
+        "contract": 4,
+        "footer": 1
+      },
+      "missing_from_source_map": [],
+      "orphan_map_entries": [],
+      "problems": [],
+      "duplicate_map_keys": [],
+      "digests_disagreeing_with_content": [],
+      "source_sha256_matches_declared": true,
+      "source_sha256": {
+        "contract": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+        "record": "sha256:851e0168d4a633351c7c1f5ea3d5f62f6293aba84b5bf6677b82dee19c500a98",
+        "footer": "sha256:f13d8ccdb0f05ba4d3c53c2f9cf3a1cbc56474f8478ee805563e1b29c467c910",
+        "card": "sha256:42745cef27abe53907b2018af5a872beeab7cf12b3048bafb476569b81f37413"
+      },
+      "note": "resolved against the LIVE sources (card body read back from the board DB with the system-owned footer stripped, the canonical record, the contract file and runtime/production_handoff.py LIFECYCLE_FOOTER); independent of the authoring run"
+    },
+    "parameter_contract_reader": {
+      "command": "runtime/parameter_contract.validate_round_spec_contract(round-spec)",
+      "problems": [
+        "round-spec has no parameter_contract and family 'crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31' is not pre-schema 'close-vs-sma-mean-reversion-long-flat-v2': fail closed (v1.8+)"
+      ],
+      "meaning": "measured, not assumed: this legacy family's round-spec carries no v1.8 parameter_contract block, so a FUTURE re-entry launch would have to add it or the launch-time reader fails closed. This gate round touches no launch path, so nothing was migrated."
+    },
+    "repo_suite": {
+      "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+      "returncode": 0,
+      "tail": [
+        "----------------------------------------------------------------------",
+        "Ran 402 tests in 4.415s",
+        "OK"
+      ]
+    },
+    "non_vacuousness": "22/22 tamper variants refused (verdict/layer/run-id tampering, fabricated attempt dir, required-data flags flipped, universe shrunk to the local list, missing instruments claimed present, coverage claimed 6/6, resolution gate relabelled, probe list narrowed, searched axis mislabelled user-fixed, DCA grid truncated, and five verbatim-map attacks); the raw fixture control plants aggTrade datasets with an isBuyerMaker flag for all six registered contracts, 1m klines for the missing instruments, a spot market, a bookTicker surface and a second venue, and flips C1-C8 to FAIL"
+  },
+  "authoring_record": {
+    "round_spec_final_writes": 1,
+    "verdict_final_writes": 1,
+    "exclusive_create": "O_CREAT|O_EXCL; a re-run of the authoring script raises FileExistsError and leaves both files byte-identical",
+    "rerun_refusal_demonstration": {
+      "command": "QH_AUTHOR_DRY_RUN= python3 .kanban-scratch/t_b3ac2c5d/author.py",
+      "exit_code": 1,
+      "error_tail": [
+        "    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)",
+        "FileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31/rounds/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31-r1/round-spec.json'"
+      ],
+      "round_spec_sha_after": "sha256:daedf17bd56ec8fd54b330db91ed935239aab2d40fc81da046703329f3b53619",
+      "verdict_sha_after": "sha256:64daaa440f68f1339a56189fd1a4f52ccd2773c003a9f38386034186f9d4ab5e",
+      "unchanged_vs_write": true
+    },
+    "prewrite_verbatim_assertions": 57,
+    "postwrite_verbatim_assertions": 57,
+    "dry_run_before_write": {
+      "command": "QH_AUTHOR_DRY_RUN=1 python3 .kanban-scratch/t_b3ac2c5d/author.py",
+      "exit_code": 0,
+      "printout": "every excerpt printed with its declared source and length, and every extracted item printed with its head, before any write"
+    },
+    "zero_write_aborts": [
+      "anchor miss: the card's crypto-portability prose line has no leading '- ' bullet, so the first anchor failed and the script aborted before any write",
+      "item-count assertion: the card's required-data excerpt counted 8 (the label line plus 7 bullets) and the script aborted before any write"
+    ],
+    "draft_removals_before_publication": [
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31/rounds/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31-r1/round-spec.json",
+        "sha256": "sha256:5183e9fa4cc6b2abbaf0adc2f059e5d3065284f005e2b5b6ec72d7ceb09e3a6f",
+        "bytes": 157480,
+        "unlinked": true
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31/rounds/crypto-quarter-hour-opening-order-imbalance-medium-horizon-2026-08-31-r1/verdict.json",
+        "sha256": "sha256:760f5208441e9d75fb17bdb50e6dbff31939a0d90c370a017207f9a6f3e5232b",
+        "bytes": 6005,
+        "unlinked": true
+      }
+    ],
+    "draft_removal_note": "the first written pair carried `schema_documents_trade_dataset = true`: the checker's schema token list wrongly matched SCHEMA.md's coverage-limit sentence 'trade count and taker-buy splits are not present', i.e. the sentence that documents the ABSENCE. The value is machine-measured and read verbatim by a reader, so the pair was removed and rebuilt once. Nothing consumed the drafts: no attempt directory, no run-spec, run_id null, the card still running.",
+    "authoring_script": "not committed (single-use, runs from .kanban-scratch/t_b3ac2c5d/); the committed artifact is the read-back checker"
+  },
+  "disclosures": [
+    "section 13 registers no dedicated prerequisite-missing class; the data_window_invalid row ('區間內無 bar、instrument 缺失') is the closest registered row and its use is recorded as an operator/contract decision inside the round-spec",
+    "the card's required-data excerpt carries 7 of the record's 9 items; the missing point-in-time requirement and missing-data assumption are restored verbatim in required_data_restored_items_verbatim (nothing dropped, frozen card bytes unedited)",
+    "the card's falsification excerpt carries 7 of the record's 8 items; item 8 (timestamp-alignment / trade-side-classification / price-anchoring sensitivity) is restored verbatim - and it is itself decisive here, because alignment and trade-side classification are exactly what the missing trade data would supply",
+    "the card's limitations excerpt carries 6 of the record's 7 bullets; the missing bullet (mechanism empirically motivated but not causally established) is restored verbatim",
+    "the card's mechanism excerpt truncates the record's Research interpretation; the full block is registered verbatim from the record",
+    "the record's '## Execution assumptions' and '## Evidence' blocks are not in the frozen card body; both are registered verbatim from the record rather than invented",
+    "the data window precedence is disclosed rather than resolved silently: the record reports its own sample (2021-01-01..2024-10-31) and the card's local fallback window/split (2022-01-01..2026-09-11) are not nested; both are registered and no cell of either was computed",
+    "the source supplies no threshold, holding horizon, overlap rule, sizing rule or cost-aware entry filter; none was invented - the DCA rail is registered as the family's research-defined exit semantics exactly as the card requires",
+    "the record registers BOTH signs (OI_t > 0 -> positive 4-12h; OI_t < 0 -> negative), so a symmetric long-short reading is the record's own and the inherited rail's mirrored short ladder already specifies it; no direction leg was invented",
+    "the probe design is part of the measurement: 39 registered tokens (0 hits in the raw tree, 0 unclassified house-wide) and 10 excluded tokens, each excluded for a measured collision (sticker/task/libquote/mismatch/... ) and each re-run in a disclosed second pass that returned 0 unclassified - an exclusion cannot hide a hit",
+    "non-canonical artifacts elsewhere on the host are disclosed as measured-but-unused: 12 data.binance.vision S3 key listings (1000 keys each, daily-kline prefixes only, 0 aggTrade occurrences), a daily quote-volume matrix, a daily OHLCV matrix from an equities project, and a US-equities case-study tree",
+    "the retired engine stacks that the store's own INVENTORY.md lists (nautilus-system, lean-system, microsoft-quant-stack - the LEAN tree is where a bybit/coinbase sample would have lived) are measured ABSENT from disk",
+    "the host-scan function is memoised per process (the self-test runs the checker once per tampered copy); the CLI --host-scan path recomputes it",
+    "the raw keeps updating since the card was written (measured 1h/1d through 2026-09-15, funding through 2026-09-16T08:00Z, versus the card's 2026-09-11 / 2026-09-12T08:00Z); measured and registered values are recorded side by side",
+    "the inherited USER_FIXED rail is a USD-M perpetual ladder and this record's market IS perpetual futures, so there is no spot/derivative tension of the kind sibling cards disclosed - but the rail is registered and never exercised, because the signal's input does not exist locally",
+    "manifestation of a legacy-round-spec gap, measured: parameter_contract.validate_round_spec_contract fails closed on this round-spec (no v1.8 parameter_contract block, and the family is not the pre-schema legacy bridge). It matters only if a future re-entry launch is attempted; this gate round touches no launch path and nothing was migrated"
+  ],
+  "untouched": {
+    "other_families": "no other family artifact, frozen bundle or verdict was read or modified",
+    "survivor_bundle": "none written (0 survivors; contract 10.8 requires >= 1)",
+    "host_scripts_deploy": "none: no run-spec exists, so no production script was deployed to the host /scripts tree",
+    "raw": "read-only throughout; no write under the raw root",
+    "cron_board": "no cron job, watchdog or board status change beyond this card's lifecycle",
+    "paper_live": "none",
+    "auditor_sub_card": "none created (the card forbids it)",
+    "next_family": "not appended by this card (contract 14.4 handoff does that after done)"
+  }
+}
