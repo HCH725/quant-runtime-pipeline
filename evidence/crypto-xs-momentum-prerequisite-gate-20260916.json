@@ -1,0 +1,259 @@
+{
+  "snapshot_kind": "prerequisite-gate terminal record (no Qlib launch): family crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31, round r1",
+  "snapshot_taken_at_utc": "2026-09-16T08:40:46Z",
+  "snapshot_boundary": "Read-back of the immutable /results tree plus the repo at the time of writing. Not runtime state: mount / container / cron health must be queried live.",
+  "card": {
+    "kanban_task_id": "t_629b9ae1",
+    "board": "quant-strategy-research",
+    "family_id": "crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31",
+    "round_id": "crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31-r1",
+    "assignee": "default",
+    "chain_parent": "t_0546d31b (scheduling/order only; scientific lineage is null)",
+    "origin": "created by the contract section 14.4 automatic production handoff from the reviewed wiki record (candidateized exactly once during the t_86d04b09 backlog backfill)"
+  },
+  "contract_basis": {
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "universe_prohibition_verbatim": "- 本卡註冊：record 自身提供 Crypto portability 段落 → 依該 portability canonicalize（原文節錄見上），未在 intake 之後另設 suitability 篩選。 若本機 canonical raw 不含本 record 所需的 universe／venue／資料，一律走 §13 prerequisite 條款（technical failure），不得縮減 universe 以硬造可執行性。",
+    "exit_semantics": "section 16.3: unfixable + card-local -> TECHNICAL_INCOMPLETE; section 6.4 defines DEFERRED as an intentional resource/priority stop (not this case); section 12.5: card-local failures do not freeze the chain; section 6.4: a failure without terminal evidence may only be TECHNICAL_INCOMPLETE or blocked",
+    "frozen_card_body": {
+      "path": "<EXPANSION>/qlib-results/_handoff/bodies/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31.md",
+      "sha256": "sha256:9215ca8702ab8b6c6424b2a78ea7eab128d2f10838a42c7b7ab7d04ca1be34e1"
+    },
+    "reviewed_source": {
+      "path": "<HOME>/.hermes/wiki/quant/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31.md",
+      "sha256": "sha256:9c13a0f9a1f66ca2ec10f15564d25d933a6201294ff7b55c6f9a2b2863c4cafb"
+    }
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; data_window_invalid is the closest registered class ('instrument 缺失'). Suggested (not implemented here, needs an operator/contract decision): an explicit prerequisite_missing class for future candidates whose required market is not in the raw.",
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "rounds_used": 1,
+    "no_progress_rounds": 1,
+    "attempts_launched": 0,
+    "terminal_sentinels": [],
+    "no_scientific_claim": "nothing was computed: no eligible universe, no cohort, no strategy case, no DCA cell, no historical/OOS/robustness grid. The candidate is neither validated nor refuted by this round.",
+    "why_not_DEFERRED": "DEFERRED (section 6.4) denotes an intentional resource/priority stop. Here the required market data does not exist in the canonical raw and cannot be obtained by any choice available to this card; section 16.3 maps exactly this case to TECHNICAL_INCOMPLETE."
+  },
+  "measured_canonical_raw": {
+    "measured_at_utc": "2026-09-16T08:40:46Z",
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "venue_market_dirs_under_binance": [
+      "usdm"
+    ],
+    "market_type": "usdm_perp",
+    "venue": "BINANCE",
+    "instrument_type": [
+      "CryptoPerpetual"
+    ],
+    "instrument_count": 4,
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "non_binance_paths_under_raw": [
+      ".",
+      "_meta",
+      "_tools",
+      "_tools/__pycache__"
+    ],
+    "paths_named_spot": [],
+    "instrument_listing_history_field_present": false,
+    "venue_classification_field_present": false,
+    "meta_sha256": {
+      "INVENTORY.md": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59"
+    },
+    "note": "single venue (BINANCE USD-M perpetual), 4 fixed contracts; no spot market, no second venue, no listing history, no venue classification, no token metadata"
+  },
+  "requirement_vs_available": [
+    {
+      "requirement": "spot cryptocurrencies for the primary reproduction",
+      "available": "BINANCE usdm_perp (4 linear contracts)",
+      "status": "MISSING",
+      "evidence": "binance market dirs = ['usdm']; instrument types = ['CryptoPerpetual']; no path named 'spot' anywhere under the raw root"
+    },
+    {
+      "requirement": "price and volume across approved CeFi/DeFi venues (multi-venue)",
+      "available": "single venue (BINANCE)",
+      "status": "MISSING",
+      "evidence": "non_binance_paths_under_raw = ['.', '_meta', '_tools', '_tools/__pycache__'] (only _meta/_tools siblings)"
+    },
+    {
+      "requirement": "> = 3 exchange listings per asset, >= 1 of them on a CeFi venue",
+      "available": "not evaluable",
+      "status": "MISSING",
+      "evidence": "a single venue provides one listing per asset; the raw records no cross-venue listing set at all"
+    },
+    {
+      "requirement": "point-in-time, survivorship-free universe membership",
+      "available": "fixed current 4-contract list",
+      "status": "MISSING",
+      "evidence": "config symbols = ['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT']; instruments export carries 4 instruments with no listing/unlisting history field (listing_history_field_present=False)"
+    },
+    {
+      "requirement": "exchange listing history",
+      "available": "absent",
+      "status": "MISSING",
+      "evidence": "no onboarding/listing timestamp in the instruments export or the kline metadata"
+    },
+    {
+      "requirement": "venue classification (CeFi/DeFi)",
+      "available": "absent",
+      "status": "MISSING",
+      "evidence": "venue_classification_field_present=False"
+    },
+    {
+      "requirement": "token metadata for the manual exclusions (rebase tokens, large transaction-penalty tokens)",
+      "available": "absent",
+      "status": "MISSING",
+      "evidence": "no token-metadata dataset exists under the raw root; the instruments export holds only contract economics (tick, lot, fees, margin)"
+    },
+    {
+      "requirement": "a cross-section large enough for a 30-day-return quintile sort",
+      "available": "4 symbols",
+      "status": "MISSING",
+      "evidence": "4 symbols cannot be split into quintiles; the source universe is hundreds of assets across ~57 CeFi/DeFi venues, and the record itself warns that a liquid-major universe removes the long-tail assets that contributed to the original spread"
+    }
+  ],
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json (environment only; no --attempt-dir, so P9/P10 are N/A and the launch gate was never evaluated)",
+    "overall": "PASS",
+    "rc": 0,
+    "host_boot_id": "boot-1789359250",
+    "checked_at_utc": "2026-09-16T08:38:27Z",
+    "checks": {
+      "P1": "PASS",
+      "P2": "PASS",
+      "P3": "PASS",
+      "P4": "PASS",
+      "P5": "PASS",
+      "P6": "PASS",
+      "P7": "PASS",
+      "P8": "PASS",
+      "P9": "NA",
+      "P10": "NA"
+    },
+    "meaning": "the execution plane was healthy at determination time (mount, read-only raw, results writable, container, image identity, work volume, Qlib import). The blocker is the record's required universe, not the environment, so no shared-layer freeze condition (section 12.5) applies."
+  },
+  "artifacts": {
+    "round_spec": {
+      "path": "<EXPANSION>/qlib-results/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31/rounds/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31-r1/round-spec.json",
+      "sha256": "sha256:ce0a24fda0791dc3511c4734d8294231e7ff061c0eb73d38556bb40c24d4af37",
+      "bytes": 26465
+    },
+    "verdict": {
+      "path": "<EXPANSION>/qlib-results/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31/rounds/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31-r1/verdict.json",
+      "sha256": "sha256:427dd9f7da31ef1e23d94a3922ec843d0e311af85e3da6988de0eff56dcb160f",
+      "bytes": 5162
+    },
+    "family_json": {
+      "path": "<EXPANSION>/qlib-results/crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31/family.json",
+      "sha256": "sha256:68397c549af5c4799a504803edd8e3ce1e0fb86295609ecfdfe51e14737785b6",
+      "kanban_task_id": "t_629b9ae1"
+    },
+    "checker": {
+      "path": "<repo>/runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py",
+      "sha256": "sha256:650115f981a757baa7e5855f8f9623744f586cfebb97e50d2a90fe66f15985c8"
+    },
+    "round_dir_file_set": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "immutability": "written once with O_EXCL; no attempt directory and no terminal sentinel were created (nothing was submitted, so a synthetic INCOMPLETE sentinel would misrepresent a submission that never happened)"
+  },
+  "verification": {
+    "live_check": "python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py -> C1-C9 PASS, overall PASS, rc=0 (re-measures the raw and re-reads both artifacts)",
+    "artifact_controls": {
+      "runner": "python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py --self-test",
+      "variants": [
+        {
+          "variant": "verdict tampered to PASS",
+          "refused": true,
+          "failed_checks": [
+            "C7"
+          ]
+        },
+        {
+          "variant": "failure.layer flipped to shared-layer",
+          "refused": true,
+          "failed_checks": [
+            "C7"
+          ]
+        },
+        {
+          "variant": "a synthetic attempts/<run>-u1/DONE fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C8",
+            "C9"
+          ]
+        }
+      ],
+      "note": "each variant runs in a fresh temp copy; the live results tree is never written"
+    },
+    "measurement_control": {
+      "fixture": "temp raw tree with the real config/instruments plus an added binance/spot directory and a second venue (bybit)",
+      "result": "rc=1, overall FAIL, failed checks C1 and C4 (C1 detail: binance market dirs=['spot', 'usdm']; C4 detail: non_binance_paths=['bybit', 'bybit/usdt'] paths_named_spot=['binance/spot'])",
+      "note": "proves the raw-side checks are live rather than vacuously true; the fixture was removed afterwards"
+    },
+    "verbatim_control": "every block copied from the frozen card body into round-spec.json was asserted to be an exact substring of that file before anything was written (the authoring script aborts otherwise)"
+  },
+  "pool_observation": {
+    "kind": "descriptive, non_gating",
+    "method": "scan _handoff/candidates.json; a candidate counts as consumed when <EXPANSION>/qlib-results/<family_id> already exists; the pending bucket is the 'universe=' token of its fingerprint_input",
+    "candidates_total": 288,
+    "consumed_dirs": 7,
+    "pending_by_universe_token": {
+      "60 ETF pairs (17 economic families)": 1,
+      "BTCUSDT spot CLOB": 1,
+      "Binance USDT-margined perpetuals (200 pairs)": 1,
+      "US equities (S&P500/MidCap400/SmallCap600/NASDAQ100/DJI),GICS sectors": 1,
+      "portability=adapted/unproven (crypto-domain)": 54,
+      "portability=adapted/unproven (source-market; research-defined)": 124,
+      "portability=direct": 88,
+      "research-defined:no-portability-section": 10,
+      "~40 Binance USDT-M perps": 1
+    },
+    "why_recorded": "this family is the first card to reach the prerequisite gate. Many queued candidates register markets that the canonical raw does not hold (equities, commodities, options, on-chain, venue-flow). The token counts above give the operator a queue-level view; no gate, no card and no automation was changed by this observation."
+  },
+  "what_was_not_done": [
+    "no Qlib launch, no container exec, no run-spec, no attempt directory, no terminal sentinel",
+    "no surrogate market, no approximate dataset, no universe reduction (the 4 majors were never substituted for the record's multi-venue spot cross-section)",
+    "no engine/runner was authored or deployed to the host /scripts directory: the card's deploy-and-pin rule governs a runner used by a launch, and there is no launch",
+    "no change to any existing family artifact, frozen bundle or verdict; no new auditor role, no new service/daemon/queue/second engine",
+    "no rewrite of the record's hypothesis, eligible universe or falsification battery"
+  ],
+  "disclosures": [
+    "the section 13 taxonomy has no dedicated prerequisite-missing class; data_window_invalid ('instrument missing') is the closest registered class and is used as-is. A named class would make future prerequisite terminals self-describing and is left as an operator / contract decision.",
+    "the round-spec registers no strategy (signal-layer) domain and no expected cell count: the round terminalized before any launch, so registering them afterwards would not be a pre-registration. Nothing downstream may treat this round as a partial computation.",
+    "verification of this record used only the filesystem plus one environment preflight run; no claim here rests on a tool's self-report."
+  ]
+}
