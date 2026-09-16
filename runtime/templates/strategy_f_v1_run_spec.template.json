@@ -1,0 +1,585 @@
+{
+  "schema_version": 1,
+  "document_kind": "run-spec (frozen attempt contract TEMPLATE; instantiation may substitute only the seven registered placeholders, the pinned script sha256 values and the template-era status prose)",
+  "template_instantiation": {
+    "placeholders": [
+      "{{round_id}}",
+      "{{run_id}}",
+      "{{task_id}}",
+      "{{created_at_utc}}",
+      "{{script_sha256}}",
+      "{{engine_selfcheck_sha256}}",
+      "{{round_spec_path}}"
+    ],
+    "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. script.sha256 pins the deployed runner and is recomputed host side by preflight P10.",
+    "validated_by": "python3 runtime/strategy_f_v1_counts.py --spec runtime/templates/strategy_f_v1_round_spec.template.json --run-spec runtime/templates/strategy_f_v1_run_spec.template.json",
+    "status": "PREREGISTRATION ONLY / NOT LAUNCHED"
+  },
+  "family_id": "stochastic-rsi-renko-2026-08-31",
+  "round_id": "{{round_id}}",
+  "run_id": "{{run_id}}",
+  "task_id": "{{task_id}}",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "{{created_at_utc}}",
+  "round_spec_path": "{{round_spec_path}}",
+  "selector_version": "cohort-selector-v1",
+  "disposition_version": "cohort-disposition-v1",
+  "data": {
+    "source": "/data/raw",
+    "read_only": true,
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "timeframes": [
+      {
+        "raw_interval": "5m",
+        "qlib_freq": "5min"
+      },
+      {
+        "raw_interval": "15m",
+        "qlib_freq": "15min"
+      },
+      {
+        "raw_interval": "30m",
+        "qlib_freq": "30min"
+      },
+      {
+        "raw_interval": "1h",
+        "qlib_freq": "60min"
+      },
+      {
+        "raw_interval": "4h",
+        "qlib_freq": "240min"
+      }
+    ],
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "bar_labelling": "open_time_ms = bar START (UTC); the runner re-measures each timeframe's grid and publishes the readback; the brick ladder is price-driven so a missing bar is disclosed, not fatal",
+    "funding_series_contract": {
+      "engine_rule": "exposure to every settlement in the CLOSED interval [entry instant - 1s, exit instant + 1s], charged on the position notional at that instant",
+      "no_fabrication": "the modelled/official split is disclosed in the artifacts"
+    }
+  },
+  "parameter_domain": {
+    "grid_cases": [
+      {
+        "brick_pct": 0.005,
+        "rsi_period": 7
+      },
+      {
+        "brick_pct": 0.005,
+        "rsi_period": 14
+      },
+      {
+        "brick_pct": 0.005,
+        "rsi_period": 21
+      },
+      {
+        "brick_pct": 0.01,
+        "rsi_period": 7
+      },
+      {
+        "brick_pct": 0.01,
+        "rsi_period": 14
+      },
+      {
+        "brick_pct": 0.01,
+        "rsi_period": 21
+      },
+      {
+        "brick_pct": 0.02,
+        "rsi_period": 7
+      },
+      {
+        "brick_pct": 0.02,
+        "rsi_period": 14
+      },
+      {
+        "brick_pct": 0.02,
+        "rsi_period": 21
+      }
+    ],
+    "legal_cases_per_cohort": 9,
+    "brick_pct_grid": [
+      0.005,
+      0.01,
+      0.02
+    ],
+    "rsi_period_grid": [
+      7,
+      14,
+      21
+    ],
+    "renko_contract": {
+      "mechanism": "geometric bricks: the brick threshold is brick_pct of the current reference price",
+      "source_price": "the source bar's CLOSE",
+      "initial_reference": "the first source bar's close",
+      "stamp": "the forming source bar's close (conservative: never earlier)",
+      "multiple_bricks_per_bar": "allowed, ladder moves monotonically toward the bar close",
+      "max_bricks_per_bar": 200
+    },
+    "indicator_contract": {
+      "rsi": "Wilder RSI on the brick close series over rsi_period bricks",
+      "stochastic": "raw = (RSI - min(RSI, STOCH_PERIOD)) / (max(RSI, STOCH_PERIOD) - min(RSI, STOCH_PERIOD))",
+      "stoch_period": 14,
+      "k_smooth": 3,
+      "d_smooth": 3,
+      "buy_signal": "K crosses above D (strict)",
+      "sell_signal": "K crosses below D (strict)",
+      "direction": "long AND short: the crossing flips the book"
+    },
+    "entry_timing_status": "RESEARCH_DEFINED - a crossing detected at a bar close fills at the NEXT bar's open.",
+    "brick_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "rsi_period_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values."
+  },
+  "dca_domain": {
+    "base_quote": 1000,
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05,
+        "base_quote": 1000
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1,
+        "base_quote": 1000
+      }
+    ],
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant.",
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "brick_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "rsi_period_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "entry_timing_status": "RESEARCH_DEFINED - a crossing detected at a bar close fills at the NEXT bar's open."
+  },
+  "provenance_mirror": {
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT - held constant across the whole domain (it is NOT a search axis) and NOT a user-fixed invariant.",
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "brick_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "rsi_period_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN - this axis IS searched over the registered values.",
+    "entry_timing_status": "RESEARCH_DEFINED - a crossing detected at a bar close fills at the NEXT bar's open."
+  },
+  "gates": {
+    "min_episodes_is": 30,
+    "min_episodes_oos": 10,
+    "neighborhood_min_same_sign_fraction": 0.6
+  },
+  "costs": {
+    "source": "canonical instrument metadata, read at run time",
+    "maker_fee": 0.0002,
+    "taker_fee": 0.0005,
+    "baseline_slippage_ticks": 1,
+    "slippage_sign_rule": "ADVERSE for every fill in both directions",
+    "cost_attrition_fee_mult": 8.0,
+    "funding": "charged per settlement inside the holding interval",
+    "funding_exposure_rule": "CLOSED interval [entry - 1s, exit + 1s]",
+    "fee_bps": 5.0,
+    "slippage_bps": null
+  },
+  "expected": {
+    "cohorts": 20,
+    "strategy_cases_per_cohort": 9,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 432,
+    "case_evaluations_per_grid": 8640,
+    "expected_case_evaluations": 86400,
+    "cohort_grid_kinds": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps"
+    ]
+  },
+  "script": {
+    "path": "/scripts/60_strategy_f_run.py",
+    "sha256": "{{script_sha256}}"
+  },
+  "engine_selfcheck": {
+    "script": "/scripts/tests/test_strategy_f_engine.py",
+    "sha256": "{{engine_selfcheck_sha256}}",
+    "must_run_before_launch": true
+  },
+  "expected_outputs": [
+    "result.json",
+    "artifacts/cohort_results.json",
+    "artifacts/cohort_survivors.json",
+    "artifacts/assertions.json",
+    "artifacts/dca_layer_histogram.json"
+  ],
+  "falsification": [
+    "no signal / insufficient trades (G2 floor: fewer than 30 historical episodes in the cohort's best case, or fewer than 10 in the winner's OOS slice; culls the cohort)",
+    "OOS economic failure of the frozen winner cell (G4: net_pnl <= 0 or sharpe <= 0)",
+    "full-window economic failure of the frozen winner cell (G5: net_pnl <= 0)",
+    "execution-cost failure (G6: any of fee_2x / funding_2x / entry_delay_1_bar / slippage_2ticks turns the frozen cell's net PnL non-positive)",
+    "cost-attrition failure (G8: net_pnl <= 0 at 40 bps per fill)",
+    "parameter-neighbourhood instability (G7: fewer than 60% of legal face-adjacent neighbours agree in historical net-PnL sign)",
+    "family-level cost boundary: a winner's full-window net-PnL sign flips between the canonical track and cost_attrition_40bps (never PASS)",
+    "family-level symbol concentration: one symbol carries more than 70% of the positive OOS net PnL among survivors (never PASS)",
+    "family-level OOS grid instability: a winner's legal neighbours disagree in OOS net-PnL sign on 40% or more of the neighbours (never PASS)"
+  ],
+  "notes": "The runner reads ONLY this file for parameters; it re-hashes itself against script.sha256 before doing anything, and it writes only into the attempt directory and /qlib/work."
+}
