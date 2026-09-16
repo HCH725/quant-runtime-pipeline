@@ -1,0 +1,1826 @@
+{
+  "snapshot_kind": "prerequisite-gate determination snapshot (contract 6.4 / 13 / 14.4)",
+  "snapshot_taken_at_utc": "2026-09-16T23:18:32Z",
+  "snapshot_boundary": "snapshot, not runtime state: it records the measured raw, the requirement-vs-available mapping, the immutable round artifacts and their hashes, and the executable verification that was run on this host at this time",
+  "card": {
+    "kanban_task_id": "t_729dd9ad",
+    "kanban_board": "quant-strategy-research",
+    "title": "Production Candidate — Ethereum Exchange Net-Inflow Bearish Drift at 1-6 Hour Horizons (full backtest)",
+    "family_id": "ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01",
+    "round_id": "ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01-r1",
+    "board_readback": "t_729dd9ad|running|default|dir|local-only"
+  },
+  "contract_basis": {
+    "path": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+    "version": "v1.9.0",
+    "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+    "sections_cited": [
+      "6.4 (done != PASS / TECHNICAL_INCOMPLETE requirements including the prerequisite-missing alignment)",
+      "7.2 v1.3.1 (DCA provenance classification)",
+      "7.3 (cohort survivor semantics)",
+      "10.7 (verdict.json schema)",
+      "10.8 (frozen survivor bundle)",
+      "13 (failure taxonomy: layer criterion and the data_window_invalid row)",
+      "15 (family yield / bounded stop)",
+      "28 (evidence preservation)"
+    ],
+    "family_id_registration_verbatim_sha256": "sha256:d6a56e42e60300997067a1aa973a3afaefa2150ee9d62015478fb5ca32ccbe4d"
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure": {
+      "layer": "card-local",
+      "class": "data_window_invalid",
+      "detail": "the record's required prerequisites - ETH on-chain transfer data, point-in-time labelled centralised-exchange addresses, exchange inflow/outflow series at hourly or finer resolution, the derived net inflow, an ETH spot-or-index price on the same clock, label-vintage metadata and the exchange maintenance/wallet-migration/bridge/staking/custody-event metadata - do not exist in the canonical raw, which holds one venue's USD-M perpetual klines/funding/instruments for four contracts. The signal's own independent variable is absent, so nothing was launched.",
+      "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; the data_window_invalid row ('區間內無 bar、instrument 缺失') is the closest registered row, and the round-spec records that choice as an operator/contract decision; §6.4's prerequisite-missing alignment (2026-09-16, card t_2acfd339) explicitly makes an honest TECHNICAL_INCOMPLETE the terminal for this case"
+    },
+    "yield": {
+      "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+      "reason": "an unfixable card-local prerequisite failure terminates the round; no re-entry of this round is possible while the data is absent"
+    },
+    "run_id": null,
+    "attempts": {
+      "launched": 0,
+      "run_specs": 0,
+      "terminal_sentinels": 0
+    },
+    "evidence_run_ids": [],
+    "coverage": {
+      "cohorts_realized": 0,
+      "case_evaluations": 0,
+      "registered_phase_grids": [
+        "historical",
+        "oos",
+        "full",
+        "fee_2x",
+        "funding_2x",
+        "entry_delay_1_bar",
+        "slippage_2ticks",
+        "no_funding",
+        "no_funding_full",
+        "cost_attrition_40bps"
+      ],
+      "coverage_complete": false,
+      "reason": "empty by construction: no cohort can be registered without the decision variable, so the G1 coverage gate has nothing to cover"
+    },
+    "survivors": {
+      "count": 0,
+      "bundle": null,
+      "ranking": null,
+      "note": "no survivor bundle exists and none may be fabricated: section 10.8 requires a terminal DONE attempt with full coverage and true assertions"
+    },
+    "not_a_scientific_reject": "the candidate is neither validated nor refuted; a missing prerequisite is explicitly not a rejection",
+    "why_technical": "the failure is a data/market absence, not a research result",
+    "why_card_local": "the criterion asks whether the SAME ACTION would fail on another card. The absence is a property of this record's required data, and no shared-layer component (container, runner, reconciler, deploy or board) was exercised at all: nothing was launched.",
+    "incomplete_reason": "required prerequisites absent from the canonical raw (measured); no attempt was ever launched",
+    "determination_evidence": {
+      "checker": "runtime/ethereum_exchange_net_inflow_prerequisite_check.py",
+      "checks": "C1-C14 (raw re-measurement, artifact re-read, live agreement, verbatim)",
+      "measurement": {
+        "raw_entry_name_count": 1633,
+        "exchange_flow_token_hits_in_entry_names": [],
+        "exchange_flow_dataset_present": false,
+        "exchange_address_label_dataset_present": false,
+        "label_vintage_metadata_present": false,
+        "eth_onchain_transfer_dataset_present": false,
+        "net_inflow_series_constructible": false,
+        "forward_return_regression_from_flow_constructible": false,
+        "record_sample_days_inside_raw_window": 384,
+        "record_sample_coverage_fraction": 0.2063
+      }
+    }
+  },
+  "measured_canonical_raw": {
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "top_level_dirs": [
+      "_meta",
+      "_tools",
+      "binance"
+    ],
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "binance_usdm_subdirs": [
+      "funding",
+      "instruments",
+      "klines"
+    ],
+    "raw_paths": [
+      "_meta",
+      "_tools",
+      "_tools/__pycache__",
+      "binance",
+      "binance/usdm",
+      "binance/usdm/funding",
+      "binance/usdm/instruments",
+      "binance/usdm/klines"
+    ],
+    "paths_named_other_market": [],
+    "non_binance_paths": [],
+    "venue": "BINANCE",
+    "market_type": "usdm_perp",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_end_rule": "last completed UTC day (no partial-day data)",
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_interval_set": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_row_field_set": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "klines_1h_first_open_utc": "2022-01-01T00:00:00+00:00",
+    "klines_1h_last_open_utc": "2026-09-15T23:00:00+00:00",
+    "klines_1h_open_step_seconds_sample": [
+      3600,
+      3600,
+      3600
+    ],
+    "klines_1h_open_step_seconds": [
+      3600
+    ],
+    "klines_1d_first_by_symbol": {
+      "BNBUSDT": "2022-01-01T00:00:00+00:00",
+      "BTCUSDT": "2022-01-01T00:00:00+00:00",
+      "ETHUSDT": "2022-01-01T00:00:00+00:00",
+      "SOLUSDT": "2022-01-01T00:00:00+00:00"
+    },
+    "klines_1d_last_by_symbol": {
+      "BNBUSDT": "2026-09-15T00:00:00+00:00",
+      "BTCUSDT": "2026-09-15T00:00:00+00:00",
+      "ETHUSDT": "2026-09-15T00:00:00+00:00",
+      "SOLUSDT": "2026-09-15T00:00:00+00:00"
+    },
+    "raw_1d_window_utc": [
+      "2022-01-01T00:00:00+00:00",
+      "2026-09-15T00:00:00+00:00"
+    ],
+    "card_registered_raw_window": "klines 2022-01-01→2026-09-11",
+    "card_registered_funding_window": "funding 2022-01-01T00:00Z→2026-09-12T08:00Z",
+    "raw_1d_window_starts_at_or_after_card_registration": true,
+    "raw_1d_history_days": 1718,
+    "record_reported_sample": {
+      "start": "2017-12-16",
+      "end": "2023-01-20",
+      "days": 1861
+    },
+    "record_sample_days_inside_raw_window": 384,
+    "record_sample_coverage_fraction": 0.2063,
+    "raw_window_covers_oos_extension_from_2023_01_21": true,
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "funding_row_keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+    ],
+    "funding_venues": [
+      "BINANCE"
+    ],
+    "funding_first_ms": "2022-01-01T00:00:00.006000+00:00",
+    "funding_last_ms": "2026-09-16T08:00:00.002000+00:00",
+    "funding_row_has_flow_field": false,
+    "instrument_count": 4,
+    "instrument_symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "instrument_ids": [
+      "BNBUSDT-PERP.BINANCE",
+      "BTCUSDT-PERP.BINANCE",
+      "ETHUSDT-PERP.BINANCE",
+      "SOLUSDT-PERP.BINANCE"
+    ],
+    "instrument_base_currencies": [
+      "BNB",
+      "BTC",
+      "ETH",
+      "SOL"
+    ],
+    "instrument_is_inverse": [
+      false
+    ],
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_quote_currencies": [
+      "USDT"
+    ],
+    "instrument_settlement_currencies": [
+      "USDT"
+    ],
+    "instrument_field_names": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_flow_field_hits": [],
+    "kline_row_has_flow_field": false,
+    "schema_sha256": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+    "schema_dataset_sections": [
+      "funding",
+      "instruments",
+      "klines (Binance USD-M perpetual futures, UTC)"
+    ],
+    "schema_documents_exchange_flow_dataset": false,
+    "schema_single_venue": true,
+    "schema_documents_missing_fields": true,
+    "schema_no_silent_gapfill": true,
+    "schema_flow_word_lines": [],
+    "inventory_sha256": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+    "inventory_declares_no_other_store_found": true,
+    "inventory_launchd_updater_line": "Updated by: `_tools/market_data_sync.py`, daily via launchd `ai.marketdata.raw-sync`",
+    "raw_entry_name_count": 1633,
+    "probe_tokens_tested": [
+      "exchange_net_inflow",
+      "exchange_netflow",
+      "exchange_inflow",
+      "exchange_outflow",
+      "net_inflow",
+      "netinflow",
+      "net_flow",
+      "netflow",
+      "inflow",
+      "outflow",
+      "exchange_flow",
+      "cex_flow",
+      "cexflow",
+      "onchain_flow",
+      "deposit_addr",
+      "exchange_address",
+      "address_label",
+      "addresslabel",
+      "labelled_address",
+      "labeled_address",
+      "wallet_label",
+      "exchange_label",
+      "label_vintage",
+      "cex_wallet",
+      "glassnode",
+      "cryptoquant",
+      "nansen",
+      "arkham",
+      "santiment",
+      "intotheblock",
+      "chainalysis",
+      "etherscan",
+      "onchain",
+      "on-chain",
+      "on_chain",
+      "erc20",
+      "tx_hash",
+      "txhash",
+      "ethereum_transfer",
+      "eth_flow",
+      "vintage"
+    ],
+    "exchange_flow_token_hits_in_entry_names": [],
+    "flow_token_name_examples": {},
+    "excluded_token_raw_tree_collisions": {
+      "eth": [
+        "ethusdt",
+        "ethusdt-15m-2022-01.jsonl.gz",
+        "ethusdt-15m-2022-02.jsonl.gz"
+      ]
+    },
+    "raw_entry_names_sample": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m",
+      "__pycache__",
+      "_meta",
+      "_tools",
+      "binance",
+      "binance_public.cpython-314.pyc",
+      "binance_public.py",
+      "bnbusdt",
+      "bnbusdt-15m-2022-01.jsonl.gz",
+      "bnbusdt-15m-2022-02.jsonl.gz",
+      "bnbusdt-15m-2022-03.jsonl.gz",
+      "bnbusdt-15m-2022-04.jsonl.gz",
+      "bnbusdt-15m-2022-05.jsonl.gz",
+      "bnbusdt-15m-2022-06.jsonl.gz",
+      "bnbusdt-15m-2022-07.jsonl.gz",
+      "bnbusdt-15m-2022-08.jsonl.gz",
+      "bnbusdt-15m-2022-09.jsonl.gz",
+      "bnbusdt-15m-2022-10.jsonl.gz",
+      "bnbusdt-15m-2022-11.jsonl.gz",
+      "bnbusdt-15m-2022-12.jsonl.gz",
+      "bnbusdt-15m-2023-01.jsonl.gz",
+      "bnbusdt-15m-2023-02.jsonl.gz",
+      "bnbusdt-15m-2023-03.jsonl.gz",
+      "bnbusdt-15m-2023-04.jsonl.gz",
+      "bnbusdt-15m-2023-05.jsonl.gz",
+      "bnbusdt-15m-2023-06.jsonl.gz",
+      "bnbusdt-15m-2023-07.jsonl.gz",
+      "bnbusdt-15m-2023-08.jsonl.gz",
+      "bnbusdt-15m-2023-09.jsonl.gz",
+      "bnbusdt-15m-2023-10.jsonl.gz",
+      "bnbusdt-15m-2023-11.jsonl.gz",
+      "bnbusdt-15m-2023-12.jsonl.gz",
+      "bnbusdt-15m-2024-01.jsonl.gz",
+      "bnbusdt-15m-2024-02.jsonl.gz"
+    ],
+    "probe_exclusions": {
+      "eth": "substring of ordinary English words ('method', 'whether', 'withdraw'), of the word 'ethereum' itself and of the local contract names ('ETHUSDT' and every 'ETHUSDT-<interval>-<month>.jsonl.gz' file), so a hit could never distinguish an on-chain ETH transfer dataset from those artefacts",
+      "flow": "substring of the ordinary words 'workflow', 'overflow', 'flowchart'; the compound tokens 'exchange_flow', 'net_flow', 'eth_flow', 'onchain_flow' stay in the probe list, so the actual surface remains covered",
+      "exchange": "generic word: matches the venue metadata ('BINANCE'), the repo/wiki prose about exchanges and web-cache files across the host; the compound flow tokens stay in the probe list",
+      "label": "substring of UI/form label code and of the word 'labeled'/'labelling' across the host; the compound tokens 'address_label', 'wallet_label', 'exchange_label' stay in the probe list",
+      "address": "generic word: matches mail/address-list and memory-address artefacts across the host (the same class the earlier on-chain gate excluded)",
+      "transfer": "substring of generic file-transfer code and prose ('transfer' in scripts, rsync logs and docs); 'ethereum_transfer' stays in the probe list",
+      "wallet": "substring of wallet-app and custody prose unrelated to labelled exchange addresses; 'cex_wallet'/'wallet_label' stay in the probe list"
+    },
+    "ref_or_onchain_subtrees": [],
+    "instrument_definition_files_outside_usdm": [],
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "INVENTORY.md": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "TRANSCODE_MANIFEST.json": "sha256:04a842159aa4a6fd7da9d4af2109cd01ca3ced6f9587f8ee8aa2106a9c878065",
+      "FUNDING_EXPORT.json": "sha256:8ceb7bcbf2fc0cc1fe6c56f0b41b418711f33b2b74edac10923f2162c939be2f"
+    },
+    "exchange_flow_dataset_present": false,
+    "exchange_address_label_dataset_present": false,
+    "label_vintage_metadata_present": false,
+    "eth_onchain_transfer_dataset_present": false,
+    "net_inflow_series_constructible": false,
+    "forward_return_regression_from_flow_constructible": false,
+    "note": "single venue (BINANCE USD-M perpetual), four fixed contracts: klines whose rows carry the seven-field OHLCV shape only, that venue's funding, and its instrument definitions. No blockchain transfer surface, no exchange-address label surface, no inflow/outflow series, and no ETH/USD (spot dollars) price source; every instrument is quoted and settled in USDT. The raw's own daily history begins 2022-01-01, so only 384 of the record's reported 1861 sample days (20.6%) fall inside it."
+  },
+  "requirement_vs_available": {
+    "rule": "ELIGIBLE UNIVERSE is canonicalised from the record's own required-data list as transcribed on the card; no second suitability adjudication was performed after intake.",
+    "required_data_matrix": [
+      {
+        "item": "universe_eth_onchain_transfer_data",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "point_in_time_exchange_address_labels",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "exchange_inflow_outflow_series_hourly_or_finer",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "derived_net_inflow_inflow_minus_outflow",
+        "status": "NOT_CONSTRUCTIBLE",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "price_reference_eth_spot_or_index_same_clock",
+        "status": "ABSENT_AS_REGISTERED_SOURCE",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "forward_returns_1h_2h_3h_4h_6h_from_flow_events",
+        "status": "NOT_CONSTRUCTIBLE",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "current_lagged_eth_returns_source_style_controls",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "address_label_vintage_metadata",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "exchange_maintenance_wallet_migration_bridge_metadata",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": true
+      },
+      {
+        "item": "instrument_eth",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "timeframe_hourly_or_finer",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "venue_and_timezone_normalization_utc",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "perpetual_bid_ask_fees_slippage_depth",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "perpetual_funding_mark_index_basis",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_1_reconstruct_flows_point_in_time",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_2_forward_return_regressions_source_sample",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_3_strict_oos_from_2023_01_21",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_4_normalization_variants",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_5_incremental_information_controls",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_6_top_pct_event_studies_and_placebos",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_7_remove_wallet_migration_custody_events",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_8_second_vendor_or_independent_label_map",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "falsification_item_9_spot_and_perp_execution_net_of_cost",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "baseline_zero_flow_placebo",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      },
+      {
+        "item": "source_sample_2017_12_16_to_2023_01_20",
+        "status": "ABSENT",
+        "provenance": "record required data (canonical), as transcribed on the card",
+        "measured": false
+      }
+    ],
+    "decisive_items_with_status": {
+      "universe_eth_onchain_transfer_data": "ABSENT",
+      "point_in_time_exchange_address_labels": "ABSENT",
+      "exchange_inflow_outflow_series_hourly_or_finer": "ABSENT",
+      "derived_net_inflow_inflow_minus_outflow": "NOT_CONSTRUCTIBLE",
+      "price_reference_eth_spot_or_index_same_clock": "ABSENT_AS_REGISTERED_SOURCE",
+      "forward_returns_1h_2h_3h_4h_6h_from_flow_events": "NOT_CONSTRUCTIBLE",
+      "address_label_vintage_metadata": "ABSENT",
+      "exchange_maintenance_wallet_migration_bridge_metadata": "ABSENT"
+    },
+    "missing": [
+      "universe_eth_onchain_transfer_data",
+      "point_in_time_exchange_address_labels",
+      "exchange_inflow_outflow_series_hourly_or_finer",
+      "derived_net_inflow_inflow_minus_outflow",
+      "price_reference_eth_spot_or_index_same_clock",
+      "forward_returns_1h_2h_3h_4h_6h_from_flow_events",
+      "address_label_vintage_metadata",
+      "exchange_maintenance_wallet_migration_bridge_metadata"
+    ],
+    "instrument_required": [
+      "ETH"
+    ],
+    "instrument_present_local": [
+      "ETHUSDT (BINANCE USD-M perpetual)"
+    ],
+    "universe_shrunk_to_local_list": false,
+    "registration_note": "ELIGIBLE UNIVERSE is canonicalised from the record's own required-data list as transcribed on the card; no second suitability adjudication was performed after intake, and the universe was not shrunk."
+  },
+  "host_wide_data_store_scan": {
+    "roots_scanned": [
+      "/Users/hong/workspace",
+      "/Volumes/ExpansionDrive",
+      "/Volumes/ResearchData",
+      "/Users/hong/.hermes",
+      "/Users/hong/workspace/qlib-apple-container"
+    ],
+    "skipped_roots": [],
+    "probe_tokens": [
+      "exchange_net_inflow",
+      "exchange_netflow",
+      "exchange_inflow",
+      "exchange_outflow",
+      "net_inflow",
+      "netinflow",
+      "net_flow",
+      "netflow",
+      "inflow",
+      "outflow",
+      "exchange_flow",
+      "cex_flow",
+      "cexflow",
+      "onchain_flow",
+      "deposit_addr",
+      "exchange_address",
+      "address_label",
+      "addresslabel",
+      "labelled_address",
+      "labeled_address",
+      "wallet_label",
+      "exchange_label",
+      "label_vintage",
+      "cex_wallet",
+      "glassnode",
+      "cryptoquant",
+      "nansen",
+      "arkham",
+      "santiment",
+      "intotheblock",
+      "chainalysis",
+      "etherscan",
+      "onchain",
+      "on-chain",
+      "on_chain",
+      "erc20",
+      "tx_hash",
+      "txhash",
+      "ethereum_transfer",
+      "eth_flow",
+      "vintage"
+    ],
+    "probe_exclusions": {
+      "eth": "substring of ordinary English words ('method', 'whether', 'withdraw'), of the word 'ethereum' itself and of the local contract names ('ETHUSDT' and every 'ETHUSDT-<interval>-<month>.jsonl.gz' file), so a hit could never distinguish an on-chain ETH transfer dataset from those artefacts",
+      "flow": "substring of the ordinary words 'workflow', 'overflow', 'flowchart'; the compound tokens 'exchange_flow', 'net_flow', 'eth_flow', 'onchain_flow' stay in the probe list, so the actual surface remains covered",
+      "exchange": "generic word: matches the venue metadata ('BINANCE'), the repo/wiki prose about exchanges and web-cache files across the host; the compound flow tokens stay in the probe list",
+      "label": "substring of UI/form label code and of the word 'labeled'/'labelling' across the host; the compound tokens 'address_label', 'wallet_label', 'exchange_label' stay in the probe list",
+      "address": "generic word: matches mail/address-list and memory-address artefacts across the host (the same class the earlier on-chain gate excluded)",
+      "transfer": "substring of generic file-transfer code and prose ('transfer' in scripts, rsync logs and docs); 'ethereum_transfer' stays in the probe list",
+      "wallet": "substring of wallet-app and custody prose unrelated to labelled exchange addresses; 'cex_wallet'/'wallet_label' stay in the probe list"
+    },
+    "probe_exclusion_demonstration": {
+      "eth": {
+        "house_collision_example": "/Users/hong/.hermes/.install_method",
+        "house_hit_count": 584,
+        "reason": "substring of ordinary English words ('method', 'whether', 'withdraw'), of the word 'ethereum' itself and of the local contract names ('ETHUSDT' and every 'ETHUSDT-<interval>-<month>.jsonl.gz' file), so a hit could never distinguish an on-chain ETH transfer dataset from those artefacts"
+      },
+      "flow": {
+        "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/hermes_cli/dashboard_auth/native_flow.py",
+        "house_hit_count": 256,
+        "reason": "substring of the ordinary words 'workflow', 'overflow', 'flowchart'; the compound tokens 'exchange_flow', 'net_flow', 'eth_flow', 'onchain_flow' stay in the probe list, so the actual surface remains covered"
+      },
+      "exchange": {
+        "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_copilot_token_exchange.py",
+        "house_hit_count": 48,
+        "reason": "generic word: matches the venue metadata ('BINANCE'), the repo/wiki prose about exchanges and web-cache files across the host; the compound flow tokens stay in the probe list"
+      },
+      "label": {
+        "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/model-status-label.test.ts",
+        "house_hit_count": 75,
+        "reason": "substring of UI/form label code and of the word 'labeled'/'labelling' across the host; the compound tokens 'address_label', 'wallet_label', 'exchange_label' stay in the probe list"
+      },
+      "address": {
+        "house_collision_example": "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/website/docs/guides/agent-email-address.md",
+        "house_hit_count": 6,
+        "reason": "generic word: matches mail/address-list and memory-address artefacts across the host (the same class the earlier on-chain gate excluded)"
+      },
+      "transfer": {
+        "house_collision_example": "/Users/hong/.hermes/hermes-agent/apps/desktop/src/plugins/kanban/transfer.ts",
+        "house_hit_count": 12,
+        "reason": "substring of generic file-transfer code and prose ('transfer' in scripts, rsync logs and docs); 'ethereum_transfer' stays in the probe list"
+      },
+      "wallet": {
+        "house_collision_example": "/Users/hong/.hermes/hermes-agent/plugin-catalog/metamask-wallet.yaml",
+        "house_hit_count": 6,
+        "reason": "substring of wallet-app and custody prose unrelated to labelled exchange addresses; 'cex_wallet'/'wallet_label' stay in the probe list"
+      }
+    },
+    "excluded_token_scan": {
+      "eth": {
+        "hit_count": 584,
+        "classification_counts": {
+          "unclassified_data_candidate": 416,
+          "non_canonical_staging_copy_false_positive": 24,
+          "contributor_metadata_false_positive": 14,
+          "hermes_cache_false_positive": 34,
+          "source_code_false_positive": 42,
+          "research_document_false_positive": 38,
+          "dataset_stub_directory_false_positive": 4,
+          "hermes_skill_or_catalog_false_positive": 3,
+          "related_wiki_document": 3,
+          "canonical_record_document": 1,
+          "own_checker_source_false_positive": 1,
+          "own_family_directory_false_positive": 3,
+          "own_round_artifact_false_positive": 1
+        },
+        "unclassified_data_candidates": [
+          "/Users/hong/.hermes/.install_method",
+          "/Users/hong/.hermes/state/binance-square-wte/cards/20260730T082320+0800-9c9ef8ef5183-ethusdt.png",
+          "/Users/hong/.hermes/state/binance-square-wte/cards/20260912T202214+0800-d95c5e626468-ethfiusdt.png",
+          "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_ethusdt_1d_index.raw",
+          "/Users/hong/workspace/btc-relative-entry-score/assets/logos/ETH.png",
+          "/Users/hong/workspace/btc-relative-entry-score/assets/logos/ETH.source",
+          "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/assets/chapter_figures/figure_7_2_triple_barrier_method.jpeg",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/funding/ETHUSDT",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/funding/ETHUSDT/ETHUSDT-funding.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/15m/ETHUSDT-15m-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1d/ETHUSDT-1d-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1h/ETHUSDT-1h-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/1w/ETHUSDT-1w-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/30m/ETHUSDT-30m-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/4h/ETHUSDT-4h-2026-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2022-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2023-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2024-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-09.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-10.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-11.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2025-12.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-01.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-02.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-03.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-04.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-05.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-06.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-07.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-08.jsonl.gz",
+          "/Volumes/ExpansionDrive/market-data-raw/binance/usdm/klines/ETHUSDT/5m/ETHUSDT-5m-2026-09.jsonl.gz"
+        ],
+        "ethusdt_named_hits": 407,
+        "examples": [
+          "/Users/hong/.hermes/.install_method",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/shared/src/billing-payment-method.test-d.ts",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/alcibiades.eth@protonmail.com",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/dnethusahan.h05@gmail.com",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/emodoteth@gmail.com"
+        ]
+      },
+      "flow": {
+        "hit_count": 256,
+        "classification_counts": {
+          "non_canonical_staging_copy_false_positive": 39,
+          "hermes_cache_false_positive": 3,
+          "source_code_false_positive": 65,
+          "contributor_metadata_false_positive": 4,
+          "dataset_stub_directory_false_positive": 14,
+          "research_document_false_positive": 84,
+          "hermes_skill_or_catalog_false_positive": 23,
+          "related_wiki_document": 15,
+          "canonical_record_document": 1,
+          "unclassified_data_candidate": 2,
+          "own_checker_source_false_positive": 2,
+          "own_family_directory_false_positive": 3,
+          "own_round_artifact_false_positive": 1
+        },
+        "unclassified_data_candidates": [
+          "/Users/hong/workspace/TokenBar-custom/Sources/TokenBar/FlowLayout.swift",
+          "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/assets/workflow.png"
+        ],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/hermes_cli/dashboard_auth/native_flow.py",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/hermes_cli/model_setup_flows.py",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/optional-skills/creative/baoyu-article-illustrator/references/workflow.md",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/optional-skills/creative/baoyu-comic/references/partial-workflows.md",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/optional-skills/creative/baoyu-comic/references/workflow.md"
+        ]
+      },
+      "exchange": {
+        "hit_count": 48,
+        "classification_counts": {
+          "non_canonical_staging_copy_false_positive": 2,
+          "source_code_false_positive": 10,
+          "canonical_record_document": 1,
+          "related_wiki_document": 3,
+          "unclassified_data_candidate": 12,
+          "research_document_false_positive": 15,
+          "own_checker_source_false_positive": 1,
+          "own_family_directory_false_positive": 3,
+          "own_round_artifact_false_positive": 1
+        },
+        "unclassified_data_candidates": [
+          "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/wayback_exchangeinfo_20220102134838.raw",
+          "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/wayback_exchangeinfo_20220318130953.raw",
+          "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/raw/wayback_exchangeinfo_20231102093209.raw",
+          "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830/raw/capture-01-b664cab08285406d8b9fe9e989670523.exchangeInfo.raw",
+          "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830/raw/capture-02-672f4eff7a2441329ec34ab7da12c2af.exchangeInfo.raw",
+          "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830/raw/capture-03-b005108538cc4b10a30648d8ad241c97.exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-01-fe879ac93d8641888598d510835d4d4a/exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-02-6a8d96c5315e40d59cb5863079567d9d/exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-03-0dee792ab05e4af4895a829e577f5119/exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-04-98525a0065f04f068e8d13799c2524f1/exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-05-f6d1a9ab771b4e3ba17a093984de6e4c/exchangeInfo.raw",
+          "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/raw/cohort-06-3ede8f3f61e4484095ab413881ef877e/exchangeInfo.raw"
+        ],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_copilot_token_exchange.py",
+          "/Users/hong/.hermes/hermes-agent/tests/hermes_cli/test_copilot_token_exchange.py",
+          "/Users/hong/.hermes/kanban/boards/_archived/quant-professional-development-1788651726/attachments/t_7744eb73/fresh_exchangeInfo.json",
+          "/Users/hong/.hermes/wiki/quant/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+          "/Users/hong/.hermes/wiki/quant/foreign-exchange-macro-news-fundamental-momentum-llm-taylor-rule-2026-09-02.md"
+        ]
+      },
+      "label": {
+        "hit_count": 75,
+        "classification_counts": {
+          "non_canonical_staging_copy_false_positive": 17,
+          "source_code_false_positive": 42,
+          "research_document_false_positive": 15,
+          "unclassified_data_candidate": 1
+        },
+        "unclassified_data_candidates": [
+          "/Users/hong/.hermes/kanban/boards/hermes-capability-development/attachments/t_b0cb5dce/labels.csv"
+        ],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/model-status-label.test.ts",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/model-status-label.ts",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/lib/session-project-label.ts",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_dashboard_profiles_nav_label.py",
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_sessions_size_delta_label.py"
+        ]
+      },
+      "address": {
+        "hit_count": 6,
+        "classification_counts": {
+          "non_canonical_staging_copy_false_positive": 1,
+          "source_code_false_positive": 3,
+          "research_document_false_positive": 2
+        },
+        "unclassified_data_candidates": [],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/website/docs/guides/agent-email-address.md",
+          "/Users/hong/.hermes/hermes-agent/apps/desktop/src/plugins/hermes-bots/group-rounds.unaddressed.test.ts",
+          "/Users/hong/.hermes/hermes-agent/optional-skills/security/unbroker/references/brokers/addresses.json",
+          "/Users/hong/.hermes/hermes-agent/tests/agent/test_api_content_row_addressed_backfill.py",
+          "/Users/hong/.hermes/hermes-agent/website/docs/guides/agent-email-address.md"
+        ]
+      },
+      "transfer": {
+        "hit_count": 12,
+        "classification_counts": {
+          "source_code_false_positive": 3,
+          "non_canonical_staging_copy_false_positive": 3,
+          "research_document_false_positive": 5,
+          "related_wiki_document": 1
+        },
+        "unclassified_data_candidates": [],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/hermes-agent/apps/desktop/src/plugins/kanban/transfer.ts",
+          "/Users/hong/.hermes/hermes-agent/hermes_cli/kanban_transfer.py",
+          "/Users/hong/.hermes/hermes-agent/tests/hermes_cli/test_kanban_transfer.py",
+          "/Users/hong/.hermes/kanban/boards/_archived/hermes-phd-researcher-professional-development-1788679854/attachments/t_4ab70448/Capstone-Transfer-Test.md",
+          "/Users/hong/.hermes/kanban/boards/_archived/hermes-phd-researcher-professional-development-1788679854/attachments/t_6f59d79b/transfer-test.md"
+        ]
+      },
+      "wallet": {
+        "hit_count": 6,
+        "classification_counts": {
+          "source_code_false_positive": 1,
+          "hermes_skill_or_catalog_false_positive": 1,
+          "related_wiki_document": 1,
+          "research_document_false_positive": 3
+        },
+        "unclassified_data_candidates": [],
+        "ethusdt_named_hits": 0,
+        "examples": [
+          "/Users/hong/.hermes/hermes-agent/plugin-catalog/metamask-wallet.yaml",
+          "/Users/hong/.hermes/skills/research/binance-trading-surfaces/references/2026-07-stablecoin-wallet-earn-brief.md",
+          "/Users/hong/.hermes/wiki/quant/crypto-public-wallet-identity-trader-informativeness-adverse-selection-2026-09-02.md",
+          "/Users/hong/workspace/alpha-strategy-research/crypto-public-wallet-identity-trader-informativeness-adverse-selection-2026-09-02.md",
+          "/Users/hong/workspace/alpha-strategy-research/hyperliquid-wallet-cross-venue-anticipatory-flow-binance-btc-perp-2026-09-15.md"
+        ]
+      }
+    },
+    "hit_count": 47,
+    "classification_counts": {
+      "research_document_false_positive": 30,
+      "hermes_skill_or_catalog_false_positive": 2,
+      "related_wiki_document": 2,
+      "canonical_record_document": 1,
+      "source_code_false_positive": 2,
+      "own_checker_source_false_positive": 2,
+      "dataset_stub_directory_false_positive": 4,
+      "own_family_directory_false_positive": 3,
+      "own_round_artifact_false_positive": 1
+    },
+    "hits_listed": 47,
+    "hits_capped_by": 0,
+    "hits": [
+      {
+        "path": "/Users/hong/.hermes/hermes-agent/optional-skills/creative/baoyu-article-illustrator/references/styles/vintage.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/.hermes/hermes-agent/optional-skills/creative/baoyu-comic/references/tones/vintage.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/.hermes/skills/creative/baoyu-article-illustrator/references/styles/vintage.md",
+        "classification": "hermes_skill_or_catalog_false_positive"
+      },
+      {
+        "path": "/Users/hong/.hermes/skills/creative/baoyu-comic/references/tones/vintage.md",
+        "classification": "hermes_skill_or_catalog_false_positive"
+      },
+      {
+        "path": "/Users/hong/.hermes/wiki/quant/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+        "classification": "related_wiki_document"
+      },
+      {
+        "path": "/Users/hong/.hermes/wiki/quant/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+        "classification": "related_wiki_document"
+      },
+      {
+        "path": "/Users/hong/.hermes/wiki/quant/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+        "classification": "canonical_record_document"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-balanced-and-terminal-price-valuation-bands-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-cointime-aviv-ratio-true-market-mean-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-cumulative-value-days-destroyed-cvdd-floor-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-entity-adjusted-dormancy-flow-macro-bottom-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-illiquid-supply-shock-ratio-issr-drift-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-market-cap-to-thermocap-ratio-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-miner-position-index-mpi-outflow-exhaustion-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-mvrv-zscore-cycle-reversal-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-net-unrealized-profit-loss-nupl-macro-cycle-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-nvt-signal-macro-cycle-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-puell-multiple-miner-capitulation-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-reserve-risk-hodl-conviction-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-sopr-spent-output-profit-ratio-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-sth-mvrv-dynamic-support-mean-reversion-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/blockchain-metrics-ribbon-cross-sectional-btc-onchain-indicators-2026-09-03.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/crypto-cross-sectional-onchain-user-activity-growth-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/crypto-prediction-market-onchain-trade-misattribution-longshot-spread-2026-09-02.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/crypto-stablecoin-minting-issuance-inflow-momentum-shock-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/defi-on-chain-options-mispricing-hegic-arbitrum-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/ethereum-exchange-net-inflow-conditioned-call-selling-2026-09-03.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/alpha-strategy-research/usdt-exchange-net-inflow-buy-side-liquidity-drift-1h-2h-2026-09-03.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/audit-CJ-DEFI3-manual/export/20260914_091849_2d7a53-audit-cj-defi3-on-chain-execution-defense.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/evidence/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31-prerequisite-gate-20260917.json",
+        "classification": "source_code_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py",
+        "classification": "own_checker_source_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/ethereum_exchange_net_inflow_prerequisite_check.py",
+        "classification": "own_checker_source_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/04_fundamental_alternative_data/09_onchain_fundamentals.ipynb",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/04_fundamental_alternative_data/09_onchain_fundamentals.py",
+        "classification": "source_code_false_positive"
+      },
+      {
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/data/crypto/onchain",
+        "classification": "dataset_stub_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+        "classification": "research_document_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+        "classification": "own_family_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31",
+        "classification": "dataset_stub_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31/rounds",
+        "classification": "dataset_stub_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31/rounds/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31-r1",
+        "classification": "dataset_stub_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01",
+        "classification": "own_family_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/rounds",
+        "classification": "own_family_directory_false_positive"
+      },
+      {
+        "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/rounds/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01-r1",
+        "classification": "own_round_artifact_false_positive"
+      }
+    ],
+    "unclassified_hits": [],
+    "note": "a house-wide name probe with the same 41-token list used for the raw tree was run over 5 roots; it returned 47 hit(s) in 9 classification(s), 0 of them unclassified, and no hit class is a data store. A separate disclosed pass re-ran the 7 excluded token(s) - excluded because each is a substring of a word or name the host already uses (an ordinary English word, the venue metadata, or the local contract name) - and returned 987 hit(s) in 13 classification(s), 431 of them unclassified, of which 407 carry the local contract name 'ethusdt' in the file name. The canonical raw remains the only market-data source on the host and it holds no on-chain transfer, exchange-flow or address-label dataset."
+  },
+  "environment_readback": {
+    "date": "2026-09-16T23:18:32Z",
+    "host": "Darwin HONGdeMac-mini.local 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:03 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_T8132 arm64",
+    "python": "3.14.6",
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "raw_root_toplevel": [
+      "_meta",
+      "_tools",
+      "binance"
+    ],
+    "results_root": "/Volumes/ExpansionDrive/qlib-results",
+    "results_root_family_entries": [
+      "family.json",
+      "rounds"
+    ],
+    "git_head": "aa3aa056e289961a949625045d5a521eda6d8a46",
+    "git_branch": "main",
+    "git_status_short": "?? .kanban-scratch/\n?? runtime/ethereum_exchange_net_inflow_prerequisite_check.py"
+  },
+  "artifact_hashes": {
+    "round_spec.json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/rounds/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01-r1/round-spec.json",
+      "bytes": 98338,
+      "sha256": "sha256:f7cdd665d302e67636b509be6f8f153b3d97e217899a505eddd54e34379e60e0"
+    },
+    "verdict.json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/rounds/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01-r1/verdict.json",
+      "bytes": 5629,
+      "sha256": "sha256:6126573caadd3046c4db3e95225d60c7f7ea5bd46ff43a63e5544578fae1e3af"
+    },
+    "checker": {
+      "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/ethereum_exchange_net_inflow_prerequisite_check.py",
+      "sha256": "sha256:6c56ba96d146871f5cf6b65cf55574230f5c06889a9c177e5d4b7b68e3ec76dc"
+    },
+    "author_script": {
+      "path": "/Users/hong/workspace/quant-runtime-pipeline/.kanban-scratch/t_729dd9ad-author.py",
+      "sha256": "sha256:f26d9f575412b36bfb256116cbbf07686dac441ae7b8f436e16d61ecaa291104"
+    },
+    "canonical_record": {
+      "path": "/Users/hong/.hermes/wiki/quant/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+      "sha256": "sha256:9df8b6b845cc061db4e30d842c5eb57f9b30d16e286f98185d838b7aeda4ac5c"
+    },
+    "frozen_card_body": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+      "sha256": "sha256:e2ceacb3fb78ceac4ef311d68c3b1e18c03fab02a95cd5b9f8582186c95a202b",
+      "note": "equals the board-DB card body with the system-owned lifecycle footer stripped, as asserted by the author script"
+    },
+    "family.json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/family.json",
+      "sha256": "sha256:1a7b0740df4d127af20944ba44800bd3bc0f8a3a04eec8a9ea2cf8a35564978a"
+    }
+  },
+  "executable_verification": {
+    "checker_default_run": {
+      "cmd": "python3 runtime/ethereum_exchange_net_inflow_prerequisite_check.py",
+      "rc": 0,
+      "lines": [
+        "C1   PASS binance market dirs=['usdm'] venue=BINANCE market_type=usdm_perp other_market_paths=[] non_binance_paths=[] ref/onchain subtrees=[]",
+        "C2   PASS instruments=4 symbols=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual'] quote=['USDT'] settlement=['USDT'] is_inverse=[False] flow_fields=[] instrument files outside binance/usdm=[]",
+        "C3   PASS kline row fields=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] kline flow field=False funding flow field=False documented dataset families=['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] schema documents a flow dataset=False schema documents missing fields=True inventory declares no other store=True",
+        "C4   PASS token hits in entry names=[] dataset present=False address-label dataset present=False label-vintage metadata present=False on-chain transfer dataset present=False (probe: 41 tokens, 1633 entry names, depth 8)",
+        "C5   PASS klines datasets=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] ETHUSDT intervals=['15m', '1d', '1h', '1w', '30m', '4h', '5m'] quote/settlement=['USDT']/['USDT'] no other-market path=True no instrument surface outside binance/usdm=True - a USDT-quoted USD-M perpetual is not the registered 'ETH spot or index price aligned to the same clock' source",
+        "C6   PASS net-inflow series constructible=False flow-conditioned 1/2/3/4/6h forward-return surface constructible=False on-chain transfer dataset present=False",
+        "C7   PASS raw 1d window=['2022-01-01T00:00:00+00:00', '2026-09-15T00:00:00+00:00'] record sample=2017-12-16..2023-01-20 (1861 days) days inside window=384 coverage=0.2063 oos extension from 2023-01-21 covered=True",
+        "C8   PASS verdict=TECHNICAL_INCOMPLETE performance_claimable=False layer=card-local class=data_window_invalid yield=STOP_TECHNICAL_INCOMPLETE run_id=None attempts={'launched': 0, 'run_specs': 0, 'terminal_sentinels': 0} evidence_run_ids=[]",
+        "C9   PASS round dir entries=['round-spec.json', 'verdict.json'] attempts dir exists=False attempts_launched=0 terminal_evidence=attempt_dir/run_spec/sentinel=[None, None, None]",
+        "C10  PASS universe_shrunk_to_local_list=False instrument_required=['ETH'] local contracts outside the record universe=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] on-chain dataset available=False address-label dataset available=False registered price source available=False",
+        "C11  PASS searched axes statuses=['PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN'] base_quote=1000 base_quote_status=PROJECT_PRE_REGISTERED_CONSTANT config_count=48 grid len=48 axes={'spacing_pct': [0.01, 0.02, 0.03, 0.04], 'size_multiplier': [1.0, 1.1], 'breakeven_tp_pct': [0.01, 0.02, 0.03], 'invalidation_pct': [0.05, 0.1]}",
+        "C12  PASS claimed keys=44 covered=44 disagreements vs live raw=[] missing keys=[]",
+        "C13  PASS 71 verbatim leaves resolved ({'record': 14, 'card': 47, 'contract': 9, 'footer': 1}), misses=0 problems=[] unclassified=0 missing_from_map=0 orphan_map=0",
+        "C14  PASS cohorts=0 cases=0 phase grids=10 complete=False survivors=0 required_data_available=False outcome=PREREQUISITE_ABSENT decisive_items=8 matrix rows=25 wrong_statuses={}",
+        "overall: PASS"
+      ]
+    },
+    "verify_verbatim": {
+      "cmd": "python3 runtime/ethereum_exchange_net_inflow_prerequisite_check.py --verify-verbatim",
+      "rc": 0,
+      "verbatim_strings_on_disk": 71,
+      "declared_source_counts": {
+        "record": 14,
+        "card": 47,
+        "contract": 9,
+        "footer": 1
+      },
+      "misses": [],
+      "problems": [],
+      "unclassified_verbatim_paths": [],
+      "missing_from_source_map": [],
+      "orphan_map_entries": [],
+      "digests_disagreeing_with_content": []
+    },
+    "self_test": {
+      "cmd": "python3 runtime/ethereum_exchange_net_inflow_prerequisite_check.py --self-test",
+      "rc": 0,
+      "variants": 26,
+      "refused": 26,
+      "overall": "PASS",
+      "detail": {
+        "verdict_tampered_to_PASS": [
+          "C8"
+        ],
+        "layer_flipped_to_shared": [
+          "C8"
+        ],
+        "failure_class_flipped_to_a_research_result": [
+          "C8"
+        ],
+        "yield_decision_flipped_to_continue": [
+          "C8"
+        ],
+        "run_id_fabricated": [
+          "C8"
+        ],
+        "attempt_fabricated": [
+          "C9"
+        ],
+        "required_data_available_flipped_true": [
+          "C14"
+        ],
+        "exchange_flow_matrix_item_claimed_present": [
+          "C14"
+        ],
+        "onchain_dataset_claimed_available": [
+          "C10"
+        ],
+        "address_label_dataset_claimed_available": [
+          "C10"
+        ],
+        "universe_shrunk_to_the_local_four_contract_list": [
+          "C10"
+        ],
+        "eth_spot_price_source_claimed_present": [
+          "C10"
+        ],
+        "probe_token_list_narrowed": [
+          "C12"
+        ],
+        "claimed_raw_window_edited": [
+          "C12"
+        ],
+        "searched_axis_mislabelled_user_fixed": [
+          "C11"
+        ],
+        "project_constant_relabelled_user_fixed": [
+          "C11"
+        ],
+        "dca_grid_truncated_to_47": [
+          "C11"
+        ],
+        "coverage_claimed_complete_with_1_cohort": [
+          "C14"
+        ],
+        "survivor_bundle_fabricated": [
+          "C14"
+        ],
+        "zero_attempt_claim_replaced_by_an_attempt_dir": [
+          "C9"
+        ],
+        "verbatim_leaf_replaced_by_a_paraphrase": [
+          "C13"
+        ],
+        "verbatim_digest_removed_from_the_map": [
+          "C13"
+        ],
+        "verbatim_source_repointed": [
+          "C13"
+        ],
+        "verbatim_chars_field_falsified": [
+          "C13"
+        ],
+        "verbatim_leaf_relabelled_as_authored_prose": [
+          "C13"
+        ],
+        "verbatim_leaf_nested_in_a_list_is_still_resolved": [
+          "C13"
+        ]
+      }
+    },
+    "raw_fixture_control": {
+      "cmd": "python3 runtime/ethereum_exchange_net_inflow_prerequisite_check.py --raw-fixture-control",
+      "rc": 0,
+      "overall": "PASS",
+      "failed_checks": [
+        "C1",
+        "C12",
+        "C2",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "expected": [
+        "C1",
+        "C12",
+        "C2",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "why": "the fixture plants what this record needs (an hourly ETH exchange net-inflow series with labelled exchange addresses and label-vintage metadata, a spot ETH/USD market, a spot instrument definition, an OKX subtree, and a 2017-12 daily bar); C1/C2/C4/C5/C6/C7 re-measure the raw and C12 re-asserts artifact-to-live-raw agreement, so all seven must flip. C3 (documented dataset families / stored row shapes) is not expected to flip: the fixture does not edit the store's own SCHEMA.md."
+    },
+    "exclusive_create_control": {
+      "cmd": "python3 .kanban-scratch/t_729dd9ad-author.py  (second run)",
+      "rc": 1,
+      "tail": "FileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01/rounds/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01-r1/round-spec.json'",
+      "artifacts_unchanged": {
+        "round-spec.json": "sha256:f7cdd665d302e67636b509be6f8f153b3d97e217899a505eddd54e34379e60e0",
+        "verdict.json": "sha256:6126573caadd3046c4db3e95225d60c7f7ea5bd46ff43a63e5544578fae1e3af"
+      }
+    },
+    "preflight_env_only": {
+      "schema_version": 1,
+      "kind": "preflight",
+      "contract_section": "16",
+      "checked_at_utc": "2026-09-16T23:17:52Z",
+      "host_boot_id": "boot-1789570820",
+      "attempt_dir": null,
+      "launch_gate": "not_evaluated",
+      "recovery": {
+        "attempted": false,
+        "ok": true,
+        "fail_reason": null,
+        "actions": []
+      },
+      "overall": "PASS",
+      "checks": [
+        {
+          "id": "P1",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+        },
+        {
+          "id": "P2",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+        },
+        {
+          "id": "P3",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-65822.tmp"
+        },
+        {
+          "id": "P4",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "container system status=running (rc=0)"
+        },
+        {
+          "id": "P5",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "qlib-run state=running"
+        },
+        {
+          "id": "P6",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+        },
+        {
+          "id": "P7",
+          "status": "PASS",
+          "layer": "card-local",
+          "detail": "/qlib/work writable: work_ok"
+        },
+        {
+          "id": "P8",
+          "status": "PASS",
+          "layer": "shared-layer",
+          "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+        },
+        {
+          "id": "P9",
+          "status": "NA",
+          "layer": "-",
+          "detail": "no --attempt-dir; launch gate NOT evaluated"
+        },
+        {
+          "id": "P10",
+          "status": "NA",
+          "layer": "-",
+          "detail": "no --attempt-dir; launch gate NOT evaluated"
+        }
+      ]
+    },
+    "repo_suite": [
+      "Ran 402 tests in 4.029s",
+      "",
+      "OK"
+    ]
+  },
+  "authoring_record": {
+    "drafts_removed_before_publication": [
+      {
+        "sha256": "sha256:e04753a78768fa4161b95a65ee06966ad850263ffec00875b606615ab828694b",
+        "bytes": 98425,
+        "reason": "the first draft's claimed live measurement listed the store's own _meta/INSTRUMENTS_EXPORT.json as an 'instrument file outside binance/usdm'; the checker was tightened to exclude the store's own provenance manifests from that probe, so the draft's measured_available no longer equalled a live re-measurement"
+      },
+      {
+        "sha256": "sha256:ab04cab63eedbe78720e7efa21ee8bd9320152aa2747820e49196139a034a583",
+        "bytes": 5629,
+        "reason": "removed together with the round-spec draft it belonged to; the round artifacts are a matched pair and are published together"
+      }
+    ],
+    "zero_computation_at_removal": true,
+    "zero_computation_evidence": "no attempts/ directory, no terminal sentinel, run_id=null, attempts.launched=0, and the card was still running; the removed drafts were never read by any downstream consumer",
+    "checker_defects_caught_by_the_controls": [
+      "the instrument-file probe counted the store's own provenance manifest (_meta/INSTRUMENTS_EXPORT.json) as a second instrument surface; the initial default run caught it (C2 FAIL) and the probe was narrowed to exclude _meta/**",
+      "a decisive matrix row could be flipped to PRESENT without failing any check (the self-test variant 'exchange_flow_matrix_item_claimed_present' was not refused); C14 was extended to compare every decisive row's status",
+      "C5 and C6 did not flip under the raw fixture control (C5 did not consider other-market paths; C6's address-label measurement ignored hyphen/underscore spelling); both were fixed and the fixture now plants a separate label-map dataset, so all seven expected checks flip",
+      "the address-label probe could be dodged by a hyphenated dataset name ('address-labels'); the entry-name probe now matches tokens against a separator-normalised copy as well, which can only add hits"
+    ],
+    "disclosures": [
+      "The record's operational trigger, preferred holding period, sizing and overlap handling are explicitly underspecified; no threshold was invented and no cohort was registered.",
+      "The contract's §13 table gives data_window_invalid the 卡片 verdict 'REJECT / DEFERRED' while §6.4's prerequisite-missing alignment directs an honest TECHNICAL_INCOMPLETE; this round follows §6.4 and records the choice in round-spec.json / verdict.json rather than leaving it implicit.",
+      "The inherited USER_FIXED execution envelope is a linear USD-M perpetual envelope while the record's registered price reference is ETH spot/on-chain clocked; the tension is recorded in execution_invariants_disclosure and was not silently resolved, because nothing was launched.",
+      "No cost, funding, slippage or latency was ever applied: with zero attempts there is no P&L, no Sharpe, no drawdown and no DCA layer histogram."
+    ],
+    "appends_only": "the family/candidate bytes were never rewritten: the artifact quotes the frozen card body (sha256 sha256:e2ceacb3fb78ceac4ef311d68c3b1e18c03fab02a95cd5b9f8582186c95a202b) and the canonical record (sha256 sha256:9df8b6b845cc061db4e30d842c5eb57f9b30d16e286f98185d838b7aeda4ac5c)"
+  },
+  "untouched": [
+    "the canonical raw tree (read-only; no write path was opened)",
+    "every other family's results directory, round artifacts and frozen bundles",
+    "the board: no card was created, blocked, completed or relabelled by this run's authoring scripts",
+    "the container / runner / reconciler / preflight code paths (nothing was launched)",
+    "Paper / Live: not touched"
+  ]
+}
