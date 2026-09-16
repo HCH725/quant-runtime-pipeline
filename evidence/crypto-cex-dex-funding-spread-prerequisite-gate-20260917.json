@@ -1,6 +1,6 @@
 {
   "snapshot_kind": "prerequisite-gate terminal (contract 6.4 / 13; no Qlib launch)",
-  "snapshot_taken_at_utc": "2026-09-16T18:21:33Z",
+  "snapshot_taken_at_utc": "2026-09-16T18:24:03Z",
   "snapshot_boundary": "values are re-measured from the live machine at snapshot time; the immutable artifacts under /results are read, never written by this snapshot",
   "card": {
     "kanban_task_id": "t_0d9309a8",
@@ -50,7 +50,7 @@
   },
   "measured_canonical_raw": {
     "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
-    "measured_at_utc": "2026-09-16T18:21:33Z",
+    "measured_at_utc": "2026-09-16T18:24:03Z",
     "binance_market_dirs": [
       "usdm"
     ],
@@ -693,17 +693,64 @@
     "published_artifact_created_once_with_O_EXCL": true,
     "draft_removals_before_publication": [
       {
+        "name": "verdict.json",
+        "bytes": 9494,
+        "sha256": "sha256:9944cf474c1effb545ccfc320566c795989e168c8da002979cef31d43927b2ce",
+        "reason": "draft authoring defect: prerequisite.measured_available.note serialised as null"
+      },
+      {
         "name": "round-spec.json",
-        "bytes": 84906,
-        "sha256": "sha256:ed46f12d99524954331a1675b9a9d4c09008bf2405c45c946c076ce391dfda6d"
+        "bytes": 83086,
+        "sha256": "sha256:52dbdcd07bf90689fa0666047cfed970beb3e07d9270edca0ef35d71108cb82d",
+        "reason": "extraction defect: the bullet helper kept the section header as its first element, shifting every record excerpt and every required-data/signal index by one item (caught by the authoring-time sanity print plus the checker's C8/C12)"
       },
       {
         "name": "verdict.json",
         "bytes": 10046,
-        "sha256": "sha256:a26a4a195522486f34746f790b7cb3bfa0544d3f0e7c838da704f9e28a91bd73"
+        "sha256": "sha256:2e1e08a708b589c3f53eb2dd27444ce8fa72a0ad8ee06b351b50a0380601770d",
+        "reason": "re-created after the round-spec was re-authored (verdict embeds the round-spec sha256)"
+      },
+      {
+        "name": "round-spec.json",
+        "bytes": 84007,
+        "sha256": "sha256:b396f920ce273103d0fa9e3c1adc847921220a940aff4a415590dc7a79bdeb84",
+        "reason": "extraction defect: a step's indented continuation line was counted as its own step, shifting steps 4-10 (caught by printing every extracted step before the write)"
+      },
+      {
+        "name": "verdict.json",
+        "bytes": 10046,
+        "sha256": "sha256:6f20e3e20705c02159cbf5453b6a0baf4af99d6fe7f9e088d59e5ff269460e74",
+        "reason": "re-created after the round-spec was re-authored (verdict embeds the round-spec sha256)"
+      },
+      {
+        "name": "round-spec.json",
+        "bytes": 84906,
+        "sha256": "sha256:ed46f12d99524954331a1675b9a9d4c09008bf2405c45c946c076ce391dfda6d",
+        "reason": "key-naming defect: an authored-prose leaf sat under a *_verbatim key, so the post-write verifier could not stay strict (renamed to *_note); caught by the post-write verifier"
+      },
+      {
+        "name": "verdict.json",
+        "bytes": 10046,
+        "sha256": "sha256:a26a4a195522486f34746f790b7cb3bfa0544d3f0e7c838da704f9e28a91bd73",
+        "reason": "re-created after the round-spec was re-authored (verdict embeds the round-spec sha256)"
       }
     ],
-    "note": "while authoring (before this evidence file, the README row or any commit existed) the round-spec/verdict were re-created three times to fix extraction and key-naming defects found by the authoring-time sanity print and the post-write verifier: (1) bullet extraction included its own section header, shifting every record excerpt by one item, (2) a step's continuation line was counted as its own step, shifting steps 4-10, (3) an authored-prose leaf sat under a *_verbatim key. Each draft sha256 is recorded above; no published hash was ever announced for a draft, and the final artifacts were created with O_EXCL and never rewritten in place."
+    "spec_writes_total": 4,
+    "verdict_writes_total": 5,
+    "final_artifacts": [
+      {
+        "name": "round-spec.json",
+        "bytes": 84913,
+        "sha256": "sha256:05491cf0be31d2015c135b73f722c37715a69b0dd702aa471aec9fa8e5f82873"
+      },
+      {
+        "name": "verdict.json",
+        "bytes": 10046,
+        "sha256": "sha256:5786fc7afefa470a49fc420a8c41c1eca9890e495beeef8bbf2c04c6f417f3e8"
+      }
+    ],
+    "publication_boundary": "no commit, no evidence file, no README row and no board transition existed at any of these moments; the final artifacts were created with O_EXCL and never rewritten in place",
+    "note": "the round-spec was written four times and the verdict five times while authoring; the first three round-spec drafts and the first four verdict drafts were removed and re-created, every one of them before this evidence file, the README row or any commit existed. The defects each removal fixed are recorded per draft above: a bullet helper that kept its own section header (every record excerpt shifted by one item), a step's continuation line counted as its own step (steps 4-10 shifted), and an authored-prose leaf under a *_verbatim key. The first draft of the verdict additionally serialised a null note. Both extraction defects were caught by the authoring-time sanity print of every extracted item and by the checker, not by assuming the extraction was right; the key-naming defect was caught by the post-write verifier. The final artifacts were created with O_EXCL and never rewritten in place, and no published hash was ever announced for a draft."
   },
   "disclosures": [
     "section 13 registers no dedicated prerequisite-missing class; data_window_invalid (closest registered class, 'instrument 缺失') is used as-is - whether to add a prerequisite class is an operator/contract decision",
