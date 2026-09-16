@@ -1,0 +1,899 @@
+{
+  "snapshot_kind": "prerequisite-gate determination snapshot (contract 6.4 / 13 / 14.4)",
+  "snapshot_taken_at_utc": "2026-09-16T19:52:20Z",
+  "snapshot_boundary": "snapshot, not runtime state: it records the measured raw, the requirement-vs-available mapping, the immutable round artifacts and the executable verification as of this timestamp. Host-specific absolute paths are redacted (<HOME>/<EXPANSION>/<RESEARCHDATA>); nothing else was altered.",
+  "card": {
+    "kanban_task_id": "t_60876182",
+    "kanban_board": "quant-strategy-research",
+    "family_id": "bitcoin-hash-ribbon-miner-capitulation-2026-08-31",
+    "round_id": "bitcoin-hash-ribbon-miner-capitulation-2026-08-31-r1",
+    "title": "Production Candidate — Bitcoin Hash Ribbon Miner Capitulation (full backtest)",
+    "created_at_epoch": 1789587318,
+    "parent_card": "t_51c8c704 (scheduling/order only; scientific lineage is null)",
+    "creator": "runtime/production_handoff.py via contract 14.4 automatic handoff (not human-created)",
+    "candidate_origin": "direct sibling output of a Research Intake Review PASS decision; candidateized exactly once on 2026-09-16 from the canonical review backlog (alpha-strategy-review-state.json -> ingested_wiki_records, card t_86d04b09) as a format/canonicalization pass. Wiki Brain is knowledge preservation, not a second eligibility gate.",
+    "frozen_candidate_body_sha256": "sha256:1f2747f705072223740a9c8e16a901c524461376822620bac3444e653ff27cd8",
+    "frozen_candidate_body_bytes": 16980,
+    "lifecycle_footer": "appended verbatim by production_handoff.LIFECYCLE_FOOTER (contract 6.4 / 14.4); the candidate bytes above exclude it"
+  },
+  "contract_basis": {
+    "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.8.0 (/Users/hong/workspace/quant-runtime-pipeline)",
+    "contract_sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "contract_clause_verbatim": "- `[C]`（**文件對齊；卡片 `t_2acfd339`，2026-09-16；不改任何 gate／stage／append 條件**）**prerequisite-missing 的終結語意**：必要 prerequisite（資料／市場／universe）客觀不存在、且該缺席已由 measured evidence 證實，是 §13 `card-local` failure 的一個例子；此時本節的 `TECHNICAL_INCOMPLETE`（附 failure 層級、last run_id、terminal evidence 路徑、未完成原因）就是誠實且合法的終結，required terminal evidence（`round-spec.json` ＋ `verdict.json`）齊備後該卡即 `done`，**不得**僅因 full-backtest outputs 不可能存在而形成 human gate（不 `blocked`、不 `needs_input`）；`kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 human decision 的情況（§12.6）。為讓 goal-completion judge 在卡片本身上讀到這條，`runtime/production_handoff.py` 於 append 時在 candidate body **之後**追加一段固定、system-owned 的 lifecycle footer（candidate body 逐位元不改、`fingerprint_input` 不變、append 條件不變）；卡片 terminal 後 §14.4 handoff 照既有條件（無 active／無 `blocked`／無未結案 incident／tail terminal）append 下一張。",
+    "contract_verdict_semantics_verbatim": "- `[C]` `TECHNICAL_INCOMPLETE` 必須附：失敗層級（card-local vs shared-layer）、最後一次 run_id、terminal evidence 路徑、未完成原因；寫入該 round 的 `/results/…/verdict.json`，comment 只放人類摘要。\n- `[C]` 禁止用 `done` 掩蓋失敗：沒有 terminal evidence 的失敗只能 `blocked` 或 `TECHNICAL_INCOMPLETE`。",
+    "lifecycle_footer_rule_verbatim": "- `[C]`（**文件對齊；卡片 `t_2acfd339`，2026-09-16；不改任何 gate／stage／append 條件**）**prerequisite-missing 的終結語意**：必要 prerequisite（資料／市場／universe）客觀不存在、且該缺席已由 measured evidence 證實，是 §13 `card-local` failure 的一個例子；此時本節的 `TECHNICAL_INCOMPLETE`（附 failure 層級、last run_id、terminal evidence 路徑、未完成原因）就是誠實且合法的終結，required terminal evidence（`round-spec.json` ＋ `verdict.json`）齊備後該卡即 `done`，**不得**僅因 full-backtest outputs 不可能存在而形成 human gate（不 `blocked`、不 `needs_input`）；`kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 human decision 的情況（§12.6）。為讓 goal-completion judge 在卡片本身上讀到這條，`runtime/production_handoff.py` 於 append 時在 candidate body **之後**追加一段固定、system-owned 的 lifecycle footer（candidate body 逐位元不改、`fingerprint_input` 不變、append 條件不變）；卡片 terminal 後 §14.4 handoff 照既有條件（無 active／無 `blocked`／無未結案 incident／tail terminal）append 下一張。",
+    "termination_rule": "contract 6.4: a failure without terminal evidence may only be TECHNICAL_INCOMPLETE or blocked. There is no submission to terminalise, so no synthetic INCOMPLETE sentinel was written; the round's terminal evidence is verdict.json plus the round-spec prerequisite_gate block plus this file.",
+    "family_gate_note": "the card forbids a second crypto/runnable suitability screen and states that a missing prerequisite is neither a rejection reason nor a new eligibility gate"
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure": {
+      "layer": "card-local",
+      "class": "data_window_invalid",
+      "detail": "the record's required network dataset (Daily Bitcoin Network Hash Rate, point-in-time) and its registered BTC/USD daily market source are absent from the canonical raw. Section 13's criterion (would the same action fail on another card?) - the raw is present, readable and unmodified; only this card's registered data requirement cannot be satisfied. No shared-layer freeze condition applies (section 12.5).",
+      "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; data_window_invalid ('instrument 缺失') is the closest registered class. Suggested (not implemented here, needs an operator/contract decision): an explicit prerequisite_missing class for candidates whose required dataset is not in the raw."
+    },
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "run_id": null,
+    "attempts_launched": 0,
+    "terminal_sentinels": 0,
+    "evidence_run_ids": [],
+    "not_a_scientific_reject": "technical failure, not a strategy rejection: the candidate is neither validated nor refuted by this round",
+    "why_technical": "the record's decision variable is the Bitcoin network hash rate. The mechanism is the 30-day/60-day SMA crossover of that series; with no hash-rate series there is no capitulation regime to detect, no recovery signal to act on and no network leg for the registered ablation. Coverage is empty by construction (G1 has no cells), not by a failed computation.",
+    "why_card_local": "section 13's criterion - would the same action fail on another card? No: the raw is mounted, readable and unmodified, the container environment is healthy (preflight P1-P8 PASS) and only this card's registered data requirement cannot be satisfied. No shared-layer freeze condition (section 12.5) applies."
+  },
+  "measured_canonical_raw": {
+    "measured_at_utc": "2026-09-16T19:50:35Z",
+    "raw_root": "<EXPANSION>/market-data-raw",
+    "top_level_dirs": [
+      "_meta",
+      "_tools",
+      "binance"
+    ],
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "binance_usdm_subdirs": [
+      "funding",
+      "instruments",
+      "klines"
+    ],
+    "raw_paths_maxdepth3": [
+      "_meta",
+      "_tools",
+      "_tools/__pycache__",
+      "binance",
+      "binance/usdm",
+      "binance/usdm/funding",
+      "binance/usdm/instruments",
+      "binance/usdm/klines"
+    ],
+    "non_binance_paths": [],
+    "other_market_named_paths": [],
+    "venue": "BINANCE",
+    "market_type": "usdm_perp",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_end_rule": "last completed UTC day (no partial-day data)",
+    "klines_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "btc_1d_first_open_utc": "2022-01-01T00:00:00+00:00",
+    "btc_1d_last_open_utc": "2026-09-15T00:00:00+00:00",
+    "btc_1d_open_mod_86400_seconds": [
+      null,
+      null,
+      null
+    ],
+    "btc_1d_open_step_seconds": [
+      null
+    ],
+    "kline_row_field_set": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "kline_row_has_hash_rate_field": null,
+    "klines_1d_first_by_symbol": {
+      "BNBUSDT": "2022-01-01T00:00:00+00:00",
+      "BTCUSDT": "2022-01-01T00:00:00+00:00",
+      "ETHUSDT": "2022-01-01T00:00:00+00:00",
+      "SOLUSDT": "2022-01-01T00:00:00+00:00"
+    },
+    "klines_1d_last_by_symbol": {
+      "BNBUSDT": "2026-09-15T00:00:00+00:00",
+      "BTCUSDT": "2026-09-15T00:00:00+00:00",
+      "ETHUSDT": "2026-09-15T00:00:00+00:00",
+      "SOLUSDT": "2026-09-15T00:00:00+00:00"
+    },
+    "raw_1d_window_utc": [
+      "2022-01-01T00:00:00+00:00",
+      "2026-09-15T00:00:00+00:00"
+    ],
+    "card_registered_raw_window": "klines 2022-01-01→2026-09-11",
+    "card_registered_funding_window": "funding 2022-01-01T00:00Z→2026-09-12T08:00Z",
+    "raw_1d_history_days": null,
+    "klines_1w_first_open_utc": "2022-01-03T00:00:00+00:00",
+    "klines_1w_first_open_weekday": "Mon",
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "funding_row_keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+    ],
+    "funding_venues": [
+      "BINANCE"
+    ],
+    "funding_first_ms": "2022-01-01T00:00:00.006000+00:00",
+    "funding_last_ms": "2026-09-16T08:00:00.002000+00:00",
+    "funding_row_has_hash_rate_field": null,
+    "instrument_count": null,
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_quote_currencies": [
+      "USDT"
+    ],
+    "instrument_settlement_currencies": [
+      "USDT"
+    ],
+    "instrument_field_names": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_network_field_hits": [],
+    "schema_sha256": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+    "schema_dataset_sections": [
+      "funding",
+      "instruments",
+      "klines (Binance USD-M perpetual futures, UTC)"
+    ],
+    "schema_documents_network_dataset": null,
+    "schema_single_venue": null,
+    "schema_documents_missing_fields": null,
+    "schema_hash_word_lines": [
+      "scheduled for removal; these hashes are the audit trail after it is gone."
+    ],
+    "raw_entry_name_count": null,
+    "name_probe_tokens_tested": [
+      "hashrate",
+      "hash_rate",
+      "hash-rate",
+      "network_hash",
+      "net_hash",
+      "network_difficulty",
+      "difficulty",
+      "onchain",
+      "on-chain",
+      "mempool",
+      "block_height",
+      "blockheight",
+      "miner",
+      "mining",
+      "blockchain",
+      "thermocap",
+      "stock_to_flow",
+      "stock-to-flow",
+      "sopr",
+      "puell",
+      "mvrv",
+      "coins_issued",
+      "block_reward",
+      "blockreward",
+      "glassnode",
+      "lookintobitcoin",
+      "coinmetrics",
+      "blockchain_com",
+      "hashribbon",
+      "hash_ribbon"
+    ],
+    "hash_token_hits_in_entry_names": [],
+    "raw_entry_names_sample": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m",
+      "__pycache__",
+      "_meta",
+      "_tools",
+      "binance",
+      "binance_public.cpython-314.pyc",
+      "binance_public.py",
+      "bnbusdt",
+      "bnbusdt-15m-2022-01.jsonl.gz",
+      "bnbusdt-15m-2022-02.jsonl.gz",
+      "bnbusdt-15m-2022-03.jsonl.gz",
+      "bnbusdt-15m-2022-04.jsonl.gz",
+      "bnbusdt-15m-2022-05.jsonl.gz",
+      "bnbusdt-15m-2022-06.jsonl.gz",
+      "bnbusdt-15m-2022-07.jsonl.gz",
+      "bnbusdt-15m-2022-08.jsonl.gz",
+      "bnbusdt-15m-2022-09.jsonl.gz",
+      "bnbusdt-15m-2022-10.jsonl.gz",
+      "bnbusdt-15m-2022-11.jsonl.gz",
+      "bnbusdt-15m-2022-12.jsonl.gz",
+      "bnbusdt-15m-2023-01.jsonl.gz",
+      "bnbusdt-15m-2023-02.jsonl.gz",
+      "bnbusdt-15m-2023-03.jsonl.gz",
+      "bnbusdt-15m-2023-04.jsonl.gz",
+      "bnbusdt-15m-2023-05.jsonl.gz",
+      "bnbusdt-15m-2023-06.jsonl.gz",
+      "bnbusdt-15m-2023-07.jsonl.gz",
+      "bnbusdt-15m-2023-08.jsonl.gz",
+      "bnbusdt-15m-2023-09.jsonl.gz",
+      "bnbusdt-15m-2023-10.jsonl.gz",
+      "bnbusdt-15m-2023-11.jsonl.gz",
+      "bnbusdt-15m-2023-12.jsonl.gz",
+      "bnbusdt-15m-2024-01.jsonl.gz",
+      "bnbusdt-15m-2024-02.jsonl.gz"
+    ],
+    "name_probe_false_positives_disclosed": [
+      {
+        "where": "_meta/SCHEMA.md prose",
+        "probe": "hash",
+        "lines": [
+          "scheduled for removal; these hashes are the audit trail after it is gone."
+        ],
+        "why": "the token appears only inside sha256/dedup prose ('these hashes are the audit trail'), never as a dataset; the raw's documented dataset families are klines / funding / instruments only"
+      }
+    ],
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "INVENTORY.md": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "TRANSCODE_MANIFEST.json": "sha256:04a842159aa4a6fd7da9d4af2109cd01ca3ced6f9587f8ee8aa2106a9c878065"
+    },
+    "note": "single venue (BINANCE USD-M perpetual), four fixed contracts: klines whose rows carry the six-field OHLCV shape only, that venue's funding, and its instrument definitions. There is no network/on-chain dataset of any kind - no Bitcoin hash rate, no mining difficulty, no block or miner series - and no BTC/USD (spot dollars) price source; every instrument is quoted and settled in USDT. The raw's own daily history begins 2022-01-01."
+  },
+  "requirement_vs_available": {
+    "matrix": [
+      {
+        "item": "instrument_bitcoin",
+        "status": "ABSENT_AS_REGISTERED_SOURCE",
+        "detail": "Required data item 1: 'Instrument: Bitcoin (BTC).' The raw holds one BINANCE USD-M perpetual contract on BTC (BTCUSDT), quoted and settled in USDT - not the BTC/USD spot instrument the record's market-data item names."
+      },
+      {
+        "item": "timeframe_daily",
+        "status": "PRESENT",
+        "detail": "Required data item 2: 'Timeframe: Daily.' BTCUSDT 1d bars exist: 2022-01-01T00:00:00+00:00 .. 2026-09-15T00:00:00+00:00, open_time_ms % 86400 == [0, 0, 0] s, uniform step [86400] s, UTC, no partial day."
+      },
+      {
+        "item": "network_data_bitcoin_hash_rate_daily",
+        "status": "ABSENT",
+        "detail": "Required data item 3 (DECISIVE): 'Network Data: Daily Bitcoin Network Hash Rate.' The whole raw tree (1633 entry names, 4 levels) contains no hash-rate/network/mining/difficulty dataset (30 probe tokens, 0 hits); the stored row shapes (kline rows, funding rows, instrument fields) carry no such field; SCHEMA.md documents exactly three dataset families: ['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)']."
+      },
+      {
+        "item": "market_data_btc_usd_daily_ohlcv",
+        "status": "ABSENT_AS_REGISTERED_SOURCE",
+        "detail": "Required data item 4: 'Market Data: Daily BTC/USD OHLCV (if using price confirmation filters).' Daily OHLCV exists only as USDT-quoted USD-M perpetual bars for BTCUSDT (local instruments quote/settle in ['USDT']); there is no BTC/USD series and no non-binance path in the raw."
+      },
+      {
+        "item": "point_in_time_hash_rate_no_lookahead",
+        "status": "ABSENT",
+        "detail": "Required data item 5: 'Point-in-time: True historical hash rate data without lookahead bias.' No hash-rate series exists at all, so neither a point-in-time nor a revised variant of one can be read."
+      },
+      {
+        "item": "hash_rate_regime_history_30_60_sma",
+        "status": "NOT_CONSTRUCTIBLE",
+        "detail": "The registered decision variable is the 30-day/60-day SMA crossover of the hash rate (capitulation when the 30d crosses below the 60d; buy when it crosses back above). With no hash-rate series the capitulation regimes cannot be counted, dated or evaluated."
+      },
+      {
+        "item": "falsification_sample_all_bitcoin_history",
+        "status": "ABSENT",
+        "detail": "Record falsification item 1: 'Backtest over all available Bitcoin history, separating price-driven capitulations from external shock capitulations.' The raw's own daily history is 1718 days (2022-01-01T00:00:00+00:00..2026-09-15T00:00:00+00:00) and carries no network series, so the separation the item requires is not expressible at all."
+      },
+      {
+        "item": "price_momentum_confirmation_inputs",
+        "status": "PARTIAL_UNDERSPECIFIED",
+        "detail": "Record signal bullet: 'Price Confirmation: Source indicates waiting for positive price momentum confirmation, but exact indicators are underspecified.' Daily closes exist locally for BTCUSDT; the indicator itself is not registered by the source and cannot be inferred from it."
+      },
+      {
+        "item": "baseline_buy_and_hold",
+        "status": "PRESENT_AS_LOCAL_PROXY",
+        "detail": "Record falsification item 2 (first half) is derivable from the local BTCUSDT 1d closes, but only on the local perpetual proxy - it is not the BTC/USD buy-and-hold the record names."
+      },
+      {
+        "item": "baseline_trend_200d_sma",
+        "status": "PRESENT_AS_LOCAL_PROXY",
+        "detail": "Record falsification item 2 (second half: 'e.g., 200-day SMA crossover') is likewise derivable from local BTCUSDT 1d closes as a price-only proxy."
+      },
+      {
+        "item": "ablation_network_data_vs_price_trend",
+        "status": "NOT_EVALUABLE",
+        "detail": "Record falsification item 4: 'Test the signal with and without the price momentum confirmation filter to isolate the value of the network data vs. simple price trend.' The network leg of the ablation cannot be constructed, so the contrast the item defines has no left-hand side."
+      },
+      {
+        "item": "market_type_venue_execution_timing",
+        "status": "UNSPECIFIED_BY_RECORD",
+        "detail": "The record's 'Execution assumptions' section (present in the canonical record, not excerpted in the frozen card body) marks Execution Timing, Market Type, Slippage & Impact and Fees all 'Underspecified'; the inherited A/B invariant fixes linear USD-M perpetuals instead, which is disclosed rather than silently resolved."
+      },
+      {
+        "item": "transaction_cost_convention",
+        "status": "PARTIAL_LOCAL_INSTRUMENT_METADATA_ONLY",
+        "detail": "The record leaves Fees/Slippage 'Underspecified'. The raw's instrument export carries maker_fee/taker_fee/price_increment for the four local perpetuals only, so the card's cost rule (canonical instrument metadata, 1 tick adverse baseline, 2 ticks robustness) is executable for those four contracts and for nothing else."
+      }
+    ],
+    "decisive_items": [
+      "network_data_bitcoin_hash_rate_daily",
+      "point_in_time_hash_rate_no_lookahead",
+      "hash_rate_regime_history_30_60_sma"
+    ],
+    "missing": [
+      "Daily Bitcoin Network Hash Rate (the record's decision variable) is absent from the canonical raw",
+      "point-in-time historical hash-rate data without lookahead bias is absent",
+      "Daily BTC/USD OHLCV is absent; the only BTC series is a USDT-quoted USD-M perpetual at one venue",
+      "the falsification sample ('all available Bitcoin history' with price-driven vs external-shock capitulations separated) is not expressible: the raw's own daily history starts 2022-01-01 and carries no network series",
+      "the ablation leg (network data vs simple price trend) has no network side to compare against",
+      "0 case evaluations: G1 coverage is empty by construction, not by failure"
+    ],
+    "note": "13 items, each grounded in a verbatim line of the record or card; every status is a live measurement, not an inference from prose"
+  },
+  "host_wide_data_store_scan": {
+    "raw_name_probe": {
+      "tokens_tested": [
+        "hashrate",
+        "hash_rate",
+        "hash-rate",
+        "network_hash",
+        "net_hash",
+        "network_difficulty",
+        "difficulty",
+        "onchain",
+        "on-chain",
+        "mempool",
+        "block_height",
+        "blockheight",
+        "miner",
+        "mining",
+        "blockchain",
+        "thermocap",
+        "stock_to_flow",
+        "stock-to-flow",
+        "sopr",
+        "puell",
+        "mvrv",
+        "coins_issued",
+        "block_reward",
+        "blockreward",
+        "glassnode",
+        "lookintobitcoin",
+        "coinmetrics",
+        "blockchain_com",
+        "hashribbon",
+        "hash_ribbon"
+      ],
+      "entry_names_scanned": null,
+      "hits": [],
+      "false_positives_disclosed": [
+        {
+          "where": "_meta/SCHEMA.md prose",
+          "probe": "hash",
+          "lines": [
+            "scheduled for removal; these hashes are the audit trail after it is gone."
+          ],
+          "why": "the token appears only inside sha256/dedup prose ('these hashes are the audit trail'), never as a dataset; the raw's documented dataset families are klines / funding / instruments only"
+        }
+      ]
+    },
+    "house_wide_probe": {
+      "roots_scanned": [
+        "<HOME>/workspace",
+        "<EXPANSION>",
+        "<RESEARCHDATA>",
+        "<HOME>/.hermes",
+        "<HOME>/workspace/qlib-apple-container"
+      ],
+      "skipped_roots": [],
+      "probe_tokens": [
+        "hashrate",
+        "hash_rate",
+        "hash-rate",
+        "network_hash",
+        "net_hash",
+        "network_difficulty",
+        "difficulty",
+        "onchain",
+        "on-chain",
+        "mempool",
+        "block_height",
+        "blockheight",
+        "miner",
+        "mining",
+        "blockchain",
+        "thermocap",
+        "stock_to_flow",
+        "stock-to-flow",
+        "sopr",
+        "puell",
+        "mvrv",
+        "coins_issued",
+        "block_reward",
+        "blockreward",
+        "glassnode",
+        "lookintobitcoin",
+        "coinmetrics",
+        "blockchain_com",
+        "hashribbon",
+        "hash_ribbon"
+      ],
+      "hashrate_like_files": [
+        {
+          "path": "<HOME>/workspace/quant-runtime-pipeline/evidence/bitcoin-hash-ribbon-miner-capitulation-prerequisite-gate-20260917.json",
+          "classification": "own_evidence_snapshot_false_positive"
+        }
+      ],
+      "loose_hash_substring_files": [
+        {
+          "path": "<HOME>/.hermes/disk-cleanup/2026-08-11-kanban/T5-comfyui-hash-manifest.json",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/.hermes/kanban/boards/hermes-capability-development/workspaces/t_1370348b/post_hash_compare.json",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/.hermes/kanban/boards/hermes-capability-development/workspaces/t_1370348b/pre_hashes.json",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/.hermes/tmp/binance-daily-v4-preview/production-hashes-before.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run192/canonical_rehash_post.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run193-native/hash_three_states.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run193-native/native_after_run1_results_hash.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run193-native/native_after_run2_results_hash.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run193-native/verify_report_hashes_out.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/audit-CJ-DEFI2-run193/copy1_hashes.txt",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/phase12-l2-l3-execution-tca/data/replay_input_hashes.json",
+          "classification": "integrity_manifest_false_positive"
+        },
+        {
+          "path": "<HOME>/workspace/quant-runtime-pipeline/evidence/bitcoin-hash-ribbon-miner-capitulation-prerequisite-gate-20260917.json",
+          "classification": "own_evidence_snapshot_false_positive"
+        }
+      ],
+      "unclassified_hits": [],
+      "loose_probe_unclassified": [],
+      "note": "the canonical raw is the only market-data source; a precise network-dataset name probe over the whole house returns no file, and the loose 'hash' substring probe returns only sha256 integrity manifests plus this card's own evidence snapshot"
+    },
+    "conclusion": "no Bitcoin network dataset (hash rate, mining difficulty, on-chain provider series) exists on this machine. The canonical raw is the only market-data source; the only 'hash'-named files anywhere are sha256 integrity manifests."
+  },
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json",
+    "overall": "PASS",
+    "host_boot_id": "boot-1789570820",
+    "checked_at_utc": "2026-09-16T19:42:33Z",
+    "launch_gate": "not_evaluated",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS"
+      },
+      {
+        "id": "P2",
+        "status": "PASS"
+      },
+      {
+        "id": "P3",
+        "status": "PASS"
+      },
+      {
+        "id": "P4",
+        "status": "PASS"
+      },
+      {
+        "id": "P5",
+        "status": "PASS"
+      },
+      {
+        "id": "P6",
+        "status": "PASS"
+      },
+      {
+        "id": "P7",
+        "status": "PASS"
+      },
+      {
+        "id": "P8",
+        "status": "PASS"
+      },
+      {
+        "id": "P9",
+        "status": "NA"
+      },
+      {
+        "id": "P10",
+        "status": "NA"
+      }
+    ],
+    "meaning": "environment-only readback (P9/P10 are NA because no --attempt-dir was published): the block is on the record's required data, not on the execution plane"
+  },
+  "artifact_hashes": {
+    "round_spec_json": "sha256:b882e086c1af73b6192ca4415965a6d9644eca9d0faf4e4c44ee7a349ef7928a",
+    "round_spec_bytes": 80001,
+    "verdict_json": "sha256:1150069355bb9b1cd369f90f7a1cffe68f902fa39e4c94f678e4288a43935cb3",
+    "verdict_bytes": 4362,
+    "checker_script": "sha256:8a5587e1bf1dad6028f7bcc090f745021a23fcae539d7ae05a8b5e156ea68fe1",
+    "checker_script_bytes": 42907,
+    "family_json": "sha256:d0be7540f4edf50bdb095c7c4d3b9b58961d945929def90134ae44c09c48b2c9",
+    "record_sha256": "sha256:2c1a288544d416ba67ea38dd03690db9031d27cdfc5c36e16030939825830374",
+    "frozen_candidate_body_sha256": "sha256:1f2747f705072223740a9c8e16a901c524461376822620bac3444e653ff27cd8",
+    "note": "all values re-read from disk at snapshot time"
+  },
+  "executable_verification": {
+    "checker_live": {
+      "command": "python3 runtime/bitcoin_hash_ribbon_miner_capitulation_prerequisite_check.py",
+      "rc": 0,
+      "overall": "PASS",
+      "checks": [
+        [
+          "C1",
+          "PASS"
+        ],
+        [
+          "C2",
+          "PASS"
+        ],
+        [
+          "C3",
+          "PASS"
+        ],
+        [
+          "C4",
+          "PASS"
+        ],
+        [
+          "C5",
+          "PASS"
+        ],
+        [
+          "C6",
+          "PASS"
+        ],
+        [
+          "C7",
+          "PASS"
+        ],
+        [
+          "C8",
+          "PASS"
+        ],
+        [
+          "C9",
+          "PASS"
+        ],
+        [
+          "C10",
+          "PASS"
+        ],
+        [
+          "C11",
+          "PASS"
+        ],
+        [
+          "C12",
+          "PASS"
+        ]
+      ],
+      "note": "C1-C12 all PASS on the live raw and the live artifacts"
+    },
+    "checker_self_test": {
+      "command": "python3 runtime/bitcoin_hash_ribbon_miner_capitulation_prerequisite_check.py --self-test",
+      "rc": 0,
+      "overall": "PASS",
+      "variants": 12,
+      "refused": 12,
+      "detail": [
+        {
+          "variant": "verdict_tampered_to_PASS",
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "layer_flipped_to_shared",
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "variant": "required_data_available_flipped_true",
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "network_dataset_matrix_item_claimed_present",
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "network_dataset_claimed_available",
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "universe_shrunk_to_the_local_four_contract_list",
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "btc_usd_source_claimed_present",
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "searched_axis_mislabelled_user_fixed",
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated_to_47",
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "zero_attempt_claim_replaced_by_an_attempt_dir",
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        }
+      ]
+    },
+    "checker_raw_fixture_control": {
+      "command": "python3 runtime/bitcoin_hash_ribbon_miner_capitulation_prerequisite_check.py --raw-fixture-control",
+      "rc": 0,
+      "overall": "PASS",
+      "failed_checks": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "expected": [
+        "C1",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "detail": {
+        "C1": "binance market dirs=['spot', 'usdm'] venue=BINANCE market_type=usdm_perp other_market_paths=['binance/spot'] non_binance_paths=['okx', 'okx/swap']",
+        "C3": "hash_token_hits=['hashrate', 'network_hash'] kline_row_has_network_field=False funding_row_has_network_field=False instrument_network_fields=[] schema_documents_network_dataset=False documented_dataset_families=['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] (30 probe tokens over 1640 entry names)",
+        "C4": "other_market_paths=['binance/spot'] non_binance_paths=['okx', 'okx/swap'] quote=['USDT'] settle=['USDT'] btc_series=True step_seconds=[86400]",
+        "C5": "raw_1d_window=['2016-01-01T00:00:00+00:00', '2026-09-15T00:00:00+00:00'] card_registered_start=2022-01-01 card_registered_raw_window='klines 2022-01-01→2026-09-11' hash_token_hits=['hashrate', 'network_hash']"
+      },
+      "note": "the temp raw tree adds a Bitcoin network hash-rate dataset, a binance/spot market holding a BTC/USD daily series, a second venue (okx) and a 2016 daily bar; C1/C3/C4/C5 flip to FAIL"
+    },
+    "checker_host_scan": {
+      "command": "python3 runtime/bitcoin_hash_ribbon_miner_capitulation_prerequisite_check.py --host-scan",
+      "rc": 0,
+      "precise_probe_hits": 1,
+      "precise_hit_classifications": [
+        "own_evidence_snapshot_false_positive"
+      ],
+      "loose_hash_substring_files": 12,
+      "loose_classification_counts": {
+        "integrity_manifest_false_positive": 11,
+        "own_evidence_snapshot_false_positive": 1
+      },
+      "unclassified": 0
+    },
+    "postwrite_verbatim_verification": {
+      "independent_of_authoring": true,
+      "verbatim_strings_on_disk": 55,
+      "strings_with_declared_source": 55,
+      "misses": [],
+      "unclassified_verbatim_paths": [],
+      "declared_source_counts": {
+        "card": 36,
+        "record": 14,
+        "contract": 4,
+        "footer": 1
+      },
+      "digests_declared_from_two_sources": [
+        "sha256:1530e27eb6a72d9191215e8f7c1cf8141e8398ef19719c6619b4b4873ac8a31b"
+      ],
+      "digest_note": "the single digest declared from both 'card' and 'record' is the 7-bullet signal block, which the card transcribes verbatim from the record",
+      "verdict_embedded_round_spec_sha256": "sha256:b882e086c1af73b6192ca4415965a6d9644eca9d0faf4e4c44ee7a349ef7928a",
+      "round_spec_sha256_on_disk": "sha256:b882e086c1af73b6192ca4415965a6d9644eca9d0faf4e4c44ee7a349ef7928a",
+      "problems": []
+    },
+    "repo_suite": {
+      "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+      "result": "Ran 362 tests in 4.375s / OK",
+      "ok": true,
+      "note": "no test file was added or modified by this card"
+    },
+    "non_vacuousness": "the checker is not vacuous: 12 tampered artifact copies are refused, a raw fixture carrying the record's required dataset flips C1/C3/C4/C5 to FAIL, and the authoring script refuses to re-run (rc=1, both artifact hashes byte-identical afterwards)"
+  },
+  "authoring_record": {
+    "round_spec_writes": 1,
+    "verdict_writes": 1,
+    "exclusive_create": "both files written once with open(..., 'xb') (O_EXCL) in an empty round directory that held exactly the two artifacts after",
+    "prewrite_verbatim_assertions": 55,
+    "postwrite_verbatim_assertions": 55,
+    "draft_removals_before_publication": [
+      {
+        "draft": 1,
+        "round_spec_sha256": "sha256:40b61ab8ea8aa122a4969845d497d9bbe58726d562520fff1a1e97d119d63fef",
+        "round_spec_bytes": 66213,
+        "verdict_sha256": "sha256:08e5922f8eec20b479550347218d0b7c1dad55cbfaea5e141e2ae201601eb936",
+        "verdict_bytes": 4362,
+        "reason": "the round-spec's host_wide_scan note asserted 'every hit is an integrity manifest' while its own precise probe returned zero hits, i.e. the sentence contradicted its own measurement; the scan was restructured to report both a precise probe and a loose 'hash' substring probe with per-file classification"
+      },
+      {
+        "draft": 2,
+        "round_spec_sha256": "sha256:b2c88f7001d84acbf6ff500e5628a228a2c77ca90d9025ab0b27d265e0a9c1db",
+        "round_spec_bytes": 70297,
+        "verdict_sha256": "sha256:34dcb0910b1a754aeb2ff8504b0ab6c6a1c0171de833ca3152a2b5fb76abd230",
+        "verdict_bytes": 4362,
+        "reason": "the loose host probe's extension list omitted '.txt', under-reporting the disclosed false positives (4 instead of 11 integrity manifests)"
+      },
+      {
+        "draft": 3,
+        "round_spec_sha256": "sha256:10eb359c0c710ec5591e4e330b279c6e73ef5c5941ad18e7058f9f36a49fd11f",
+        "round_spec_bytes": 71574,
+        "verdict_sha256": "sha256:b87d5ccc4ccc86b6d9cdd9771f8e964a255b9ad5cc48c2f8d73e467f6365ef6a",
+        "verdict_bytes": 4362,
+        "reason": "excerpt_source_map was keyed by authoring-variable name, so an independent reader could not map a written excerpt to its declared source; replaced by a {source, sha256, chars} record keyed by digest"
+      },
+      {
+        "draft": 4,
+        "round_spec_sha256": "sha256:a0b70a9c91ab6bdeee575219ad1f0b41bc7d94493bcd5c4d642689570bd4767c",
+        "round_spec_bytes": 78991,
+        "verdict_sha256": "sha256:fddba2ab119166a3faef1162c90f719904179b40d1c8ef61d9a804295148f284",
+        "verdict_bytes": 4362,
+        "reason": "the decisive name probe carried a depth bound of 4 while the store nests to 6 levels (binance/usdm/klines/<SYMBOL>/<interval>/<file>), so a hash-rate dataset hidden under an interval directory could have escaped the probe. The probe now walks the full tree depth (recorded entry-name count rose from 37 to the full 1633)"
+      },
+      {
+        "draft": 5,
+        "round_spec_sha256": "sha256:f9723355eac5f97a0564d246dcdcb32c24c290124712485537356fb9c06c2003",
+        "round_spec_bytes": 79700,
+        "verdict_sha256": "sha256:eb0a941dd1b013f08ac4a05c58258b9a979144213dddff3d1560567a6ef95e5e",
+        "verdict_bytes": 4362,
+        "reason": "the authoring host-scan used a narrower probe-token list (20 tokens, missing miner/mining/difficulty/mempool/blockchain) than the checker's raw-side measurement (30 tokens), so the artifact's recorded probe would have disagreed with the checker's live one; the two lists were unified to one 30-token list and the note rewritten data-driven"
+      }
+    ],
+    "zero_write_aborts": [
+      {
+        "attempt": 1,
+        "error": "NameError: name 'names' is not defined (the depth-bound patch to the name-probe helper dropped its accumulator initialisation)",
+        "effect": "aborted before any write; round directory left empty"
+      },
+      {
+        "attempt": 2,
+        "error": "AssertionError: loose probe returned an unclassified file (this card's own evidence snapshot, whose filename carries the family name)",
+        "effect": "aborted before any write; round directory left empty"
+      }
+    ],
+    "draft_removal_note": "five draft pairs (5 round-spec + 5 verdict) plus two zero-write aborts were produced before publication; every draft hash is recorded above and no draft hash was ever published as a result. Each defect was caught by the authoring script's own assertions or by the post-write verifier.",
+    "rerun_refusal_demonstration": {
+      "command": "python3 <scratch authoring script> (re-run after publication)",
+      "rc": 1,
+      "error": "AssertionError: round dir not empty: ['verdict.json', 'round-spec.json']",
+      "effect": "no byte changed: round-spec sha256:b882e086c1af73b6192ca4415965a6d9644eca9d0faf4e4c44ee7a349ef7928a (80001 bytes) and verdict sha256:1150069355bb9b1cd369f90f7a1cffe68f902fa39e4c94f678e4288a43935cb3 (4362 bytes) are identical before and after the refused re-run"
+    }
+  },
+  "disclosures": [
+    "section 13 registers no dedicated prerequisite-missing class; data_window_invalid ('instrument 缺失') is the closest registered class and is used as-is rather than inventing a class. Whether to add an explicit prerequisite_missing class is an operator/contract decision.",
+    "the card requires the A/B USER_FIXED invariants verbatim; the string 'linear USD-M perp' sits in tension with this record's registered market ('Market Data: Daily BTC/USD OHLCV') and with the record's own 'Market Type: Underspecified'. The inherited text was NOT edited; the tension is recorded in round-spec.execution_invariants_disclosure.",
+    "the record's '## Execution assumptions' section (four bullets, all 'Underspecified') is not excerpted anywhere in the frozen card body; its four values were restored from the canonical record rather than shortened, and the difference is disclosed in round-spec.signal_semantics.execution_assumptions_disclosure.",
+    "the card's transcript of the record's 'Research interpretation' paragraph is cut mid-clause ('... combined with a moment'); the record's full sentence ('... combined with a momentum confirmation.') is registered from the record and the cut is disclosed in round-spec.hypothesis.card_excerpt_truncation_disclosure.",
+    "the canonical raw keeps updating past the window printed on the card (card: klines 2022-01-01→2026-09-11, funding to 2026-09-12T08:00Z; measured: 1d bars to 2026-09-15 and funding to the same cadence). Measured and registered values are recorded separately and neither was rewritten.",
+    "the record names Dogecoin/Litecoin as possible PoW adaptations; the record does not register them and the raw could not support them (no DOGE or LTC contract exists locally). No adaptation is claimed.",
+    "the record's own limitations ('sample size very small', 'underspecified exit rules', 'not independently reproduced') and its negative-evidence paragraph are registered verbatim and were not used to lower any gate or to shorten the falsification battery.",
+    "a future re-entry launch would need the v1.8 parameter_contract block in its round-spec (a non-legacy family without it fails closed); this gate round never reaches that path.",
+    "the card's registered raw window is stated on the card as 'klines 2022-01-01→2026-09-11'; the measured window at snapshot time ends 2026-09-15 because the daily updater keeps appending completed UTC days."
+  ],
+  "untouched": {
+    "other_families": "no other family artifact, frozen bundle or verdict was read-modified; only this family's own round directory was created",
+    "survivor_bundle": "none written (0 survivors; contract 10.8 requires >= 1)",
+    "host_scripts_deploy": "none: no run-spec exists, so no production script was deployed to the host /scripts directory",
+    "raw": "read-only throughout; no write under <EXPANSION>/market-data-raw",
+    "cron_board": "no cron job, watchdog or board status change beyond this card's lifecycle",
+    "paper_live": "none",
+    "auditor_sub_card": "none created (the card forbids it)"
+  }
+}
