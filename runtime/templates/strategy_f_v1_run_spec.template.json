@@ -568,7 +568,17 @@
     "artifacts/cohort_results.json",
     "artifacts/cohort_survivors.json",
     "artifacts/assertions.json",
-    "artifacts/dca_layer_histogram.json"
+    "artifacts/dca_layer_histogram.json",
+    "artifacts/grid_historical.csv",
+    "artifacts/grid_oos.csv",
+    "artifacts/grid_full.csv",
+    "artifacts/grid_fee_2x.csv",
+    "artifacts/grid_funding_2x.csv",
+    "artifacts/grid_entry_delay_1_bar.csv",
+    "artifacts/grid_slippage_2ticks.csv",
+    "artifacts/grid_no_funding.csv",
+    "artifacts/grid_no_funding_full.csv",
+    "artifacts/grid_cost_attrition_40bps.csv"
   ],
   "falsification": [
     "no signal / insufficient trades (G2 floor: fewer than 30 historical episodes in the cohort's best case, or fewer than 10 in the winner's OOS slice; culls the cohort)",

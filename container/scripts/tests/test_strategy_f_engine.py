@@ -511,15 +511,28 @@ class TestSelectorAndGates(unittest.TestCase):
             sf.require_historical(rows, "probe")
 
     def test_family_disposition_mapping(self):
-        self.assertEqual(sf.family_disposition([], True)["verdict_recommendation"], "REJECT")
+        # The `disposition` column IS the v1.4.0 band string (it describes the survivor COUNT,
+        # not the verdict): runtime/survivor_bundle.py::build() compares that column against
+        # band_for(count) and refuses a mismatch, so engine 1.0.2 - which wrote the VERDICT
+        # ('REJECT'/'SURVIVOR') into it - could never freeze a bundle, survivor-bearing rounds
+        # included (card t_e86b05a8).
+        zero = sf.family_disposition([], True)
+        self.assertEqual(zero["disposition"], "REJECT / NO_SURVIVOR")
+        self.assertEqual(zero["band"], "REJECT / NO_SURVIVOR")
+        self.assertEqual(zero["verdict_recommendation"], "REJECT")
+        self.assertFalse(zero["performance_claimable_recommendation"])
         one = sf.family_disposition([{"cohort": "A/1h"}], True)
+        self.assertEqual(one["disposition"], "SURVIVOR_FOUND")
         self.assertEqual(one["band"], "SURVIVOR_FOUND")
         self.assertEqual(one["verdict_recommendation"], "PASS")
+        self.assertTrue(one["performance_claimable_recommendation"])
         many = sf.family_disposition([{"cohort": "A/1h"}, {"cohort": "B/1h"}], True)
+        self.assertEqual(many["disposition"], "MULTIPLE_SURVIVORS")
         self.assertEqual(many["band"], "MULTIPLE_SURVIVORS")
         self.assertEqual(many["verdict_recommendation"], "PASS")
         bad = sf.family_disposition([{"cohort": "A/1h"}], False)
         self.assertEqual(bad["verdict_recommendation"], "TECHNICAL_INCOMPLETE")
+        self.assertEqual(bad["disposition"], "TECHNICAL_INCOMPLETE")
         self.assertFalse(bad["performance_claimable_recommendation"])
 
     def test_axis_and_tie_break_are_registered_order_based(self):

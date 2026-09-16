@@ -127,7 +127,7 @@ CASE_FIELDS = ("brick_pct", "rsi_period")
 SELECTOR_VERSION = "cohort-selector-v1"
 DISPOSITION_VERSION = "cohort-disposition-v1"
 CONTRACT_SEMANTICS_VERSION = "v1.4.0"
-ENGINE_VERSION = "f-v1-engine-1.0.2"
+ENGINE_VERSION = "f-v1-engine-1.0.3"
 ENGINE_SEMANTICS = ("geometric Renko bricks (brick_pct of the current reference price) built "
                     "from the cohort's own bars, stamped at the forming bar's close; Wilder RSI "
                     "and a Stochastic-RSI K/D cross on the BRICK CLOSE series; next-bar-open "
@@ -1274,16 +1274,21 @@ def evaluate_cohort(spec, cohort_label, rows):
 
 
 def family_disposition(survivors, coverage_complete):
-    """Contract 7.2/7.3 (v1.4.0).  Coverage/technical incompleteness wins."""
+    """Contract 7.2/7.3 (v1.4.0).  Coverage/technical incompleteness wins.
+
+    `disposition` carries the v1.4.0 BAND string (it describes the survivor COUNT, never the
+    verdict): runtime/survivor_bundle.py compares that column against `band_for(count)` and
+    refuses a mismatch, so the pre-1.0.3 'REJECT'/'SURVIVOR' wording froze no bundle at all.
+    """
     if not coverage_complete:
         return {"disposition": "TECHNICAL_INCOMPLETE",
                 "verdict_recommendation": "TECHNICAL_INCOMPLETE",
                 "performance_claimable_recommendation": False,
                 "mapping_version": CONTRACT_SEMANTICS_VERSION}
-    band = "NO_SURVIVOR" if not survivors else ("SURVIVOR_FOUND" if len(survivors) == 1
-                                               else "MULTIPLE_SURVIVORS")
+    band = ("REJECT / NO_SURVIVOR" if not survivors
+            else ("SURVIVOR_FOUND" if len(survivors) == 1 else "MULTIPLE_SURVIVORS"))
     verdict = "PASS" if survivors else "REJECT"
-    return {"disposition": "SURVIVOR" if survivors else "REJECT", "band": band,
+    return {"disposition": band, "band": band,
             "verdict_recommendation": verdict,
             "performance_claimable_recommendation": bool(survivors),
             "mapping_version": CONTRACT_SEMANTICS_VERSION}

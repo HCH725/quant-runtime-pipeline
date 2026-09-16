@@ -17,7 +17,8 @@ artifact that decides what "all survivors advance" means in practice, so these c
     and by the writer, and a non-dict `generator` is compared rather than normalised away (the
     F2 regression pin),
   * fail-closed behaviour: a non-terminal attempt, a mismatched survivor count/order, false
-    assertions, incomplete coverage, or a disagreeing disposition band all refuse to freeze,
+    assertions, incomplete coverage, an attempt that records no survivor at all, or a
+    disagreeing disposition band all refuse to freeze,
   * tamper control: a frozen bundle whose measurement, or whose published identity, no longer
     matches the attempt's artifacts is refused by `--check` (and never rewritten), while a
     corrected writer with unchanged measurement still recognises its own frozen content,
@@ -134,13 +135,22 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertEqual(bundle["disposition_band"], "SURVIVOR_FOUND")
         self.assertEqual(bundle["verdict"], "PASS")
 
-    def test_zero_survivor_band_is_reject_not_a_gate_failure(self):
-        bundle, problems = sb.build(make_attempt(self.root, [], extra_cohorts=["ETHUSDT/5m"]))
-        self.assertEqual(problems, [])
-        self.assertEqual(bundle["survivor_count"], 0)
-        self.assertEqual(bundle["survivors"], [])
-        self.assertEqual(bundle["disposition_band"], "REJECT / NO_SURVIVOR")
-        self.assertEqual(bundle["verdict"], "REJECT")
+    def test_zero_survivor_attempt_is_refused_and_freezes_nothing(self):
+        # Card t_e86b05a8: a round with no cohort survivor has no frozen survivor bundle.  The
+        # refusal must name the survivor count itself; the disposition-band check is NOT the
+        # reason (a band-correct 0-survivor attempt used to be written as an empty bundle).
+        attempt = make_attempt(self.root, [], extra_cohorts=["ETHUSDT/5m"])
+        bundle, problems = sb.build(attempt)
+        self.assertIsNone(bundle)
+        self.assertTrue(any(p.startswith("0 survivors") for p in problems), problems)
+        self.assertEqual([p for p in problems if "disposition band mismatch" in p], [])
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("0 survivors", proc.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.root, "rounds", "fam-r1",
+                                                     "survivor-bundle.json")),
+                         "a 0-survivor attempt must freeze nothing")
 
     def test_bundle_identity_is_order_sensitive_so_nothing_is_sorted_or_ranked(self):
         attempt = make_attempt(self.root, [survivor(A), survivor(B)])

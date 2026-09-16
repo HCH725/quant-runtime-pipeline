@@ -778,7 +778,8 @@ def run_spec_template():
                              "must_run_before_launch": True},
         "expected_outputs": ["result.json", "artifacts/cohort_results.json",
                              "artifacts/cohort_survivors.json", "artifacts/assertions.json",
-                             "artifacts/dca_layer_histogram.json"],
+                             "artifacts/dca_layer_histogram.json",
+                             *["artifacts/grid_%s.csv" % g for g in counts.COHORT_GRID_KINDS]],
         "falsification": [
             "no signal / insufficient trades (G2 floor: fewer than 30 historical episodes in the "
             "cohort's best case, or fewer than 10 in the winner's OOS slice; culls the cohort)",

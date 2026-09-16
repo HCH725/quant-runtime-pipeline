@@ -41,6 +41,23 @@ def probe_docs():
                             "sha256:" + "a" * 64, "sha256:" + "b" * 64)
 
 
+def grid_names(entries):
+    """The `artifacts/grid_<grid>.csv` names inside an expected_outputs / artifacts_required list."""
+    return sorted(rel[len("artifacts/grid_"):-len(".csv")] for rel in entries
+                  if rel.startswith("artifacts/grid_") and rel.endswith(".csv"))
+
+
+def engine_grid_kinds(runner_path):
+    """The registered phase grids a runner writes: one `artifacts/grid_<grid>.csv` per entry and
+    the same list as `result.json.cohort_grid_kinds` (see the runner's own summary writer)."""
+    with open(runner_path) as fh:
+        tree = ast.parse(fh.read())
+    for item in tree.body:
+        if isinstance(item, ast.Assign) and getattr(item.targets[0], "id", None) == "COHORT_GRID_KINDS":
+            return list(ast.literal_eval(item.value))
+    raise AssertionError("%s must declare COHORT_GRID_KINDS" % runner_path)
+
+
 class TestTemplatesValidate(unittest.TestCase):
     def test_round_spec_counts_and_contract_are_clean(self):
         round_spec, run_spec = probe_docs()
@@ -213,7 +230,7 @@ class TestEngineAgreesWithTheRegistration(unittest.TestCase):
         self.assertEqual(list(kinds), list(counts.COHORT_GRID_KINDS))
 
     def test_engine_version_and_selector_versions_are_declared(self):
-        self.assertIn('ENGINE_VERSION = "f-v1-engine-1.0.2"', self.src)
+        self.assertIn('ENGINE_VERSION = "f-v1-engine-1.0.3"', self.src)
         self.assertIn('SELECTOR_VERSION = "cohort-selector-v1"', self.src)
         self.assertIn('DISPOSITION_VERSION = "cohort-disposition-v1"', self.src)
         self.assertIn('CONTRACT_SEMANTICS_VERSION = "v1.4.0"', self.src)
@@ -222,6 +239,42 @@ class TestEngineAgreesWithTheRegistration(unittest.TestCase):
         # entries/scale-ins pay for a buy and sell lower for a sell; exits are the mirror
         self.assertRegex(self.src, r"px = O\[entry\] \+ sign \* slip_ticks \* tick")
         self.assertRegex(self.src, r"xpx = base_price - sign \* slip_ticks \* tick")
+
+
+class TestRunSpecExpectedOutputsCoverTheGrids(unittest.TestCase):
+    """BLOCKER 2 regression (card t_e86b05a8).
+
+    Contract 28.3 compares the run-spec's `artifacts/grid_*.csv` list with the frozen terminal
+    `DONE` sentinel's manifest (`runtime/survivor_evidence.py::registered_grid_names` raises on
+    any disagreement, including an EMPTY run-spec list), so a run-spec that omits the grids
+    refuses every evidence package its survivors would ever produce.  The F template shipped 0
+    grid entries against a sentinel manifest of 10; E is the reference - its run-spec carries
+    all 11 of its own grids.
+    """
+
+    def test_f_expected_outputs_cover_exactly_the_engine_grids(self):
+        _round_spec, run_spec = probe_docs()
+        kinds = engine_grid_kinds(RUNNER)
+        self.assertEqual(len(kinds), 10)
+        self.assertEqual(grid_names(run_spec["expected_outputs"]), sorted(kinds))
+        self.assertEqual(len(run_spec["expected_outputs"]), 5 + len(kinds))
+        self.assertEqual(len(set(run_spec["expected_outputs"])),
+                         len(run_spec["expected_outputs"]),
+                         "expected_outputs must not list the same artifact twice")
+
+    def test_f_round_spec_required_artifacts_and_run_spec_agree_on_the_grids(self):
+        # the drift BLOCKER 2 came from: one authored list carried the grids, the other did not
+        round_spec, run_spec = probe_docs()
+        self.assertEqual(grid_names(round_spec["artifacts_required"]),
+                         grid_names(run_spec["expected_outputs"]))
+
+    def test_e_run_spec_still_covers_its_own_grids(self):
+        e_run = load(os.path.join(RUNTIME, "templates", "strategy_e_v1_run_spec.template.json"))
+        e_kinds = engine_grid_kinds(os.path.join(REPO, "container", "scripts",
+                                                 "50_strategy_e_run.py"))
+        self.assertEqual(len(e_kinds), 11)
+        self.assertEqual(grid_names(e_run["expected_outputs"]), sorted(e_kinds))
+        self.assertEqual(len(e_run["expected_outputs"]), 24)
 
 
 if __name__ == "__main__":

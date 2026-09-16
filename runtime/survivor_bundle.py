@@ -10,7 +10,8 @@ shortlist, and never as a single chosen cell.
 This script is the only producer of that artifact.  It is a host-side, pure-stdlib,
 deterministic reader of the attempt's immutable artifacts: it re-reads the survivors from
 `artifacts/cohort_survivors.json`, re-checks them against `result.json` (count, order,
-disposition band, coverage and assertions), and writes
+disposition band, coverage and assertions), refuses an attempt that records no survivor at
+all (there is then no bundle to freeze), and writes
 
     <round-dir>/survivor-bundle.json
 
@@ -212,6 +213,15 @@ def build(attempt_dir, attempts_root=None):
                         % (measured_survivors, labels))
 
     count = len(survivors)
+    if count == 0:
+        # A round with no cohort survivor has no frozen survivor bundle: there is nothing to
+        # freeze and nothing downstream (section 27) could read from an empty bundle.  Before
+        # the 0-survivor refusal existed, the attempt was only refused by the disposition-band
+        # check below - i.e. a correctly-worded 0-survivor attempt was WRITTEN as an empty
+        # bundle (card t_e86b05a8).
+        problems.append("0 survivors: this attempt records no cohort survivor, so there is no "
+                        "frozen survivor bundle to write (contract 7.3/10.8 freezes the round's "
+                        "survivors for the post-survivor lifecycle)")
     expected_band = band_for(count)
     if result.get("disposition") != expected_band:
         problems.append("disposition band mismatch: result.json %r, v1.4.0 mapping for %d "

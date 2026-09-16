@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "kind": "Strategy F v1 latent §27/§28 blocker remediation evidence snapshot",
+  "card": "t_e86b05a8",
+  "parent_card": "t_0546d31b",
+  "author": "Hermes default (Xiaoqian)",
+  "created_at_utc": "2026-09-16T08:20:39Z",
+  "redaction": "host-specific absolute paths use <HOME> / <EXPANSION> per evidence/README.md; nothing else altered",
+  "scope": {
+    "goal": "fix the two latent blockers disclosed by the Strategy F r1 closeout so a future F round with >=1 survivor can freeze its §10.8 survivor bundle and pass §28.3",
+    "replay_of_f_r1": false,
+    "frozen_artifacts_rewritten": false,
+    "paper_or_live_touched": false,
+    "gates_relaxed": false,
+    "auditor_child_created": false
+  },
+  "blocker_1_engine_disposition_band": {
+    "symptom": "engine wrote the VERDICT ('REJECT'/'SURVIVOR') into result.json `disposition`, while runtime/survivor_bundle.py::build() requires the v1.4.0 BAND string from band_for(count) -> every F attempt was refused a bundle (survivor-bearing rounds included)",
+    "engine_before": {
+      "path": "container/scripts/60_strategy_f_run.py",
+      "sha256": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71",
+      "version": "f-v1-engine-1.0.2",
+      "family_disposition_lines": "1276-1289 (disposition = 'SURVIVOR' if survivors else 'REJECT', band kept separately)"
+    },
+    "engine_after": {
+      "sha256": "sha256:fc63038ffa5fc5671feeea3c8166a8ad4a37710c3bd3c6effc829a61f5e5c52a",
+      "version": "f-v1-engine-1.0.3",
+      "changed_lines": [
+        "container/scripts/60_strategy_f_run.py:130 ENGINE_VERSION = \"f-v1-engine-1.0.3\"",
+        "container/scripts/60_strategy_f_run.py:1276-1296 family_disposition(): band = ('REJECT / NO_SURVIVOR' if not survivors else ('SURVIVOR_FOUND' ... )); return {'disposition': band, 'band': band, ...}"
+      ],
+      "cross_check": "Strategy E's 50_strategy_e_run.py:1758-1772 already wrote the same band strings into the same column (with Strategy B/C/A); F was the outlier, so the writer was NOT changed to accommodate the engine"
+    },
+    "measured_engine_output_after": {
+      "0 survivors": {"disposition": "REJECT / NO_SURVIVOR", "verdict_recommendation": "REJECT", "performance_claimable_recommendation": false},
+      "1 survivor": {"disposition": "SURVIVOR_FOUND", "verdict_recommendation": "PASS", "performance_claimable_recommendation": true},
+      "2 survivors": {"disposition": "MULTIPLE_SURVIVORS", "verdict_recommendation": "PASS", "performance_claimable_recommendation": true},
+      "band_for(count) agreement": "all three equal runtime/survivor_bundle.py band_for(0|1|2) (asserted in the e2e control script)"
+    },
+    "negative_control_of_the_old_engine": {
+      "command": "python3 runtime/survivor_bundle.py --attempt-dir <EXPANSION>/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/attempts/stochastic-rsi-renko-2026-08-31-r1-u3",
+      "rc": 1,
+      "stderr_before_fix": "REFUSED: disposition band mismatch: result.json 'REJECT', v1.4.0 mapping for 0 survivor(s) is 'REJECT / NO_SURVIVOR'",
+      "round_dir_writes": 0
+    }
+  },
+  "blocker_2_run_spec_expected_outputs_grids": {
+    "symptom": "the F run-spec template listed 0 of the engine's 10 artifacts/grid_*.csv, while the frozen u3 DONE sentinel manifest lists all 10; contract 28.3 (runtime/survivor_evidence.py::registered_grid_names) raises on any disagreement -> every F evidence package would be refused",
+    "changed_lines": [
+      "runtime/templates/strategy_f_v1_run_spec.template.json:566-582 expected_outputs 5 -> 15 entries (result.json + 4 artifacts/*.json + 10 artifacts/grid_*.csv)",
+      "runtime/_author_strategy_f_template.py:779-782 the authoring source of the same list: now *[\"artifacts/grid_%s.csv\" % g for g in counts.COHORT_GRID_KINDS]"
+    ],
+    "template_sha256_before": "sha256:8174cbb733677bfb7c2a4764dfa12bf3ae1cf83a09733e467349ac15273c7ab1",
+    "template_sha256_after": "sha256:0a37f775027026457f57ab2dfb489bdbf7d15d44eeac2fbd52ea28a972b949ed",
+    "frozen_run_specs_untouched": [
+      "u1 run-spec.json sha256:b775750de1c322c46f6ba9363adb0acf91a007477e07accd70088f0f7203bfab (5 entries, immutable per INV-4)",
+      "u2 run-spec.json sha256:b6b147cebe2a8c0a758fe38508e579951ecf7491bc5016c0fb564c7bd1b8a435 (5 entries, immutable)",
+      "u3 run-spec.json sha256:838121c69a1f402d4d26a957d6c572c93a267218015f1bd1a6d09f33cd19cd98 (5 entries, immutable)"
+    ],
+    "contract_28_3_e2e_against_the_frozen_u3_sentinel": {
+      "sentinel_manifest_grids": ["cost_attrition_40bps", "entry_delay_1_bar", "fee_2x", "full", "funding_2x", "historical", "no_funding", "no_funding_full", "oos", "slippage_2ticks"],
+      "run_spec_instantiated_from_the_fixed_template": "15 expected_outputs, 10 grids -> registered_grid_names() returned the 10 grids, no raise (future rounds only)",
+      "frozen_u3_run_spec_control": "ValueError: the frozen terminal sentinel's artifact manifest [...] and the run-spec expected_outputs [] disagree on the registered grids (expected: the frozen bytes are immutable)"
+    }
+  },
+  "disclosed_third_change_writer_zero_survivor_refusal": {
+    "why": "the card's negative control requires a 0-survivor fixture to stay REFUSED with a reason naming 0 survivors. Empirically that refusal did not exist: with band-correct 0-survivor bytes the writer WROTE an empty bundle (control B below), and the pre-fix refusal only happened by accident through the band mismatch. Fixing only the engine would therefore have flipped 0-survivor F rounds from 'refused' to 'empty bundle written' - a fail-open the parent card's closeout explicitly rules out ('0 survivor -> 依 §10.8 不寫 survivor bundle').",
+    "changed_lines": [
+      "runtime/survivor_bundle.py:214-223 build(): `if count == 0:` appends '0 survivors: this attempt records no cohort survivor, so there is no frozen survivor bundle to write (contract 7.3/10.8 ...)'",
+      "runtime/survivor_bundle.py:12-13 module docstring: the refusal is named among the re-checks",
+      "runtime/tests/test_survivor_bundle.py:137-153 test_zero_survivor_attempt_is_refused_and_freezes_nothing (replaces test_zero_survivor_band_is_reject_not_a_gate_failure, which pinned the empty-bundle write)"
+    ],
+    "not_a_band_accommodation": "the disposition-band rule and band_for()/verdict_for() are unchanged; the new clause is independent of them and fires for a band-correct 0-survivor attempt",
+    "writer_sha256_before_after": {
+      "before": "sha256:d3b2f41f62e1448f5672bedd35e55fafa126ac2da67789815a05c5683a9c9458",
+      "after": "sha256:3800085714671d7ec4d795dcbddc6004dceed4ccef2ae281436e08e83853a98e"
+    },
+    "empirical_controls_before_the_guard": {
+      "A_0_survivors_old_engine_bytes": "rc=1, only reason = disposition band mismatch",
+      "B_0_survivors_band_correct_bytes": "rc=0, bundle WRITTEN with survivor_count=0 (the fail-open)",
+      "C_1_survivor_band_correct_bytes": "rc=0, bundle written",
+      "D_1_survivor_old_engine_bytes": "rc=1, disposition band mismatch"
+    },
+    "open_item_for_operator": "contract §10.8's written text names the production conditions (terminal DONE, coverage_complete, assertions all true) but does NOT literally state 'no survivor -> no bundle'. The guard implements the rule the parent card's closeout recorded; if it should be normative, §10.8 needs an explicit [C] clause (no contract edit was made by this card)."
+  },
+  "end_to_end_controls": {
+    "script": "workspace copy: _fixtures/f_latent_blockers_e2e.py (artifact of this card; log: f_latent_blockers_e2e.log)",
+    "A_engine_output": "0/1/2 survivors -> REJECT / NO_SURVIVOR | SURVIVOR_FOUND | MULTIPLE_SURVIVORS",
+    "B_1_survivor_fixture_from_the_fixed_engine": "writer rc=0, bundle written: survivor_count=1, disposition_band=SURVIVOR_FOUND, verdict=PASS, identity sha256:35b6f1fbd8dca6f1efdac52cda07c598762b2e187192f80a46cc220b2d68aca4, identity_recipe_matches=true",
+    "C_0_survivor_fixture_from_the_fixed_engine": "writer rc=1, stderr = 'REFUSED: 0 survivors: ...', NO 'disposition band mismatch' line, nothing written",
+    "D_frozen_u3_read_only_re_run": "writer rc=1, nothing written; round dir before == after == ['attempts','round-spec.json','verdict.json']; u3 result.json sha256 unchanged (ec1cb27c...). The frozen bytes still ALSO report the band mismatch - unavoidable and correct, since u3's result.json is immutable engine-1.0.2 output; the 'no band mismatch' evidence object is control C, as the card's parenthetical requires",
+    "E_contract_28_3": "see blocker_2"
+  },
+  "red_green": {
+    "red_1_engine": {
+      "command": "SF_ENGINE_PATH=/tmp/sf_engine_1_0_2.py python3 container/scripts/tests/test_strategy_f_engine.py",
+      "frozen_bytes_sha256": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71 (git show 3bd5a08:container/scripts/60_strategy_f_run.py)",
+      "result": "FAILED (failures=1): test_family_disposition_mapping -> AssertionError: 'REJECT' != 'REJECT / NO_SURVIVOR'"
+    },
+    "green_1_engine": {
+      "command": "SF_ENGINE_PATH=<repo>/container/scripts/60_strategy_f_run.py python3 container/scripts/tests/test_strategy_f_engine.py",
+      "result": "Ran 28 tests - OK"
+    },
+    "green_1_engine_in_container": {
+      "command": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_strategy_f_engine.py",
+      "result": "Ran 28 tests - OK (on the deployed /scripts bytes)"
+    },
+    "red_2_writer": {
+      "command": "python3 -m unittest runtime.tests.test_survivor_bundle (in a /tmp copy with the guard reverted)",
+      "result": "FAILED (failures=1): test_zero_survivor_attempt_is_refused_and_freezes_nothing -> the full empty bundle dict is not None"
+    },
+    "red_3_template": {
+      "command": "python3 -m unittest runtime.tests.test_strategy_f_v1_templates (in a /tmp copy with the 10 grid entries removed)",
+      "result": "FAILED (failures=2): grids [] != [10 grids]; round-spec artifacts_required vs run-spec expected_outputs disagree"
+    }
+  },
+  "tests": {
+    "repo_suite_before": "python3 -m unittest discover -s runtime/tests -t runtime/tests -> Ran 347 tests, OK (HEAD 3bd5a08 copy)",
+    "repo_suite_after": "python3 -m unittest discover -s runtime/tests -t runtime/tests -> Ran 350 tests, OK",
+    "engine_selfcheck": "28/28 host and container",
+    "new_tests": [
+      "container/scripts/tests/test_strategy_f_engine.py:513-537 pins the band strings for 0/1/2+ survivors",
+      "runtime/tests/test_strategy_f_v1_templates.py:244-275 grids vs engine, round-spec/run-spec agreement, Strategy E cross-check (24 entries / 11 grids)",
+      "runtime/tests/test_survivor_bundle.py:137-153 the 0-survivor refusal"
+    ]
+  },
+  "deployment_three_way_identity": {
+    "engine_1_0_3": {
+      "repo": "sha256:fc63038ffa5fc5671feeea3c8166a8ad4a37710c3bd3c6effc829a61f5e5c52a",
+      "host_deploy": "sha256:fc63038ffa5fc5671feeea3c8166a8ad4a37710c3bd3c6effc829a61f5e5c52a",
+      "container_scripts": "sha256:fc63038ffa5fc5671feeea3c8166a8ad4a37710c3bd3c6effc829a61f5e5c52a"
+    },
+    "engine_selfcheck_test": {
+      "repo": "sha256:744048ac1ff1fbc3869efd85cfc54e2b0bcb62b7b0c0eb5bb25e0424eac51f30",
+      "host_deploy": "sha256:744048ac1ff1fbc3869efd85cfc54e2b0bcb62b7b0c0eb5bb25e0424eac51f30",
+      "container_scripts": "sha256:744048ac1ff1fbc3869efd85cfc54e2b0bcb62b7b0c0eb5bb25e0424eac51f30"
+    },
+    "path": "<HOME>/workspace/qlib-apple-container/scripts/ (bind-mounted read-only at the container's /scripts)"
+  },
+  "frozen_artifacts_untouched": {
+    "round-spec.json": "sha256:7cd808b14422b08d2cfa6e600ab8d2420dc5d21a2e78b4b3d7b5a34f55c26cc5",
+    "verdict.json": "sha256:08f3b8a7a8cc8a2619e9cdd817f8c1b197b9a9c446bd5dc835a4bb57d4fea485",
+    "u1 result.json": "sha256:27468f42d4bfb6a50d29943d6a214aa8da8122e917004ea10adce59bf7087a78",
+    "u2 result.json": "sha256:53213e8b371455f769fabeaa01c841b4157ede28e64ea09c3482813fd6318cee",
+    "u3 result.json": "sha256:ec1cb27c3a4ea32c4e85fe0a6dee63870270ca93ba632e600abc0abbb148e7f4",
+    "u3 DONE sentinel": "sha256:e2a11ff2ee5f53c50415534d1e01b9304b2db44a114f959fd0cbd83922de047b",
+    "u3 run-spec.json": "sha256:838121c69a1f402d4d26a957d6c572c93a267218015f1bd1a6d09f33cd19cd98",
+    "note": "all equal the values the F r1 closeout recorded; this card wrote nothing inside <EXPANSION>/qlib-results"
+  },
+  "boundaries_respected": [
+    "F r1 was not re-run: no container run and no run-spec/round-spec/attempt byte changed",
+    "A/B/C/D/E frozen artifacts untouched (read-only reads only)",
+    "no Paper/Live surface touched",
+    "no gate, threshold or band semantics relaxed; the only added rule is a fail-closed 0-survivor refusal",
+    "no auditor child card created (operator decides)"
+  ]
+}
