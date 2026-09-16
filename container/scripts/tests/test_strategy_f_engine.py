@@ -32,6 +32,11 @@ FEE = 0.0005
 LEV = 10.0
 RAIL = {"base_quote": 1000.0, "spacing_d0": 0.01, "size_multiplier": 1.0,
         "tp": 0.01, "invalidation": 0.05}
+# One 750,000 USDT level (75,000 x 10x): big enough that a single flatten can consume the whole
+# account, which is what the capital-exhaustion tests need.  A wide ladder spacing keeps the
+# scale-ins out of the way of the hand-computed fills.
+BIG_RAIL = {"base_quote": 75000.0, "spacing_d0": 0.5, "size_multiplier": 1.0,
+            "tp": 0.01, "invalidation": 0.05}
 CASE = {"brick_pct": 0.02, "rsi_period": 14}
 
 
@@ -258,6 +263,50 @@ class TestExecution(unittest.TestCase):
         self.assertEqual(m["flip_exits"], 1)
         self.assertEqual(m["layers"][0], 2)
         self.assertEqual(m["tp_hits"] + m["stop_hits"], 0)
+
+    def test_flip_that_exhausts_the_account_opens_no_new_episode(self):
+        # Registered capital-exhaustion semantics: "no new episode is opened once the realised
+        # equity is gone".  The opposite-crossing flatten is itself a FILL, so it can consume the
+        # last of the equity on the bar it fills at: the mirrored side must not open then, even
+        # though the signal is perfectly valid.  One 750,000 USDT level, the short signal on bar
+        # 8 fills on bar 9 whose open gaps to 96: the flatten realises -30,000 and the two 5 bps
+        # fees leave the account at -735.
+        n = 30
+        o = [100.0] * n
+        h = [100.0] * n
+        l = [100.0] * n
+        c = [100.0] * n
+        o[9] = h[9] = l[9] = c[9] = 96.0     # the flip's fill bar opens at the gap price
+        cohort = FakeCohort(o, h, l, c, mmaint=0.002)
+        m = sim(cohort, [(2, 1), (8, -1)], rail=BIG_RAIL, slip=0)
+        self.assertTrue(m["halted"])
+        self.assertEqual(m["episodes"], 1)
+        self.assertEqual(m["signals_entered"], 1)
+        self.assertEqual(m["flip_exits"], 1)          # the flatten itself still happens
+        self.assertGreater(m["min_entry_equity"], 0.0)  # the registered gate, verbatim
+        self.assertAlmostEqual(m["ending_equity"], -735.0, places=6)
+        self.assertAlmostEqual(m["net_pnl"], -30735.0, places=6)
+        self.assertTrue(sf.pnl_decomposition_ok(m))
+
+    def test_exhausted_equity_halts_before_a_new_episode(self):
+        # The pre-signal guard (unchanged by the flip-path fix, and the other half of the same
+        # semantics): an account stopped out to a negative balance must not take the next signal
+        # either.  The 5% resting invalidation on one 750,000 USDT level realises -37,500 and the
+        # fees leave the account at -8,231.25.
+        n = 30
+        o = [100.0] * n
+        h = [100.0] * n
+        l = [100.0] * n
+        c = [100.0] * n
+        o[8] = h[8] = l[8] = c[8] = 95.0     # the resting invalidation fills here
+        cohort = FakeCohort(o, h, l, c, mmaint=0.002)
+        m = sim(cohort, [(2, 1), (12, 1)], rail=BIG_RAIL, slip=0)
+        self.assertTrue(m["halted"])
+        self.assertEqual(m["episodes"], 1)
+        self.assertEqual(m["signals_entered"], 1)
+        self.assertEqual(m["stop_hits"], 1)
+        self.assertGreater(m["min_entry_equity"], 0.0)
+        self.assertAlmostEqual(m["ending_equity"], -8231.25, places=6)
 
     def test_same_sign_signal_is_ignored_while_positioned(self):
         n = 30

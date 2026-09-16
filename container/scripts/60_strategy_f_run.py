@@ -35,7 +35,10 @@ rail), the take profit is reduce-only at running_average_cost x (1 +/- breakeven
 invalidation is a RESTING stop at running_average_cost x (1 -/+ invalidation_pct), an opposite
 crossing reduce-only flattens every layer and opens the mirrored side, and an open position is
 reduce-only flattened at the slice's last bar.  Between positions the book is FLAT and no layer
-may be added.  Every fill is a market order: taker fee on its own notional plus registered
+may be added.  No new episode is opened once the realised equity is gone: the capital-exhaustion
+guard is re-evaluated after the opposite-crossing flatten as well as before the signal, because
+that flatten is itself a fill that can consume the remaining equity.  Every fill is a market
+order: taker fee on its own notional plus registered
 ADVERSE slippage of `slip_ticks` instrument ticks (entry and scale-in pay up for a buy / down
 for a sell, exits the mirror: the price always moves against the position), and every funding
 settlement inside the closed holding interval is charged on the position notional that was at
@@ -122,7 +125,7 @@ CASE_FIELDS = ("brick_pct", "rsi_period")
 SELECTOR_VERSION = "cohort-selector-v1"
 DISPOSITION_VERSION = "cohort-disposition-v1"
 CONTRACT_SEMANTICS_VERSION = "v1.4.0"
-ENGINE_VERSION = "f-v1-engine-1.0.0"
+ENGINE_VERSION = "f-v1-engine-1.0.1"
 ENGINE_SEMANTICS = ("geometric Renko bricks (brick_pct of the current reference price) built "
                     "from the cohort's own bars, stamped at the forming bar's close; Wilder RSI "
                     "and a Stochastic-RSI K/D cross on the BRICK CLOSE series; next-bar-open "
@@ -904,6 +907,13 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, signals, diag=Fa
         if pos_open:
             close_position(entry, O[entry], "flip", int(cohort.open_time_ms[i0 + entry]))
             pos_open = False
+            if START_EQUITY + realized <= 0.0:
+                # the flatten above is itself a fill: it can consume the last of the equity, so
+                # the registered capital-exhaustion semantics ("no new episode is opened once
+                # the realised equity is gone") must be re-checked before the mirrored side is
+                # opened.  Without this the mirrored episode would open on an exhausted account.
+                halted = True
+                break
         open_position(entry, sign)
         pos_open = True
         ptr = entry
