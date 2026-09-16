@@ -36,8 +36,10 @@ invalidation is a RESTING stop at running_average_cost x (1 -/+ invalidation_pct
 crossing reduce-only flattens every layer and opens the mirrored side, and an open position is
 reduce-only flattened at the slice's last bar.  Between positions the book is FLAT and no layer
 may be added.  No new episode is opened once the realised equity is gone: the capital-exhaustion
-guard is re-evaluated after the opposite-crossing flatten as well as before the signal, because
-that flatten is itself a fill that can consume the remaining equity.  Every fill is a market
+guard is re-evaluated after the opposite-crossing flatten (that flatten is itself a fill that can
+consume the remaining equity) and again inside `open_position`, against the equity the entry's own
+taker fee will leave behind -- an account that cannot fund the tranche's fill cost is exhausted and
+opens no episode.  Every fill is a market
 order: taker fee on its own notional plus registered
 ADVERSE slippage of `slip_ticks` instrument ticks (entry and scale-in pay up for a buy / down
 for a sell, exits the mirror: the price always moves against the position), and every funding
@@ -125,7 +127,7 @@ CASE_FIELDS = ("brick_pct", "rsi_period")
 SELECTOR_VERSION = "cohort-selector-v1"
 DISPOSITION_VERSION = "cohort-disposition-v1"
 CONTRACT_SEMANTICS_VERSION = "v1.4.0"
-ENGINE_VERSION = "f-v1-engine-1.0.1"
+ENGINE_VERSION = "f-v1-engine-1.0.2"
 ENGINE_SEMANTICS = ("geometric Renko bricks (brick_pct of the current reference price) built "
                     "from the cohort's own bars, stamped at the forming bar's close; Wilder RSI "
                     "and a Stochastic-RSI K/D cross on the BRICK CLOSE series; next-bar-open "
@@ -874,22 +876,36 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, signals, diag=Fa
         return False
 
     def open_position(entry, sign):
+        """Open tranche #1 at the entry bar's open.
+
+        Returns False when the tranche's OWN fill cost would leave the account exhausted: the
+        registered capital-exhaustion semantics ("no new episode is opened once the realised
+        equity is gone") are evaluated against the equity the entry itself leaves behind, so an
+        account that cannot fund the tranche opens no episode at all.  The comparison below is
+        spelled exactly like the recorded `min_entry_equity` expression, so the recorded value
+        is the value that passed the guard.
+        """
         nonlocal fills, turnover, signals_entered, min_entry_equity
         px = O[entry] + sign * slip_ticks * tick     # buying pays up, selling sells lower
         qty = base * lev / px
         cost = qty * px
-        charge_fee(qty * px * taf)
+        entry_fee = qty * px * taf
+        if START_EQUITY + (realized - entry_fee) <= 0.0:
+            counter(kind, "entry_refused_exhausted")
+            return False
+        charge_fee(entry_fee)
         fills += 1
         turnover += qty * px
         state.update({"sign": sign, "qty": qty, "cost": cost,
                       "levels": [px * (1.0 - sign * d0 * kk) for kk in range(12)],
                       "entry_ms": int(cohort.open_time_ms[i0 + entry]),
-                      "ep_gross": 0.0, "ep_fees": qty * px * taf, "ep_fund": 0.0})
+                      "ep_gross": 0.0, "ep_fees": entry_fee, "ep_fund": 0.0})
         layers[0] += 1
         signals_entered += 1
         min_entry_equity = min(min_entry_equity, START_EQUITY + realized)
         state["kptr"] = int(np.searchsorted(
             fund_times, state["entry_ms"] - MS_JITTER_TOLERANCE_MS, side="left"))
+        return True
 
     pos_open = False
     ptr = 0
@@ -914,7 +930,11 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, signals, diag=Fa
                 # opened.  Without this the mirrored episode would open on an exhausted account.
                 halted = True
                 break
-        open_position(entry, sign)
+        if not open_position(entry, sign):
+            # the entry's own fill cost would exhaust the book (see open_position): the episode
+            # is not opened at all, and the account is spent -> no further episode either.
+            halted = True
+            break
         pos_open = True
         ptr = entry
     if pos_open:

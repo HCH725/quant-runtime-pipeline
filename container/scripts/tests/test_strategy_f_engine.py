@@ -288,6 +288,34 @@ class TestExecution(unittest.TestCase):
         self.assertAlmostEqual(m["net_pnl"], -30735.0, places=6)
         self.assertTrue(sf.pnl_decomposition_ok(m))
 
+    def test_entry_the_account_cannot_fund_is_not_opened(self):
+        # The other half of the same registered semantics, and the one a pre-signal-only guard
+        # misses: the entry's OWN taker fee is itself a charge, so an account whose realised
+        # equity is smaller than that fee cannot fund the tranche and must open no episode.  The
+        # flip above leaves +14.625 USDT -- well below the mirrored tranche's 375 USDT fee -- so
+        # the mirrored side must not open, the account halts flat, and the registered gate
+        # (`min_entry_equity > 0`) still holds on the episode that WAS opened.
+        n = 30
+        o = [100.0] * n
+        h = [100.0] * n
+        l = [100.0] * n
+        c = [100.0] * n
+        o[9] = h[9] = l[9] = c[9] = 96.10    # the flip's fill bar: equity 14.625 after the flatten
+        cohort = FakeCohort(o, h, l, c, mmaint=0.002)
+        before = sf.COUNTERS.get("full", {}).get("entry_refused_exhausted", 0)
+        m = sim(cohort, [(2, 1), (8, -1)], rail=BIG_RAIL, slip=0)
+        self.assertGreater(m["min_entry_equity"], 0.0)   # the registered gate, verbatim
+        self.assertTrue(m["halted"])                     # the account is spent: no more episodes
+        self.assertEqual(m["episodes"], 1)
+        self.assertEqual(m["signals_entered"], 1)
+        self.assertEqual(m["flip_exits"], 1)             # the flatten itself still happens
+        self.assertAlmostEqual(m["min_entry_equity"], 29625.0, places=6)
+        self.assertAlmostEqual(m["ending_equity"], 14.625, places=6)
+        self.assertAlmostEqual(m["net_pnl"], -29985.375, places=6)
+        self.assertTrue(sf.pnl_decomposition_ok(m))
+        after = sf.COUNTERS.get("full", {}).get("entry_refused_exhausted", 0)
+        self.assertEqual(after - before, 1, "the refused entry must be counted exactly once")
+
     def test_exhausted_equity_halts_before_a_new_episode(self):
         # The pre-signal guard (unchanged by the flip-path fix, and the other half of the same
         # semantics): an account stopped out to a negative balance must not take the next signal

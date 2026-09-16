@@ -213,7 +213,7 @@ class TestEngineAgreesWithTheRegistration(unittest.TestCase):
         self.assertEqual(list(kinds), list(counts.COHORT_GRID_KINDS))
 
     def test_engine_version_and_selector_versions_are_declared(self):
-        self.assertIn('ENGINE_VERSION = "f-v1-engine-1.0.1"', self.src)
+        self.assertIn('ENGINE_VERSION = "f-v1-engine-1.0.2"', self.src)
         self.assertIn('SELECTOR_VERSION = "cohort-selector-v1"', self.src)
         self.assertIn('DISPOSITION_VERSION = "cohort-disposition-v1"', self.src)
         self.assertIn('CONTRACT_SEMANTICS_VERSION = "v1.4.0"', self.src)
