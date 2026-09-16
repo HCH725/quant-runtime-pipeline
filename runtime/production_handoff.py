@@ -13,7 +13,10 @@ Legal action: append at most ONE new family card at the chain tail
 Duplicate / ambiguous / ineligible / incident / freeze -> fail-closed: no card, ONE finding line,
 no retry storm.  Since v1.3.0 a candidate whose card body does not register the DCA parameter
 domain and the cohort survivor rules is also fail-closed (`candidate_body_not_v13`): a v1.2-era
-body cannot express a v1.3 full backtest (contract 7.2/7.3/14.4).
+body cannot express a v1.3 full backtest (contract 7.2/7.3/14.4).  The created body is the candidate
+body verbatim plus a fixed system-owned lifecycle footer (contract 6.4: an honest prerequisite-missing
+TECHNICAL_INCOMPLETE terminal satisfies the card goal) - the footer never rewrites candidate bytes,
+never enters the fingerprint input, and changes no append gate.
 
 Fence note (contract 9.4): the board mutation shells out to `hermes kanban create`, which Hermes
 refuses from a delegate_task child context. Run this from a fence-free host shell - the cron entry
@@ -45,6 +48,23 @@ _STRATEGY_CARD_FIELDS = ("id", "status", "created_at", "title")
 # must register the DCA parameter domain and the cohort survivor rules, otherwise it cannot
 # express a v1.3 full backtest. Compared case-insensitively against the resolved card body.
 CANDIDATE_BODY_MARKERS = ("DCA PARAMETER DOMAIN", "COHORT SURVIVOR")
+# System-owned lifecycle footer appended to every card body this automation creates (contract 6.4).
+# Fixed text, never derived from the candidate: the candidate bytes stay verbatim and its fingerprint
+# input is untouched. It exists because a card that can only terminate as an honest prerequisite-missing
+# TECHNICAL_INCOMPLETE otherwise reads to a goal-mode completion judge as "full backtest not delivered".
+LIFECYCLE_FOOTER = (
+    "\n\n---\n"
+    "LIFECYCLE FOOTER（system-owned；append 時由 production_handoff 注入，非 candidate 規格的一部分；"
+    "contract §6.4／§14.4）\n"
+    "- full backtest 是本卡的目標，前提是 required prerequisites（資料／市場／universe）存在。\n"
+    "- 若必要 prerequisite 客觀不存在、其缺席已由 measured evidence 證實，且已依 contract 寫出該 round"
+    "必要的 immutable terminal artifacts（`round-spec.json` ＋ `verdict.json`=TECHNICAL_INCOMPLETE，"
+    "§6.4／§10.7，含 failure 層級、last run_id、terminal evidence 路徑、未完成原因），"
+    "則該誠實 terminal 結果即 SATISFIES THIS CARD GOAL：應以 `kanban_complete` 終結，"
+    "不得僅因 full-backtest outputs 不可能存在而 block。\n"
+    "- `kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、"
+    "確實需要 human decision 的情況（§12.6）。\n"
+)
 
 
 def sh(cmd, timeout=180):
@@ -178,6 +198,15 @@ def card_body(pool_path, cand):
         return None
 
 
+def body_with_footer(cand):
+    """Candidate body verbatim + the fixed system-owned lifecycle footer (contract 6.4).
+
+    The candidate bytes are never edited and the footer never enters `fingerprint_input`; it is
+    appended so the created card states the prerequisite-missing terminal rule on its own body.
+    """
+    return (cand.get("_body") or cand.get("card_body") or "") + LIFECYCLE_FOOTER
+
+
 class Round(object):
     def __init__(self):
         self.action = None
@@ -269,7 +298,7 @@ def append_one(results_root, board, tail, cand, args, res):
            "--workspace", "dir:" + (cand.get("workspace_path") or DEFAULT_WORKSPACE),
            "--completion-contract", "local-only",
            "--created-by", "production-handoff",
-           "--body", cand.get("_body") or cand.get("card_body") or "",
+           "--body", body_with_footer(cand),
            "--json"]
     if cand.get("goal_mode", True):
         cmd += ["--goal", "--goal-max-turns", str(cand.get("goal_max_turns", 20))]

@@ -4,7 +4,9 @@
 Injected kernel: `production_handoff.sh` is replaced by FakeBoard, so the append decision is exercised
 without touching a real board or a real /results tree. Asserts the properties that matter: a card is
 created ONLY when every section-14 gate passed, `family.json` lands in the same round, the create is
-idempotent by family_id, and every ambiguous state is fail-closed with no card.
+idempotent by family_id, the created `--body` keeps the candidate bytes verbatim plus the system-owned
+lifecycle footer (contract 6.4: a prerequisite-missing TECHNICAL_INCOMPLETE terminal satisfies the
+card goal), and every ambiguous state is fail-closed with no card.
 
 Run: python3 runtime/tests/test_production_handoff.py     (stdlib unittest, no dependencies)
 """
@@ -160,6 +162,26 @@ class TestAppend(Base):
         res = self.run_round()
         self.assertEqual(res.task_id, NEW)
         self.assertEqual(len(self.fake.keys), 1)
+
+    def test_created_body_keeps_candidate_bytes_and_carries_the_lifecycle_footer(self):
+        """The appended `--body` = candidate body verbatim + the fixed system-owned lifecycle footer.
+
+        Contract 6.4: an honest prerequisite-missing `TECHNICAL_INCOMPLETE` terminal (with its immutable
+        round-spec/verdict artifacts) satisfies the card's full-backtest goal, so a goal-mode judge must
+        see that rule on the card instead of blocking for outputs that cannot exist.
+        """
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        create = [c for c in self.fake.calls if c[4] == "create"][0]
+        body = create[create.index("--body") + 1]
+        self.assertTrue(body.startswith(V13_BODY), "candidate body must be preserved verbatim")
+        self.assertIn("SATISFIES THIS CARD GOAL", body)
+        self.assertIn("TECHNICAL_INCOMPLETE", body)
+        self.assertIn("kanban_complete", body)
+        self.assertIn("kanban_block", body)
+        # The footer is system-owned chrome, never part of the candidate spec or its fingerprint.
+        self.assertEqual(json.loads((Path(self.root) / FAMILY_B / "family.json").read_text())
+                         ["semantic_fingerprint"], h.fingerprint(candidate()["fingerprint_input"]))
 
 
 class TestFailClosed(Base):
