@@ -1,0 +1,660 @@
+{
+  "snapshot_kind": "prerequisite-gate terminal (contract 6.4 / 13; no Qlib launch)",
+  "snapshot_taken_at_utc": "2026-09-16T18:02:13Z",
+  "snapshot_boundary": "values are re-measured from the live machine at snapshot time; the immutable artifacts under /results are read, never written by this snapshot",
+  "card": {
+    "kanban_task_id": "t_619d69e1",
+    "board": "quant-strategy-research",
+    "family_id": "crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31",
+    "round_id": "crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31-r1",
+    "assignee": "default",
+    "chain_parent": "t_c62c6881",
+    "origin": "contract 14.4 automatic production handoff (card created by production_handoff; parent edge is scheduling order only - scientific lineage is null, this family does not refine or inherit from any earlier one)"
+  },
+  "contract_basis": {
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "universe_prohibition_verbatim": [
+      "- 本卡註冊：record 自身提供 Crypto portability 段落 → 依該 portability canonicalize（原文節錄見上），未在 intake 之後另設 suitability 篩選。 若本機 canonical raw 不含本 record 所需的 universe／venue／資料，一律走 §13 prerequisite 條款（technical failure），不得縮減 universe 以硬造可執行性。"
+    ],
+    "exit_semantics": "card LIFECYCLE FOOTER + contract 6.4: a prerequisite that objectively does not exist, with its absence proven by measured evidence and the round's immutable terminal artifacts written, IS this card's goal - close with kanban_complete, do not block",
+    "frozen_card_body": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31.md",
+      "sha256": "sha256:8c3378ab34efa7468f316e49f0e118d864a1cc5772cea636c6648cb5f7d7663b",
+      "bytes": 20261
+    },
+    "reviewed_source": {
+      "path": "/Users/hong/.hermes/wiki/quant/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31.md",
+      "sha256": "sha256:be5aee0b46386c4bfabfdc501b5962a3d4a57871f0872d5e0fd632adf8fa456f",
+      "bytes": 15044
+    },
+    "primary_sources": [
+      "https://doi.org/10.1016/j.finmar.2026.101047",
+      "https://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2025-Greece/papers/OrderFlowpaper.pdf"
+    ]
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; data_window_invalid is the closest registered class ('instrument 缺失'). Suggested (not implemented here, needs an operator/contract decision): an explicit prerequisite_missing class for future candidates whose required market or required data source is not in the raw.",
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "rounds_used": 1,
+    "no_progress_rounds": 1,
+    "attempts_launched": 0,
+    "terminal_sentinels": [],
+    "run_id": null,
+    "no_scientific_claim": "this is a technical failure, NOT a scientific REJECT: the candidate is neither validated nor refuted (card text)",
+    "why_not_DEFERRED": "section 6.4 defines DEFERRED as an intentional resource/priority stop; this round stopped because the record's required data does not exist locally",
+    "first_of_its_kind": "this is the first prerequisite-gate card whose absent item is the signal's OWN INPUT (signed multi-fiat order flow) rather than a conditioning or eligibility variable: the raw is an OHLCV-only store, and the record states in its own words that standard OHLCV alone is insufficient"
+  },
+  "measured_canonical_raw": {
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "paths_named_spot": [],
+    "non_binance_paths": [],
+    "market_type": "usdm_perp",
+    "venue": "BINANCE",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "cross_section_size": 4,
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_1d_first_open_utc": "2022-01-01T00:00:00+00:00",
+    "klines_1d_last_open_utc": "2022-01-31T00:00:00+00:00",
+    "klines_1w_first_open_utc": "2022-01-03T00:00:00+00:00",
+    "klines_1w_first_open_weekday": "Mon",
+    "klines_row_field_set": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "funding_row_keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+    ],
+    "funding_row_mark_price_present": true,
+    "funding_truth_status_field_present": true,
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_count": 4,
+    "instrument_field_names": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_quote_currencies": [
+      "USDT"
+    ],
+    "listing_history_field_present": false,
+    "schema_documents_missing_fields": true,
+    "flow_tokens_found": [],
+    "fiat_tokens_found": [],
+    "vendor_tokens_found": [],
+    "market_structure_tokens_found": [],
+    "availability_tokens_found": [],
+    "state_cursors": {
+      "klines_BTCUSDT_1d_ms": 1789516800000,
+      "funding_BTCUSDT_ms": 1789545600003,
+      "last_run_utc": "2026-09-16T15:00:53.159000+00:00"
+    },
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "binance/usdm/instruments/usdm-perp-instruments.json": "sha256:5a1d9585853e8bab5f50edeb0eac5febe78fbde0875659eebd63b84c625afdda"
+    },
+    "note": "single venue (BINANCE USD-M perpetual), 4 fixed contracts, klines whose rows carry the six-field OHLCV shape only (no taker/aggressor split, no quote_volume, no trade count, documented in _meta/SCHEMA.md); no fiat denomination channel, no CryptoCompare/CoinMarketCap-style vendor dataset, no market-cap or stablecoin reference data, no trading-availability history, no spot market and no second venue; the stored 1w bars open on Monday, not on the record's Saturday 00:00 GMT week boundary",
+    "measured_at_utc": "2026-09-16T18:02:13Z",
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw"
+  },
+  "requirement_vs_available": [
+    {
+      "item": "instrument_universe",
+      "verbatim": "- **Instrument/universe:** source-faithful reproduction requires the historical 84-coin balanced panel or a clearly documented point-in-time modern analogue.",
+      "status": "ABSENT",
+      "measured": "CONFIG.json symbols == ['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] (= klines and funding dataset dirs); no universe-membership or listing history anywhere under the raw root; the published article's balanced panel is 84 coins (working paper 82) and the source construction needs market capitalization and a stablecoin exclusion rule, neither of which exists locally. Measured cross-section size: 4."
+    },
+    {
+      "item": "market_type",
+      "verbatim": "- **Market type:** underlying return series are aggregated cryptocurrency prices; the source does not specify a single executable venue/instrument for each coin.",
+      "status": "ADAPTED_ONLY",
+      "measured": "the source's return series are aggregated cryptocurrency prices and it names no single executable venue; the raw offers one venue's perpetual contracts (BINANCE usdm, 4 contracts), which the record's own portability section calls 'an adaptation, not a source-faithful replication'"
+    },
+    {
+      "item": "price_source",
+      "verbatim": "- **Price source:** CoinMarketCap daily USD prices sampled at 00:00 GMT in the source.",
+      "status": "ABSENT",
+      "measured": "no CoinMarketCap- or equivalent vendor dataset anywhere under the raw root (name probe over the whole tree: no coinmarketcap/cmc/kaiko/coingecko token); prices exist only as BINANCE USD-M perpetual klines for 4 contracts, with no aggregate-USD-price lineage"
+    },
+    {
+      "item": "order_flow_source",
+      "verbatim": "- **Order-flow source:** CryptoCompare signed buy-volume and sell-volume by fiat denomination, aggregated from more than 300 exchanges.",
+      "status": "ABSENT",
+      "measured": "DECISIVE ITEM. The kline rows carry exactly the six-field OHLCV shape (open_time_ms, close_time_ms, open, high, low, close, volume; row field set measured live); _meta/SCHEMA.md documents that quote_volume, trade count and taker-buy splits are 'not' present; no signed buyer-initiated or seller-initiated volume exists anywhere, and the raw contains a single venue, not more than 300"
+    },
+    {
+      "item": "fiat_channels",
+      "verbatim": "- **Fiat channels:** USD, EUR, GBP, JPY, CHF, CAD, AUD, NZD, NOK, SEK, KRW.",
+      "status": "ABSENT",
+      "measured": "the only quote currency present is USDT (measured from the instrument export); a name probe for the record's 11 fiat denominations (USD/EUR/GBP/JPY/CHF/CAD/AUD/NZD/NOK/SEK/KRW) over the whole raw tree returns nothing"
+    },
+    {
+      "item": "fields",
+      "verbatim": "- **Fields:** per-coin buyer-initiated volume and seller-initiated volume by fiat, prices, returns, market capitalization, total volume, stablecoin classification, trading-availability history.",
+      "status": "MOSTLY_ABSENT",
+      "measured": "prices and returns are derivable from 1d klines for the four contracts only; buyer-initiated and seller-initiated volume by fiat ABSENT; market capitalization ABSENT; total volume as traded value ABSENT (the stored volume is base-asset units, no quote_volume); stablecoin classification ABSENT; trading-availability history ABSENT"
+    },
+    {
+      "item": "timeframe",
+      "verbatim": "- **Timeframe:** daily source data aggregated to weekly intervals for the focal strategy.",
+      "status": "PARTIAL_STRUCTURAL_ONLY",
+      "measured": "1d klines exist (2022-01-01..2022-01-31) so daily-to-weekly aggregation is mechanically possible for the four contracts, but the daily source data to aggregate - signed flow - does not exist"
+    },
+    {
+      "item": "timestamp",
+      "verbatim": "- **Timestamp:** GMT; weekly interval Saturday 00:00 through Friday 23:59.",
+      "status": "MISMATCH",
+      "measured": "bars are documented UTC, but the stored 1w bars open Monday 00:00 UTC (measured: first 1w open 2022-01-03T00:00:00+00:00, Mon) while the record's week runs Saturday 00:00 through Friday 23:59 GMT; the registered weekly window is not native to any stored series"
+    },
+    {
+      "item": "point_in_time",
+      "verbatim": "- **Point-in-time:** expanding-window orthogonalization must use only information available at each rebalance. Modern universe construction should be point-in-time rather than imposing the source's full-sample continuous-trading requirement.",
+      "status": "ABSENT",
+      "measured": "no point-in-time universe membership exists locally, and the expanding-window orthogonalization regresses lagged standardized world order flow on lagged returns - with the flow series absent there is nothing to residualize"
+    },
+    {
+      "item": "missing_data_and_data_gap",
+      "verbatim": "- **Data gap:** a modern implementation needs signed aggressor-side volume across multiple fiat venues or a defensible substitute. Standard OHLCV alone is insufficient.",
+      "status": "CONFIRMED_MISSING",
+      "measured": "the record's own sentence is exactly what the raw is: standard OHLCV alone; no defensible substitute for signed aggressor-side volume across multiple fiat venues exists on this machine (host-wide scan)"
+    }
+  ],
+  "cross_section_note": "the record normalizes a five-quintile cross-sectional sort (long P5, short P1, equal weight, weekly); the measured cross-section is 4 names, which cannot form P1..P5 at all, and it is 84>4 names short of the registered balanced panel. The raw's four contracts are the largest, most liquid majors - the subset the record's own mechanism section says may behave differently once flow is controlled for.",
+  "host_wide_data_store_scan": {
+    "data_file_scan": {
+      "command": "find /Volumes/ExpansionDrive -maxdepth 4 \\( -name '*.parquet' -o -name '*.jsonl' -o -name '*.jsonl.gz' -o -name '*.feather' -o -name '*.csv' -o -name '*.h5' \\) | grep -v qlib-results | grep -v 'Photos Library'",
+      "rc": 0,
+      "result": [
+        "/Volumes/ExpansionDrive/Hermes/Cchiiann/.openclaw-wiki/log.jsonl"
+      ]
+    },
+    "name_token_scan": {
+      "command": "find /Volumes/ExpansionDrive /Volumes/ResearchData -maxdepth 4 \\( -iname '*order*flow*' -o -iname '*orderflow*' -o -iname '*taker*' -o -iname '*aggressor*' -o -iname '*fiat*' -o -iname '*market*cap*' -o -iname '*mcap*' -o -iname '*stablecoin*' -o -iname '*coinmarketcap*' -o -iname '*cryptocompare*' -o -iname '*listing*' -o -iname '*delist*' \\) | grep -v qlib-results | grep -v 'Photos Library'",
+      "rc": 1,
+      "result": []
+    },
+    "workspace_data_file_scan": {
+      "command": "find /Users/hong/workspace -maxdepth 3 \\( -name '*.parquet' -o -name '*.jsonl' -o -name '*.jsonl.gz' -o -name '*.feather' -o -name '*.h5' \\) 2>/dev/null",
+      "rc": 0,
+      "result": [
+        "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830/snapshot_observations.jsonl",
+        "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830/capture_manifest.jsonl",
+        "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+        "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/snapshot_observations.jsonl",
+        "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/cohort_manifest.jsonl",
+        "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830/cohort_events.jsonl",
+        "/Users/hong/workspace/ml4t-real-evidence-remediation/p4/P4_SANDBOX_TRACE.jsonl",
+        "/Users/hong/workspace/ml4t-real-evidence-remediation/p4/P4_ADVERSARIAL_TRACE.jsonl",
+        "/Users/hong/workspace/ml4t-real-evidence-remediation/p3/P3_PANEL.parquet",
+        "/Users/hong/workspace/ml4t-real-evidence-remediation/p2/P2_PREDICTIONS.parquet",
+        "/Users/hong/workspace/telegram-dr-profit-vip-new-cleaned-v1/posts_index.jsonl",
+        "/Users/hong/workspace/telegram-dr-profit-vip-new-cleaned-v1/review_candidates.jsonl",
+        "/Users/hong/workspace/audit-CJ-DEFI3-manual/export/manifest.jsonl",
+        "/Users/hong/workspace/CJ-DEFI4/results/runs.jsonl",
+        "/Users/hong/workspace/CJ-DEFI4/results/native_vs_portable.jsonl",
+        "/Users/hong/workspace/CJ-DEFI4/fixtures/events_4000000.jsonl",
+        "/Users/hong/workspace/CJ-DEFI4/fixtures/events_1000000.jsonl",
+        "/Users/hong/workspace/CJ-DEFI4/fixtures/events_250000.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation/memory/PERSONA_STATE_LEDGER_V0_1.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation/pilot/PILOT_COGNITION_V0_1.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation/pilot/REVISION_COGNITION_V0_3.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation/pilot/PILOT_COGNITION_V0_2.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation-final/memory/PERSONA_STATE_LEDGER_V0_1.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation-final/pilot/PILOT_COGNITION_V0_1.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation-final/pilot/REVISION_COGNITION_V0_3.jsonl",
+        "/Users/hong/workspace/dr-profit-distillation-final/pilot/PILOT_COGNITION_V0_2.jsonl"
+      ]
+    },
+    "point_in_time_membership_corroboration": {
+      "artifact": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+      "artifact_sha256": "sha256:54b2abe7d1c3c9f3500cad42eb1a2a712acc7527f1e929fa248425a6d1a8295c",
+      "coverage_census": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/coverage_census.json",
+      "coverage_census_sha256": "sha256:fadf289413ba7fd0acb0f5a9e499863622bd08904ba1ce59b9221462e632ccd6",
+      "rows": 14760,
+      "membership_status_counts": {
+        "unknown": 14760
+      },
+      "distinct_symbols": 12,
+      "symbols": [
+        "ADAUSDT",
+        "AVAXUSDT",
+        "BCHUSDT",
+        "BNBUSDT",
+        "BTCUSDT",
+        "DOGEUSDT",
+        "ETCUSDT",
+        "ETHUSDT",
+        "LINKUSDT",
+        "LTCUSDT",
+        "SOLUSDT",
+        "XRPUSDT"
+      ],
+      "decision_date_range": [
+        "2022-01-01",
+        "2025-05-14"
+      ],
+      "classification": {
+        "evidence_complete_symbol_count": 0,
+        "longest_contiguous_supported_days": 0,
+        "pit_supported_asset_count": 0,
+        "supported_cells": 0,
+        "total_cells": 14760,
+        "unknown_cells": 14760,
+        "unsupported_cells": 14760
+      },
+      "census_classification": "DATA_BLOCKED",
+      "finding": "the only point-in-time membership artifact on this machine is a dedicated project whose every historical cell is 'unknown' (0 supported of 14760 cells, classified DATA_BLOCKED) because no exact historical listing/status evidence exists locally; the prospective captures that project did make start 2026-08-30 and cover a forward window, so no historical point-in-time universe exists for the registered sample - and none of it is the canonical raw",
+      "not_used_because": "the card fixes the canonical raw (/data/raw) as the computation source and forbids surrogate or approximate data; this block is a corroborating measurement of absence, not an input to any computation"
+    },
+    "finding": "no other market-data store exists on the machine: the only market-data root is /Volumes/ExpansionDrive/market-data-raw (BINANCE USD-M perpetual, 4 contracts, OHLCV-only klines); the old engine stacks (nautilus-system, lean-system) are gone and qlib-results is a results tree, not a data store. The order-flow-shaped hits under workspace are research records (markdown) and notebook traces, not datasets, and the machine's only point-in-time membership artifact resolves every historical cell as unknown (see point_in_time_membership_corroboration)."
+  },
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json (environment checks P1-P8; --attempt-dir absent so the P9/P10 launch gate is NOT evaluated)",
+    "overall": "PASS",
+    "rc": 0,
+    "host_boot_id": "boot-1789570819",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+      },
+      {
+        "id": "P2",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+      },
+      {
+        "id": "P3",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-97597.tmp"
+      },
+      {
+        "id": "P4",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "container system status=running (rc=0)"
+      },
+      {
+        "id": "P5",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "qlib-run state=running"
+      },
+      {
+        "id": "P6",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+      },
+      {
+        "id": "P7",
+        "status": "PASS",
+        "layer": "card-local",
+        "detail": "/qlib/work writable: work_ok"
+      },
+      {
+        "id": "P8",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+      },
+      {
+        "id": "P9",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      },
+      {
+        "id": "P10",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      }
+    ],
+    "meaning": "the execution plane is healthy; the blocker is the record's required data, not the environment - therefore no section 12.5 freeze"
+  },
+  "artifact_hashes": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31/rounds/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31-r1/round-spec.json",
+      "bytes": 71387,
+      "sha256": "sha256:625aa2e29d768fc7fe6dcb096e33e0eb9675cfb3bd44791144b2e8d22b23ec45",
+      "verbatim_excerpts": {
+        "card_body": 78,
+        "wiki_record": 68
+      }
+    },
+    "verdict": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31/rounds/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31-r1/verdict.json",
+      "bytes": 8928,
+      "sha256": "sha256:6d68f9c1e0456c3bd9f95949c89a67bc3a644fa03a23c8cb4ca978c15609936f"
+    },
+    "family_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-world-order-flow-cross-sectional-quintile-weekly-2026-08-31/family.json",
+      "sha256": "sha256:904067b10710f05f227c68c4f5302607894856e3fbb772db3c41cdcc2f440dd0"
+    },
+    "checker": {
+      "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_world_order_flow_prerequisite_check.py",
+      "sha256": "sha256:9dcd4f0cb85a460d54f4ca4d171a86706a2a13b9e3a63215205f839269cd725a"
+    },
+    "round_dir_files": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "attempts_dir_exists": false
+  },
+  "executable_verification": {
+    "live_check": {
+      "command": "python3 runtime/crypto_world_order_flow_prerequisite_check.py --json",
+      "rc": 0,
+      "overall": "PASS",
+      "checks": [
+        {
+          "id": "C1",
+          "status": "PASS",
+          "detail": "binance market dirs=['usdm'] venue=BINANCE market_type=usdm_perp paths_named_spot=[] non_binance_paths=[]"
+        },
+        {
+          "id": "C2",
+          "status": "PASS",
+          "detail": "klines=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual'] count=4"
+        },
+        {
+          "id": "C3",
+          "status": "PASS",
+          "detail": "kline_row_fields=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] schema_documents_missing_fields=True flow_tokens_found=[]"
+        },
+        {
+          "id": "C4",
+          "status": "PASS",
+          "detail": "cross_section=4 < quintiles=5 and < record panel=84; market_structure_tokens=[] availability_tokens=[]"
+        },
+        {
+          "id": "C5",
+          "status": "PASS",
+          "detail": "fiat_tokens_found=[] quote_currencies=['USDT']"
+        },
+        {
+          "id": "C6",
+          "status": "PASS",
+          "detail": "vendor_tokens_found=[]"
+        },
+        {
+          "id": "C7",
+          "status": "PASS",
+          "detail": "1w first open=2022-01-03T00:00:00+00:00 weekday=Mon (registered week starts Saturday 00:00 GMT)"
+        },
+        {
+          "id": "C8",
+          "status": "PASS",
+          "detail": "round-spec ids/gate=PREREQUISITE_MISSING required_available=False quintiles=5 panel=84 cross_section_registered=4 shrunk=False flow_available=False"
+        },
+        {
+          "id": "C9",
+          "status": "PASS",
+          "detail": "verdict=TECHNICAL_INCOMPLETE run_id=None layer=card-local class=data_window_invalid yield=STOP_TECHNICAL_INCOMPLETE run_ids=[]"
+        },
+        {
+          "id": "C10",
+          "status": "PASS",
+          "detail": "attempts_dir_exists=False terminal_sentinels=[]"
+        },
+        {
+          "id": "C11",
+          "status": "PASS",
+          "detail": "family.kanban_task_id=t_619d69e1 round_dir_files=['round-spec.json', 'verdict.json']"
+        },
+        {
+          "id": "C12",
+          "status": "PASS",
+          "detail": "dca provenance/grid+bounded invariants: ok"
+        }
+      ]
+    },
+    "self_test": {
+      "command": "python3 runtime/crypto_world_order_flow_prerequisite_check.py --self-test",
+      "rc": 0,
+      "overall": "PASS",
+      "variants": [
+        {
+          "variant": "verdict_tampered_to_PASS",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "layer_flipped_to_shared",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "variant": "universe_shrunk_to_the_local_four_perps",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "required_data_available_flipped_true",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "signed_flow_flipped_available",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "searched_axis_mislabelled_user_fixed",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated_to_47",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        }
+      ]
+    },
+    "raw_fixture_control": {
+      "command": "python3 runtime/crypto_world_order_flow_prerequisite_check.py --raw-fixture-control",
+      "rc": 0,
+      "overall": "FAIL",
+      "failed_checks": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "expected": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "detail": {
+        "C1": "binance market dirs=['spot', 'usdm'] venue=BINANCE market_type=usdm_perp paths_named_spot=['binance/spot'] non_binance_paths=['okx', 'okx/swap']",
+        "C2": "klines=['ADAUSDT', 'BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'LINKUSDT', 'SOLUSDT', 'TRXUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual'] count=4",
+        "C3": "kline_row_fields=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'quote_volume', 'taker_buy_base', 'taker_sell_base', 'trade_count', 'volume'] schema_documents_missing_fields=True flow_tokens_found=[]",
+        "C4": "cross_section=4 < quintiles=5 and < record panel=84; market_structure_tokens=['market_cap', 'marketcap', 'stablecoin'] availability_tokens=['listing']",
+        "C5": "fiat_tokens_found=['fiat'] quote_currencies=['USDT']",
+        "C6": "vendor_tokens_found=['coinmarketcap', 'cryptocompare']",
+        "C7": "1w first open=2022-01-01T00:00:00+00:00 weekday=Sat (registered week starts Saturday 00:00 GMT)"
+      }
+    },
+    "verbatim_assertions": {
+      "counts": {
+        "card_body": 78,
+        "wiki_record": 68,
+        "note_counts_source": "counted by the authoring run (line-anchored extraction, substring-asserted before any write)"
+      },
+      "note": "every excerpt placed into the round-spec was substring-asserted against the frozen card body / canonical record before any write; nothing was written unless all 146 assertions passed",
+      "independent_reverification": [
+        {
+          "document": "round-spec.json",
+          "exact_substring": {
+            "card_body": 90,
+            "wiki_record": 37
+          },
+          "line_verified": {
+            "card_body": 112,
+            "wiki_record": 37
+          },
+          "unmatched_lines": [
+            {
+              "document": "round-spec.json",
+              "key": "execution_invariants_disclosure.inherited_verbatim",
+              "line": "the card requires these USER_FIXED invariants to be inherited verbatim from the "
+            }
+          ],
+          "unmatched_line_explanation": "the re-verifier treats every string under a key containing 'verbatim' as a quote. The single unmatched line is authored prose, not a quote: round-spec.execution_invariants_disclosure.inherited_verbatim restates the card's inheritance requirement in the author's own words (the quoted source line is recorded separately as user_fixed_verbatim, which is verbatim). No quoted material failed verification."
+        },
+        {
+          "document": "verdict.json",
+          "exact_substring": {
+            "card_body": 0,
+            "wiki_record": 0
+          },
+          "line_verified": {
+            "card_body": 0,
+            "wiki_record": 0
+          },
+          "unmatched_lines": []
+        }
+      ]
+    }
+  },
+  "disclosures": [
+    "section 13 still registers no dedicated prerequisite-missing class; the closest registered class data_window_invalid ('instrument 缺失') is used as-is - whether to add a named class is an operator/contract decision",
+    "the card requires the USER_FIXED invariants to be inherited verbatim from A/B; the inherited string 'linear USD-M perpetual instruments' names perpetuals while this record's return series are aggregated cryptocurrency prices and it marks single-venue/perpetual adaptation unproven. Nothing was edited or resolved: the tension is recorded in round-spec.execution_invariants_disclosure for a future re-entry round.",
+    "this record DOES register a long-short spread (long P5, short P1), so - unlike the earlier reversal family - no leg-shape ambiguity is asserted; instead the record's own short-leg caveat (bottom-quintile coins may not be shortable) and the interaction between the DCA rail's TP/invalidation and the record's weekly-rebalance exit are recorded as execution disclosures in round-spec.direction_disclosure",
+    "the frozen card body's falsification excerpt lists items 1-6 while the canonical record's battery has 8; items 7 (orthogonalization incrementality) and 8 (random-rank / lagged-return control) were restored from the record so nothing is deleted, disclosed in round-spec.falsification.battery_source_note",
+    "the frozen card body's limitations excerpt carries 5 bullets while the record lists 9; the full record list is recorded verbatim in round-spec.falsification.record_limitations_verbatim and the difference is disclosed in limitations_source_note",
+    "the raw has been updated since the card body's stated window: klines now run to 2022-01-31 (card text said 2026-09-11). The registered window is recorded as the card states it and the measured end is recorded separately; no window was read because nothing was computed.",
+    "the stored 1w bars are Monday-anchored, which is not the record's Saturday 00:00 - Friday 23:59 GMT week; this is recorded as a measured mismatch (research-defined rebuild from daily bars) and not as a substitute-market argument",
+    "a future re-entry round that actually launches must carry the v1.8 parameter_contract block in its round-spec (the launch path fails closed without one for non-legacy families); this gate round never reaches that path",
+    "corroboration of the point-in-time claim (outside the raw): the machine's only point-in-time membership project resolves all 14,760 historical cells as unknown with classification DATA_BLOCKED and zero supported cells, and its prospective captures begin 2026-08-30; it was measured read-only, was not used as an input, and is recorded under host_wide_data_store_scan.point_in_time_membership_corroboration"
+  ],
+  "untouched": {
+    "other_families": "no other family's artifact, frozen bundle, verdict or leaderboard was read into or written by this card",
+    "cron": "no cron job was created, resumed or modified",
+    "board": "no auditor sub-card, no board mutation beyond this card's own terminal transition",
+    "paper_live": "no Paper/Live activity; no runner deployed to the host /scripts tree (nothing launched)",
+    "raw": "the raw tree was read-only: no file under market-data-raw was written"
+  }
+}
