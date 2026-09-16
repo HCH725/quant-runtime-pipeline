@@ -13,13 +13,14 @@ instead of trusting prose:
     set, listing/venue-classification fields, spot paths) - the measurement side;
   * it re-reads the round's immutable artifacts and asserts they state exactly
     the contract-mandated terminal values (verdict, layer, class, yield
-    decision, zero attempts) - the artifact side;
+    decision, zero attempts) and that the DCA registration still carries the
+    contract 7.2 v1.3.1 provenance classes plus the complete 48-cell product;
   * it asserts nothing was ever submitted (no attempt directory, no terminal
     sentinel) so a "0 attempts" claim cannot quietly become a fabricated run.
 
-Read-only: it never writes inside the results tree. `--self-test` builds a
-tampered copy in a fresh temp directory and asserts the checker refuses it
-(non-vacuousness control); the temp copy is removed afterwards.
+Read-only: it never writes inside the results tree. `--self-test` builds
+tampered copies in fresh temp directories and asserts the checker refuses them
+(non-vacuousness control); the temp copies are removed afterwards.
 
 Usage:
     python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py [--json]
@@ -34,6 +35,14 @@ import shutil
 import sys
 import tempfile
 
+# Provenance classes and cartesian-product helper are reused from the existing
+# registered validator rather than re-implemented here (contract 7.2 v1.3.1).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import strategy_a_v2_counts as _sav2
+except ImportError:  # pragma: no cover - only if the sibling module is missing
+    _sav2 = None
+
 FAMILY = "crypto-cross-sectional-momentum-30d-top-quintile-7d-2026-08-31"
 ROUND = FAMILY + "-r1"
 TASK = "t_629b9ae1"
@@ -41,8 +50,10 @@ DEFAULT_RESULTS = "/Volumes/ExpansionDrive/qlib-results"
 DEFAULT_RAW = "/Volumes/ExpansionDrive/market-data-raw"
 EXPECTED_SYMBOLS = ["BNBUSDT", "BTCUSDT", "ETHUSDT", "SOLUSDT"]
 MIN_CROSS_SECTION_FOR_QUINTILES = 5
+INVARIANT_TOKENS = ("30000", "numeraire", "leverage 10x", "12 tranches", "tranche #12",
+                    "reduce-only", "flat/kill")
 
-CHECK_IDS = ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9")
+CHECK_IDS = ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10")
 
 
 def _load_json(path):
@@ -202,6 +213,39 @@ def run_checks(results_root, raw_root):
         and files == ["round-spec.json", "verdict.json"],
         "family.kanban_task_id=%s round_dir_files=%s" % (fam.get("kanban_task_id"), files))
 
+    # C10 - the DCA registration keeps its contract 7.2 v1.3.1 provenance classes and its
+    #       complete 48-cell product (a searched axis is never declared as a user-fixed invariant).
+    probs = []
+    dca = spec.get("dca_domain") or {}
+    invariants = list(spec.get("user_fixed_invariants") or [])
+    if _sav2 is None:
+        probs.append("runtime/strategy_a_v2_counts.py is not importable")
+    else:
+        for axis in _sav2.DCA_AXES:
+            values = list(dca.get(axis) or [])
+            cls = _sav2.provenance_class(dca.get(axis + "_status"))
+            if len(values) > 1 and cls != _sav2.PROJECT_SEARCH:
+                probs.append("%s is searched over %r but classified %r" % (axis, values, cls))
+        if _sav2.provenance_class(dca.get("base_quote_status")) != _sav2.PROJECT_CONSTANT:
+            probs.append("base_quote_status=%r is not %s"
+                         % (dca.get("base_quote_status"), _sav2.PROJECT_CONSTANT))
+        cells = _sav2.product([list(dca.get(a) or []) for a in _sav2.DCA_AXES])
+        declared = [tuple(g.get(a) for a in _sav2.DCA_AXES) for g in (dca.get("grid") or [])]
+        if (len(cells) != 48 or len(declared) != len(cells)
+                or sorted(set(declared)) != sorted(set(cells))
+                or dca.get("config_count") != 48):
+            probs.append("grid is not the complete 48-cell product (declared=%d product=%d "
+                         "config_count=%r)" % (len(declared), len(cells), dca.get("config_count")))
+        for key in _sav2.USER_FIXED_FORBIDDEN_KEYS:
+            if any(str(s).lower().startswith(key.lower()) for s in invariants):
+                probs.append("user_fixed_invariants declares the searched axis %r" % key)
+    blob = " | ".join(str(s) for s in invariants).lower()
+    for token in INVARIANT_TOKENS:
+        if token not in blob:
+            probs.append("registered invariant token missing: %s" % token)
+    add("C10", not probs, "dca provenance/grid+bounded invariants: %s"
+        % (probs if probs else "ok"))
+
     return {"family_id": FAMILY, "round_id": ROUND, "task_id": TASK,
             "results_root": results_root, "raw_root": raw_root,
             "measured_raw": raw,
@@ -220,6 +264,10 @@ def self_test(results_root, raw_root):
         "layer_flipped_to_shared": lambda d: _tamper(d, lambda v: v["failure"].update(
             {"layer": "shared-layer"})),
         "attempt_fabricated": lambda d: _fabricate_attempt(d),
+        "searched_axis_mislabelled_user_fixed": lambda d: _tamper_spec(
+            d, lambda s: s["dca_domain"].update({"spacing_pct_status": "USER_FIXED"})),
+        "dca_grid_truncated_to_47": lambda d: _tamper_spec(
+            d, lambda s: s["dca_domain"]["grid"].pop()),
     }
     results = []
     ok = True
@@ -244,6 +292,14 @@ def self_test(results_root, raw_root):
 
 def _tamper(round_dir, mutate):
     p = os.path.join(round_dir, "verdict.json")
+    doc = _load_json(p)
+    mutate(doc)
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(doc, f, indent=2, ensure_ascii=False)
+
+
+def _tamper_spec(round_dir, mutate):
+    p = os.path.join(round_dir, "round-spec.json")
     doc = _load_json(p)
     mutate(doc)
     with open(p, "w", encoding="utf-8") as f:

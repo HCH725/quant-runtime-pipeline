@@ -181,7 +181,7 @@
     },
     "checker": {
       "path": "<repo>/runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py",
-      "sha256": "sha256:650115f981a757baa7e5855f8f9623744f586cfebb97e50d2a90fe66f15985c8"
+      "sha256": "sha256:f9d239dc4993d676ac013200c202ac2e57ac7c92b166d8c6bfaca04c112cd198"
     },
     "round_dir_file_set": [
       "round-spec.json",
@@ -190,7 +190,7 @@
     "immutability": "written once with O_EXCL; no attempt directory and no terminal sentinel were created (nothing was submitted, so a synthetic INCOMPLETE sentinel would misrepresent a submission that never happened)"
   },
   "verification": {
-    "live_check": "python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py -> C1-C9 PASS, overall PASS, rc=0 (re-measures the raw and re-reads both artifacts)",
+    "live_check": "python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py -> C1-C10 PASS, overall PASS, rc=0 (re-measures the raw, re-reads both artifacts, and re-checks the DCA provenance classes plus the complete 48-cell product using the classes and product helper of the existing registered validator runtime/strategy_a_v2_counts.py)",
     "artifact_controls": {
       "runner": "python3 runtime/crypto_xs_momentum_30d_7d_prerequisite_check.py --self-test",
       "variants": [
@@ -214,6 +214,20 @@
           "failed_checks": [
             "C8",
             "C9"
+          ]
+        },
+        {
+          "variant": "searched axis spacing_pct_status relabelled USER_FIXED",
+          "refused": true,
+          "failed_checks": [
+            "C10"
+          ]
+        },
+        {
+          "variant": "DCA grid truncated to 47 entries",
+          "refused": true,
+          "failed_checks": [
+            "C10"
           ]
         }
       ],
