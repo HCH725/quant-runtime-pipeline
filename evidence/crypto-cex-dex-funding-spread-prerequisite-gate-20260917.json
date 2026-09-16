@@ -1,0 +1,728 @@
+{
+  "snapshot_kind": "prerequisite-gate terminal (contract 6.4 / 13; no Qlib launch)",
+  "snapshot_taken_at_utc": "2026-09-16T18:21:33Z",
+  "snapshot_boundary": "values are re-measured from the live machine at snapshot time; the immutable artifacts under /results are read, never written by this snapshot",
+  "card": {
+    "kanban_task_id": "t_0d9309a8",
+    "board": "quant-strategy-research",
+    "family_id": "crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31",
+    "round_id": "crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31-r1",
+    "assignee": "default",
+    "chain_parent": "t_619d69e1",
+    "origin": "contract 14.4 automatic production handoff (card created by production_handoff; parent edge is scheduling order only - scientific lineage is null, this family does not refine or inherit from any earlier one)"
+  },
+  "contract_basis": {
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "universe_prohibition_verbatim": [
+      "- 本卡註冊：record 自身提供 Crypto portability 段落 → 依該 portability canonicalize（原文節錄見上），未在 intake 之後另設 suitability 篩選。 若本機 canonical raw 不含本 record 所需的 universe／venue／資料，一律走 §13 prerequisite 條款（technical failure），不得縮減 universe 以硬造可執行性。"
+    ],
+    "exit_semantics": "card LIFECYCLE FOOTER + contract 6.4: a prerequisite that objectively does not exist, with its absence proven by measured evidence and the round's immutable terminal artifacts written, IS this card's goal - close with kanban_complete, do not block",
+    "frozen_card_body": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31.md",
+      "sha256": "sha256:080f1ccaeac72af123eabcd9432fb7e58d73379c9d472c534f23e4a4a9ae3f64",
+      "bytes": 20357
+    },
+    "reviewed_source": {
+      "path": "/Users/hong/.hermes/wiki/quant/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31.md",
+      "sha256": "sha256:286732bb61093cbf0c2411e424e4f9f57e30f5aa27cc9b0d317aa1fdddd6ab24",
+      "bytes": 18778
+    },
+    "primary_sources": [
+      "https://doi.org/10.1007/s42521-026-00213-3"
+    ],
+    "documented_tension": "record required-data items and card excerpts are registered in the round-spec with 263 verbatim assertions against the frozen card body and the canonical record, plus a post-write re-verification of the written file (182 leaves under *_verbatim keys, 0 misses)"
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; data_window_invalid is the closest registered class ('instrument 缺失'). Suggested (not implemented here, needs an operator/contract decision): an explicit prerequisite_missing class for future candidates whose required market or required data source is not in the raw.",
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "rounds_used": 1,
+    "no_progress_rounds": 1,
+    "attempts_launched": 0,
+    "terminal_sentinels": [],
+    "run_id": null,
+    "no_scientific_claim": "this is a technical failure, NOT a scientific REJECT: the candidate is neither validated nor refuted (card text)",
+    "why_not_DEFERRED": "section 6.4 defines DEFERRED as an intentional resource/priority stop; this round stopped because the record's required venue pair does not exist locally",
+    "first_of_its_kind": "the first prerequisite gate in this chain whose absent item is a VENUE PAIR rather than a dataset shape: the raw is complete and healthy for one venue, and the deficit is the second leg of the registered instrument ('perpetual futures / perpetual swaps for the same underlying on at least two venues'), so the signal object itself - the cross-venue funding spread - has no right-hand term"
+  },
+  "measured_canonical_raw": {
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "measured_at_utc": "2026-09-16T18:21:33Z",
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "binance_usdm_subdirs": [
+      "funding",
+      "instruments",
+      "klines"
+    ],
+    "non_binance_paths": [],
+    "paths_named_other_market": [],
+    "venue": "BINANCE",
+    "market_type": "usdm_perp",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "klines_row_field_set": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "klines_1d_first_open_utc": "2022-01-01T00:00:00+00:00",
+    "klines_1d_last_open_utc": "2026-09-15T00:00:00+00:00",
+    "klines_1w_first_open_utc": "2022-01-03T00:00:00+00:00",
+    "klines_1w_first_open_weekday": "Mon",
+    "kline_last_open_utc_any_interval": "2026-09-15T23:55:00+00:00",
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "funding_row_keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+    ],
+    "funding_venues": [
+      "BINANCE"
+    ],
+    "funding_market_types": [
+      "usdm_perp"
+    ],
+    "funding_cadence_seconds_histogram_btcusdt": {
+      "28799": 1495,
+      "28800": 3663
+    },
+    "funding_cadence_seconds_histogram_solusdt": {
+      "7199": 43,
+      "7200": 55,
+      "14399": 1,
+      "14400": 2,
+      "28799": 1485,
+      "28800": 3647
+    },
+    "funding_truth_status_histogram": {
+      "modeled_funding": 2005,
+      "official": 3154
+    },
+    "funding_rows_per_symbol": {
+      "BNBUSDT": 5159,
+      "BTCUSDT": 5159,
+      "ETHUSDT": 5159,
+      "SOLUSDT": 5234
+    },
+    "funding_first_utc": "2022-01-01T00:00:00.006000+00:00",
+    "funding_last_utc": "2026-09-16T08:00:00.002000+00:00",
+    "funding_mark_price_present": true,
+    "funding_index_price_present": false,
+    "instrument_count": 4,
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_quote_currencies": [
+      "USDT"
+    ],
+    "instrument_settlement_currencies": [
+      "USDT"
+    ],
+    "instrument_field_names": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_info_keys": [],
+    "name_probe_hits": {
+      "dex_venue": [],
+      "index_or_reference_price": [],
+      "order_book": [],
+      "liquidity_impact": [],
+      "dex_costs": [],
+      "margin_liquidation": [],
+      "cex_ops": [],
+      "second_venue_generic": []
+    },
+    "dex_probe_note": "the generic token 'dex' is deliberately NOT used as a probe: it is a substring of 'index', so it would produce false positives",
+    "schema_quotes": {
+      "quote_volume_absent": false,
+      "venue_count": true,
+      "single_venue_doc": true,
+      "truth_status_doc": true,
+      "no_imputation_doc": true
+    },
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "FUNDING_EXPORT.json": "sha256:8ceb7bcbf2fc0cc1fe6c56f0b41b418711f33b2b74edac10923f2162c939be2f"
+    },
+    "instruments_sha256": "sha256:5a1d9585853e8bab5f50edeb0eac5febe78fbde0875659eebd63b84c625afdda",
+    "state_last_run_utc": "2026-09-16T15:00:53.159000+00:00",
+    "note": "single venue (BINANCE USD-M perpetual) with a healthy, self-documenting raw: klines whose rows carry the six-field OHLCV shape only, plus that venue's funding (8-hour cadence, mark_price present, official/modeled truth split). No second venue of any kind exists, so the registered signal s(i,t) = f_DEX(i,t) - f_CEX(i,t) cannot be formed."
+  },
+  "requirement_vs_available": [
+    {
+      "item": "instrument_two_venue_perpetual",
+      "verbatim": "- **Instrument:** perpetual futures / perpetual swaps for the same underlying on at least two venues.",
+      "status": "ABSENT",
+      "measured": "DECISIVE ITEM. The raw holds one venue's perpetuals only: binance/usdm with 4 CryptoPerpetual instruments (BNBUSDT/BTCUSDT/ETHUSDT/SOLUSDT). Nothing under the raw root is a second venue (non-binance paths: []), and a host-wide scan finds no DEX or second-CEX market data at all."
+    },
+    {
+      "item": "universe_cex_leg",
+      "verbatim": "- **Universe:** source-tested BTC, ETH, SOL; broader asset portability is unproven.",
+      "status": "PRESENT_FOR_CEX_LEG_ONLY",
+      "measured": "BTCUSDT, ETHUSDT and SOLUSDT (plus BNBUSDT) exist as that one venue's USDT perpetuals, so the source-tested assets exist on the CEX side; the same underlyings on a DEX do not."
+    },
+    {
+      "item": "venues_cex",
+      "verbatim": "- **Venues:** source main CEX input is Binance Futures; observed DEX robustness input is dYdX v4. A live adaptation must use current contract specifications and funding conventions for each actual venue pair.",
+      "status": "PRESENT_ONE_CEX_ONLY",
+      "measured": "BINANCE is present and documented by the raw itself (_meta/CONFIG.json venue=BINANCE, market_type=usdm_perp; _meta/SCHEMA.md 'Binance USD-M perpetual futures'); its funding series carries venue='BINANCE' for every row."
+    },
+    {
+      "item": "venues_dex",
+      "verbatim": "- **Venues:** source main CEX input is Binance Futures; observed DEX robustness input is dYdX v4. A live adaptation must use current contract specifications and funding conventions for each actual venue pair.",
+      "status": "ABSENT",
+      "measured": "DECISIVE ITEM. The record's DEX leg (dYdX v4; in general any DEX perp venue) has no data of any kind: the raw-tree name probe over dydx/hyperliquid/gmx/paradex/vertex/aevo/drift/perpdex finds nothing, one venue exists in total, and the machine-wide scan finds only knowledge records (Wiki/Wiki-brain markdown) mentioning those venues, never market data."
+    },
+    {
+      "item": "funding_per_venue",
+      "verbatim": "- **Funding data:** current and historically realized funding rate, exact funding timestamps, funding interval, and sign convention for every venue.",
+      "status": "SINGLE_VENUE_ONLY",
+      "measured": "Measured on the live files: funding for the 4 contracts, 5,159 rows (SOLUSDT 5,234), first 2022-01-01T00:00:00.006000+00:00 .. last 2026-09-16T08:00:00.002000+00:00, cadence 28,799/28,800 s (SOLUSDT additionally shows 98 intervals near 7,199/7,200 s, i.e. its funding interval changed at some point), rate_type 'Regular', row keys funding_time_ms/funding_rate/mark_price/rate_type/truth_status, truth_status = official 3,154 / modeled_funding 2,005, venue='BINANCE' for every row. The record needs this for EVERY venue; with one venue the registered spread cannot be formed."
+    },
+    {
+      "item": "price_fields",
+      "verbatim": "- **Price fields:** perpetual mark price, index/reference price, and executable bid/ask or trade prices on both venues; spot/reference price where required to normalize residual basis.",
+      "status": "MARK_ONLY_NO_INDEX_NO_BOOK",
+      "measured": "mark_price is present inside the funding rows, and klines carry OHLCV; but no index/reference price exists (index_price key absent and no index-price token anywhere), no bid/ask or trade-price series exists (kline rows are the six-field OHLCV shape only, and _meta/SCHEMA.md documents that quote_volume, trade count and taker-buy splits are not present), and there is no spot/reference market in the raw to normalize residual basis."
+    },
+    {
+      "item": "volatility",
+      "verbatim": "- **Volatility:** point-in-time return history sufficient for the chosen volatility-regime estimator; the source uses GARCH(1,1) terciles.",
+      "status": "PRESENT_FOR_CEX_LEG_ONLY",
+      "measured": "point-in-time return history is derivable from the stored klines (1d/4h/1h/30m/15m/5m/1w from 2022-01-01) for the four contracts; a GARCH(1,1) tercile overlay is research-defined. No second-venue history exists, so the record's cross-venue risk comparison cannot be made."
+    },
+    {
+      "item": "liquidity",
+      "verbatim": "- **Liquidity:** top-of-book spread, depth, expected participation, trade size, and slippage/impact estimates on both venues.",
+      "status": "ABSENT",
+      "measured": "no top-of-book spread, depth, participation, size or slippage/impact surface exists anywhere under the raw root (name probes for orderbook/book_snapshot/bid_ask/depth/slippage/impact/participation all return nothing); kline volume is in base-asset units with no quote volume."
+    },
+    {
+      "item": "margin_liquidation",
+      "verbatim": "- **Margin/liquidation:** leverage, initial margin, maintenance-margin tiers, collateral asset, cross/isolated margin mode, liquidation fee, mark-price trigger rules, and partial-liquidation behavior.",
+      "status": "SCALARS_ONLY_FOR_CEX_LEG",
+      "measured": "the instrument export carries margin_init and margin_maint scalars (plus maker/taker fee, price/size increments, min/max notional) for the 4 CEX contracts only; there are no maintenance-margin TIERS, no liquidation fee, no collateral asset, no cross/isolated margin mode and no partial-liquidation behaviour, and nothing at all for a DEX leg."
+    },
+    {
+      "item": "dex_specific",
+      "verbatim": "- **DEX-specific:** gas/transaction fees where applicable, oracle/index mechanics, protocol status, settlement/finality risk, and smart-contract/protocol-change information.",
+      "status": "ABSENT",
+      "measured": "no gas/transaction-fee, oracle/index-mechanics, protocol-status, settlement or finality data exists anywhere (the DEX-side name probe returns nothing and no DEX venue directory exists)."
+    },
+    {
+      "item": "cex_specific",
+      "verbatim": "- **CEX-specific:** counterparty/venue availability, collateral and transfer constraints, fee tier, and operational outage information.",
+      "status": "FEE_TIER_ONLY",
+      "measured": "maker_fee/taker_fee are present per instrument; there is no counterparty/venue availability history, no collateral or transfer constraint data and no operational outage record."
+    },
+    {
+      "item": "timestamp",
+      "verbatim": "- **Timestamp:** all rates and prices must be aligned point-in-time without using a funding observation before it was knowable/tradable.",
+      "status": "POINT_IN_TIME_CEX_ONLY",
+      "measured": "funding_time_ms plus truth_status='official' make the CEX leg's funding point-in-time usable, but the alignment object is the cross-venue spread, and its second series does not exist; the record's dYdX hourly-to-8h aggregation has no input locally."
+    },
+    {
+      "item": "missing_data_policy",
+      "verbatim": "- **Missing data:** missing/stale funding or mark/index observations must not be imputed silently. Venue outages and protocol interruptions should be explicit states.",
+      "status": "PARTIALLY_SATISFIED_DOCUMENTED",
+      "measured": "the raw documents its own conventions - 'No gaps are silently filled' for klines and truth_status separating 'official' from 'modeled' funding rows - so the no-silent-imputation rule is partially supported. It cannot be exercised for the registered object: a missing second venue is not an imputable observation, it is an absent leg."
+    }
+  ],
+  "requirement_matrix_note": "copied verbatim from the frozen round-spec's prerequisite_gate.required_data_matrix (single source of truth); each item carries the record's own required-data line plus the live measured status",
+  "missing": [
+    "the second venue itself: the record requires perpetuals for the same underlying on at least two venues (one CEX + one DEX); the canonical raw holds exactly one venue (BINANCE USD-M perpetual)",
+    "the DEX leg's funding series (dYdX v4 hourly rates summed into aligned 8-hour windows) - absent, so s(i,t) = f_DEX(i,t) - f_CEX(i,t) cannot be formed",
+    "index/reference prices and executable bid/ask or trade prices on both venues",
+    "liquidity surfaces (top-of-book spread, depth, expected participation, trade size, slippage/impact) on both venues",
+    "maintenance-margin tiers, liquidation fee, collateral asset, cross/isolated margin mode and partial-liquidation behaviour",
+    "DEX-specific data: gas/transaction fees, oracle/index mechanics, protocol status, settlement/finality risk",
+    "CEX-specific operational data: counterparty/venue availability, collateral and transfer constraints, outage information",
+    "the observed-protocol robustness window the record relies on (2023-10..2024-12) is not reproducible locally in any form"
+  ],
+  "host_wide_data_store_scan": {
+    "roots_scanned": {
+      "/Users/hong/workspace": 40,
+      "/Volumes/ExpansionDrive": 11,
+      "/Volumes/ResearchData": 0,
+      "/Users/hong/.hermes": 94,
+      "/Users/hong/qlib-apple-container": null,
+      "/Users/hong/workspace/qlib-apple-container": 0
+    },
+    "hits_by_root": {
+      "/Users/hong/workspace": [
+        "/Users/hong/workspace/alpha-strategy-research/bitcoin-fomc-announcement-event-drift-contraction-2026-09-01.md",
+        "/Users/hong/workspace/alpha-strategy-research/bitcoin-friday-3pm-est-post-event-drift-2026-09-03.md",
+        "/Users/hong/workspace/alpha-strategy-research/bitcoin-onchain-illiquid-supply-shock-ratio-issr-drift-2026-09-01.md",
+        "/Users/hong/workspace/alpha-strategy-research/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md",
+        "/Users/hong/workspace/alpha-strategy-research/bitget-perpetual-shuffled-null-falsification-cross-sectional-momentum-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/buyback-announcement-drift-smallcap-illiquidity-falsification-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/crypto-cross-sectional-lead-lag-rotation-hyperliquid-perps-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/crypto-hyperliquid-momentum-funding-carry-combo-2026-09-12.md",
+        "/Users/hong/workspace/alpha-strategy-research/crypto-stat-arb-cointegration-fdr-tiering-drifting-hedge-turnover-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/drift-regime-gated-cross-sectional-value-reversal-2026-09-05.md",
+        "/Users/hong/workspace/alpha-strategy-research/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+        "/Users/hong/workspace/alpha-strategy-research/futures-trend-following-autocorrelation-drift-decomposition-2026-09-02.md",
+        "/Users/hong/workspace/alpha-strategy-research/hyperliquid-cex-cross-venue-funding-spread-carry-2026-09-03.md",
+        "/Users/hong/workspace/alpha-strategy-research/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/hyperliquid-sunshine-trading-adverse-selection-liquidity-extraction-2026-09-01.md",
+        "/Users/hong/workspace/alpha-strategy-research/hyperliquid-vol-targeted-tsmom-drawdown-calibrated-ratchet-2026-09-12.md",
+        "/Users/hong/workspace/alpha-strategy-research/hyperliquid-wallet-cross-venue-anticipatory-flow-binance-btc-perp-2026-09-15.md",
+        "/Users/hong/workspace/alpha-strategy-research/latent-drift-kalman-bucy-macd-optimal-portfolio-2026-09-03.md",
+        "/Users/hong/workspace/alpha-strategy-research/news-event-tag-drift-rumor-resolution-placebo-adjusted-momentum-2026-09-02.md",
+        "/Users/hong/workspace/alpha-strategy-research/rejected-post-only-order-flow-directional-predictor-hyperliquid-2026-09-14.md",
+        "/Users/hong/workspace/alpha-strategy-research/sec-form-10-12b-spinoff-drift-decay-falsification-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/sp500-index-reconstitution-announcement-drift-decay-falsification-2026-09-13.md",
+        "/Users/hong/workspace/alpha-strategy-research/usdt-exchange-net-inflow-buy-side-liquidity-drift-1h-2h-2026-09-03.md",
+        "/Users/hong/workspace/phase13-production-ops/runbooks/reconciliation-drift.md",
+        "/Users/hong/workspace/tmp/ars-0914/repo/docs/design/2026-04-30-ars-v3.6.8-trust-provenance-and-drift-transparency-spec.md",
+        "/Users/hong/workspace/tmp/ars-0914/repo/docs/design/2026-08-10-679-revision-claim-drift-suite-v2-spec.md",
+        "/Users/hong/workspace/tmp/ars-0914/repo/evals/heldout/revision_claim_drift",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/check_revision_claim_drift_suite_v2.py",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/claim_strength_drift_disposition.py",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/fixtures/revision_claim_drift_v2",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/test_check_revision_claim_drift_suite_v2.py",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/test_claim_strength_drift_disposition.py",
+        "/Users/hong/workspace/tmp/ars-0914/repo/scripts/test_repro_lock_validation_drift.py",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/19_risk_management/07_drift_detection.ipynb",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/19_risk_management/07_drift_detection.py",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/26_mlops_governance/01_drift_monitoring.ipynb",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/26_mlops_governance/01_drift_monitoring.py",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/26_mlops_governance/02_online_drift_detection.ipynb",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/26_mlops_governance/02_online_drift_detection.py",
+        "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/tests/test_external_drift.py"
+      ],
+      "/Volumes/ExpansionDrive": [
+        "/Volumes/ExpansionDrive/Hermes/Cchiiann/profile_backup_20260911/scripts/hermes_docs_fullsite_drift_watch.py",
+        "/Volumes/ExpansionDrive/Hermes/Cchiiann/profile_backup_20260911/wiki/drafts/hermes-docs-drift",
+        "/Volumes/ExpansionDrive/build-cache/catdesk/target/debug/deps/catdesk-c7e99d3d959eb078.ctwsdt5k0p9ig59zbrc5okxr0.1jy2taq.rcgu.o",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-friday-3pm-est-post-event-drift-2026-09-03.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-hyperliquid-momentum-funding-carry-combo-2026-09-12.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/drift-regime-gated-cross-sectional-value-reversal-2026-09-05.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/ethereum-exchange-net-inflow-bearish-drift-1h-6h-2026-09-01.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/hyperliquid-cex-cross-venue-funding-spread-carry-2026-09-03.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/hyperliquid-vol-targeted-tsmom-drawdown-calibrated-ratchet-2026-09-12.md",
+        "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/news-event-tag-drift-rumor-resolution-placebo-adjusted-momentum-2026-09-02.md"
+      ],
+      "/Volumes/ResearchData": [],
+      "/Users/hong/.hermes": [
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/agent/vertex_adapter.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/e2e/submit-drift.spec.ts",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/hyperliquid",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/plugins/model-providers/vertex",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/agent/test_vertex_adapter.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cli/test_termios_drift_heal.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/cron/test_cron_drift_alert_once.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_vertex_model_picker.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_vertex_provider.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/tests/skills/test_hyperliquid_skill.py",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/ui-tui/src/__tests__/cursorDriftRegression.test.ts",
+        "/Users/hong/.hermes/archive/worktree-updater-safety-20260814/website/docs/guides/google-vertex.md",
+        "/Users/hong/.hermes/cache/.mcp_schema_cache_0f8oggmx.tmp",
+        "/Users/hong/.hermes/cache/.mcp_schema_cache_v6mqdokx.tmp",
+        "/Users/hong/.hermes/cache/web/hyperliquid.gitbook.io-4dc38514a31475e2.cache.md",
+        "/Users/hong/.hermes/cache/web/hyperliquid.gitbook.io-f6d5ead5cfb9a9ab.cache.md",
+        "/Users/hong/.hermes/cache/web/www.bybit.com-2af7a49036e315ec.cache.md",
+        "/Users/hong/.hermes/cache/web/www.bybit.com-f0d6febc42b98a56.cache.md",
+        "/Users/hong/.hermes/cache/web/www.coinbase.com-04706b291433ab02.cache.md",
+        "/Users/hong/.hermes/cache/web/www.coinbase.com-2d7482ce70.md",
+        "/Users/hong/.hermes/cache/web/www.kraken.com-4e9da3b475.md",
+        "/Users/hong/.hermes/hermes-agent/agent/__pycache__/vertex_adapter.cpython-311.pyc",
+        "/Users/hong/.hermes/hermes-agent/agent/vertex_adapter.py",
+        "/Users/hong/.hermes/hermes-agent/apps/desktop/e2e/submit-drift.spec.ts",
+        "/Users/hong/.hermes/hermes-agent/contributors/emails/prodrifterdk@pop-os.tailc64d14.ts.net",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiBuiltbybit.cjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiBuiltbybit.d.ts",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiBuiltbybit.mjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiCoinbase.cjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiCoinbase.d.ts",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiCoinbase.mjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGitkraken.cjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGitkraken.d.ts",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGitkraken.mjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGmx.cjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGmx.d.ts",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiGmx.mjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiOkx.cjs",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiOkx.d.ts",
+        "/Users/hong/.hermes/hermes-agent/node_modules/@icons-pack/react-simple-icons/icons/SiOkx.mjs"
+      ],
+      "/Users/hong/qlib-apple-container": null,
+      "/Users/hong/workspace/qlib-apple-container": []
+    },
+    "market_data_hits": {
+      "/Users/hong/workspace": [],
+      "/Volumes/ExpansionDrive": [],
+      "/Volumes/ResearchData": [],
+      "/Users/hong/.hermes": [],
+      "/Users/hong/qlib-apple-container": null,
+      "/Users/hong/workspace/qlib-apple-container": []
+    },
+    "volume_listings": {
+      "/Volumes/ExpansionDrive": [
+        "Automatically Add to Music.localized",
+        "Automatically Add to TV.localized",
+        "Downloads",
+        "Downloads-Music",
+        "Hermes",
+        "Photos Library.photoslibrary",
+        "build-cache",
+        "daily-crypto-brief",
+        "market-data-raw",
+        "qlib-results"
+      ],
+      "/Volumes/ResearchData": [
+        "ThesisVault",
+        "Zotero"
+      ]
+    },
+    "non_canonical_market_files": {
+      "/Users/hong/workspace/phase5-crypto-derivatives/data/klines_spot_btc_1d.json": {
+        "kind": "binance SPOT daily kline cache (project-local derived artifact)",
+        "rows": 970,
+        "field_count": 12,
+        "first_open_ms": 1704067200000,
+        "note": "not the canonical raw (the card requires /data/raw reads), a single asset (BTC), a spot market rather than a perpetual, and still one venue only"
+      }
+    },
+    "data_file_scan": {
+      "/Volumes": 24,
+      "/Volumes/ExpansionDrive": 25,
+      "/Users/hong/workspace": 114
+    },
+    "finding": "market-data-raw is the only market-data root on this machine. Every token hit outside it is either (a) a Wiki/knowledge markdown record or strategy research note naming a venue, (b) a research-project derived cache of the SAME single BINANCE source (including one 12-field Binance SPOT daily kline file for BTC in a legacy project dir, which is a spot market, a single asset, outside the canonical raw and therefore not a second perpetual venue), or (c) an unrelated database (Hermes/Zotero/Photos/TimeMachine). No DEX venue data of any kind exists."
+  },
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json",
+    "overall": "PASS",
+    "rc": 0,
+    "host_boot_id": "boot-1789570819",
+    "checked_at_utc": "2026-09-16T18:11:55Z",
+    "launch_gate": "not_evaluated",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P2",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P3",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P4",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P5",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P6",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P7",
+        "status": "PASS",
+        "layer": "card-local"
+      },
+      {
+        "id": "P8",
+        "status": "PASS",
+        "layer": "shared-layer"
+      },
+      {
+        "id": "P9",
+        "status": "NA",
+        "layer": "-"
+      },
+      {
+        "id": "P10",
+        "status": "NA",
+        "layer": "-"
+      }
+    ],
+    "meaning": "the execution plane is healthy (P1-P8 PASS, P9/P10 NA: no --attempt-dir); the blocker is the record's required second venue, not the environment, so no section 12.5 shared-layer freeze condition applies"
+  },
+  "artifact_hashes": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31/rounds/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31-r1/round-spec.json",
+      "sha256": "sha256:05491cf0be31d2015c135b73f722c37715a69b0dd702aa471aec9fa8e5f82873",
+      "bytes": 84913
+    },
+    "verdict": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31/rounds/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31-r1/verdict.json",
+      "sha256": "sha256:5786fc7afefa470a49fc420a8c41c1eca9890e495beeef8bbf2c04c6f417f3e8",
+      "bytes": 10046
+    },
+    "family_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cex-dex-cross-venue-funding-spread-carry-2026-08-31/family.json",
+      "sha256": "sha256:986a21c7393b78e5743195c17bc1966f8b776e4dbdef70010062616dc8ba6fd9",
+      "bytes": 1579
+    },
+    "checker": {
+      "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_cex_dex_funding_spread_prerequisite_check.py",
+      "sha256": "sha256:8fbe44c5ea5af24478e3870be53eeec333c4bd7be07634af886d4f3dc08fc8ee",
+      "bytes": 34826
+    },
+    "round_dir_files": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "attempts_dir_exists": false,
+    "terminal_sentinels": []
+  },
+  "executable_verification": {
+    "live_check": {
+      "command": "python3 runtime/crypto_cex_dex_funding_spread_prerequisite_check.py",
+      "overall": "PASS",
+      "rc": 0,
+      "checks": [
+        "C1 ... C12 all PASS (C1-C7 raw measurement, C8-C9 artifact terminal values, C10 no submission, C11 ownership, C12 DCA provenance/grid)"
+      ]
+    },
+    "self_test": {
+      "command": "python3 runtime/crypto_cex_dex_funding_spread_prerequisite_check.py --self-test",
+      "overall": "PASS",
+      "rc": 0,
+      "variants": [
+        {
+          "variant": "verdict_tampered_to_PASS",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "layer_flipped_to_shared",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C10",
+            "C11"
+          ]
+        },
+        {
+          "variant": "universe_shrunk_to_the_local_single_venue",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "dex_leg_struck_from_the_registration",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "required_data_available_flipped_true",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "spread_flipped_available",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "searched_axis_mislabelled_user_fixed",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated_to_47",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        }
+      ],
+      "note": "ten tampered copies built in fresh temp dirs; every one is refused, so a PASS cannot be vacuous"
+    },
+    "raw_fixture_control": {
+      "command": "python3 runtime/crypto_cex_dex_funding_spread_prerequisite_check.py --raw-fixture-control",
+      "overall": "PASS",
+      "rc": 0,
+      "failed_checks": [
+        "C1",
+        "C2",
+        "C3",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "expected": [
+        "C1",
+        "C2",
+        "C3",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "note": "a temp raw tree carrying a DEX venue (dydx/v4 with hourly funding and its own instrument definitions), a second CEX venue (okx/swap), index_price and order-book files, and gas/oracle/settlement/margin-tier references flips C1-C3 and C5-C7 to FAIL, so the measurement side is non-vacuous too"
+    },
+    "verbatim_assertions": {
+      "pre_write_assertions_in_round_spec": {
+        "assertions": 263,
+        "against_card_only": 98,
+        "against_record": 165,
+        "note": "every excerpt registered above was asserted as an exact substring of its declared source (frozen card body, or canonical record, or both) BEFORE any write; a single miss aborts with zero writes"
+      },
+      "post_write_verbatim_leaves_verified": 182,
+      "post_write_verbatim_by_source": {
+        "card": 71,
+        "record": 111,
+        "either": 0
+      },
+      "post_write_verbatim_misses": [],
+      "post_write_verifier": "scratch postwrite_verify.py (re-reads the written file)",
+      "note": "every excerpt was asserted against its declared source before any write (0 writes until all matched) and re-verified afterwards from the written artifact; the only authored-prose leaf under a *_verbatim-style path is renamed to *_note/*_disclosure so the check stays strict"
+    },
+    "repo_suite": {
+      "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+      "result": "Ran 362 tests ... OK"
+    }
+  },
+  "authoring_record": {
+    "published_artifact_created_once_with_O_EXCL": true,
+    "draft_removals_before_publication": [
+      {
+        "name": "round-spec.json",
+        "bytes": 84906,
+        "sha256": "sha256:ed46f12d99524954331a1675b9a9d4c09008bf2405c45c946c076ce391dfda6d"
+      },
+      {
+        "name": "verdict.json",
+        "bytes": 10046,
+        "sha256": "sha256:a26a4a195522486f34746f790b7cb3bfa0544d3f0e7c838da704f9e28a91bd73"
+      }
+    ],
+    "note": "while authoring (before this evidence file, the README row or any commit existed) the round-spec/verdict were re-created three times to fix extraction and key-naming defects found by the authoring-time sanity print and the post-write verifier: (1) bullet extraction included its own section header, shifting every record excerpt by one item, (2) a step's continuation line was counted as its own step, shifting steps 4-10, (3) an authored-prose leaf sat under a *_verbatim key. Each draft sha256 is recorded above; no published hash was ever announced for a draft, and the final artifacts were created with O_EXCL and never rewritten in place."
+  },
+  "disclosures": [
+    "section 13 registers no dedicated prerequisite-missing class; data_window_invalid (closest registered class, 'instrument 缺失') is used as-is - whether to add a prerequisite class is an operator/contract decision",
+    "the card's ELIGIBLE UNIVERSE excerpt carries 7 of the record's 12 required-data bullets; the other five (Margin/liquidation, DEX-specific, CEX-specific, Timestamp, Missing data) were restored from the canonical record so nothing is deleted - recorded in round-spec.registered_requirement.card_excerpt_scope_note",
+    "the card's falsification excerpt lists items 1-3; the record's battery has 10. Items 4-10 were restored, never shortened",
+    "the card's limitations excerpt lists 7 bullets; the record lists 10. The three extras (tail risk, regime dependency, headline-metric caution) are recorded verbatim",
+    "the inherited USER_FIXED invariant 'linear USD-M perp' names a single-venue linear perpetual while this record's required instrument is a CEX+DEX perpetual pair; the tension is disclosed in round-spec.execution_invariants_disclosure and was not resolved by editing the inherited text (no launch happened, so nothing was silently assumed)",
+    "the raw's CEX-leg funding carries truth_status 'official' 3,154 and 'modeled_funding' 2,005 rows per symbol; a launching round would have to register an official-only filter for the falsification battery's observed-only replication item",
+    "SOLUSDT's stored funding cadence is not uniformly 8-hour (98 intervals near 7,199/7,200 s and 3 near 14,399/14,400 s in addition to the 8-hour cadence) - measured and recorded, not resolved",
+    "the raw has advanced past the card's stated window (measured live: klines to 2026-09-15T23:55Z, funding to 2026-09-16T08:00Z); measured and registered values are recorded separately",
+    "the machine holds one non-canonical market-data file (a 12-field Binance SPOT daily BTC kline cache in a legacy project dir). It is outside the canonical raw, single-asset, a spot market and still one venue, so it is neither a second venue nor an admissible input; it was not used",
+    "a future re-entry launch would need the v1.8 parameter_contract block in its round-spec (non-legacy families fail closed without it); this gate round never touched that path"
+  ],
+  "untouched": {
+    "other_families": "no other family artifact, frozen survivor bundle or verdict was read-modified",
+    "cron": "no cron job or watchdog was created, changed or run",
+    "board": "no auditor sub-card, no child card, no board status change beyond this card's own lifecycle",
+    "paper_live": "no Paper/Live activity; no container launch, no run-spec, no attempt dir",
+    "raw": "the canonical raw was read-only throughout (no write, no temp file inside it)",
+    "runner_deploy": "no runner was deployed to host /scripts: deploy-and-pin is only required for a launching round, and this round launched nothing"
+  }
+}
