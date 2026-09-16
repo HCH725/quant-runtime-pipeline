@@ -694,6 +694,8 @@ family F
 
   `[C]` 這條 loop 由三段**既有**機制拼成（container compute／no-agent reconciler／no-agent handoff），**不**新增任何 service／daemon／queue／manager；reconciler 不判 verdict、不改 `/results`、handoff 不建 auditor 卡、default 不長 turn 等 Qlib（§1.2/§25）。
 
+- `[C]`（**文件對齊；卡片 `t_86d04b09`，2026-09-16；僅文字修正，無 runtime／gate／stage 變更**）**candidate 的 producer 就是 Research Intake Review 的同一決策**：每一個 `PASS`／`PASS-WITH-CAVEAT` 在同一次 review decision 產生兩個 **sibling outputs**——① Wiki Brain knowledge record（research-only 保存）；② 本節 production candidate pool 中的**恰一筆** candidate（`/results/_handoff/candidates.json`，並以 `/results/*/family.json` 推導消費狀態）。因此：Wiki Brain 是知識保存、**不是** candidate eligibility 的第二道 gate；`REMEDIATE`／`REJECT` 不進 pool；**不存在**「Wiki 之後再做 crypto/runnable suitability screening」的階段。candidate eligibility 就在 Intake Review 這一次決定，`PASS`／`PASS-WITH-CAVEAT` 必須足以 candidateize；body 的產生是 **format/canonicalization**（frozen GitHub artifact ＋ 該次 review 的正規化內容／crypto portability／caveat），仍須滿足上方 **v1.3.0 candidate card requirements**（含 `DCA PARAMETER DOMAIN` 與 `COHORT SURVIVOR SEMANTICS`），source 未明示的必要 execution 細節可標 `research-defined` 但不得改變核心 hypothesis；缺 prerequisite（本機無該資料／市場）**不是**拒絕 candidate 的新 gate——candidate 仍入 pool、body 忠實註冊 required data/market，未來的執行卡再依 §13 technical failure semantics 終結。append 為 idempotent（同 `reviewed_source`／`family_id`／fingerprint 已存在即 no-op）。本節其餘條文（append 演算法、fingerprint 規則、fail-closed findings、「同一輪最多 1 張」、auditor 非 production stage）與 §14.1–§14.3 皆**不變**；**不新增**任何 stage／service／daemon／queue／cron／manager／檔案型 framework。本條只作文字對齊，**未**變更 `runtime/production_handoff.py`、`runtime/reconcile.py` 或任何 production cron。
+
 ## 15. Family Yield / Anti-Starvation Policy
 
 ### 15.1 為何需要
