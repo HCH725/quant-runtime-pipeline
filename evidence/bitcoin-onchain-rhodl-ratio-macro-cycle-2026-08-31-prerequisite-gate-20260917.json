@@ -1,0 +1,2026 @@
+{
+ "snapshot_kind": "prerequisite-gate determination snapshot (contract 6.4 / 13 / 14.4)",
+ "snapshot_taken_at_utc": "2026-09-16T21:51:44Z",
+ "snapshot_boundary": "snapshot, not runtime state: it records the measured raw, the requirement-vs-available mapping, the immutable round artifacts and the executable verification as of this timestamp. Host-specific absolute paths are redacted (<HOME>/<EXPANSION>); nothing else was altered.",
+ "card": {
+  "kanban_task_id": "t_010232b7",
+  "kanban_board": "quant-strategy-research",
+  "family_id": "bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31",
+  "round_id": "bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31-r1",
+  "title": "Production Candidate — Bitcoin On-Chain Realized HODL (RHODL) Ratio Macro Cycle Timing and Distribution Oscillator (full backtest)",
+  "parent_card": "t_cc8b557f (kanban scheduling parent only; family.json parent_family=null, so scientific lineage is null)",
+  "creator": "production-handoff (contract 14.4 automatic production handoff; not manually created)",
+  "candidate_origin": "Research Intake Review PASS (PASS-WITH-CAVEAT) decision's sibling output, candidateized exactly once from the canonical review backlog (card t_86d04b09 backfill) in format/canonicalization-only mode",
+  "frozen_candidate_body_sha256": "sha256:bad1e14c7189139e39a62eda243bfe1e2225cd8cf972ca7df7322c2643c7765c",
+  "frozen_candidate_body_bytes": 19420,
+  "lifecycle_footer": "appended by runtime/production_handoff.py; system-owned and not part of the candidate specification"
+ },
+ "contract_basis": {
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+  "contract_sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+  "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+  "contract_clause_verbatim": "- `[C]`（**文件對齊；卡片 `t_2acfd339`，2026-09-16；不改任何 gate／stage／append 條件**）**prerequisite-missing 的終結語意**：必要 prerequisite（資料／市場／universe）客觀不存在、且該缺席已由 measured evidence 證實，是 §13 `card-local` failure 的一個例子；此時本節的 `TECHNICAL_INCOMPLETE`（附 failure 層級、last run_id、terminal evidence 路徑、未完成原因）就是誠實且合法的終結，required terminal evidence（`round-spec.json` ＋ `verdict.json`）齊備後該卡即 `done`，**不得**僅因 full-backtest outputs 不可能存在而形成 human gate（不 `blocked`、不 `needs_input`）；`kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 human decision 的情況（§12.6）。為讓 goal-completion judge 在卡片本身上讀到這條，`runtime/production_handoff.py` 於 append 時在 candidate body **之後**追加一段固定、system-owned 的 lifecycle footer（candidate body 逐位元不改、`fingerprint_input` 不變、append 條件不變）；卡片 terminal 後 §14.4 handoff 照既有條件（無 active／無 `blocked`／無未結案 incident／tail terminal）append 下一張。",
+  "contract_verdict_semantics_verbatim": "- `[C]` `TECHNICAL_INCOMPLETE` 必須附：失敗層級（card-local vs shared-layer）、最後一次 run_id、terminal evidence 路徑、未完成原因；寫入該 round 的 `/results/…/verdict.json`，comment 只放人類摘要。",
+  "contract_layer_criterion_verbatim": "- `[C]` 判定層級的判準：**「同一動作在另一張卡上是否也會失敗？」** 會 → shared-layer；只在此卡 → card-local。",
+  "contract_data_window_invalid_row_verbatim": "| `data_window_invalid` | card-local | 區間內無 bar、instrument 缺失 | 新 round（若窗改）或新 run（若僅參數） | REJECT / DEFERRED |",
+  "lifecycle_footer_rule_verbatim": "LIFECYCLE FOOTER（system-owned；append 時由 production_handoff 注入，非 candidate 規格的一部分；contract §6.4／§14.4）",
+  "termination_rule": "section 6.4 / 16.3: an unfixable card-local prerequisite failure terminates as TECHNICAL_INCOMPLETE with failure layer, last run_id, terminal evidence paths and the reason for incompleteness - an honest done, not a block",
+  "family_gate_note": "section 7.3 v1.4.0: 0 cohort survivors -> REJECT; >=1 -> PASS; coverage/technical incomplete -> TECHNICAL_INCOMPLETE. This round realized 0 cohorts, so no survivor bundle exists (section 10.8 requires >= 1) and no disposition was invoked."
+ },
+ "determination": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure": {
+   "layer": "card-local",
+   "class": "data_window_invalid",
+   "detail": "the record's required prerequisites - the Bitcoin spot on-chain ledger (UTXO set), its realized-cap HODL age bands (RC_1w / RC_1y-2y), a daily BTC/USD volume-weighted spot index, per-UTXO creation prices back to 2009-01-03 and a point-in-time confirmed UTXO snapshot - do not exist in the canonical raw, which holds one venue's USD-M perpetual klines/funding/instruments for four contracts. The signal's own independent variable is absent, so nothing was launched.",
+   "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; the data_window_invalid row ('區間內無 bar、instrument 缺失') is the closest registered row and its use is recorded as an operator/contract decision inside the round-spec"
+  },
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "run_id": null,
+  "attempts_launched": 0,
+  "terminal_sentinels": 0,
+  "evidence_run_ids": [],
+  "not_a_scientific_reject": "the candidate is neither validated nor refuted; a missing prerequisite is explicitly not a rejection",
+  "why_technical": "the failure is a data/market absence, not a research result",
+  "why_card_local": "the criterion asks whether the SAME ACTION would fail on another card. The absence is a property of this record's required data, and no shared-layer component (container, runner, reconciler, deploy or board) was exercised at all: nothing was launched.",
+  "incomplete_reason": "required prerequisites absent from the canonical raw (measured); no attempt was ever launched"
+ },
+ "measured_canonical_raw": {
+  "raw_root": "<EXPANSION>/market-data-raw",
+  "top_level_dirs": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "binance_market_dirs": [
+   "usdm"
+  ],
+  "binance_usdm_subdirs": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "raw_paths": [
+   "_meta",
+   "_tools",
+   "_tools/__pycache__",
+   "binance",
+   "binance/usdm",
+   "binance/usdm/funding",
+   "binance/usdm/instruments",
+   "binance/usdm/klines"
+  ],
+  "paths_named_other_market": [],
+  "non_binance_paths": [],
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "config_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "klines_end_rule": "last completed UTC day (no partial-day data)",
+  "klines_dataset_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "klines_interval_set": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "klines_row_field_set": [
+   "close",
+   "close_time_ms",
+   "high",
+   "low",
+   "open",
+   "open_time_ms",
+   "volume"
+  ],
+  "klines_1d_first_open_utc": "2022-01-01T00:00:00+00:00",
+  "klines_1d_last_open_utc": "2026-09-15T00:00:00+00:00",
+  "klines_1d_first_open_mod_86400_seconds": [
+   0,
+   0,
+   0
+  ],
+  "klines_1d_open_step_seconds": [
+   86400
+  ],
+  "klines_1d_first_by_symbol": {
+   "BNBUSDT": "2022-01-01T00:00:00+00:00",
+   "BTCUSDT": "2022-01-01T00:00:00+00:00",
+   "ETHUSDT": "2022-01-01T00:00:00+00:00",
+   "SOLUSDT": "2022-01-01T00:00:00+00:00"
+  },
+  "klines_1d_last_by_symbol": {
+   "BNBUSDT": "2026-09-15T00:00:00+00:00",
+   "BTCUSDT": "2026-09-15T00:00:00+00:00",
+   "ETHUSDT": "2026-09-15T00:00:00+00:00",
+   "SOLUSDT": "2026-09-15T00:00:00+00:00"
+  },
+  "raw_1d_window_utc": [
+   "2022-01-01T00:00:00+00:00",
+   "2026-09-15T00:00:00+00:00"
+  ],
+  "card_registered_raw_window": "klines 2022-01-01→2026-09-11",
+  "card_registered_funding_window": "funding 2022-01-01T00:00Z→2026-09-12T08:00Z",
+  "raw_1d_window_starts_at_or_after_card_registration": true,
+  "raw_1d_history_days": 1718,
+  "cycles_covered_4y_equivalent": 1.176,
+  "raw_1d_window_reaches_back_to_genesis": false,
+  "klines_1w_first_open_utc": "2022-01-03T00:00:00+00:00",
+  "klines_1w_first_open_weekday": "Mon",
+  "funding_symbol_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "funding_row_keys": [
+   "funding_price_source",
+   "funding_rate",
+   "funding_time_ms",
+   "mark_price",
+   "market_type",
+   "rate_type",
+   "symbol",
+   "truth_status",
+   "venue"
+  ],
+  "funding_venues": [
+   "BINANCE"
+  ],
+  "funding_first_ms": "2022-01-01T00:00:00.006000+00:00",
+  "funding_last_ms": "2026-09-16T08:00:00.002000+00:00",
+  "funding_row_has_onchain_field": false,
+  "instrument_count": 4,
+  "instrument_types": [
+   "CryptoPerpetual"
+  ],
+  "instrument_quote_currencies": [
+   "USDT"
+  ],
+  "instrument_settlement_currencies": [
+   "USDT"
+  ],
+  "instrument_field_names": [
+   "base_currency",
+   "id",
+   "info",
+   "is_inverse",
+   "lot_size",
+   "maker_fee",
+   "margin_init",
+   "margin_maint",
+   "max_notional",
+   "max_price",
+   "max_quantity",
+   "min_notional",
+   "min_price",
+   "min_quantity",
+   "multiplier",
+   "price_increment",
+   "price_precision",
+   "quote_currency",
+   "raw_symbol",
+   "settlement_currency",
+   "size_increment",
+   "size_precision",
+   "taker_fee",
+   "tick_scheme",
+   "ts_event",
+   "ts_init",
+   "type"
+  ],
+  "instrument_onchain_field_hits": [],
+  "kline_row_has_onchain_field": false,
+  "schema_sha256": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+  "schema_dataset_sections": [
+   "funding",
+   "instruments",
+   "klines (Binance USD-M perpetual futures, UTC)"
+  ],
+  "schema_documents_onchain_dataset": false,
+  "schema_single_venue": true,
+  "schema_documents_missing_fields": true,
+  "schema_no_silent_gapfill": true,
+  "schema_onchain_word_lines": [],
+  "inventory_sha256": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+  "inventory_declares_no_other_store_found": true,
+  "inventory_launchd_updater_line": "Updated by: `_tools/market_data_sync.py`, daily via launchd `ai.marketdata.raw-sync`",
+  "raw_entry_name_count": 1633,
+  "probe_tokens_tested": [
+   "rhodl",
+   "hodl",
+   "hodl_waves",
+   "hodlwaves",
+   "realized_cap",
+   "realised_cap",
+   "realizedcap",
+   "realized_value",
+   "rc_1w",
+   "rc_1y",
+   "age_band",
+   "ageband",
+   "coin_age",
+   "coinage",
+   "coindays",
+   "coin_days",
+   "utxo",
+   "unspent",
+   "spent_output",
+   "spentoutput",
+   "onchain",
+   "on-chain",
+   "on_chain",
+   "blockchain",
+   "mempool",
+   "block_height",
+   "blockheight",
+   "genesis",
+   "sopr",
+   "mvrv",
+   "nupl",
+   "thermocap",
+   "puell",
+   "reserve_risk",
+   "difficulty",
+   "hashrate",
+   "hash_rate",
+   "mining",
+   "block_reward",
+   "blockreward",
+   "coinmetrics",
+   "coin_metrics",
+   "kaiko",
+   "coinmarketcap",
+   "glassnode",
+   "lookintobitcoin",
+   "positivecrypto",
+   "chainalysis",
+   "dune",
+   "cryptoquant",
+   "bitcoin_node",
+   "bitcoind"
+  ],
+  "onchain_token_hits_in_entry_names": [],
+  "excluded_token_raw_tree_collisions": {
+   "btcusd": [
+    "btcusdt",
+    "btcusdt-15m-2022-01.jsonl.gz",
+    "btcusdt-15m-2022-02.jsonl.gz"
+   ]
+  },
+  "probe_exclusions": {
+   "lth": "substring of the ordinary word 'health' (~/.hermes/hermes-agent/**/*health*.py and the archive copy of the same tree)",
+   "sth": "substring of the ordinary word 'health' (same class as 'lth')",
+   "miner": "substring of the contributor handle 'minervini' (contributors/emails/p.minervini@gmail.com)",
+   "supply": "generic word: matches 'supply chain'/'power supply' prose and archive source trees, not an on-chain supply surface",
+   "btcusd": "substring of the local contract name 'btcusdt' (and of every 'btcusdt-<interval>-<month>.jsonl.gz' file)",
+   "btc_usd": "same class as 'btcusd': every local BTC artefact is 'btcusdt'-named",
+   "address": "generic word: matches mail/address-list artefacts across the host, not the UTXO address surface",
+   "index": "generic word: matches web/JSON index files house-wide, not an on-chain index"
+  },
+  "meta_sha256": {
+   "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+   "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+   "INVENTORY.md": "sha256:4955a7435a3272ec39c58bac6daf61b9fc0519b4b3913bbb3e4b3d3e4218a82a",
+   "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+   "TRANSCODE_MANIFEST.json": "sha256:04a842159aa4a6fd7da9d4af2109cd01ca3ced6f9587f8ee8aa2106a9c878065",
+   "FUNDING_EXPORT.json": "sha256:8ceb7bcbf2fc0cc1fe6c56f0b41b418711f33b2b74edac10923f2162c939be2f"
+  },
+  "note": "single venue (BINANCE USD-M perpetual), four fixed contracts: klines whose rows carry the six-field OHLCV shape only, that venue's funding, and its instrument definitions. No blockchain/UTXO dataset of any kind, no realized-cap or HODL-age band surface, and no BTC/USD (spot dollars) price source; every instrument is quoted and settled in USDT. The raw's own daily history begins 2022-01-01, about 1.18 four-year cycles, while the record multiplies by an age measured from 2009-01-03."
+ },
+ "requirement_vs_available": {
+  "matrix": [
+   {
+    "item": "universe_bitcoin_spot_onchain_ledger",
+    "status": "ABSENT_AS_REGISTERED_SOURCE",
+    "detail": "Required data item 1: 'Universe: Bitcoin (BTC) spot on-chain ledger.' The raw holds one BINANCE USD-M perpetual contract on BTC (BTCUSDT, quote/settlement USDT) - a derivatives market on a centralised venue, not the Bitcoin spot ledger. No UTXO set, no ledger surface and no spot market exists in the tree (1633 entry names probed at depth <= 8 with 52 on-chain tokens: 0 hits)."
+   },
+   {
+    "item": "archival_bitcoin_node_utxo_parse",
+    "status": "ABSENT",
+    "detail": "Required data item 2 (DECISIVE): 'Data Source: Full archival Bitcoin node parsing UTXO creation dates, block heights, output values, and spend timestamps.' No UTXO/blockchain dataset exists anywhere in the raw tree; the store's own SCHEMA.md documents exactly 3 dataset families ['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'], its INVENTORY.md states that no other store was found on the host, and no stored row shape carries an on-chain field. The realization prices themselves (P_creation) would additionally need BTC/USD quotes back to the genesis block (2009-01-03)."
+   },
+   {
+    "item": "instrument_bitcoin",
+    "status": "ABSENT_AS_REGISTERED_SOURCE",
+    "detail": "The record's instrument is Bitcoin in its native UTXO form ('Universe: Bitcoin (BTC) spot on-chain ledger'). Locally only a USDT-margined perpetual contract on BTC exists (BNBUSDT,BTCUSDT,ETHUSDT,SOLUSDT); every instrument in the export is a CryptoPerpetual quoted and settled in USDT, so the record's instrument is absent as registered even though a BTC price series is present."
+   },
+   {
+    "item": "timeframe_daily",
+    "status": "PRESENT",
+    "detail": "The record's daily resolution exists locally: ['2022-01-01T00:00:00+00:00', '2026-09-15T00:00:00+00:00'] (open step [86400] seconds, open time exactly 00:00 UTC), 1718 bars."
+   },
+   {
+    "item": "price_reference_btc_usd_volume_weighted_spot_index",
+    "status": "ABSENT_AS_REGISTERED_SOURCE",
+    "detail": "Required data item 3: 'Price Reference: Daily BTC/USD volume-weighted spot index (e.g., Coin Metrics / Kaiko / CoinMarketCap) aligned with daily 00:00 UTC block timestamps.' No BTC/USD (dollar) series and no spot market exist: no entry name in the tree carries a spot/USD/provider token, every instrument is USDT-quoted (['USDT']), and the documented dataset families are ['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)']. UTC-day alignment is present in the klines (open_time_ms % 86400 == 0), so alignment is not the missing part - the registered source is."
+   },
+   {
+    "item": "derived_rc_band_and_market_age_series",
+    "status": "NOT_CONSTRUCTIBLE",
+    "detail": "Required data item 4 (DECISIVE): 'Derived Time Series: Daily aggregate RC_1w, RC_1y-2y, and elapsed calendar days from Bitcoin Genesis block.' RC_1w and RC_1y-2y are realized-value sums over UTXO age bands: with no UTXO set and no per-UTXO creation price there is neither numerator nor denominator, so the RHODL ratio itself cannot be formed. The missing prerequisite is the signal's own independent variable, not an auxiliary filter."
+   },
+   {
+    "item": "point_in_time_utxo_snapshot_no_mempool",
+    "status": "ABSENT",
+    "detail": "Required data item 5: 'Point-in-Time Requirement: Daily UTC closure snapshot of the confirmed UTXO set. Unconfirmed mempool transactions must be excluded.' No UTXO snapshot exists in any form, so the requirement has no substrate: nothing can be excluded from a set that was never captured."
+   },
+   {
+    "item": "rhodl_ratio_series_since_genesis",
+    "status": "NOT_CONSTRUCTIBLE",
+    "detail": "RHODL_t = (RC_1w,t / RC_1y-2y,t) x (Date_t - 2009-01-03). Neither the ratio nor its market-age multiplier is constructible locally: the multiplier needs a history reaching back to 2009-01-03 while the raw's own daily history begins 2022-01-01T00:00:00+00:00 (1718 days, 1.176 four-year cycles), and the band aggregates do not exist at any date."
+   },
+   {
+    "item": "rhodl_accumulation_episodes_threshold_350",
+    "status": "NOT_COMPUTABLE",
+    "detail": "The registration's accumulation regime ('RHODL_t <= 350') has no series to read, so no episode count exists and the selector's sufficiency step (min_episodes_is) can never be evaluated. Recorded as not-computable rather than zero: the metric is absent, not empty."
+   },
+   {
+    "item": "rhodl_distribution_episodes_threshold_15000",
+    "status": "NOT_COMPUTABLE",
+    "detail": "The registration's distribution regime ('RHODL_t >= 15,000') is likewise not computable: no RHODL series - and therefore no historical median of one - exists locally."
+   },
+   {
+    "item": "falsification_item_1_accumulation_forward_returns_vs_buy_and_hold",
+    "status": "NOT_EVALUABLE",
+    "detail": "Record falsification item 1 needs an accumulation signal (RHODL < 350) and multi-year forward returns versus buy-and-hold. The signal leg is absent; the buy-and-hold leg alone is derivable from local BTCUSDT 1d closes but cannot carry the test."
+   },
+   {
+    "item": "falsification_item_2_blowoff_top_above_historical_median",
+    "status": "NOT_EVALUABLE",
+    "detail": "Record falsification item 2 requires the RHODL ratio's historical median; with no ratio series there is no median and no blow-off top to compare against."
+   },
+   {
+    "item": "falsification_item_3_random_age_band_replacement_control",
+    "status": "NOT_EVALUABLE",
+    "detail": "Record falsification item 3 replaces the 1-week and 1-2 year bands with randomly selected age-band ratios. No age-band aggregates of any kind exist locally, so neither the registered bands nor their random replacements can be evaluated."
+   },
+   {
+    "item": "falsification_item_4_oos_cycle_band_divergence",
+    "status": "NOT_EVALUABLE",
+    "detail": "Record falsification item 4 requires an out-of-sample cycle showing the expanding divergence between RC_1w and RC_1y-2y. Both legs are unconstructible, and the local OOS slice (2025-10-01..2026-09-11) is not a cycle in the record's sense."
+   },
+   {
+    "item": "historical_cycle_evidence_base_2011_2022",
+    "status": "ABSENT",
+    "detail": "The record's evidence base and its published top/bottom zones are the 2011, 2013, 2015, 2017-18 and 2021 cycles. The raw's daily history begins 2022-01-01T00:00:00+00:00 - 1.176 four-year cycles - and cannot reach the record's historical sample."
+   },
+   {
+    "item": "btc_usd_creation_price_since_2009",
+    "status": "ABSENT",
+    "detail": "Realized Value(u, t) = Amount(u) x P_creation(u), where P_creation(u) is the BTC/USD price on the day each UTXO was minted. An age-band aggregate over a UTXO set that still holds coins minted since the genesis block needs BTC/USD quotes from 2009-01-03 onward; the local series starts 2022-01-01T00:00:00+00:00 and is a USDT perpetual, so the creation-price leg is absent for every pre-2022 UTXO - i.e. for the 1y-2y band the signal depends on."
+   },
+   {
+    "item": "baseline_buy_and_hold",
+    "status": "PRESENT_AS_LOCAL_PROXY",
+    "detail": "The buy-and-hold leg of the falsification battery is derivable from the local BTCUSDT 1d closes, but only on the local perpetual with USDT numeraire and only from 2022-01-01T00:00:00+00:00 - not on the record's spot-ledger sample."
+   },
+   {
+    "item": "market_type_venue_execution_timing",
+    "status": "UNSPECIFIED_BY_RECORD",
+    "detail": "The record states its execution assumptions are underspecified ('Exact order type, venue, leverage, hedging instrument, rebalance timing, holding period, transaction-cost model, and custody workflow are underspecified'). Registered here as read from the record; no default was invented in its place."
+   },
+   {
+    "item": "transaction_cost_convention",
+    "status": "PARTIAL_LOCAL_INSTRUMENT_METADATA_ONLY",
+    "detail": "The raw's instrument export carries maker_fee/taker_fee/price_increment for the four local perpetuals plus that venue's funding rows, which is what the card's cost rail would consume. The record itself registers no cost convention, so this is a registration-side item only - nothing was priced because nothing traded."
+   }
+  ],
+  "decisive_items": [
+   "universe_bitcoin_spot_onchain_ledger",
+   "archival_bitcoin_node_utxo_parse",
+   "price_reference_btc_usd_volume_weighted_spot_index",
+   "derived_rc_band_and_market_age_series",
+   "point_in_time_utxo_snapshot_no_mempool",
+   "rhodl_ratio_series_since_genesis"
+  ],
+  "missing": [
+   "the Bitcoin spot on-chain ledger (UTXO set) - the record's universe - is absent from the canonical raw",
+   "the realized-cap HODL age bands RC_1w and RC_1y-2y are absent, so the RHODL ratio (the signal's own independent variable) is not constructible",
+   "the daily BTC/USD volume-weighted spot index is absent; the only BTC series is a USDT-quoted USD-M perpetual",
+   "per-UTXO creation prices back to 2009-01-03 are absent, so the 1y-2y band cannot be realized even in principle",
+   "the record's historical cycle evidence base (2011-2022) lies outside the raw's window (2022-01-01T00:00:00+00:00 .. 2026-09-15T00:00:00+00:00)",
+   "0 case evaluations: G1 coverage is empty by construction, not by failure"
+  ],
+  "note": "each required-data item carries its own measured status (ABSENT / ABSENT_AS_REGISTERED_SOURCE / NOT_CONSTRUCTIBLE / NOT_COMPUTABLE / NOT_EVALUABLE / PRESENT / PRESENT_AS_LOCAL_PROXY / UNSPECIFIED_BY_RECORD / PARTIAL_LOCAL_INSTRUMENT_METADATA_ONLY) rather than a blanket claim",
+  "enumerated_counts": {
+   "ABSENT": 4,
+   "ABSENT_AS_REGISTERED_SOURCE": 3,
+   "NOT_COMPUTABLE": 2,
+   "NOT_CONSTRUCTIBLE": 2,
+   "NOT_EVALUABLE": 4,
+   "PARTIAL_LOCAL_INSTRUMENT_METADATA_ONLY": 1,
+   "PRESENT": 1,
+   "PRESENT_AS_LOCAL_PROXY": 1,
+   "UNSPECIFIED_BY_RECORD": 1
+  }
+ },
+ "host_wide_data_store_scan": {
+  "raw_name_probe": {
+   "tokens_tested": [
+    "rhodl",
+    "hodl",
+    "hodl_waves",
+    "hodlwaves",
+    "realized_cap",
+    "realised_cap",
+    "realizedcap",
+    "realized_value",
+    "rc_1w",
+    "rc_1y",
+    "age_band",
+    "ageband",
+    "coin_age",
+    "coinage",
+    "coindays",
+    "coin_days",
+    "utxo",
+    "unspent",
+    "spent_output",
+    "spentoutput",
+    "onchain",
+    "on-chain",
+    "on_chain",
+    "blockchain",
+    "mempool",
+    "block_height",
+    "blockheight",
+    "genesis",
+    "sopr",
+    "mvrv",
+    "nupl",
+    "thermocap",
+    "puell",
+    "reserve_risk",
+    "difficulty",
+    "hashrate",
+    "hash_rate",
+    "mining",
+    "block_reward",
+    "blockreward",
+    "coinmetrics",
+    "coin_metrics",
+    "kaiko",
+    "coinmarketcap",
+    "glassnode",
+    "lookintobitcoin",
+    "positivecrypto",
+    "chainalysis",
+    "dune",
+    "cryptoquant",
+    "bitcoin_node",
+    "bitcoind"
+   ],
+   "token_count": 52,
+   "entry_names_scanned": 1633,
+   "probe_max_depth": 8,
+   "hits": [],
+   "probe_exclusions": {
+    "lth": "substring of the ordinary word 'health' (~/.hermes/hermes-agent/**/*health*.py and the archive copy of the same tree)",
+    "sth": "substring of the ordinary word 'health' (same class as 'lth')",
+    "miner": "substring of the contributor handle 'minervini' (contributors/emails/p.minervini@gmail.com)",
+    "supply": "generic word: matches 'supply chain'/'power supply' prose and archive source trees, not an on-chain supply surface",
+    "btcusd": "substring of the local contract name 'btcusdt' (and of every 'btcusdt-<interval>-<month>.jsonl.gz' file)",
+    "btc_usd": "same class as 'btcusd': every local BTC artefact is 'btcusdt'-named",
+    "address": "generic word: matches mail/address-list artefacts across the host, not the UTXO address surface",
+    "index": "generic word: matches web/JSON index files house-wide, not an on-chain index"
+   },
+   "excluded_token_raw_tree_collisions": {
+    "btcusd": [
+     "btcusdt",
+     "btcusdt-15m-2022-01.jsonl.gz",
+     "btcusdt-15m-2022-02.jsonl.gz"
+    ]
+   }
+  },
+  "house_wide_probe": {
+   "roots_scanned": [
+    "<HOME>/workspace",
+    "<EXPANSION>",
+    "/Volumes/ResearchData",
+    "<HOME>/.hermes",
+    "<HOME>/workspace/qlib-apple-container"
+   ],
+   "skipped_roots": [],
+   "probe_tokens": [
+    "rhodl",
+    "hodl",
+    "hodl_waves",
+    "hodlwaves",
+    "realized_cap",
+    "realised_cap",
+    "realizedcap",
+    "realized_value",
+    "rc_1w",
+    "rc_1y",
+    "age_band",
+    "ageband",
+    "coin_age",
+    "coinage",
+    "coindays",
+    "coin_days",
+    "utxo",
+    "unspent",
+    "spent_output",
+    "spentoutput",
+    "onchain",
+    "on-chain",
+    "on_chain",
+    "blockchain",
+    "mempool",
+    "block_height",
+    "blockheight",
+    "genesis",
+    "sopr",
+    "mvrv",
+    "nupl",
+    "thermocap",
+    "puell",
+    "reserve_risk",
+    "difficulty",
+    "hashrate",
+    "hash_rate",
+    "mining",
+    "block_reward",
+    "blockreward",
+    "coinmetrics",
+    "coin_metrics",
+    "kaiko",
+    "coinmarketcap",
+    "glassnode",
+    "lookintobitcoin",
+    "positivecrypto",
+    "chainalysis",
+    "dune",
+    "cryptoquant",
+    "bitcoin_node",
+    "bitcoind"
+   ],
+   "probe_exclusions": {
+    "lth": "substring of the ordinary word 'health' (~/.hermes/hermes-agent/**/*health*.py and the archive copy of the same tree)",
+    "sth": "substring of the ordinary word 'health' (same class as 'lth')",
+    "miner": "substring of the contributor handle 'minervini' (contributors/emails/p.minervini@gmail.com)",
+    "supply": "generic word: matches 'supply chain'/'power supply' prose and archive source trees, not an on-chain supply surface",
+    "btcusd": "substring of the local contract name 'btcusdt' (and of every 'btcusdt-<interval>-<month>.jsonl.gz' file)",
+    "btc_usd": "same class as 'btcusd': every local BTC artefact is 'btcusdt'-named",
+    "address": "generic word: matches mail/address-list artefacts across the host, not the UTXO address surface",
+    "index": "generic word: matches web/JSON index files house-wide, not an on-chain index"
+   },
+   "probe_exclusion_demonstration": {
+    "lth": {
+     "house_collision_example": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/agent/monitoring/cron_health.py",
+     "house_hit_count": 63,
+     "reason": "substring of the ordinary word 'health' (~/.hermes/hermes-agent/**/*health*.py and the archive copy of the same tree)"
+    },
+    "sth": {
+     "house_collision_example": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/esther@feedmob.com",
+     "house_hit_count": 31,
+     "reason": "substring of the ordinary word 'health' (same class as 'lth')"
+    },
+    "miner": {
+     "house_collision_example": "<HOME>/.hermes/hermes-agent/contributors/emails/p.minervini@gmail.com",
+     "house_hit_count": 11,
+     "reason": "substring of the contributor handle 'minervini' (contributors/emails/p.minervini@gmail.com)"
+    },
+    "supply": {
+     "house_collision_example": "<HOME>/.hermes/skills/data-science/quant-results-dashboard-engineering/references/research-supply-diagnostics.md",
+     "house_hit_count": 42,
+     "reason": "generic word: matches 'supply chain'/'power supply' prose and archive source trees, not an on-chain supply surface"
+    },
+    "btcusd": {
+     "house_collision_example": "<HOME>/.hermes/kanban/boards/_archived/quant-professional-development-1788651726/workspaces/t_50e7f9ed/btcusdt_2025_raw.json",
+     "house_hit_count": 416,
+     "reason": "substring of the local contract name 'btcusdt' (and of every 'btcusdt-<interval>-<month>.jsonl.gz' file)"
+    },
+    "btc_usd": {
+     "house_collision_example": null,
+     "house_hit_count": 0,
+     "reason": "same class as 'btcusd': every local BTC artefact is 'btcusdt'-named"
+    },
+    "address": {
+     "house_collision_example": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/website/docs/guides/agent-email-address.md",
+     "house_hit_count": 6,
+     "reason": "generic word: matches mail/address-list artefacts across the host, not the UTXO address surface"
+    },
+    "index": {
+     "house_collision_example": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/bootstrap-installer/index.html",
+     "house_hit_count": 304,
+     "reason": "generic word: matches web/JSON index files house-wide, not an on-chain index"
+    }
+   },
+   "excluded_token_scan": {
+    "lth": {
+     "hit_count": 63,
+     "classification_counts": {
+      "non_canonical_staging_copy_false_positive": 22,
+      "source_code_false_positive": 26,
+      "agent_session_or_log_false_positive": 4,
+      "contributor_metadata_false_positive": 1,
+      "hermes_skill_or_catalog_false_positive": 8,
+      "unclassified_data_candidate": 1,
+      "repo_documentation_false_positive": 1
+     },
+     "unclassified_data_candidates": [
+      "<EXPANSION>/Hermes/Cchiiann/profile_backup_20260911/logs/gateway_faulthandler.log"
+     ],
+     "btcusdt_named_hits": 0,
+     "examples": [
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/agent/monitoring/cron_health.py",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/agent/monitoring/gateway_health.py",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/agent/monitoring/gateway_health_export.py",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/electron/backend-health.test.ts",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/electron/backend-health.ts"
+     ]
+    },
+    "sth": {
+     "hit_count": 31,
+     "classification_counts": {
+      "non_canonical_staging_copy_false_positive": 9,
+      "hermes_cache_false_positive": 1,
+      "contributor_metadata_false_positive": 1,
+      "hermes_skill_or_catalog_false_positive": 1,
+      "repo_documentation_false_positive": 4,
+      "source_code_false_positive": 7,
+      "agent_session_or_log_false_positive": 1,
+      "related_wiki_document": 1,
+      "dataset_stub_directory_false_positive": 1,
+      "unclassified_data_candidate": 5
+     },
+     "unclassified_data_candidates": [
+      "<HOME>/workspace/dr-profit-distillation/local/phase2/unattended-acquisition-dry-run-chatgpt-launchd-20260823-092328/telegram-dr-profit-vip-new-export-20260823/files/WhyIsThisCoinPumping PART1.mp3",
+      "<HOME>/workspace/dr-profit-distillation/local/phase2/unattended-windowisolated-20260823-162315/telegram-dr-profit-vip-new-export/files/WhyIsThisCoinPumping PART1.mp3",
+      "<HOME>/workspace/dr-profit-distillation/local/phase2/unattended_acceptance_20260825_0110/telegram-dr-profit-vip-new-export/files/WhyIsThisCoinPumping PART1.mp3",
+      "<HOME>/workspace/telegram-dr-profit-vip-new-export-2026-08-22/files/WhyIsThisCoinPumping PART1.mp3",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/catdesk-c7e99d3d959eb078.6uz2ukyifpk8z0dtsthvwzyi3.0ihldtm.rcgu.o"
+     ],
+     "btcusdt_named_hits": 0,
+     "examples": [
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/contributors/emails/esther@feedmob.com",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/skills/creative/popular-web-designs/templates/posthog.md",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/tests/docker/test_tui_passthrough.py",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/tests/gateway/relay/test_relay_passthrough.py",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/tests/hermes_cli/test_kanban_cli_dispatch_passthrough.py"
+     ]
+    },
+    "miner": {
+     "hit_count": 11,
+     "classification_counts": {
+      "contributor_metadata_false_positive": 1,
+      "related_wiki_document": 1,
+      "repo_documentation_false_positive": 4,
+      "source_code_false_positive": 1,
+      "own_checker_source_false_positive": 1,
+      "dataset_stub_directory_false_positive": 3
+     },
+     "unclassified_data_candidates": [],
+     "btcusdt_named_hits": 0,
+     "examples": [
+      "<HOME>/.hermes/hermes-agent/contributors/emails/p.minervini@gmail.com",
+      "<HOME>/.hermes/wiki/quant/bitcoin-hash-ribbon-miner-capitulation-2026-08-31.md",
+      "<HOME>/workspace/alpha-strategy-research/bitcoin-hash-ribbon-miner-capitulation-2026-08-31.md",
+      "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-miner-position-index-mpi-outflow-exhaustion-2026-09-01.md",
+      "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-puell-multiple-miner-capitulation-2026-08-31.md"
+     ]
+    },
+    "supply": {
+     "hit_count": 42,
+     "classification_counts": {
+      "repo_documentation_false_positive": 11,
+      "related_wiki_document": 1,
+      "source_code_false_positive": 16,
+      "dataset_stub_directory_false_positive": 11,
+      "unclassified_data_candidate": 3
+     },
+     "unclassified_data_candidates": [
+      "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/23_knowledge_graphs/output/supply_chain_cache",
+      "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/23_knowledge_graphs/visualizations/figure_23_3_supply_chain_network.pdf",
+      "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/23_knowledge_graphs/visualizations/figure_23_3_supply_chain_network.png"
+     ],
+     "btcusdt_named_hits": 0,
+     "examples": [
+      "<HOME>/.hermes/skills/data-science/quant-results-dashboard-engineering/references/research-supply-diagnostics.md",
+      "<HOME>/.hermes/wiki/quant/crypto-token-unlock-72h-supply-shock-event-short-2026-09-12.md",
+      "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-illiquid-supply-shock-ratio-issr-drift-2026-09-01.md",
+      "<HOME>/workspace/alpha-strategy-research/bitcoin-stablecoin-supply-ratio-ssr-oscillator-2026-09-01.md",
+      "<HOME>/workspace/alpha-strategy-research/crypto-cross-sectional-locked-supply-staking-conviction-2026-09-01.md"
+     ]
+    },
+    "btcusd": {
+     "hit_count": 416,
+     "classification_counts": {
+      "non_canonical_staging_copy_false_positive": 1,
+      "unclassified_data_candidate": 410,
+      "repo_documentation_false_positive": 1,
+      "source_code_false_positive": 4
+     },
+     "unclassified_data_candidates": [
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_btcusdt_1d_index.raw",
+      "<EXPANSION>/market-data-raw/binance/usdm/funding/BTCUSDT",
+      "<EXPANSION>/market-data-raw/binance/usdm/funding/BTCUSDT/BTCUSDT-funding.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/15m/BTCUSDT-15m-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1d/BTCUSDT-1d-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1h/BTCUSDT-1h-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/1w/BTCUSDT-1w-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/30m/BTCUSDT-30m-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/4h/BTCUSDT-4h-2026-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2022-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2023-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2024-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-09.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-10.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-11.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2025-12.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-01.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-02.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-03.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-04.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-05.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-06.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-07.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-08.jsonl.gz",
+      "<EXPANSION>/market-data-raw/binance/usdm/klines/BTCUSDT/5m/BTCUSDT-5m-2026-09.jsonl.gz"
+     ],
+     "btcusdt_named_hits": 409,
+     "examples": [
+      "<HOME>/.hermes/kanban/boards/_archived/quant-professional-development-1788651726/workspaces/t_50e7f9ed/btcusdt_2025_raw.json",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_btcusdt_1d_index.raw",
+      "<HOME>/workspace/alpha-strategy-research/btcusdt-ppo-continuation-audit-imbalance-override-2026-09-14.md",
+      "<HOME>/workspace/phase12-l2-l3-execution-tca/raw/binance_futures_aggtrades_btcusdt_limit20.json",
+      "<HOME>/workspace/phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json"
+     ]
+    },
+    "btc_usd": {
+     "hit_count": 0,
+     "classification_counts": {},
+     "unclassified_data_candidates": [],
+     "btcusdt_named_hits": 0,
+     "examples": []
+    },
+    "address": {
+     "hit_count": 6,
+     "classification_counts": {
+      "non_canonical_staging_copy_false_positive": 1,
+      "source_code_false_positive": 2,
+      "hermes_skill_or_catalog_false_positive": 1,
+      "repo_documentation_false_positive": 2
+     },
+     "unclassified_data_candidates": [],
+     "btcusdt_named_hits": 0,
+     "examples": [
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/website/docs/guides/agent-email-address.md",
+      "<HOME>/.hermes/hermes-agent/apps/desktop/src/plugins/hermes-bots/group-rounds.unaddressed.test.ts",
+      "<HOME>/.hermes/hermes-agent/optional-skills/security/unbroker/references/brokers/addresses.json",
+      "<HOME>/.hermes/hermes-agent/tests/agent/test_api_content_row_addressed_backfill.py",
+      "<HOME>/.hermes/hermes-agent/website/docs/guides/agent-email-address.md"
+     ]
+    },
+    "index": {
+     "hit_count": 304,
+     "classification_counts": {
+      "non_canonical_staging_copy_false_positive": 43,
+      "hermes_cache_false_positive": 8,
+      "unclassified_data_candidate": 57,
+      "dataset_stub_directory_false_positive": 23,
+      "repo_documentation_false_positive": 69,
+      "source_code_false_positive": 88,
+      "agent_session_or_log_false_positive": 2,
+      "hermes_skill_or_catalog_false_positive": 4,
+      "related_wiki_document": 10
+     },
+     "unclassified_data_candidates": [
+      "<HOME>/.hermes/chrome-debug/Default/Code Cache/js/index",
+      "<HOME>/.hermes/chrome-debug/Default/Code Cache/js/index-dir/the-real-index",
+      "<HOME>/.hermes/chrome-debug/Default/Code Cache/wasm/index",
+      "<HOME>/.hermes/chrome-debug/Default/Code Cache/wasm/index-dir/the-real-index",
+      "<HOME>/.hermes/chrome-debug/Default/DawnGraphiteCache/index",
+      "<HOME>/.hermes/chrome-debug/Default/DawnWebGPUCache/index",
+      "<HOME>/.hermes/chrome-debug/Default/GPUCache/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/77fdd29060f0d616a97a53f7c376131d2697c71b/a3b027f7-ed21-4a0c-a56c-f4909f16857b/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/77fdd29060f0d616a97a53f7c376131d2697c71b/aa70f60a-6cac-46e3-86de-a9968583a158/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/b1f79fe4b7ced23eb7adcde17904fba4e858ce4b/e0785f42-8feb-43bc-8086-55bbc71e7dc9/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/08536bf8-e413-476c-b8d8-835934e2c2b1/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/1f4b261d-9bc6-4209-8ef2-cba3c64a7a71/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/3f801f88-7c1b-4e3a-b033-348432c98786/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/683706f2-95b2-4e85-bf95-521a35e7046b/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/8b999145-2696-4a18-a462-ebd580077850/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/CacheStorage/ba00623a413aef1be0c65618db85f0b8176e803d/cb73e00d-5dcf-4535-a524-3f0c73e571e4/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/ScriptCache/index",
+      "<HOME>/.hermes/chrome-debug/Default/Service Worker/ScriptCache/index-dir/the-real-index",
+      "<HOME>/.hermes/chrome-debug/GraphiteDawnCache/index",
+      "<HOME>/.hermes/hermes-agent/apps/desktop/scripts/perf/scenarios/index.mjs",
+      "<HOME>/.hermes/hermes-agent/plugins/platforms/photon/sidecar/index.mjs",
+      "<HOME>/workspace/TokenBar-custom/dist/.metadata_never_index",
+      "<HOME>/workspace/TokenBar-custom/dist/production-894/.metadata_never_index",
+      "<HOME>/workspace/TokenBar-custom/dist/production-895/.metadata_never_index",
+      "<HOME>/workspace/TokenBar-custom/dist/production-896/.metadata_never_index",
+      "<HOME>/workspace/TokenBar-custom/dist/selftest/.metadata_never_index",
+      "<HOME>/workspace/TokenBar-custom/landing/src/pages/index.astro",
+      "<HOME>/workspace/TokenBar-custom/landing/src/pages/zh-tw/index.astro",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_adausdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_avaxusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_bchusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_bnbusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_btcusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_dogeusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_etcusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_ethusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_linkusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_ltcusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_solusdt_1d_index.raw",
+      "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_xrpusdt_1d_index.raw",
+      "<HOME>/workspace/telegram-dr-profit-vip-new-cleaned-v1/posts_index.jsonl",
+      "<HOME>/workspace/tmp/ars-0914/repo/evals/bakeoff/2026-08-19-gpt-5-6-sol-codex/run7_call_index.jsonl",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/indexmap-6c18ad862f9504f8.d",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/indexmap-75ae88c27c85a376.d",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/indexmap-9031115356ef4c87.d",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/indexmap-9031115356ef4c87.indexmap.946e291dfc1f23d9-cgu.0.rcgu.o",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/libindexmap-6c18ad862f9504f8.rlib",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/libindexmap-6c18ad862f9504f8.rmeta",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/libindexmap-75ae88c27c85a376.rmeta",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/libindexmap-9031115356ef4c87.rlib",
+      "<EXPANSION>/build-cache/catdesk/target/debug/deps/libindexmap-9031115356ef4c87.rmeta",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/indexmap-aaa0da17c58739aa.d",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/indexmap-ce9ed01ac16adcbe.d",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/libindexmap-aaa0da17c58739aa.rlib",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/libindexmap-aaa0da17c58739aa.rmeta",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/libindexmap-ce9ed01ac16adcbe.rlib",
+      "<EXPANSION>/build-cache/catdesk/target/release/deps/libindexmap-ce9ed01ac16adcbe.rmeta"
+     ],
+     "btcusdt_named_hits": 1,
+     "examples": [
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/bootstrap-installer/index.html",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/index.html",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/app/index.tsx",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/contrib/index.ts",
+      "<HOME>/.hermes/archive/worktree-updater-safety-20260814/apps/desktop/src/debug/index.ts"
+     ]
+    }
+   },
+   "hit_count": 61,
+   "classification_counts": {
+    "non_canonical_staging_copy_false_positive": 7,
+    "hermes_cache_false_positive": 1,
+    "hermes_skill_or_catalog_false_positive": 7,
+    "repo_documentation_false_positive": 32,
+    "related_wiki_document": 5,
+    "canonical_record_document": 1,
+    "own_checker_source_false_positive": 1,
+    "source_code_false_positive": 2,
+    "dataset_stub_directory_false_positive": 1,
+    "own_family_directory_false_positive": 3,
+    "own_round_artifact_false_positive": 1
+   },
+   "hits_listed": 61,
+   "hits_capped_by": 0,
+   "hits": [
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/evm",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/evm/scripts",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/hyperliquid",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/hyperliquid/scripts",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/solana",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/archive/worktree-updater-safety-20260814/optional-skills/blockchain/solana/scripts",
+     "classification": "non_canonical_staging_copy_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/cache/web/coinmarketcap.com-8f17106999.md",
+     "classification": "hermes_cache_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/evm",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/evm/scripts",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/hyperliquid",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/hyperliquid/scripts",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/solana",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/hermes-agent/optional-skills/blockchain/solana/scripts",
+     "classification": "hermes_skill_or_catalog_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/skills/research/binance-trading-surfaces/references/2026-07-coinmarketcap-binance-brief-bridge.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/binance-square/write-to-earn-content-mining-research-2026-07.md",
+     "classification": "related_wiki_document"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/quant/alphaschema-trading-semantic-plan-space-surrogate-guided-factor-mining-2026-09-05.md",
+     "classification": "related_wiki_document"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/quant/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+     "classification": "canonical_record_document"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/quant/btc-perpetual-factor-mining-point-in-time-audit-negative-2026-09-04.md",
+     "classification": "related_wiki_document"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/quant/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+     "classification": "related_wiki_document"
+    },
+    {
+     "path": "<HOME>/.hermes/wiki/quant/factorengine-program-level-knowledge-infused-factor-mining-2026-09-05.md",
+     "classification": "related_wiki_document"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/alphaschema-trading-semantic-plan-space-surrogate-guided-factor-mining-2026-09-05.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-balanced-and-terminal-price-valuation-bands-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-cointime-aviv-ratio-true-market-mean-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-cumulative-value-days-destroyed-cvdd-floor-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-entity-adjusted-dormancy-flow-macro-bottom-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-illiquid-supply-shock-ratio-issr-drift-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-market-cap-to-thermocap-ratio-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-miner-position-index-mpi-outflow-exhaustion-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-mvrv-zscore-cycle-reversal-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-net-unrealized-profit-loss-nupl-macro-cycle-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-nvt-signal-macro-cycle-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-puell-multiple-miner-capitulation-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-reserve-risk-hodl-conviction-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-sopr-spent-output-profit-ratio-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/bitcoin-onchain-sth-mvrv-dynamic-support-mean-reversion-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/blockchain-metrics-ribbon-cross-sectional-btc-onchain-indicators-2026-09-03.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/btc-perpetual-factor-mining-point-in-time-audit-negative-2026-09-04.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/crypto-cross-sectional-blockchain-network-distribution-factor-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/crypto-cross-sectional-onchain-user-activity-growth-2026-08-31.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/crypto-prediction-market-onchain-trade-misattribution-longshot-spread-2026-09-02.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/defi-on-chain-options-mispricing-hegic-arbitrum-2026-09-01.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/factorengine-program-level-knowledge-infused-factor-mining-2026-09-05.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/alpha-strategy-research/tradingview-algoros-btc-eth-sentiment-trader-sopr-premium-usdtd-regime-2026-09-16.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/audit-CJ-DEFI3-manual/export/20260914_091849_2d7a53-audit-cj-defi3-on-chain-execution-defense.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/quant-runtime-pipeline/runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py",
+     "classification": "own_checker_source_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/04_fundamental_alternative_data/09_onchain_fundamentals.ipynb",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/04_fundamental_alternative_data/09_onchain_fundamentals.py",
+     "classification": "source_code_false_positive"
+    },
+    {
+     "path": "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/data/crypto/onchain",
+     "classification": "dataset_stub_directory_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/_handoff/bodies/alphaschema-trading-semantic-plan-space-surrogate-guided-factor-mining-2026-09-05.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/_handoff/bodies/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31.md",
+     "classification": "own_family_directory_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/_handoff/bodies/btc-perpetual-factor-mining-point-in-time-audit-negative-2026-09-04.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/_handoff/bodies/cryptoquantix-macro-gated-funding-squeeze-contrarian-short-2026-09-08.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/_handoff/bodies/factorengine-program-level-knowledge-infused-factor-mining-2026-09-05.md",
+     "classification": "repo_documentation_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31",
+     "classification": "own_family_directory_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31/rounds",
+     "classification": "own_family_directory_false_positive"
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31/rounds/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31-r1",
+     "classification": "own_round_artifact_false_positive"
+    },
+    {
+     "path": "/Volumes/ResearchData/Zotero/translators/Library Genesis.js",
+     "classification": "source_code_false_positive"
+    }
+   ],
+   "unclassified_hits": [],
+   "note": "a house-wide name probe with the same 52-token list used for the raw tree was run over 5 roots; it returned 61 hit(s) in 11 classification(s), 0 of them unclassified, and no hit class is a data store. A separate disclosed pass re-ran the 8 excluded token(s) - excluded because each is a substring of a word or name the host already uses (an ordinary English word, a contributor handle, or the local contract name), so a hit could never distinguish an on-chain dataset from those artefacts - and returned 873 hit(s) in 11 classification(s), 476 of them unclassified, of which 410 carry the local contract name 'btcusdt' in the file name. The canonical raw remains the only market-data source on the host and it holds no on-chain dataset."
+  },
+  "third_party_artefacts_found_and_not_used": [
+   {
+    "path": "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/data/crypto/onchain",
+    "what": "a third-party tutorial dataset *stub*: README.md + download.py only, no data file beneath it",
+    "classification": "dataset_stub_directory_false_positive",
+    "used": false
+   },
+   {
+    "path": "<HOME>/workspace/tmp/ml4t-p1/ml4t-src/04_fundamental_alternative_data/09_onchain_fundamentals.ipynb",
+    "what": "a tutorial notebook about on-chain fundamentals (course material)",
+    "classification": "repo_documentation_false_positive",
+    "used": false
+   },
+   {
+    "path": "<HOME>/workspace/a1-1-phase9-pit-membership-20260830/raw/vision_um_daily_klines_*_index.raw",
+    "what": "a non-canonical Binance Vision probe tree: S3 listing/klines index files, one contract each - a market-data listing, not an on-chain dataset",
+    "classification": "unclassified in the registered probe only if it had matched a registered token; it does not, so it appears only in the disclosed excluded-token pass",
+    "used": false
+   }
+  ],
+  "conclusion": "the registered 52-token probe returns 0 hits under the canonical raw and 0 unclassified hits house-wide; no data store carrying a Bitcoin UTXO / realized-cap / HODL-age surface exists locally"
+ },
+ "environment_readback": {
+  "command": "python3 runtime/preflight.py --json",
+  "overall": "PASS",
+  "host_boot_id": "boot-1789570820",
+  "checked_at_utc": "2026-09-16T21:52:34Z",
+  "launch_gate": "not_evaluated",
+  "checks": [
+   {
+    "id": "P1",
+    "status": "PASS"
+   },
+   {
+    "id": "P2",
+    "status": "PASS"
+   },
+   {
+    "id": "P3",
+    "status": "PASS"
+   },
+   {
+    "id": "P4",
+    "status": "PASS"
+   },
+   {
+    "id": "P5",
+    "status": "PASS"
+   },
+   {
+    "id": "P6",
+    "status": "PASS"
+   },
+   {
+    "id": "P7",
+    "status": "PASS"
+   },
+   {
+    "id": "P8",
+    "status": "PASS"
+   },
+   {
+    "id": "P9",
+    "status": "NA"
+   },
+   {
+    "id": "P10",
+    "status": "NA"
+   }
+  ],
+  "meaning": "environment-only readback (P9/P10 are NA because no --attempt-dir was published): the block is on the record's required data, not on the execution plane"
+ },
+ "artifact_hashes": {
+  "round_spec_json": "sha256:db86723669e3dc682c340abcdbe47149aec6fdb392abd4dd7f0fecbb656a7008",
+  "round_spec_bytes": 179069,
+  "verdict_json": "sha256:5c3a9bffdebce9a806ac1c35b8ad9aee56f4c00069cffdaf32822fc13c68b493",
+  "verdict_bytes": 4881,
+  "checker_script": "sha256:2930b86e4b21617394ffe7fd0e84a7582437bad4c0dfb2ebd819aa01428162ac",
+  "checker_script_bytes": 69741,
+  "family_json": "sha256:cdb9e3b4d6481ae2669739c0ea29c3c999b0c1e581043eb2c8dd38e03c51cdc7",
+  "record_sha256": "sha256:8ea1cb19e3018d8898719fa1e2e35a74a8fe9571081ec8e5a768e564d6609ac6",
+  "frozen_candidate_body_sha256": "sha256:bad1e14c7189139e39a62eda243bfe1e2225cd8cf972ca7df7322c2643c7765c",
+  "note": "read back from disk at snapshot time; no value was typed from memory"
+ },
+ "executable_verification": {
+  "checker_live": {
+   "command": "python3 runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py --json",
+   "rc": 0,
+   "overall": "PASS",
+   "checks": [
+    {
+     "id": "C1",
+     "status": "PASS",
+     "detail": "binance market dirs=['usdm'] venue=BINANCE market_type=usdm_perp other_market_paths=[] non_binance_paths=[]"
+    },
+    {
+     "id": "C2",
+     "status": "PASS",
+     "detail": "klines=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual'] count=4 quote=['USDT'] settle=['USDT']"
+    },
+    {
+     "id": "C3",
+     "status": "PASS",
+     "detail": "onchain_token_hits=[] kline_row_has_onchain_field=False funding_row_has_onchain_field=False instrument_onchain_fields=[] schema_documents_onchain_dataset=False documented_dataset_families=['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] inventory_no_other_store=True (52 probe tokens over 1633 entry names, depth<=8)"
+    },
+    {
+     "id": "C4",
+     "status": "PASS",
+     "detail": "other_market_paths=[] non_binance_paths=[] quote=['USDT'] settle=['USDT'] btc_series=True step_seconds=[86400] open_mod_86400=[0, 0, 0]"
+    },
+    {
+     "id": "C5",
+     "status": "PASS",
+     "detail": "raw_1d_window=['2022-01-01T00:00:00+00:00', '2026-09-15T00:00:00+00:00'] history_days=1718 cycles_4y_equivalent=1.176 card_registered_raw_window='klines 2022-01-01→2026-09-11' reaches_back_to_genesis(2009-01-03)=False onchain_token_hits=[]"
+    },
+    {
+     "id": "C6",
+     "status": "PASS",
+     "detail": "kline_row_field_set=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] schema_documents_missing_fields=True schema_single_venue=True schema_no_silent_gapfill=True open_mod_86400=[0, 0, 0]"
+    },
+    {
+     "id": "C7",
+     "status": "PASS",
+     "detail": "house_hits_stored=61 classification_counts={'non_canonical_staging_copy_false_positive': 7, 'hermes_cache_false_positive': 1, 'hermes_skill_or_catalog_false_positive': 7, 'repo_documentation_false_positive': 32, 'related_wiki_document': 5, 'canonical_record_document': 1, 'own_checker_source_false_positive': 1, 'source_code_false_positive': 2, 'dataset_stub_directory_false_positive': 1, 'own_family_directory_false_positive': 3, 'own_round_artifact_false_positive': 1} unclassified=[] hits_listed=61 capped_by=0 raw_name_probe_hits(artifact)=[] (live)=[] excluded_token_unclassified=476 excluded_token_raw_collisions={'btcusd': ['btcusdt', 'btcusdt-15m-2022-01.jsonl.gz', 'btcusdt-15m-2022-02.jsonl.gz']} | live_house_hits=61 live_only=[] stored_only=[] drift_all_own_artifacts=True"
+    },
+    {
+     "id": "C8",
+     "status": "PASS",
+     "detail": "round-spec ids/gate=PREREQUISITE_MISSING required_available=False decisive={'universe_bitcoin_spot_onchain_ledger': 'ABSENT_AS_REGISTERED_SOURCE', 'archival_bitcoin_node_utxo_parse': 'ABSENT', 'price_reference_btc_usd_volume_weighted_spot_index': 'ABSENT_AS_REGISTERED_SOURCE', 'derived_rc_band_and_market_age_series': 'NOT_CONSTRUCTIBLE', 'point_in_time_utxo_snapshot_no_mempool': 'ABSENT', 'rhodl_ratio_series_since_genesis': 'NOT_CONSTRUCTIBLE'} shrunk=False onchain_available=False price_source_available=False matrix_items=19 probe_tokens_equal=True"
+    },
+    {
+     "id": "C9",
+     "status": "PASS",
+     "detail": "verdict=TECHNICAL_INCOMPLETE run_id=None layer=card-local class=data_window_invalid yield=STOP_TECHNICAL_INCOMPLETE run_ids=[] onchain_dataset_available=False"
+    },
+    {
+     "id": "C10",
+     "status": "PASS",
+     "detail": "attempts_dir_exists=False terminal_sentinels=[]"
+    },
+    {
+     "id": "C11",
+     "status": "PASS",
+     "detail": "family.kanban_task_id=t_010232b7 round_dir_files=['round-spec.json', 'verdict.json']"
+    },
+    {
+     "id": "C12",
+     "status": "PASS",
+     "detail": "dca provenance/grid+bounded invariants: ok"
+    },
+    {
+     "id": "C13",
+     "status": "PASS",
+     "detail": "verbatim_leaves=55 sources={'record': 12, 'card': 38, 'contract': 4, 'footer': 1} misses=[] problems=[] digest_mismatches=[] orphan_map_entries=[] source_sha_ok=True"
+    }
+   ],
+   "note": "C1-C6 re-measure the raw; C7-C12 read back the artifacts; C13 resolves every persisted verbatim leaf against its declared source"
+  },
+  "checker_self_test": {
+   "command": "python3 runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py --self-test",
+   "rc": 0,
+   "overall": "PASS",
+   "variants": 18,
+   "refused": 18,
+   "detail": [
+    {
+     "variant": "verdict_tampered_to_PASS",
+     "refused": true,
+     "failed_checks": [
+      "C9"
+     ]
+    },
+    {
+     "variant": "layer_flipped_to_shared",
+     "refused": true,
+     "failed_checks": [
+      "C9"
+     ]
+    },
+    {
+     "variant": "run_id_fabricated",
+     "refused": true,
+     "failed_checks": [
+      "C9"
+     ]
+    },
+    {
+     "variant": "attempt_fabricated",
+     "refused": true,
+     "failed_checks": [
+      "C10",
+      "C11"
+     ]
+    },
+    {
+     "variant": "required_data_available_flipped_true",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "onchain_dataset_matrix_item_claimed_present",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "onchain_dataset_claimed_available",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "universe_shrunk_to_the_local_four_contract_list",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "btc_usd_price_source_claimed_present",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "probe_token_list_narrowed",
+     "refused": true,
+     "failed_checks": [
+      "C8"
+     ]
+    },
+    {
+     "variant": "searched_axis_mislabelled_user_fixed",
+     "refused": true,
+     "failed_checks": [
+      "C12"
+     ]
+    },
+    {
+     "variant": "dca_grid_truncated_to_47",
+     "refused": true,
+     "failed_checks": [
+      "C12"
+     ]
+    },
+    {
+     "variant": "zero_attempt_claim_replaced_by_an_attempt_dir",
+     "refused": true,
+     "failed_checks": [
+      "C10",
+      "C11"
+     ]
+    },
+    {
+     "variant": "verbatim_leaf_replaced_by_a_paraphrase",
+     "refused": true,
+     "failed_checks": [
+      "C13"
+     ]
+    },
+    {
+     "variant": "verbatim_digest_removed_from_the_map",
+     "refused": true,
+     "failed_checks": [
+      "C13"
+     ]
+    },
+    {
+     "variant": "verbatim_source_repointed",
+     "refused": true,
+     "failed_checks": [
+      "C13"
+     ]
+    },
+    {
+     "variant": "verbatim_chars_field_falsified",
+     "refused": true,
+     "failed_checks": [
+      "C13"
+     ]
+    },
+    {
+     "variant": "verbatim_leaf_relabelled_as_authored_prose",
+     "refused": true,
+     "failed_checks": [
+      "C13"
+     ]
+    }
+   ]
+  },
+  "checker_raw_fixture_control": {
+   "command": "python3 runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py --raw-fixture-control",
+   "rc": 0,
+   "overall": "PASS",
+   "failed_checks": [
+    "C1",
+    "C3",
+    "C4",
+    "C5",
+    "C7",
+    "C8"
+   ],
+   "expected": [
+    "C1",
+    "C3",
+    "C4",
+    "C5",
+    "C7",
+    "C8"
+   ],
+   "why": "the fixture plants what this record needs (a Bitcoin UTXO realized-cap age-band dataset, a spot BTC/USD daily series, a second venue, a pre-2022 daily bar); C1-C5 re-measure the raw and C7-C8 re-assert the artifact-to-live-raw agreement, so all six must flip. C6 (stored kline row shape) is not expected to flip.",
+   "detail": {
+    "C1": "binance market dirs=['spot', 'usdm'] venue=BINANCE market_type=usdm_perp other_market_paths=['binance/spot'] non_binance_paths=['okx', 'okx/swap']",
+    "C3": "onchain_token_hits=['hodl', 'onchain', 'utxo'] kline_row_has_onchain_field=False funding_row_has_onchain_field=False instrument_onchain_fields=[] schema_documents_onchain_dataset=False documented_dataset_families=['funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)'] inventory_no_other_store=True (52 probe tokens over 1640 entry names, depth<=8)",
+    "C4": "other_market_paths=['binance/spot'] non_binance_paths=['okx', 'okx/swap'] quote=['USDT'] settle=['USDT'] btc_series=True step_seconds=[86400] open_mod_86400=[0]",
+    "C5": "raw_1d_window=['2016-01-01T00:00:00+00:00', '2026-09-15T00:00:00+00:00'] history_days=3910 cycles_4y_equivalent=2.676 card_registered_raw_window='klines 2022-01-01→2026-09-11' reaches_back_to_genesis(2009-01-03)=False onchain_token_hits=['hodl', 'onchain', 'utxo']",
+    "C6": "kline_row_field_set=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] schema_documents_missing_fields=True schema_single_venue=True schema_no_silent_gapfill=True open_mod_86400=[0]",
+    "C7": "house_hits_stored=61 classification_counts={'non_canonical_staging_copy_false_positive': 7, 'hermes_cache_false_positive': 1, 'hermes_skill_or_catalog_false_positive': 7, 'repo_documentation_false_positive': 32, 'related_wiki_document': 5, 'canonical_record_document': 1, 'own_checker_source_false_positive': 1, 'source_code_false_positive': 2, 'dataset_stub_directory_false_positive': 1, 'own_family_directory_false_positive': 3, 'own_round_artifact_false_positive': 1} unclassified=[] hits_listed=61 capped_by=0 raw_name_probe_hits(artifact)=[] (live)=['hodl', 'onchain', 'utxo'] excluded_token_unclassified=476 excluded_token_raw_collisions={'btcusd': ['btcusd', 'btcusd-1d-2016-01.jsonl.gz', 'btcusdt']} | live_house_hits=61 live_only=[] stored_only=[] drift_all_own_artifacts=True",
+    "C8": "round-spec ids/gate=PREREQUISITE_MISSING required_available=False decisive={'universe_bitcoin_spot_onchain_ledger': 'ABSENT_AS_REGISTERED_SOURCE', 'archival_bitcoin_node_utxo_parse': 'ABSENT', 'price_reference_btc_usd_volume_weighted_spot_index': 'ABSENT_AS_REGISTERED_SOURCE', 'derived_rc_band_and_market_age_series': 'NOT_CONSTRUCTIBLE', 'point_in_time_utxo_snapshot_no_mempool': 'ABSENT', 'rhodl_ratio_series_since_genesis': 'NOT_CONSTRUCTIBLE'} shrunk=False onchain_available=False price_source_available=False matrix_items=19 probe_tokens_equal=True"
+   }
+  },
+  "checker_host_scan": {
+   "command": "python3 runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py --host-scan",
+   "rc": 0,
+   "hit_count": 61,
+   "classification_counts": {
+    "non_canonical_staging_copy_false_positive": 7,
+    "hermes_cache_false_positive": 1,
+    "hermes_skill_or_catalog_false_positive": 7,
+    "repo_documentation_false_positive": 32,
+    "related_wiki_document": 5,
+    "canonical_record_document": 1,
+    "own_checker_source_false_positive": 1,
+    "source_code_false_positive": 2,
+    "dataset_stub_directory_false_positive": 1,
+    "own_family_directory_false_positive": 3,
+    "own_round_artifact_false_positive": 1
+   },
+   "unclassified": 0,
+   "excluded_token_scan_summary": {
+    "lth": {
+     "hit_count": 63,
+     "unclassified_data_candidates": 1,
+     "btcusdt_named_hits": 0
+    },
+    "sth": {
+     "hit_count": 31,
+     "unclassified_data_candidates": 5,
+     "btcusdt_named_hits": 0
+    },
+    "miner": {
+     "hit_count": 11,
+     "unclassified_data_candidates": 0,
+     "btcusdt_named_hits": 0
+    },
+    "supply": {
+     "hit_count": 42,
+     "unclassified_data_candidates": 3,
+     "btcusdt_named_hits": 0
+    },
+    "btcusd": {
+     "hit_count": 416,
+     "unclassified_data_candidates": 410,
+     "btcusdt_named_hits": 409
+    },
+    "btc_usd": {
+     "hit_count": 0,
+     "unclassified_data_candidates": 0,
+     "btcusdt_named_hits": 0
+    },
+    "address": {
+     "hit_count": 6,
+     "unclassified_data_candidates": 0,
+     "btcusdt_named_hits": 0
+    },
+    "index": {
+     "hit_count": 304,
+     "unclassified_data_candidates": 57,
+     "btcusdt_named_hits": 1
+    }
+   },
+   "note": "a house-wide name probe with the same 52-token list used for the raw tree was run over 5 roots; it returned 61 hit(s) in 11 classification(s), 0 of them unclassified, and no hit class is a data store. A separate disclosed pass re-ran the 8 excluded token(s) - excluded because each is a substring of a word or name the host already uses (an ordinary English word, a contributor handle, or the local contract name), so a hit could never distinguish an on-chain dataset from those artefacts - and returned 873 hit(s) in 11 classification(s), 476 of them unclassified, of which 410 carry the local contract name 'btcusdt' in the file name. The canonical raw remains the only market-data source on the host and it holds no on-chain dataset."
+  },
+  "postwrite_verbatim_verification": {
+   "command": "python3 runtime/bitcoin_onchain_rhodl_ratio_prerequisite_check.py --verify-verbatim",
+   "rc": 0,
+   "independent_of_authoring": true,
+   "verbatim_strings_on_disk": 55,
+   "strings_with_declared_source": 55,
+   "declared_source_counts": {
+    "record": 12,
+    "card": 38,
+    "contract": 4,
+    "footer": 1
+   },
+   "misses": [],
+   "unclassified_verbatim_paths": [],
+   "missing_from_source_map": [],
+   "orphan_map_entries": [],
+   "duplicate_map_keys": [],
+   "digests_disagreeing_with_content": [],
+   "problems": [],
+   "source_sha256": {
+    "contract": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+    "record": "sha256:8ea1cb19e3018d8898719fa1e2e35a74a8fe9571081ec8e5a768e564d6609ac6",
+    "footer": "sha256:f13d8ccdb0f05ba4d3c53c2f9cf3a1cbc56474f8478ee805563e1b29c467c910",
+    "card": "sha256:bad1e14c7189139e39a62eda243bfe1e2225cd8cf972ca7df7322c2643c7765c"
+   },
+   "source_sha256_matches_declared": true,
+   "note": "the verifier reads the card body from the board DB, strips the system-owned footer, asserts its sha256 equals the declared frozen candidate hash, and then re-resolves all 55 leaves"
+  },
+  "repo_suite": {
+   "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+   "rc": 0,
+   "result": "Ran 402 tests in 4.340s / OK",
+   "ok": true,
+   "new_test_files": 0
+  },
+  "non_vacuousness": "18/18 tamper variants refused (including three verbatim-map attacks); the raw fixture control flips C1/C3/C4/C5/C7/C8 to FAIL while C6 deliberately stays green; the rerun of the authoring script is refused by O_EXCL with both artifact hashes unchanged"
+ },
+ "authoring_record": {
+  "round_spec_final_writes": 1,
+  "verdict_final_writes": 1,
+  "exclusive_create": "O_CREAT|O_EXCL; a re-run of the authoring script raises FileExistsError (rc=1) and both artifact hashes are unchanged",
+  "rerun_refusal_demonstration": {
+   "command": "python3 .kanban-scratch/t_010232b7/author.py (second run)",
+   "rc": 1,
+   "error": "FileExistsError: [Errno 17] File exists: <EXPANSION>/qlib-results/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31/rounds/bitcoin-onchain-rhodl-ratio-macro-cycle-2026-08-31-r1/round-spec.json",
+   "effect": "no write; round-spec.json sha256 sha256:db86723669e3dc682c340abcdbe47149aec6fdb392abd4dd7f0fecbb656a7008 and verdict.json sha256 sha256:5c3a9bffdebce9a806ac1c35b8ad9aee56f4c00069cffdaf32822fc13c68b493 unchanged"
+  },
+  "prewrite_verbatim_assertions": 55,
+  "postwrite_verbatim_assertions": 55,
+  "dry_run_before_write": {
+   "mode": "RHODL_AUTHOR_DRY_RUN=1 (all assertions + the excerpt listing run, nothing is written)",
+   "predicted_round_spec_bytes": 179069,
+   "written_round_spec_bytes": 179069,
+   "predicted_verdict_bytes": 4881,
+   "written_verdict_bytes": 4881,
+   "note": "byte sizes were predicted exactly; the digests differ between the dry run and the write only through created_at_utc inside the documents"
+  },
+  "zero_write_aborts": [
+   {
+    "n": 1,
+    "reason": "verbatim key mismatch: the writer's own key set did not match the destination keys (and the source-map walk itself was wrong: map value keys were being treated as excerpt leaves)",
+    "wrote": 0,
+    "fix": "checker _walk_verbatim rewritten to key by the nearest verbatim-named ancestor and to skip excerpt_source_map"
+   },
+   {
+    "n": 2,
+    "reason": "duplicate destination key names: the selector and robustness blocks would both have been written under registered_block_verbatim, so the map could not resolve them",
+    "wrote": 0,
+    "fix": "destination keys renamed to selector_registered_block_verbatim / robustness_registered_block_verbatim"
+   },
+   {
+    "n": 3,
+    "reason": "excerpt misattribution caught by the dry-run excerpt listing: identity_verbatim spanned the rest of the record (12,827 chars) instead of the one title line",
+    "wrote": 0,
+    "fix": "bounded the extraction to the line end"
+   }
+  ],
+  "draft_removals_before_publication": [],
+  "draft_removal_note": "nothing was published and then removed: all three defects were caught in dry runs (or by the dry-run listing) before the first byte was written, so the published artifacts are a first write rather than a rebuild",
+  "authoring_script": "not committed (single-use, runs from .kanban-scratch/t_010232b7/); the checker it imports IS committed, so every measurement it used is independently re-derivable"
+ },
+ "disclosures": [
+  "section 13 registers no dedicated prerequisite-missing class; data_window_invalid ('區間內無 bar、instrument 缺失') is the closest registered row and is used as-is rather than inventing a class. Whether to add an explicit prerequisite_missing class remains an operator/contract decision.",
+  "the card requires the A/B USER_FIXED invariants verbatim; the string 'linear USD-M perp' sits in tension with this record's universe (a spot on-chain ledger read from a Bitcoin node). The inherited text was NOT edited; the tension is recorded in round-spec.execution_invariants_disclosure and is moot because nothing launched.",
+  "the card's transcript of the record's 'Source-reported' block is cut at 'The source reports that:' and carries an explicit truncation marker. The record's two regime bullets (cycle tops / cycle bottoms) are restored verbatim from the canonical record in round-spec.hypothesis.economic_mechanism_block_verbatim and the difference is disclosed in card_excerpt_truncation_disclosure.",
+  "the card's transcript of the record's Signal section stops after the first threshold (RHODL_t <= 350). The distribution threshold (>= 15,000) and the neutral state are restored verbatim as signal_semantics.thresholds_restored_verbatim; nothing was shortened.",
+  "the record's '## Execution assumptions' section is not excerpted in the frozen card body at all; it is registered verbatim from the canonical record rather than invented, and the difference is disclosed.",
+  "the record's Evidence section (Source-reported / Independently reproduced / Negative evidence) is likewise absent from the card body; it is registered verbatim in the round-spec so the record's own negative evidence is preserved.",
+  "the card's falsification excerpt carries 4 of the record's 4 items and its limitations excerpt 4 of 4, so nothing had to be restored there - asserted, not assumed (the counts are re-derived from both sources at authoring time).",
+  "the raw keeps updating past the window printed on the card (card: klines 2022-01-01→2026-09-11, funding to 2026-09-12T08:00Z; measured: 1d bars to 2026-09-15 and funding to 2026-09-16T08:00Z). Measured and registered values are recorded separately and neither was rewritten.",
+  "the on-chain probe token list is part of the measurement, not an implementation detail: 4 tokens ('lth', 'sth', 'miner', 'supply') were excluded AFTER measuring that each collides with an ordinary host word ('health', the contributor handle 'minervini', 'supply chain' prose) - the first scan draft returned 102 unclassified hits purely from those collisions. The 8 exclusions are registered with their measured collisions, and the excluded tokens are re-scanned in a separate disclosed pass so an exclusion cannot hide a hit.",
+  "'btc_usd' is excluded as a redundant spelling of the demonstrated 'btcusd' collision (it is a substring of the local contract name 'btcusdt'); its own measured hit count is 0 house-wide, so that particular exclusion is a no-op. The measurement records this rather than implying it excluded something.",
+  "the house-wide scan reads every path whose own name or containing directory carries a probe token; a directory hit is classified by walking it and confirming there is no data file beneath it. Third-party artefacts found this way (a tutorial on-chain download stub, a course notebook, a non-canonical Binance Vision kline-listing tree) are disclosed as measured-but-unused; none was read into any computation.",
+  "no attempt directory, run-spec, container run or terminal sentinel exists, and none may be fabricated: a synthetic INCOMPLETE sentinel would record a submission that never happened. The preflight block is explicitly recorded as NOT_RUN because P1-P10 are launch gates.",
+  "the DCA domain (48-cell product), the selector/disposition versions and the robustness grids are registered as specified and were never executed: no cost, fee or funding was ever charged, and no metric of any kind was produced. Expected performance is not-computable, never zero.",
+  "the round is a prerequisite gate, not a re-review: no second-round crypto/runnable suitability screen was performed and the candidate is neither validated nor refuted.",
+  "a future re-entry of this family needs a new tail card once the required data exists (contract 14.4); this card does not append the next family itself."
+ ],
+ "untouched": {
+  "other_families": "no other family artifact, frozen bundle or verdict was read or modified; only this family's own round directory was created",
+  "survivor_bundle": "none written (0 survivors; contract 10.8 requires >= 1)",
+  "host_scripts_deploy": "none: no run-spec exists, so no production script was deployed to the host /scripts directory",
+  "raw": "read-only throughout; no write under <EXPANSION>/market-data-raw",
+  "cron_board": "no cron job, watchdog or board status change beyond this card's lifecycle",
+  "paper_live": "none",
+  "auditor_sub_card": "none created (the card forbids it)"
+ }
+}
