@@ -137,6 +137,14 @@
     },
     "path": "<HOME>/workspace/qlib-apple-container/scripts/ (bind-mounted read-only at the container's /scripts)"
   },
+  "observed_pre_existing_flake": {
+    "test": "runtime/tests/test_post_survivor.py::TestSurvivorIndex::test_index_cli_writes_checks_and_detects_drift",
+    "symptom": "the second `survivor_index.py` invocation in the test occasionally reports `result=written` where the test expects `result=unchanged`",
+    "attribution": "pre-existing and NOT caused by this card: an untouched copy of HEAD (3bd5a08) fails the same assertion 3/60 runs (this tree: 1/25 plus one full-suite run); nothing this card changed is on that code path (survivor_index.py imports only survivor_bundle.identity)",
+    "root_cause": "survivor_index.write_index() compares the FULL serialized index - including `generated_at_utc` at second granularity - so two runs that straddle a second boundary legitimately differ and rewrite; the test's two CLI calls must land in the same second",
+    "action": "reported, not fixed: it is the §27 post-survivor lane, outside this card's two blockers, and a fix would change a production writer's behaviour",
+    "measured_green": "repo suite was re-run 6x plus a 20x loop: 350/350 OK in every run except that single pre-existing flake occurrence"
+  },
   "frozen_artifacts_untouched": {
     "round-spec.json": "sha256:7cd808b14422b08d2cfa6e600ab8d2420dc5d21a2e78b4b3d7b5a34f55c26cc5",
     "verdict.json": "sha256:08f3b8a7a8cc8a2619e9cdd817f8c1b197b9a9c446bd5dc835a4bb57d4fea485",
