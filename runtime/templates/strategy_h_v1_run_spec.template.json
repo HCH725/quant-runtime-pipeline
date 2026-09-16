@@ -1,0 +1,928 @@
+{
+ "costs": {
+  "baseline_slippage_ticks": 1,
+  "cost_attrition_fee_mult": 8.0,
+  "fee_bps": 5,
+  "funding": "charged per settlement inside the episode's closed exposure interval; funding_2x doubles it and the no_funding grids zero it (descriptive)",
+  "funding_exposure_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1 s, exit instant + 1 s]. A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the episode, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged, and the rule assumes no fixed settlement spacing (SOLUSDT's 2022-11 4 h-interval episode is charged settlement by settlement).",
+  "maker_fee": 0.0002,
+  "source": "canonical instrument metadata, read at run time from /data/raw",
+  "taker_fee": 0.0005
+ },
+ "created_at_utc": "{{created_at_utc}}",
+ "data": {
+  "bar_labelling": "VERIFIED at pre-registration: open_time_ms is the bar START in UTC; the 1h grid is exactly contiguous for all four contracts over the window (41,160 bars each, 0 gaps, 0 off-grid steps) and 41,160 / 4 = 10,290 4h bins per cohort hold exactly 4 base bars each, aligned to 00:00 UTC, so the bin membership and the bin-close instant are exact and the engine asserts them at run time.",
+  "end": "2026-09-11",
+  "funding_truth_status_windows": {
+   "engine_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1 s, exit instant + 1 s]. A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the episode, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged, and the rule assumes no fixed settlement spacing (SOLUSDT's 2022-11 4 h-interval episode is charged settlement by settlement).",
+   "modeled_funding": "2022-01-01T00:00:00Z .. 2023-10-31 (reconstruction; mark_price null)",
+   "official": "2023-10-31T08:00:00Z .. 2026-09-11T23:59:59Z (Binance mark price present)",
+   "primary_uses": "the complete registered series (modelled + official), as a COST only"
+  },
+  "historical_end": "2025-09-30",
+  "historical_start": "2022-01-01",
+  "oos_end": "2026-09-11",
+  "oos_start": "2025-10-01",
+  "read_only": true,
+  "source": "/data/raw",
+  "start": "2022-01-01",
+  "symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "timeframes": [
+   {
+    "qlib_freq": "60min",
+    "raw_interval": "1h"
+   }
+  ]
+ },
+ "dca_domain": {
+  "base_quote": 1000,
+  "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+  "breakeven_tp_pct": [
+   0.01,
+   0.02,
+   0.03
+  ],
+  "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "config_count": 48,
+  "grid": [
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   }
+  ],
+  "invalidation_pct": [
+   0.05,
+   0.1
+  ],
+  "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "size_multiplier": [
+   1.0,
+   1.1
+  ],
+  "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "spacing_pct": [
+   0.01,
+   0.02,
+   0.03,
+   0.04
+  ],
+  "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+ },
+ "disposition_version": "cohort-disposition-v1",
+ "document_kind": "run-spec (Strategy H v1; instantiate to /results/<family_id>/rounds/<round_id>/attempts/<run_id>/run-spec.json BEFORE launch)",
+ "engine_selfcheck": {
+  "must_run_before_launch": true,
+  "script": "/scripts/tests/test_strategy_h_engine.py",
+  "sha256": "{{engine_selfcheck_sha256}}"
+ },
+ "expected": {
+  "base_combinations_per_cohort": 1296,
+  "case_evaluations_per_grid": 5184,
+  "cohort_grid_kinds": [
+   "historical",
+   "oos",
+   "full",
+   "fee_2x",
+   "funding_2x",
+   "entry_delay_1_bar",
+   "slippage_2ticks",
+   "no_funding",
+   "no_funding_full",
+   "cost_attrition_40bps"
+  ],
+  "cohorts": 4,
+  "dca_configs_per_cohort": 48,
+  "expected_case_evaluations": 51840,
+  "phase_grid_count": 10,
+  "strategy_cases_per_cohort": 27
+ },
+ "expected_outputs": [
+  "result.json",
+  "artifacts/cohort_results.json",
+  "artifacts/cohort_survivors.json",
+  "artifacts/assertions.json",
+  "artifacts/dca_layer_histogram.json",
+  "artifacts/state_layer.json",
+  "artifacts/signal_layer.json",
+  "artifacts/family_falsification.json",
+  "artifacts/robustness_diagnostics.json",
+  "artifacts/funding_series.json",
+  "artifacts/input_manifest.json",
+  "artifacts/bins_build.json",
+  "artifacts/progress.json",
+  "artifacts/grid_historical.csv",
+  "artifacts/grid_oos.csv",
+  "artifacts/grid_full.csv",
+  "artifacts/grid_fee_2x.csv",
+  "artifacts/grid_funding_2x.csv",
+  "artifacts/grid_entry_delay_1_bar.csv",
+  "artifacts/grid_slippage_2ticks.csv",
+  "artifacts/grid_no_funding.csv",
+  "artifacts/grid_no_funding_full.csv",
+  "artifacts/grid_cost_attrition_40bps.csv"
+ ],
+ "falsification": [
+  "no signal / insufficient entry events (G2)",
+  "no qualifying historical candidate (G3)",
+  "OOS economic rejection (G4)",
+  "full-window economic rejection (G5)",
+  "robustness economic failure (G6)",
+  "parameter-neighbourhood fragility (G7)",
+  "transition-matrix instability -> family-level, never PASS",
+  "exit-asymmetry dominance -> family-level, never PASS",
+  "cost boundary (40 bps attrition) -> family-level, never PASS",
+  "cross-asset dispersion -> family-level, never PASS",
+  "coverage incomplete in any registered phase grid (G1)",
+  "any false assertion in assertions.json"
+ ],
+ "family_id": "markov-chain-volume-price-state-2026-08-31",
+ "gates": {
+  "min_episodes_is": 30,
+  "min_episodes_oos": 10,
+  "neighborhood_min_same_sign_fraction": 0.6
+ },
+ "kanban_board": "quant-strategy-research",
+ "notes": "One attempt of round {{round_id}}. The engine rebuilds the qlib .bin store from the read-only raw store, resamples each cohort's own 1h bars into causal 4h bins, trains the transition matrix point-in-time, evaluates 4 cohorts x 27 strategy cases x 48 DCA configs on 10 registered phase grids, and writes the registered artifacts. The runner's verdict_recommendation is a recommendation; the final verdict.json is written by the Hermes default card after reading the artifacts back (contract 10.7).",
+ "parameter_domain": {
+  "constants": {
+   "atr_period": 14,
+   "base_bars_per_bin": 4,
+   "bear_states": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "bin_hours": 4,
+   "bull_states": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "min_row_observations": 5,
+   "min_signal_probability_grid": [
+    0.5,
+    0.6,
+    0.7
+   ],
+   "price_state_threshold_grid": [
+    1.0,
+    1.5,
+    2.0
+   ],
+   "sequence_length_grid": [
+    1,
+    2,
+    3
+   ],
+   "state_count": 12,
+   "volume_high_multiplier": 1.5,
+   "volume_low_multiplier": 0.5,
+   "volume_sma_period": 24
+  },
+  "entry_timing_status": "RESEARCH_DEFINED",
+  "exit_timing_status": "RESEARCH_DEFINED",
+  "grid_case_names": [
+   "thr1__L1__p0.5",
+   "thr1__L1__p0.6",
+   "thr1__L1__p0.7",
+   "thr1__L2__p0.5",
+   "thr1__L2__p0.6",
+   "thr1__L2__p0.7",
+   "thr1__L3__p0.5",
+   "thr1__L3__p0.6",
+   "thr1__L3__p0.7",
+   "thr1.5__L1__p0.5",
+   "thr1.5__L1__p0.6",
+   "thr1.5__L1__p0.7",
+   "thr1.5__L2__p0.5",
+   "thr1.5__L2__p0.6",
+   "thr1.5__L2__p0.7",
+   "thr1.5__L3__p0.5",
+   "thr1.5__L3__p0.6",
+   "thr1.5__L3__p0.7",
+   "thr2__L1__p0.5",
+   "thr2__L1__p0.6",
+   "thr2__L1__p0.7",
+   "thr2__L2__p0.5",
+   "thr2__L2__p0.6",
+   "thr2__L2__p0.7",
+   "thr2__L3__p0.5",
+   "thr2__L3__p0.6",
+   "thr2__L3__p0.7"
+  ],
+  "grid_cases": [
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 1,
+    "thr_1_5": 0,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 1,
+    "thr_2_0": 0
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 1,
+    "seq_len_2": 0,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 1,
+    "seq_len_3": 0,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 1,
+    "minp_0_6": 0,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 1,
+    "minp_0_7": 0,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   },
+   {
+    "minp_0_5": 0,
+    "minp_0_6": 0,
+    "minp_0_7": 1,
+    "seq_len_1": 0,
+    "seq_len_2": 0,
+    "seq_len_3": 1,
+    "thr_1_0": 0,
+    "thr_1_5": 0,
+    "thr_2_0": 1
+   }
+  ],
+  "legal_cases_per_cohort": 27,
+  "markov_contract": {
+   "atr": "Wilder ATR over atr_period = 14 completed bins: TR_i = max(high_i - low_i, |high_i - close_{i-1}|, |low_i - close_{i-1}|); atr_14 = mean(TR_1..TR_14); atr_i = (13 * atr_{i-1} + TR_i) / 14 for i > 14; a bin whose ATR is not positive or whose window is incomplete carries NO state",
+   "direction": "the record registers both a buy and a sell signal, so the family trades both directions; a position is always opened by a fresh signal and is flattened by one of the four registered exits",
+   "entry": "the OPEN of the next base bar after the signal event (the first executable price after the signal is measurable)",
+   "exit": "(1) rail take profit at running_average_cost x (1 +/- breakeven_tp_pct); (2) resting invalidation at running_average_cost x (1 -/+ invalidation_pct); (3) the record's own signal exit: an opposite signal while the position is profitable against its running average cost -> reduce-only flatten of every layer at the next base bar open; (4) slice end -> reduce-only flatten of every layer at the last bar close",
+   "lookahead_control": "the naive left-edge resample + backward as-of merge of the source would attach a bin's own eventual state to the bars inside that bin; the engine carries a registered structural counter that every attached state was available before the bar it is attached to, and the engine self-check red-proves the naive variant would be detected",
+   "matrix": "expanding-window point-in-time counts of (sequence -> next state), grown only from transitions whose outcome bin has already completed at the decision bar; no future bar and no future bin can enter the row, which is the record's limitation 'transition-matrix training must remain strictly isolated from the evaluation window' implemented as strict causality",
+   "min_row_observations": "a sequence whose row carries fewer than 5 observed transitions yields NO signal (counted as untrained)",
+   "point_in_time": "bin states, the transition matrix and the signal are all computed from completed information only; a decision at bar t never reads a bar after t and never reads a bin that closes after t",
+   "price_state": "r = (close - previous bin close) / atr; price_state = 0 (strong up) if r >= price_state_threshold, 1 (mild up) if 0 <= r < threshold, 2 (mild down) if -threshold < r < 0, 3 (strong down) if r <= -threshold",
+   "sequence": "the decision sequence at base bar t is the last sequence_length COMPLETED bin states; the bin that contains t is excluded until it completes",
+   "signal": "p_bull = share of the row's transitions landing in states 0..5, p_bear = share landing in 6..11; LONG if p_bull > min_signal_probability and p_bull > p_bear, SHORT if p_bear > min_signal_probability and p_bear > p_bull, otherwise NONE (an exact tie is NONE)",
+   "signal_event": "a FRESH signal (the signal at the decision bar differs from the signal at the previous base bar) is the entry event; a persistent signal never re-enters after a flatten",
+   "sizing": "the card-registered tranche rail replaces the source's equal-division sizing: tranche #1 = base_quote x leverage notional at the entry fill; adverse-price scale-ins sit at level_k = entry_fill_price x (1 -/+ spacing_pct x k) for k = 1..10, i.e. at most 11 routine active levels of the 12-tranche rail",
+   "state_availability": "the state of a bin is visible only at or after that bin's close; a base bar NEVER carries its own bin's state, it carries the most recent COMPLETED bin state (the record's material source-code look-ahead caveat, corrected)",
+   "state_basis": "the 12-state discretisation is computed on COMPLETED 4h bins aligned to 00:00 UTC and built by resampling the cohort's own 1h bars (O = first open, H = max high, L = min low, C = last close, V = sum volume); every bin must contain exactly 4 base bars",
+   "state_index": "state = price_state * 3 + volume_state in 0..11; states 0..5 are the BULLISH next-states (price_state 0 or 1, i.e. the next bin's close above this one's) and states 6..11 are the BEARISH next-states",
+   "volume_state": "vsma_i = mean(V_{i-23..i}) over the rolling 24 completed bins (the current bin included); volume_state = 0 (low) if V_i < volume_low_multiplier * vsma_i, 2 (high) if V_i > volume_high_multiplier * vsma_i, 1 (normal) otherwise (equality is normal)"
+  },
+  "markov_contract_status": "RESEARCH_DEFINED",
+  "matrix_training_status": "RESEARCH_DEFINED",
+  "min_signal_probability_grid": [
+   0.5,
+   0.6,
+   0.7
+  ],
+  "price_state_threshold_grid": [
+   1.0,
+   1.5,
+   2.0
+  ],
+  "sequence_length_grid": [
+   1,
+   2,
+   3
+  ],
+  "state_availability_status": "RESEARCH_DEFINED"
+ },
+ "provenance_mirror": {
+  "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+  "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+ },
+ "round_id": "{{round_id}}",
+ "round_spec_path": "{{round_spec_path}}",
+ "run_id": "{{run_id}}",
+ "schema_version": 1,
+ "script": {
+  "deployed_from": "HCH725/quant-runtime-pipeline container/scripts/80_strategy_h_run.py (byte-identical, P10 recomputes it host side)",
+  "path": "/scripts/80_strategy_h_run.py",
+  "sha256": "{{script_sha256}}"
+ },
+ "selector_version": "cohort-selector-v1",
+ "semantic_fingerprint": {
+  "fingerprint_input": "markov-chain-volume-price-state-2026-08-31|universe=portability=direct;window=record-faithful|dca=spacing_pct=0.01,0.02,0.03,0.04;size_multiplier=1.0,1.1;breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10|selector=cohort-selector-v1;disposition=cohort-disposition-v1|source=markov-chain-volume-price-state-2026-08-31.md",
+  "semantic_fingerprint": "sha256:fa36b0774def9639ac18f7b21c00ab5f382472695832652e3c6c2959c1f33665"
+ },
+ "task_id": "{{task_id}}",
+ "template_instantiation": {
+  "placeholders": [
+   "{{round_id}}",
+   "{{run_id}}",
+   "{{task_id}}",
+   "{{created_at_utc}}",
+   "{{script_sha256}}",
+   "{{engine_selfcheck_sha256}}",
+   "{{round_spec_path}}"
+  ],
+  "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/80_strategy_h_run.py; {{engine_selfcheck_sha256}} the same for /scripts/tests/test_strategy_h_engine.py, which must run (rc=0) before launch."
+ }
+}

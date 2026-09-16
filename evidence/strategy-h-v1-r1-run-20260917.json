@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_full_backtest_run_record",
+  "card": "t_8fe66394",
+  "author": "Hermes default (Xiaoqian)",
+  "created_at_utc": "2026-09-17T05:05:00Z",
+  "redaction": "host paths under the user's home and the expansion volume are written in full here only for the results-tree artifacts this card owns; no credential, token or personal data is included",
+  "family_id": "markov-chain-volume-price-state-2026-08-31",
+  "round_id": "markov-chain-volume-price-state-2026-08-31-r1",
+  "authoritative_run_id": "markov-chain-volume-price-state-2026-08-31-r1-u1",
+  "registration": {
+    "round_spec_sha256": "sha256:6d82267112bc3078dd97278187f7f1449e7f1077e6573c549431355a81e9a236",
+    "round_spec_bytes": 75549,
+    "run_spec_sha256": "sha256:39c60c0b076f195036fd1a9c7c193aa7598b641ef02e0786d70d66fc4dae7a2e",
+    "validator": "runtime/strategy_h_v1_counts.py --spec <round-spec> --run-spec <run-spec> -> 0 problems (4 cohorts x 27 strategy cases x 48 DCA = 1,296 base combinations per cohort per grid; 5,184 per grid; 51,840 case evaluations)",
+    "counts": "4 cohorts x 27 cases x 48 DCA x 10 grids = 51,840",
+    "round_spec_parameter_contract": "generic v1.8 block present and validated (validate_contract / validate_round_spec_contract = 0 problems) - preflight P10 enforces it",
+    "preregistration_timing": "the round-spec and the run-spec were instantiated and frozen BEFORE the first (and only) attempt; the provenance classes are declared item by item (3 searched strategy axes, 5 non-searched strategy constants, 4 searched DCA axes, base_quote as the project constant, the unrecovered execution detail as RESEARCH_DEFINED)"
+  },
+  "engine": {
+    "path": "/scripts/80_strategy_h_run.py (repo container/scripts/80_strategy_h_run.py)",
+    "version": "h-v1-engine-1.0.0",
+    "sha256_repo": "sha256:b7238aede80ad28cbfbfa86e7291df56447c9650ee045014fe6cf55a04ebb026",
+    "sha256_host_deployed": "sha256:b7238aede80ad28cbfbfa86e7291df56447c9650ee045014fe6cf55a04ebb026",
+    "sha256_pinned_in_run_spec": "sha256:b7238aede80ad28cbfbfa86e7291df56447c9650ee045014fe6cf55a04ebb026",
+    "three_way_identity": "repo == host deploy == container /scripts readback",
+    "selfcheck": "/scripts/tests/test_strategy_h_engine.py",
+    "selfcheck_sha256": "sha256:f4b4dddad51c75e5305160cc4a13b9cb7ea3b2e7684b4fb978b65e95e7a71975",
+    "selfcheck_pinned_in_run_spec": "sha256:f4b4dddad51c75e5305160cc4a13b9cb7ea3b2e7684b4fb978b65e95e7a71975",
+    "selfcheck_result": "49 tests OK on the host numpy interpreter and inside qlib-run (before launch and after the final engine edit)"
+  },
+  "launch": {
+    "mode": "container exec -d qlib-run /opt/venv/bin/python <container run-spec path> (detached inside the container; the host redirect uses the CONTAINER path)",
+    "launch_utc": "2026-09-16T20:36:57Z",
+    "preflight": "runtime/preflight.py --launch --attempt-dir <u1> -> P1-P10 all PASS, rc=0 (P10 recomputed script.sha256 == pinned)",
+    "attempts": 1,
+    "technical_retries": 0,
+    "smoke_run_before_launch": "two out-of-tree code-path dry runs under results/_selftest/strategy-h-smoke(-u2) with the same registered domains and a shortened window (2022-01-01..2022-03-31); the second one ran on the final engine bytes (43 s, coverage_complete, all assertions true) - they are code-path checks, not scientific results and not part of the round",
+    "runtime_seconds": 373
+  },
+  "terminal": {
+    "stage": "ARTIFACT_READY; DONE sentinel published host-side by runtime/terminal_evidence.py (check rc=0, problems=[], host_boot_id boot-1789570820 == current boot id, 25 manifest entries re-hashed)",
+    "sentinel_sha256": "sha256:0882dfb5fb2c8719b56db2eb6ad191f039dca13bf047cb9fe3e831e76ea8024c",
+    "coverage_complete": true,
+    "case_evaluations_total": 51840,
+    "expected_case_evaluations": 51840,
+    "rows_per_grid": {
+      "historical": 5184,
+      "oos": 5184,
+      "full": 5184,
+      "fee_2x": 5184,
+      "funding_2x": 5184,
+      "entry_delay_1_bar": 5184,
+      "slippage_2ticks": 5184,
+      "no_funding": 5184,
+      "no_funding_full": 5184,
+      "cost_attrition_40bps": 5184
+    },
+    "assertions_total": 35,
+    "assertions_false": [],
+    "cohort_survivor_count": 0,
+    "disposition": "REJECT / NO_SURVIVOR",
+    "verdict": "REJECT",
+    "performance_claimable": false,
+    "yield_decision": "STOP_REJECT",
+    "cohort_decisions": {
+      "BNBUSDT/1h": {
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "insufficient_trades",
+          "parameter_neighbourhood"
+        ],
+        "winner": "thr1.5__L2__p0.7",
+        "neighbourhood": {
+          "neighbours": 8,
+          "agreeing": 3,
+          "same_sign_fraction": 0.375,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        },
+        "oos_episodes": 8,
+        "oos_net_pnl": 382.17853
+      },
+      "BTCUSDT/1h": {
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "insufficient_trades",
+          "oos_economic",
+          "parameter_neighbourhood"
+        ],
+        "winner": "thr2__L1__p0.7",
+        "neighbourhood": {
+          "neighbours": 7,
+          "agreeing": 2,
+          "same_sign_fraction": 0.285714,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        },
+        "oos_episodes": 0,
+        "oos_net_pnl": 0.0
+      },
+      "ETHUSDT/1h": {
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "insufficient_trades",
+          "oos_economic",
+          "parameter_neighbourhood"
+        ],
+        "winner": "thr1__L1__p0.7",
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 3,
+          "same_sign_fraction": 0.5,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        },
+        "oos_episodes": 0,
+        "oos_net_pnl": 0.0
+      },
+      "SOLUSDT/1h": {
+        "outcome": "CULLED",
+        "cull_reasons": [
+          "insufficient_trades",
+          "oos_economic",
+          "robustness_economic:entry_delay_1_bar",
+          "parameter_neighbourhood"
+        ],
+        "winner": "thr1__L1__p0.7",
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 3,
+          "same_sign_fraction": 0.5,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        },
+        "oos_episodes": 0,
+        "oos_net_pnl": 0.0
+      }
+    },
+    "family_level_readers": {
+      "transition_matrix_stability": false,
+      "exit_asymmetry": false,
+      "cost_boundary": true,
+      "cross_asset_dispersion": false
+    },
+    "family_level_reader_hits": [
+      "cost_boundary"
+    ],
+    "verdict_sha256": "sha256:5a173852b10e6a8cdeb0d76de883b8bd28cf3d5fa583ea1c63c412fea000ea17",
+    "verdict_bytes": 66329,
+    "survivor_bundle": "NONE (0 survivors; contract 10.8 requires >=1) - runtime/survivor_bundle.py refuses on this attempt (rc=1, nothing written into the round directory)"
+  },
+  "independent_verification": {
+    "signal_layer_rederivation": {
+      "method": "an off-engine reimplementation of the 4h bin resample, the Wilder ATR(14), the 24-bin volume SMA, the 12-state index, the point-in-time transition matrix and the fresh-event rule, written from the frozen contract text and reading ONLY /Volumes/ExpansionDrive/market-data-raw",
+      "result": "12/12 (cohort, slice) cells reproduce the engine's windows_seen exactly",
+      "detail": {
+        "BNBUSDT": {
+          "historical": {
+            "independent": 97,
+            "engine": 97
+          },
+          "oos": {
+            "independent": 8,
+            "engine": 8
+          },
+          "full": {
+            "independent": 105,
+            "engine": 105
+          }
+        },
+        "BTCUSDT": {
+          "historical": {
+            "independent": 46,
+            "engine": 46
+          },
+          "oos": {
+            "independent": 0,
+            "engine": 0
+          },
+          "full": {
+            "independent": 46,
+            "engine": 46
+          }
+        },
+        "ETHUSDT": {
+          "historical": {
+            "independent": 80,
+            "engine": 80
+          },
+          "oos": {
+            "independent": 0,
+            "engine": 0
+          },
+          "full": {
+            "independent": 80,
+            "engine": 80
+          }
+        },
+        "SOLUSDT": {
+          "historical": {
+            "independent": 40,
+            "engine": 40
+          },
+          "oos": {
+            "independent": 0,
+            "engine": 0
+          },
+          "full": {
+            "independent": 40,
+            "engine": 40
+          }
+        }
+      }
+    },
+    "raw_grid_remeasurement": "41,160 1h bars per symbol over 2022-01-01..2026-09-11, 0 off-grid steps, exactly 10,290 00:00-UTC-aligned 4h bins of 4 bars each (measured independently before the run; the engine re-asserts it at run time)",
+    "derived_numbers": "every aggregate, the ladder-histogram identity, the 51,840-row gross - fees - funding == net identity and the six cost/stress track deltas were recomputed from the frozen CSVs by runtime/strategy_h_v1_verdict_inputs.py (0 problems)",
+    "ladder_histogram": {
+      "level_00": 7685679,
+      "level_00_expected": 7685679,
+      "levels_01_11": {
+        "level_01": 9780506,
+        "level_02": 2085513,
+        "level_03": 587377,
+        "level_04": 203650,
+        "level_05": 80439,
+        "level_06": 34347,
+        "level_07": 15850,
+        "level_08": 7235,
+        "level_09": 2426,
+        "level_10": 1398,
+        "level_11": 0
+      }
+    },
+    "cost_tracks": {
+      "fee_2x": {
+        "base_grid": "full",
+        "stressed_grid": "fee_2x",
+        "field": "sum_fees",
+        "delta": 19271401.771742,
+        "moved": true
+      },
+      "funding_2x": {
+        "base_grid": "full",
+        "stressed_grid": "funding_2x",
+        "field": "sum_funding",
+        "delta": -172441.250204,
+        "moved": true
+      },
+      "cost_attrition_40bps": {
+        "base_grid": "full",
+        "stressed_grid": "cost_attrition_40bps",
+        "field": "sum_fees",
+        "delta": 66227780.088603,
+        "moved": true
+      },
+      "no_funding": {
+        "base_grid": "full",
+        "stressed_grid": "no_funding_full",
+        "field": "sum_funding",
+        "delta": 168558.000659,
+        "moved": true
+      },
+      "entry_delay_1_bar": {
+        "base_grid": "full",
+        "stressed_grid": "entry_delay_1_bar",
+        "field": "sum_net_pnl",
+        "delta": 684571.005464,
+        "moved": true
+      },
+      "slippage_2ticks": {
+        "base_grid": "full",
+        "stressed_grid": "slippage_2ticks",
+        "field": "sum_net_pnl",
+        "delta": -480673.393699,
+        "moved": true
+      }
+    }
+  },
+  "registered_semantics_decisions_before_the_first_run": [
+    "the 4h state mapping is corrected for the record's own material caveat: states are computed on COMPLETED 4h bins and a base bar never carries its own bin's state (counter attached_state_before_availability == 0 on every grid); the naive left-edge/backward-as-of mapping is red-proved as detectable in the engine self-check",
+    "the transition matrix is a point-in-time expanding-window count (a transition enters its row only after its outcome bin completed; counter matrix_row_contained_future_outcome == 0); a row with fewer than 5 observations yields no signal",
+    "the entry event is a FRESH signal (the card's 'entry after the signal is formed'); a persistent signal never re-enters after a flatten",
+    "the engine starts from the audited D/G accounting rail but every fill is charged ONE TICK ADVERSE as the card registers; the D/G spelling copied as the starting point had the entry (plus the stop and the capital-exhaustion exit) as a one-tick CREDIT and was corrected before the first run, with the sign pinned on every leg in both directions by the self-check",
+    "the exit set = rail TP (breakeven-anchored on the running average cost) + resting invalidation (same anchor) + the record's own opposite-signal exit (taken only while the position is profitable against the running average cost, blocked and counted otherwise) + the slice-end flatten",
+    "the record's falsification battery is registered as four family-level readers (transition-matrix stability, exit asymmetry, cost boundary, cross-asset dispersion) that can never cull a cohort and can only move a PASS to DEFERRED; the stability reader reads its split-half deviation only off rows carrying >= 10 observations in EACH half (>= 3 such rows), otherwise it reports insufficient_evidence and does not trigger - a deviation read off nearly empty rows measures sparsity, not instability"
+  ],
+  "scope": {
+    "frozen_artifacts_rewritten": false,
+    "gates_relaxed": false,
+    "paper_or_live_touched": false,
+    "auditor_child_created": false,
+    "notes": "this card executed one pre-registered round of the Strategy H family and terminalized it; no existing family artifact, bundle, verdict, cron or board state was modified; the raw store was read-only throughout; the card did not append the next family (the contract 14.4 handoff does that after this card completes)"
+  }
+}
