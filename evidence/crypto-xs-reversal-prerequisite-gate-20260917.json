@@ -1,0 +1,460 @@
+{
+  "snapshot_kind": "prerequisite-gate terminal (contract 6.4 / 13; no Qlib launch)",
+  "snapshot_taken_at_utc": "2026-09-16T17:14:40Z",
+  "snapshot_boundary": "values are re-measured from the live machine at snapshot time; the immutable artifacts under /results are read, never written by this snapshot",
+  "card": {
+    "kanban_task_id": "t_c62c6881",
+    "board": "quant-strategy-research",
+    "family_id": "crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31",
+    "round_id": "crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31-r1",
+    "assignee": "default",
+    "chain_parent": "t_d0abc072",
+    "origin": "contract 14.4 automatic production handoff (appended 2026-09-16T17:05:47Z, card created by production_handoff; candidateized during the t_86d04b09 backlog backfill)"
+  },
+  "contract_basis": {
+    "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+    "universe_prohibition_verbatim": [
+      "- 本卡註冊：record 自身提供 Crypto portability 段落 → 依該 portability canonicalize（原文節錄見上），未在 intake 之後另設 suitability 篩選。 若本機 canonical raw 不含本 record 所需的 universe／venue／資料，一律走 §13 prerequisite 條款（technical failure），不得縮減 universe 以硬造可執行性。"
+    ],
+    "exit_semantics": "card LIFECYCLE FOOTER + contract 6.4: a prerequisite that objectively does not exist, with its absence proven by measured evidence and the round's immutable terminal artifacts written, IS this card's goal - close with kanban_complete, do not block",
+    "frozen_card_body": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31.md",
+      "sha256": "sha256:f6896041de5df258e68413abbbd3a3f27e17dbd236c368072715bbeb368334e7"
+    },
+    "reviewed_source": {
+      "path": "/Users/hong/.hermes/wiki/quant/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31.md",
+      "sha256": "sha256:a73655cb310f1f2045111ad8996128cc7738a816d7bbfb07dfc6a9bc62197ed4"
+    },
+    "primary_sources": [
+      "https://doi.org/10.1016/j.irfa.2021.101908",
+      "https://ideas.repec.org/a/eee/finana/v78y2021ics1057521921002349.html",
+      "https://doi.org/10.1080/13504851.2020.1784831",
+      "https://digitalcommons.fairfield.edu/business-facultypubs/246/"
+    ]
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "taxonomy_note": "section 13 registers no dedicated prerequisite-missing class; data_window_invalid is the closest registered class ('instrument 缺失'). Suggested (not implemented here, needs an operator/contract decision): an explicit prerequisite_missing class for future candidates whose required market is not in the raw.",
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "rounds_used": 1,
+    "no_progress_rounds": 1,
+    "attempts_launched": 0,
+    "terminal_sentinels": [],
+    "run_id": null,
+    "no_scientific_claim": "this is a technical failure, NOT a scientific REJECT: the candidate is neither validated nor refuted (card text)",
+    "why_not_DEFERRED": "section 6.4 defines DEFERRED as an intentional resource/priority stop; this round stopped because the record's required data does not exist locally"
+  },
+  "measured_canonical_raw": {
+    "binance_market_dirs": [
+      "usdm"
+    ],
+    "paths_named_spot": [],
+    "non_binance_paths": [],
+    "market_type": "usdm_perp",
+    "venue": "BINANCE",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "trade_instrument": "perpetual",
+    "cross_section_size": 4,
+    "klines_dataset_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "klines_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "funding_symbol_dirs": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_count": 4,
+    "listing_history_field_present": false,
+    "quote_volume_documented_absent": true,
+    "market_cap_dataset_present": false,
+    "liquidity_or_turnover_dataset_present": false,
+    "stale_price_flag_field_present": false,
+    "universe_membership_history_present": false,
+    "mark_index_dataset_present": false,
+    "funding_row_mark_price_present": true,
+    "funding_truth_status_field_present": true,
+    "state_cursors": {
+      "klines_BTCUSDT_1d_ms": 1789516800000,
+      "funding_BTCUSDT_ms": 1789545600003,
+      "last_run_utc": "2026-09-16T15:00:53.159000+00:00"
+    },
+    "meta_sha256": {
+      "CONFIG.json": "sha256:579b18b67acf4cfd1ee85e359fc41ede7975ef3e855732c6eee27e63b099a539",
+      "INSTRUMENTS_EXPORT.json": "sha256:0c8a5e1248425c48778240613d563d08390c1c9e416cf34487b1b1e8b8a0bc59",
+      "SCHEMA.md": "sha256:0c58f05da1c8eaf7e3148947491e0fb20ba449343042a779467c85e338d5f135",
+      "binance/usdm/instruments/usdm-perp-instruments.json": "sha256:5a1d9585853e8bab5f50edeb0eac5febe78fbde0875659eebd63b84c625afdda"
+    },
+    "note": "single venue (BINANCE USD-M perpetual), 4 fixed contracts, OHLCV-only klines (no quote_volume / trade count / taker splits); no spot market, no market-cap or liquidity/turnover dataset, no listing/delisting dates, no stale-price flags, no universe-membership history, no mark/index price series, no second venue",
+    "measured_at_utc": "2026-09-16T17:14:40Z",
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw"
+  },
+  "requirement_vs_available": [
+    {
+      "item": "point_in_time_survivorship_free_universe",
+      "verbatim": "- Point-in-time cryptocurrency universe; survivorship-free inclusion is required for a faithful modern test.",
+      "status": "ABSENT",
+      "measured": "CONFIG.json symbols == ['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] (= klines and funding dataset dirs); no universe-membership or listing history anywhere under the raw root; the four names are the 2026-listed majors - the exact subset the record says shows the opposite (momentum) sign. Source scale: >3,600 coins (primary), 200 (supporting)."
+    },
+    {
+      "item": "daily_close_prices",
+      "verbatim": "- Daily close prices sufficient to compute previous-day close-to-close returns.",
+      "status": "PRESENT_FOR_FOUR_CONTRACTS_ONLY",
+      "measured": "1d klines exist for ['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] (7 intervals, 2022-01-01..2026-09-11, gap-audited); a cross-sectional ranking as registered is impossible on four fixed majors."
+    },
+    {
+      "item": "market_cap_and_liquidity_measures",
+      "verbatim": "- Point-in-time market capitalization and liquidity measures for regime conditioning and replication of size/liquidity dependence.",
+      "status": "ABSENT",
+      "measured": "no market-cap field or dataset and no liquidity measure anywhere under the raw root (name probe over the whole tree: market_cap_dataset_present=False, liquidity_or_turnover_dataset_present=False); the record's own signal step 5 makes liquidity/size a required regime dimension."
+    },
+    {
+      "item": "turnover_or_traded_value",
+      "verbatim": "- Preferably daily turnover, traded value, or another source-consistent liquidity proxy.",
+      "status": "ABSENT",
+      "measured": "klines are the 6-field OHLCV shape; _meta/SCHEMA.md documents that quote_volume, trade count and taker-buy splits are not present (quote_volume_documented_absent=True), so no source-consistent traded-value proxy exists."
+    },
+    {
+      "item": "listing_and_delisting_dates",
+      "verbatim": "- Listing and delisting dates.",
+      "status": "ABSENT",
+      "measured": "the instruments export carries no onboard/listing/delivery/expiry field (listing_history_field_present=False); no listing or delisting dataset exists under the raw root."
+    },
+    {
+      "item": "venue_lineage_and_timestamp_convention",
+      "verbatim": "- Venue/data-vendor lineage and timestamp convention.",
+      "status": "PRESENT",
+      "measured": "venue=BINANCE, market_type=usdm_perp, UTC bars documented in _meta/SCHEMA.md, with per-file sha256 provenance (_meta/TRANSCODE_MANIFEST.json, FUNDING_EXPORT.json, INSTRUMENTS_EXPORT.json); lineage is available but only for the four local contracts."
+    },
+    {
+      "item": "stale_price_flags",
+      "verbatim": "- Missing/stale-price flags; stale prices must not be silently treated as zero returns.",
+      "status": "ABSENT",
+      "measured": "no stale/missing-price flag field or dataset (stale_price_flag_field_present=False); _meta/VERIFY_GAPS.txt is a contiguity audit of the stored series, not a stale-price flag mechanism."
+    },
+    {
+      "item": "perpetual_addons_funding_mark_index_contract_availability",
+      "verbatim": "- If tested on perpetuals rather than spot, funding, mark/index pricing, and contract availability must be added because the original evidence is not a perpetual-futures study.",
+      "status": "PARTIAL_1_OF_3",
+      "measured": "funding IS present (4 symbols, official truth_status, mark_price inside each funding row: funding_row_mark_price_present=True) but there is no mark/index price SERIES (mark_index_dataset_present=False) and no contract-availability history (listing_history_field_present=False)."
+    }
+  ],
+  "cross_section_note": "the record's own signal step 5 requires the test to be split into liquid/large and illiquid/small subsets because the primary source reports daily momentum among the largest and most tradeable coins; the local raw is exactly that largest/most-tradeable set, and it holds no size or liquidity measure to segment with",
+  "host_wide_data_store_scan": {
+    "data_file_scan_command": "find /Volumes/ExpansionDrive -maxdepth 4 \\( -name '*.parquet' -o -name '*.jsonl' -o -name '*.jsonl.gz' -o -name '*.feather' -o -name '*.csv' -o -name '*.h5' \\) | grep -v qlib-results | grep -v 'Photos Library'",
+    "data_file_scan_rc": 0,
+    "data_file_scan_result": [
+      "/Volumes/ExpansionDrive/Hermes/Cchiiann/.openclaw-wiki/log.jsonl"
+    ],
+    "name_token_scan_command": "find /Volumes/ExpansionDrive -maxdepth 4 \\( -iname '*market*cap*' -o -iname '*mcap*' -o -iname '*listing*' -o -iname '*delist*' -o -iname '*universe*' -o -iname '*coingecko*' -o -iname '*coinmarketcap*' -o -iname '*turnover*' -o -iname '*spot*' \\) | grep -v qlib-results | grep -v 'Photos Library'",
+    "name_token_scan_rc": 0,
+    "name_token_scan_result": [
+      "/Volumes/ExpansionDrive/.Spotlight-V100",
+      "/Volumes/ExpansionDrive/.Spotlight-V100/Store-V2/984423BD-D777-442B-9576-C2E5F842F84E/journals.corespotlight",
+      "/Volumes/ExpansionDrive/.Spotlight-V100/Store-V2/984423BD-D777-442B-9576-C2E5F842F84E/tmp.spotlight.loc",
+      "/Volumes/ExpansionDrive/.Spotlight-V100/Store-V2/984423BD-D777-442B-9576-C2E5F842F84E/tmp.spotlight.state"
+    ],
+    "finding": "no other market-data store exists on the machine: the old engine stacks (nautilus-system, lean-system) are gone, and the only market-data root is /Volumes/ExpansionDrive/market-data-raw (BINANCE USD-M perpetual, 4 contracts). qlib-results is a results tree, not a data store."
+  },
+  "environment_readback": {
+    "command": "python3 runtime/preflight.py --json (environment checks P1-P8; --attempt-dir absent so the P9/P10 launch gate is NOT evaluated)",
+    "overall": "PASS",
+    "rc": 0,
+    "host_boot_id": "boot-1789570818",
+    "checks": [
+      {
+        "id": "P1",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+      },
+      {
+        "id": "P2",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+      },
+      {
+        "id": "P3",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-79489.tmp"
+      },
+      {
+        "id": "P4",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "container system status=running (rc=0)"
+      },
+      {
+        "id": "P5",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "qlib-run state=running"
+      },
+      {
+        "id": "P6",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+      },
+      {
+        "id": "P7",
+        "status": "PASS",
+        "layer": "card-local",
+        "detail": "/qlib/work writable: work_ok"
+      },
+      {
+        "id": "P8",
+        "status": "PASS",
+        "layer": "shared-layer",
+        "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+      },
+      {
+        "id": "P9",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      },
+      {
+        "id": "P10",
+        "status": "NA",
+        "layer": "-",
+        "detail": "no --attempt-dir; launch gate NOT evaluated"
+      }
+    ],
+    "meaning": "the execution plane is healthy; the blocker is the record's required data, not the environment - therefore no section 12.5 freeze"
+  },
+  "artifact_hashes": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31/rounds/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31-r1/round-spec.json",
+      "bytes": 41887,
+      "sha256": "sha256:c935df9abefc6193e9023b7d9b0fd4653f854ee1c227c34e74727d90e4b3e671"
+    },
+    "verdict": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31/rounds/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31-r1/verdict.json",
+      "bytes": 7253,
+      "sha256": "sha256:054c999bb814b98230062d339d527fe2d4c78489365f230c38b9d00a3a4559d6"
+    },
+    "family_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-cross-sectional-last-day-return-reversal-liquidity-conditioned-2026-08-31/family.json",
+      "sha256": "sha256:7b3c34f6d7a4ca62a5057f0384a8dbc7a425a6b27ea373bdcd9596a077080b76"
+    },
+    "checker": {
+      "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_xs_reversal_prerequisite_check.py",
+      "sha256": "sha256:ca7e1ea13afb6ad786d8b5ef870e6b568196d14b6b0fd540d98ff6583df5626d"
+    },
+    "round_dir_files": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "attempts_dir_exists": false
+  },
+  "executable_verification": {
+    "live_check": {
+      "command": "python3 runtime/crypto_xs_reversal_prerequisite_check.py --json",
+      "rc": 0,
+      "overall": "PASS",
+      "checks": [
+        {
+          "id": "C1",
+          "status": "PASS",
+          "detail": "binance market dirs=['usdm'] venue=BINANCE market_type=usdm_perp"
+        },
+        {
+          "id": "C2",
+          "status": "PASS",
+          "detail": "klines=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual']"
+        },
+        {
+          "id": "C3",
+          "status": "PASS",
+          "detail": "cross_section=4 < 20; market_cap_dataset=False liquidity_dataset=False quote_volume_documented_absent=True"
+        },
+        {
+          "id": "C4",
+          "status": "PASS",
+          "detail": "non_binance_paths=[] paths_named_spot=[]"
+        },
+        {
+          "id": "C5",
+          "status": "PASS",
+          "detail": "listing_history_field_present=False stale_price_flag_field_present=False universe_membership_history_present=False"
+        },
+        {
+          "id": "C6",
+          "status": "PASS",
+          "detail": "funding_mark_price_in_rows=True mark_index_dataset_present=False contract_availability(listing)_present=False"
+        },
+        {
+          "id": "C7",
+          "status": "PASS",
+          "detail": "round-spec ids/gate=PREREQUISITE_MISSING required_available=False point_in_time=True survivorship_free=True regime_split=True cross_section_registered=4"
+        },
+        {
+          "id": "C8",
+          "status": "PASS",
+          "detail": "verdict=TECHNICAL_INCOMPLETE run_id=None layer=card-local class=data_window_invalid yield=STOP_TECHNICAL_INCOMPLETE run_ids=[]"
+        },
+        {
+          "id": "C9",
+          "status": "PASS",
+          "detail": "attempts_dir_exists=False terminal_sentinels=[]"
+        },
+        {
+          "id": "C10",
+          "status": "PASS",
+          "detail": "family.kanban_task_id=t_c62c6881 round_dir_files=['round-spec.json', 'verdict.json']"
+        },
+        {
+          "id": "C11",
+          "status": "PASS",
+          "detail": "dca provenance/grid+bounded invariants: ok"
+        }
+      ]
+    },
+    "self_test": {
+      "command": "python3 runtime/crypto_xs_reversal_prerequisite_check.py --self-test",
+      "rc": 0,
+      "overall": "PASS",
+      "variants": [
+        {
+          "variant": "verdict_tampered_to_PASS",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "layer_flipped_to_shared",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C8"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C9",
+            "C10"
+          ]
+        },
+        {
+          "variant": "universe_shrunk_to_the_local_four_perps",
+          "refused": true,
+          "failed_checks": [
+            "C7"
+          ]
+        },
+        {
+          "variant": "required_data_available_flipped_true",
+          "refused": true,
+          "failed_checks": [
+            "C7"
+          ]
+        },
+        {
+          "variant": "searched_axis_mislabelled_user_fixed",
+          "refused": true,
+          "failed_checks": [
+            "C11"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated_to_47",
+          "refused": true,
+          "failed_checks": [
+            "C11"
+          ]
+        }
+      ]
+    },
+    "raw_fixture_control": {
+      "command": "python3 runtime/crypto_xs_reversal_prerequisite_check.py --raw-fixture-control",
+      "rc": 0,
+      "overall": "FAIL",
+      "failed_checks": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6"
+      ],
+      "expected": [
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6"
+      ],
+      "detail": {
+        "C2": "klines=['ADAUSDT', 'BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'LINKUSDT', 'SOLUSDT', 'TRXUSDT'] funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] config=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] types=['CryptoPerpetual']",
+        "C3": "cross_section=4 < 20; market_cap_dataset=True liquidity_dataset=True quote_volume_documented_absent=True",
+        "C4": "non_binance_paths=['okx', 'okx/swap'] paths_named_spot=['binance/spot']",
+        "C5": "listing_history_field_present=True stale_price_flag_field_present=False universe_membership_history_present=False",
+        "C6": "funding_mark_price_in_rows=True mark_index_dataset_present=True contract_availability(listing)_present=True"
+      }
+    },
+    "verbatim_assertions": {
+      "counts": {
+        "card_body": 56,
+        "wiki_record": 6
+      },
+      "note": "every excerpt placed into the round-spec was substring-asserted against the frozen card body / canonical record before any write; the authoring run aborted once (a stray '- ' prefix) and wrote nothing until all excerpts matched"
+    }
+  },
+  "disclosures": [
+    "section 13 still registers no dedicated prerequisite-missing class; the closest registered class data_window_invalid ('instrument 缺失') is used as-is - whether to add a named class is an operator/contract decision",
+    "the card requires the USER_FIXED invariants to be inherited verbatim from A/B; the inherited string 'linear USD-M perpetual instruments' names perpetuals while this record's source evidence is spot and marks spot-to-perpetual portability adapted/unproven. Nothing was edited or resolved: the tension is recorded in round-spec.execution_invariants_disclosure for a future re-entry round.",
+    "the reviewed material leaves the leg shape underspecified (a long-short spread versus a long-only loser portfolio); no direction leg was assumed or added - recorded in round-spec.direction_disclosure",
+    "the frozen card body's falsification excerpt lists items 1-6 while the canonical record's battery has 7; item 7 (venue/timestamp sign instability) was restored from the record so nothing is deleted, and the difference is disclosed in round-spec.falsification.battery_source_note",
+    "a future re-entry round that actually launches this family must carry the v1.8 parameter_contract block in its round-spec: the launch path fails closed for non-legacy families without one (this gate round never reaches that path because nothing is launched)"
+  ],
+  "untouched": {
+    "other_families": "no other family's artifact, frozen bundle, verdict or leaderboard was read into or written by this card",
+    "cron": "no cron job was created, resumed or modified",
+    "board": "no auditor sub-card, no board mutation beyond this card's own terminal transition",
+    "paper_live": "no Paper/Live activity; no runner deployed to the host /scripts tree (nothing launched)"
+  }
+}
