@@ -1,0 +1,1149 @@
+{
+  "snapshot_kind": "strategy-f-v1 round 1 execution record (launch -> two technical retries -> terminal -> verdict)",
+  "snapshot_taken_at_utc": "2026-09-16T08:07:32Z",
+  "snapshot_boundary": "Read-back of the immutable /results tree plus the repo at the time of writing. Not runtime state: whether the container, mounts or cron are healthy now must be queried live.",
+  "card": {
+    "kanban_task_id": "t_0546d31b",
+    "board": "quant-strategy-research",
+    "family_id": "stochastic-rsi-renko-2026-08-31",
+    "round_id": "stochastic-rsi-renko-2026-08-31-r1",
+    "assignee": "default",
+    "origin": "created by the Contract v1.4.0 section 14.4 automatic production handoff (candidate canonicalized from the Wiki Brain record during the card t_86d04b09 backlog backfill)"
+  },
+  "family": {
+    "title": "Production Strategy F - Stochastic RSI (Renko) family representative, BTC/ETH/BNB/SOL USD-M perpetual, five source grids",
+    "mechanism": "Stochastic RSI (Renko): geometric Renko bricks built from each source bar's close, Wilder RSI and a Stochastic-RSI K/D cross on the BRICK CLOSE series; K crossing above D buys, below D sells (the source's own long/short signal semantics); inherited DCA rail with per-fill taker fee, adverse tick slippage and per-settlement funding",
+    "signal_family": "indicator crossover on a derived (Renko) bar series",
+    "provenance": "wiki brain quant/stochastic-rsi-renko-2026-08-31.md (research-only intake; source: fmzquant/strategies K线Stochastic-RSI交易策略Renko-Stochastic-RSI-Trading-Strategy.md)",
+    "cohort_count": 20,
+    "cohorts": [
+      "BNBUSDT/15m",
+      "BNBUSDT/1h",
+      "BNBUSDT/30m",
+      "BNBUSDT/4h",
+      "BNBUSDT/5m",
+      "BTCUSDT/15m",
+      "BTCUSDT/1h",
+      "BTCUSDT/30m",
+      "BTCUSDT/4h",
+      "BTCUSDT/5m",
+      "ETHUSDT/15m",
+      "ETHUSDT/1h",
+      "ETHUSDT/30m",
+      "ETHUSDT/4h",
+      "ETHUSDT/5m",
+      "SOLUSDT/15m",
+      "SOLUSDT/1h",
+      "SOLUSDT/30m",
+      "SOLUSDT/4h",
+      "SOLUSDT/5m"
+    ],
+    "registered_grids": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps"
+    ],
+    "case_evaluations_per_grid": 8640,
+    "case_evaluations_per_cohort_per_grid": 432,
+    "case_evaluations_total": 86400,
+    "expected_case_evaluations": 86400,
+    "selector_disposition": "selector=cohort-selector-v1; disposition=cohort-disposition-v1",
+    "universe_note": "four local canonical raw symbols x the five source grids; the raw also holds 1d/1w klines, which are outside the registered eligible universe (fixed before any computation, disclosed in the round-spec, not narrowed after seeing results)"
+  },
+  "preregistration": {
+    "family_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/family.json",
+      "sha256": "sha256:c77d070cc0a27a2c786f53ba635cb26251545ccd6f410afb9963e37c9adfb758",
+      "kanban_task_id": "t_0546d31b",
+      "semantic_fingerprint": "sha256:6d8e324f12b821c8273c7197a7f8b0af3f76e9d7c009a0f2d45389b834f1cc36",
+      "parent_family": null
+    },
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/round-spec.json",
+      "sha256": "sha256:7cd808b14422b08d2cfa6e600ab8d2420dc5d21a2e78b4b3d7b5a34f55c26cc5",
+      "reused_verbatim_for_u1_u2_u3": true,
+      "note": "frozen before any computation (INV-4); u2/u3 are technical retries inside the same round, so the pre-registration was NOT rewritten",
+      "parameter_contract_v1_8": {
+        "present": true,
+        "validate_round_spec_contract_problems": []
+      }
+    },
+    "run_spec": {
+      "u1": {
+        "sha256": "sha256:b775750de1c322c46f6ba9363adb0acf91a007477e07accd70088f0f7203bfab",
+        "engine": "sha256:13fa8a2d4e42c93e21cdc4db45f4244e3bdadd47d98cad4ddd7e98bb6afdc88a"
+      },
+      "u2": {
+        "sha256": "sha256:b6b147cebe2a8c0a758fe38508e579951ecf7491bc5016c0fb564c7bd1b8a435",
+        "engine": "sha256:312ef8078f78ed9fecd4b95f7bbd486ad045a241e9cd7207876439c3da90e3eb",
+        "engine_selfcheck": "sha256:a771b68540769c8629534f895f6ff795f2786b8bd409ac5c16b338db7de192c8"
+      },
+      "u3": {
+        "sha256": "sha256:838121c69a1f402d4d26a957d6c572c93a267218015f1bd1a6d09f33cd19cd98",
+        "engine": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71",
+        "engine_selfcheck": "sha256:54523c1a863dd4ed778a0acc787376ffdc79d9205ec9fc4dbd89acf108831a3e"
+      }
+    },
+    "engine": {
+      "path": "/scripts/60_strategy_f_run.py",
+      "repo_path": "container/scripts/60_strategy_f_run.py",
+      "host_deploy": "/Users/hong/workspace/qlib-apple-container/scripts/60_strategy_f_run.py",
+      "u1_version": "f-v1-engine-1.0.0",
+      "u1_sha256": "sha256:13fa8a2d4e42c93e21cdc4db45f4244e3bdadd47d98cad4ddd7e98bb6afdc88a",
+      "u2_version": "f-v1-engine-1.0.1",
+      "u2_sha256": "sha256:312ef8078f78ed9fecd4b95f7bbd486ad045a241e9cd7207876439c3da90e3eb",
+      "u3_version": "f-v1-engine-1.0.2",
+      "u3_sha256": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71",
+      "three_way_identical": "repo == host deploy == container /scripts readback, sha256 verified for the 1.0.2 bytes",
+      "selfcheck_sha256": "sha256:54523c1a863dd4ed778a0acc787376ffdc79d9205ec9fc4dbd89acf108831a3e"
+    },
+    "split": {
+      "historical": "2022-01-01..2025-09-30",
+      "oos": "2025-10-01..2026-09-11",
+      "full": "2022-01-01..2026-09-11"
+    },
+    "gates": {
+      "G1_coverage": "every one of the 10 registered phase grids must contain exactly 8640 cases (20 cohorts x 9 strategy cases x 48 DCA configs), the measured strategy/DCA cell sets must equal the registered products, and the case-evaluation total must equal 86400",
+      "G2_insufficient_trades": "per cohort: fewer than min_episodes_is (30) historical episodes in the cohort's best case, or fewer than min_episodes_oos (10) episodes in the elected winner's OOS slice, culls the cohort",
+      "G3_cohort_selector": "historical net_pnl > 0 AND sharpe > 0 AND episodes >= 30, ranked by Sharpe desc, net_pnl desc, registered-index lexical tie-break",
+      "G4_cohort_oos": "OOS net_pnl > 0 AND OOS sharpe > 0 for the frozen winner cell",
+      "G5_cohort_full": "full-window net_pnl > 0 for the frozen winner cell",
+      "G6_cohort_robustness": "the winner cell has net_pnl > 0 in all four execution stress reruns",
+      "G7_cohort_neighbourhood": "at least 60% of legal face-adjacent neighbours agree in historical net-PnL sign",
+      "G8_cohort_cost_attrition": "the winner cell has net_pnl > 0 in the cost_attrition_40bps grid",
+      "verdict_rule": "TECHNICAL_INCOMPLETE if G1 fails; else each cohort passing G3-G8 is a SURVIVOR: 0 survivors -> REJECT, >=1 survivors -> PASS (band SURVIVOR_FOUND / MULTIPLE_SURVIVORS describes the count only). The three registered family-level readers can only move a PASS to DEFERRED, never to PASS.",
+      "min_episodes_is": 30,
+      "min_episodes_is_provenance": "RESEARCH_DEFINED - the record registers no no-signal floor; this round registers 30 historical episodes for the selection window and 10 for the OOS slice before the first run, and never lowers them afterwards.",
+      "min_episodes_oos": 10,
+      "neighborhood_min_same_sign_fraction": 0.6,
+      "known_gate_set_limitation": "The registered gate set contains no benchmark-relative test and no buy-and-hold comparison; a two-sided flip book can show positive PnL in a trending sample through posture alone. This limitation is disclosed and is not repaired inside this round."
+    }
+  },
+  "launch_gate": {
+    "recorded_by_the_launch_runs": "P1-P10 all PASS for u1/u2/u3 (--launch --attempt-dir, rc=0); the u3 preflight JSON was not persisted, only the u2 one is in .kanban-scratch/t_0546d31b/preflight_u2.json",
+    "recheck_now": "the preflight TOOL cannot be re-run on a terminal attempt (P9 fails by design once a sentinel exists), so the two substantive P10 gates were re-derived read-only by this card: the frozen round-spec validates against the v1.8 parameter contract with 0 problems, and the run-spec's script.sha256 / engine_selfcheck.sha256 equal the host-deployed bytes",
+    "p10_run_spec_pin": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71",
+    "p10_host_deploy_sha": "sha256:1e0b679e47bfa9896f4a6cef0070bebd43420b8e32406c455d2f9f606aabfb71",
+    "selfcheck_run_spec_pin": "sha256:54523c1a863dd4ed778a0acc787376ffdc79d9205ec9fc4dbd89acf108831a3e",
+    "selfcheck_host_deploy_sha": "sha256:54523c1a863dd4ed778a0acc787376ffdc79d9205ec9fc4dbd89acf108831a3e"
+  },
+  "attempts": [
+    {
+      "run_id": "stochastic-rsi-renko-2026-08-31-r1-u1",
+      "terminal": null,
+      "state": "ARTIFACT_READY",
+      "engine_version": "f-v1-engine-1.0.0",
+      "runtime_seconds": 2599,
+      "coverage": {
+        "coverage_complete": true,
+        "case_evaluations_total": 86400
+      },
+      "assertions_false": [
+        "no_entry_after_exhaustion"
+      ],
+      "defect": "452/8,640 full-grid cells opened an entry with realised equity <= 0 (min -4.985 USDT); the u1 diagnosis blamed a prior exit fill draining the book",
+      "terminal_sentinel_published": false,
+      "carries_independent_measurement": false
+    },
+    {
+      "run_id": "stochastic-rsi-renko-2026-08-31-r1-u2",
+      "terminal": null,
+      "state": "ARTIFACT_READY",
+      "engine_version": "f-v1-engine-1.0.1",
+      "runtime_seconds": 2616,
+      "coverage": {
+        "coverage_complete": true,
+        "case_evaluations_total": 86400
+      },
+      "assertions_false": [
+        "no_entry_after_exhaustion"
+      ],
+      "defect": "the 1.0.1 re-check after the opposite-crossing flatten never fired once: all 10 grid CSVs are byte-identical to u1's, so u2 carries no independent measurement and the u1 diagnosis was incomplete",
+      "terminal_sentinel_published": false,
+      "carries_independent_measurement": false
+    },
+    {
+      "run_id": "stochastic-rsi-renko-2026-08-31-r1-u3",
+      "terminal": "DONE",
+      "state": "ARTIFACT_READY",
+      "engine_version": "f-v1-engine-1.0.2",
+      "runtime_seconds": 2617,
+      "coverage": {
+        "coverage_complete": true,
+        "case_evaluations_total": 86400
+      },
+      "assertions_true": 26,
+      "assertions_total": 26,
+      "disposition": "REJECT / NO_SURVIVOR (0/20 cohorts)",
+      "terminal_sentinel_published": true,
+      "carries_independent_measurement": true
+    }
+  ],
+  "remediation": {
+    "what_changed": "engine f-v1-engine-1.0.1 -> 1.0.2, one accounting-guard fix only (60_strategy_f_run.py::open_position)",
+    "u1_diagnosis_was_wrong": "byte-identity of all 10 grids between u1 and u2 proved the 1.0.1 fix (re-check the exhaustion guard after the opposite-crossing flatten) fired zero times out of 86,400 cells",
+    "root_cause": "min_entry_equity is recorded INSIDE open_position AFTER the entry's own taker fee is charged, while the pre-entry guard tested equity BEFORE that fee, so an episode decided at a positive-but-sub-fee equity (e.g. +0.33 USDT) posts -4.67 and the registered gate min_entry_equity > 0 fails",
+    "fingerprint": "the per-grid minima are always just inside -1x the entry's fee quantum on a 10,000 USDT notional: 1x 5 bps = 5 for the 5 bps grids (full -4.985), 2x = 10 for fee_2x (-9.987), 8x = 40 for cost_attrition_40bps (-39.995)",
+    "fix": "open_position refuses the tranche when START_EQUITY + (realized - entry_fee) <= 0 (spelled exactly like the recorded min_entry_equity expression, so the recorded value IS the value that passed the guard), counts entry_refused_exhausted, and the episode loop halts flat on a refusal",
+    "red_proof": "the new regression test_entry_the_account_cannot_fund_is_not_opened runs against the frozen 1.0.1 bytes -> FAIL (-360.375 not greater than 0.0), full suite 28 ran / 27 ok / 1 FAIL; against 1.0.2 -> 28/28 OK in the qlib-run container; repo suite unittest discover -s runtime/tests -t runtime/tests -> 342/342 OK",
+    "bounded_diff": {
+      "prediction": "the fix can only change cells in which u2 had an entry whose own taker fee exhausted the book: per grid, the differing rows must be exactly the u2 rows with min_entry_equity <= 0, each now > 0 with its net_pnl sign unchanged",
+      "method": "sha256 per grid + row-level comparison keyed on (symbol, timeframe, window_kind, case_name, brick_pct, rsi_period, spacing_pct, size_multiplier, breakeven_tp_pct, invalidation_pct)",
+      "result": "PASS, exactly as predicted: 7,028 differing rows across the 10 grids = 7,028 u2 defect rows (400/91/452/1101/396/540/419/360/403/2866), 0 rows differing outside that set, 0 defect rows unchanged, 0 rows with min_entry_equity <= 0 left in u3, 0 net-PnL sign flips; 79,372 of 86,400 rows byte-identical",
+      "entry_refused_exhausted_counter": "sums to 7,028 = the number of refused entries, one per defect cell",
+      "no_measurement_field_differed_outside_the_defect_set": true
+    }
+  },
+  "cohorts": {
+    "outcome_counts": {
+      "SURVIVOR": 0,
+      "CULLED": 20
+    },
+    "cull_reason_census": {
+      "oos_economic": 6,
+      "robustness_economic": 23,
+      "parameter_neighbourhood": 5,
+      "no_qualifying_candidate": 4
+    },
+    "no_winner_reason_census": {
+      "insufficient_trades": 0,
+      "no_qualifying_candidate": 4
+    },
+    "winner_reason": "16 of 20 cohorts DID elect a historical winner (G3 satisfied) and then failed a later gate; the four 5m cohorts elected none because no historical case reaches net_pnl > 0 with sharpe > 0 (their best cases still lose money; they traded heavily, thousands of 5m episodes per cell)",
+    "per_cohort": [
+      {
+        "cohort": "BNBUSDT/15m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:fee_2x,entry_delay_1_bar",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.04,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.02,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.01,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 0.375,
+        "historical_net_pnl": 5336.197853,
+        "historical_sharpe": 0.399822,
+        "historical_episodes": 1723,
+        "oos_net_pnl": -2780.14488,
+        "oos_sharpe": -0.326729,
+        "full_net_pnl": 2316.946822,
+        "cost_attrition_net_pnl": -29970.041345
+      },
+      {
+        "cohort": "BNBUSDT/1h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 14
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 50040.283424,
+        "historical_sharpe": 3.261915,
+        "historical_episodes": 2836,
+        "oos_net_pnl": 11425.661922,
+        "oos_sharpe": 3.795826,
+        "full_net_pnl": 61553.891826,
+        "cost_attrition_net_pnl": -29983.981061
+      },
+      {
+        "cohort": "BNBUSDT/30m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:fee_2x",
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 14
+        },
+        "neighbourhood_same_sign_fraction": 0.875,
+        "historical_net_pnl": 24633.95755,
+        "historical_sharpe": 1.493944,
+        "historical_episodes": 3684,
+        "oos_net_pnl": 10045.848,
+        "oos_sharpe": 3.261677,
+        "full_net_pnl": 34727.866009,
+        "cost_attrition_net_pnl": -29971.287327
+      },
+      {
+        "cohort": "BNBUSDT/4h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 168491.940469,
+        "historical_sharpe": 7.396462,
+        "historical_episodes": 1475,
+        "oos_net_pnl": 23353.453967,
+        "oos_sharpe": 1.868074,
+        "full_net_pnl": 191845.394437,
+        "cost_attrition_net_pnl": -30040.941333
+      },
+      {
+        "cohort": "BNBUSDT/5m",
+        "outcome": "CULLED",
+        "no_winner_reason": "no_qualifying_candidate",
+        "cull_reasons": [
+          "no_qualifying_candidate"
+        ],
+        "winner": null,
+        "neighbourhood_same_sign_fraction": null,
+        "historical_net_pnl": null,
+        "historical_sharpe": null,
+        "historical_episodes": null,
+        "oos_net_pnl": null,
+        "oos_sharpe": null,
+        "full_net_pnl": null,
+        "cost_attrition_net_pnl": null
+      },
+      {
+        "cohort": "BTCUSDT/15m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:fee_2x",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.03,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "brick_pct": 0.01,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 0.5,
+        "historical_net_pnl": 18249.694089,
+        "historical_sharpe": 1.381852,
+        "historical_episodes": 1261,
+        "oos_net_pnl": -517.636169,
+        "oos_sharpe": -0.091033,
+        "full_net_pnl": 17732.057919,
+        "cost_attrition_net_pnl": -30057.608618
+      },
+      {
+        "cohort": "BTCUSDT/1h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 0.857143,
+        "historical_net_pnl": 42204.651796,
+        "historical_sharpe": 3.176725,
+        "historical_episodes": 2259,
+        "oos_net_pnl": -1783.404686,
+        "oos_sharpe": -0.488544,
+        "full_net_pnl": 40238.097086,
+        "cost_attrition_net_pnl": -30055.439504
+      },
+      {
+        "cohort": "BTCUSDT/30m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:fee_2x,entry_delay_1_bar",
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.03,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "brick_pct": 0.01,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 0.625,
+        "historical_net_pnl": 23009.301497,
+        "historical_sharpe": 1.669582,
+        "historical_episodes": 1109,
+        "oos_net_pnl": -422.361518,
+        "oos_sharpe": -0.070964,
+        "full_net_pnl": 22586.93998,
+        "cost_attrition_net_pnl": -30014.955143
+      },
+      {
+        "cohort": "BTCUSDT/4h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 67617.011562,
+        "historical_sharpe": 5.83905,
+        "historical_episodes": 1243,
+        "oos_net_pnl": 10508.476835,
+        "oos_sharpe": 3.884281,
+        "full_net_pnl": 77796.85662,
+        "cost_attrition_net_pnl": -30013.677199
+      },
+      {
+        "cohort": "BTCUSDT/5m",
+        "outcome": "CULLED",
+        "no_winner_reason": "no_qualifying_candidate",
+        "cull_reasons": [
+          "no_qualifying_candidate"
+        ],
+        "winner": null,
+        "neighbourhood_same_sign_fraction": null,
+        "historical_net_pnl": null,
+        "historical_sharpe": null,
+        "historical_episodes": null,
+        "oos_net_pnl": null,
+        "oos_sharpe": null,
+        "full_net_pnl": null,
+        "cost_attrition_net_pnl": null
+      },
+      {
+        "cohort": "ETHUSDT/15m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:fee_2x,entry_delay_1_bar",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "brick_pct": 0.005,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 0.285714,
+        "historical_net_pnl": 5893.391196,
+        "historical_sharpe": 0.405012,
+        "historical_episodes": 5438,
+        "oos_net_pnl": -2948.02419,
+        "oos_sharpe": -0.676382,
+        "full_net_pnl": 2892.379287,
+        "cost_attrition_net_pnl": -30011.350957
+      },
+      {
+        "cohort": "ETHUSDT/1h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 76520.376924,
+        "historical_sharpe": 4.187523,
+        "historical_episodes": 3142,
+        "oos_net_pnl": 18502.067429,
+        "oos_sharpe": 5.046397,
+        "full_net_pnl": 94984.204027,
+        "cost_attrition_net_pnl": -29971.278843
+      },
+      {
+        "cohort": "ETHUSDT/30m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:fee_2x",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 0.571429,
+        "historical_net_pnl": 30365.181681,
+        "historical_sharpe": 1.503685,
+        "historical_episodes": 4345,
+        "oos_net_pnl": 12138.859381,
+        "oos_sharpe": 3.101948,
+        "full_net_pnl": 42824.5928,
+        "cost_attrition_net_pnl": -30017.493843
+      },
+      {
+        "cohort": "ETHUSDT/4h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 136172.337005,
+        "historical_sharpe": 8.726441,
+        "historical_episodes": 1603,
+        "oos_net_pnl": 28323.596152,
+        "oos_sharpe": 10.494661,
+        "full_net_pnl": 164495.933156,
+        "cost_attrition_net_pnl": -29999.736798
+      },
+      {
+        "cohort": "ETHUSDT/5m",
+        "outcome": "CULLED",
+        "no_winner_reason": "no_qualifying_candidate",
+        "cull_reasons": [
+          "no_qualifying_candidate"
+        ],
+        "winner": null,
+        "neighbourhood_same_sign_fraction": null,
+        "historical_net_pnl": null,
+        "historical_sharpe": null,
+        "historical_episodes": null,
+        "oos_net_pnl": null,
+        "oos_sharpe": null,
+        "full_net_pnl": null,
+        "cost_attrition_net_pnl": null
+      },
+      {
+        "cohort": "SOLUSDT/15m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "oos_economic",
+          "robustness_economic:fee_2x,entry_delay_1_bar,slippage_2ticks",
+          "robustness_economic:cost_attrition_40bps",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 21
+        },
+        "neighbourhood_same_sign_fraction": 0.142857,
+        "historical_net_pnl": 7957.182471,
+        "historical_sharpe": 0.375038,
+        "historical_episodes": 9838,
+        "oos_net_pnl": -3641.010228,
+        "oos_sharpe": -0.577431,
+        "full_net_pnl": 4316.172243,
+        "cost_attrition_net_pnl": -30007.616308
+      },
+      {
+        "cohort": "SOLUSDT/1h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 209635.438168,
+        "historical_sharpe": 6.232053,
+        "historical_episodes": 5296,
+        "oos_net_pnl": 16788.615278,
+        "oos_sharpe": 3.721734,
+        "full_net_pnl": 226424.053446,
+        "cost_attrition_net_pnl": -30971.442096
+      },
+      {
+        "cohort": "SOLUSDT/30m",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 0.857143,
+        "historical_net_pnl": 102227.074562,
+        "historical_sharpe": 3.337516,
+        "historical_episodes": 7532,
+        "oos_net_pnl": 10618.991975,
+        "oos_sharpe": 2.419266,
+        "full_net_pnl": 112846.066536,
+        "cost_attrition_net_pnl": -29994.795637
+      },
+      {
+        "cohort": "SOLUSDT/4h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:cost_attrition_40bps"
+        ],
+        "winner": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "brick_pct": 0.005,
+          "rsi_period": 7
+        },
+        "neighbourhood_same_sign_fraction": 1.0,
+        "historical_net_pnl": 225983.259992,
+        "historical_sharpe": 7.645939,
+        "historical_episodes": 2376,
+        "oos_net_pnl": 32188.622025,
+        "oos_sharpe": 9.392886,
+        "full_net_pnl": 258281.355792,
+        "cost_attrition_net_pnl": -30975.053535
+      },
+      {
+        "cohort": "SOLUSDT/5m",
+        "outcome": "CULLED",
+        "no_winner_reason": "no_qualifying_candidate",
+        "cull_reasons": [
+          "no_qualifying_candidate"
+        ],
+        "winner": null,
+        "neighbourhood_same_sign_fraction": null,
+        "historical_net_pnl": null,
+        "historical_sharpe": null,
+        "historical_episodes": null,
+        "oos_net_pnl": null,
+        "oos_sharpe": null,
+        "full_net_pnl": null,
+        "cost_attrition_net_pnl": null
+      }
+    ]
+  },
+  "economics": {
+    "note": "0 survivors -> no elected winner cell; each cell is an independent 30,000 USDT case, so the sums are a scale indicator for how the cost tracks bite, never a portfolio return. Recomputed by this card from the frozen grid CSVs.",
+    "descriptive_medians_all_base_cases": {
+      "net_pnl": -29995.31764,
+      "fees": 21171.871784000003,
+      "funding": -38.8938735,
+      "gross_pnl": 4256.8256010000005,
+      "ending_equity": 4.68236,
+      "sharpe": -0.506299,
+      "max_dd_pct": -0.999852,
+      "max_dd_usdt": -30675.731822,
+      "max_effective_leverage": 9.944706,
+      "capital_utilization": 0.0934035,
+      "cagr": -0.023277261350501177,
+      "total_return_pct": -0.999844,
+      "episodes": 1112.0,
+      "fills": 3340.0,
+      "turnover_usdt": 42343743.5682475
+    },
+    "aggregate_per_grid": {
+      "historical": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -30095279.124867,
+        "sum_fees": 220053457.048246,
+        "sum_funding": -352347.938958,
+        "sum_gross_pnl": 189605829.984462,
+        "sum_episodes": 13762220,
+        "sum_fills": 35240276,
+        "sum_turnover_usdt": 440106914096.5641,
+        "max_max_effective_leverage": 34586.859179,
+        "max_capital_utilization": 1.116318
+      },
+      "oos": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -78876393.791556,
+        "sum_fees": 69065866.443333,
+        "sum_funding": -131267.356905,
+        "sum_gross_pnl": -9941794.705235,
+        "sum_episodes": 3863861,
+        "sum_fills": 10599413,
+        "sum_turnover_usdt": 138131732886.6633,
+        "max_max_effective_leverage": 1037.880988,
+        "max_capital_utilization": 0.573134
+      },
+      "full": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -22400339.463906,
+        "sum_fees": 244037604.320292,
+        "sum_funding": -407725.259925,
+        "sum_gross_pnl": 221229539.596453,
+        "sum_episodes": 15462889,
+        "sum_fills": 39293946,
+        "sum_turnover_usdt": 488075208640.5738,
+        "max_max_effective_leverage": 34586.859179,
+        "max_capital_utilization": 1.116318
+      },
+      "fee_2x": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -121203998.014106,
+        "sum_fees": 328300258.646453,
+        "sum_funding": -364874.575075,
+        "sum_gross_pnl": 206731386.057366,
+        "sum_episodes": 10237835,
+        "sum_fills": 26246117,
+        "sum_turnover_usdt": 328300258646.4948,
+        "max_max_effective_leverage": 145897.649249,
+        "max_capital_utilization": 1.634544
+      },
+      "funding_2x": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -22266572.377774,
+        "sum_fees": 244082304.191263,
+        "sum_funding": -790647.567472,
+        "sum_gross_pnl": 221025084.246079,
+        "sum_episodes": 15459345,
+        "sum_fills": 39294032,
+        "sum_turnover_usdt": 488164608382.52496,
+        "max_max_effective_leverage": 2670.775667,
+        "max_capital_utilization": 0.696443
+      },
+      "entry_delay_1_bar": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -94535731.463834,
+        "sum_fees": 218597738.803721,
+        "sum_funding": -904431.755201,
+        "sum_gross_pnl": 123157575.584761,
+        "sum_episodes": 13710318,
+        "sum_fills": 35022724,
+        "sum_turnover_usdt": 437195477607.474,
+        "max_max_effective_leverage": 5212.881395,
+        "max_capital_utilization": 0.514141
+      },
+      "slippage_2ticks": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -43018446.321602,
+        "sum_fees": 226506550.429963,
+        "sum_funding": -383855.503403,
+        "sum_gross_pnl": 183104248.60513,
+        "sum_episodes": 14276296,
+        "sum_fills": 36391335,
+        "sum_turnover_usdt": 453013100860.01044,
+        "max_max_effective_leverage": 3322.079301,
+        "max_capital_utilization": 0.574882
+      },
+      "no_funding": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -31007531.530056,
+        "sum_fees": 220026742.930251,
+        "sum_funding": 0.0,
+        "sum_gross_pnl": 189019211.400247,
+        "sum_episodes": 13764391,
+        "sum_fills": 35241329,
+        "sum_turnover_usdt": 440053485860.52716,
+        "max_max_effective_leverage": 3574.194657,
+        "max_capital_utilization": 0.685447
+      },
+      "no_funding_full": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -23456517.930208,
+        "sum_fees": 243925524.560667,
+        "sum_funding": 0.0,
+        "sum_gross_pnl": 220469006.630523,
+        "sum_episodes": 15461920,
+        "sum_fills": 39283901,
+        "sum_turnover_usdt": 487851049121.3456,
+        "max_max_effective_leverage": 3574.194657,
+        "max_capital_utilization": 0.685447
+      },
+      "cost_attrition_40bps": {
+        "cells": 8640,
+        "cells_with_episodes": 8640,
+        "sum_net_pnl": -259253344.275013,
+        "sum_fees": 322617836.315256,
+        "sum_funding": 4414.650457,
+        "sum_gross_pnl": 63368906.69077,
+        "sum_episodes": 2376654,
+        "sum_fills": 6299969,
+        "sum_turnover_usdt": 80654459078.81961,
+        "max_max_effective_leverage": 223722.167797,
+        "max_capital_utilization": 72.350244
+      }
+    },
+    "dca_layer_histogram": {
+      "level_00": 86985257,
+      "level_01": 38777364,
+      "level_02": 5946842,
+      "level_03": 1774296,
+      "level_04": 687980,
+      "level_05": 325805,
+      "level_06": 164778,
+      "level_07": 88930,
+      "level_08": 52090,
+      "level_09": 26180,
+      "level_10": 17245,
+      "level_11": 0
+    },
+    "dca_layer_histogram_identity": {
+      "rule": "level_00 == sum of episodes over the seven FULL_WINDOW_GRID_KINDS",
+      "level_00": 86985257,
+      "sum_over_seven_full_window_grids": 86985257,
+      "matches": true
+    },
+    "cost_track_effectiveness": {
+      "evaluated": true,
+      "fee_2x_fees_delta": 84262654.32616103,
+      "funding_2x_funding_delta": 382922.3075470003,
+      "cost_attrition_fees_delta": 78580231.994964,
+      "no_funding_funding_delta": 0.0,
+      "entry_delay_net_delta": -72135391.99992788,
+      "slippage_net_delta": -20618106.85769587,
+      "aggregate_fills": 39293946,
+      "fee_2x_is_not_a_noop": true,
+      "funding_2x_is_not_a_noop": true,
+      "cost_attrition_is_not_a_noop": true,
+      "no_funding_is_cost_free_track": true,
+      "entry_delay_is_not_a_noop": true,
+      "slippage_is_not_a_noop": true
+    },
+    "stress_summary_medians_non_gating": {
+      "fee_2x": {
+        "median_net_pnl": -30007.914049,
+        "median_sharpe": -0.9202905,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "funding_2x": {
+        "median_net_pnl": -29995.024059,
+        "median_sharpe": -0.498459,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "entry_delay_1_bar": {
+        "median_net_pnl": -30002.3098655,
+        "median_sharpe": -0.6165265,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "slippage_2ticks": {
+        "median_net_pnl": -29997.419975,
+        "median_sharpe": -0.55489,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "cost_attrition_40bps": {
+        "median_net_pnl": -30022.2687075,
+        "median_sharpe": -1.3957595,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "no_funding": {
+        "median_net_pnl": -25898.418397,
+        "median_sharpe": -0.513863,
+        "cases": 8640,
+        "non_gating": true
+      },
+      "no_funding_full": {
+        "median_net_pnl": -29995.380142,
+        "median_sharpe": -0.5018215,
+        "cases": 8640,
+        "non_gating": true
+      }
+    }
+  },
+  "registered_family_level_falsification": {
+    "cost_boundary": {
+      "registered_item": "cost-boundary",
+      "evaluated": true,
+      "hit": true,
+      "cohorts": [
+        "BNBUSDT/15m",
+        "BNBUSDT/1h",
+        "BNBUSDT/30m",
+        "BNBUSDT/4h",
+        "BTCUSDT/15m",
+        "BTCUSDT/1h",
+        "BTCUSDT/30m",
+        "BTCUSDT/4h",
+        "ETHUSDT/15m",
+        "ETHUSDT/1h",
+        "ETHUSDT/30m",
+        "ETHUSDT/4h",
+        "SOLUSDT/15m",
+        "SOLUSDT/1h",
+        "SOLUSDT/30m",
+        "SOLUSDT/4h"
+      ],
+      "definition": "full-window net-PnL sign differs between the canonical cost track and cost_attrition_40bps",
+      "landing": "family-level: a hit must NEVER be recorded as PASS"
+    },
+    "symbol_concentration": {
+      "registered_item": "symbol-concentration",
+      "evaluated": false,
+      "hit": false,
+      "top_symbol": null,
+      "top_share": 0.0,
+      "shares": {},
+      "threshold": 0.7,
+      "landing": "family-level robustness disclosure: a hit must NEVER be recorded as PASS"
+    },
+    "oos_grid_instability": {
+      "registered_item": "oos-grid-instability",
+      "evaluated": true,
+      "hit": false,
+      "cohorts": [],
+      "detail": {
+        "BNBUSDT/15m": {
+          "neighbours": 8,
+          "disagreeing": 1,
+          "disagree_fraction": 0.125
+        },
+        "BNBUSDT/1h": {
+          "neighbours": 8,
+          "disagreeing": 1,
+          "disagree_fraction": 0.125
+        },
+        "BNBUSDT/30m": {
+          "neighbours": 8,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "BNBUSDT/4h": {
+          "neighbours": 6,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "BTCUSDT/15m": {
+          "neighbours": 8,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "BTCUSDT/1h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "BTCUSDT/30m": {
+          "neighbours": 8,
+          "disagreeing": 1,
+          "disagree_fraction": 0.125
+        },
+        "BTCUSDT/4h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "ETHUSDT/15m": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "ETHUSDT/1h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "ETHUSDT/30m": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "ETHUSDT/4h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "SOLUSDT/15m": {
+          "neighbours": 7,
+          "disagreeing": 1,
+          "disagree_fraction": 0.142857
+        },
+        "SOLUSDT/1h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        },
+        "SOLUSDT/30m": {
+          "neighbours": 7,
+          "disagreeing": 2,
+          "disagree_fraction": 0.285714
+        },
+        "SOLUSDT/4h": {
+          "neighbours": 7,
+          "disagreeing": 0,
+          "disagree_fraction": 0.0
+        }
+      },
+      "threshold": 0.4,
+      "landing": "family-level disclosure of the registered grid-instability item (the historical arm is the G7 gate); a hit must NEVER be recorded as PASS"
+    },
+    "cost_track_effectiveness": {
+      "evaluated": true,
+      "fee_2x_fees_delta": 84262654.32616103,
+      "funding_2x_funding_delta": 382922.3075470003,
+      "cost_attrition_fees_delta": 78580231.994964,
+      "no_funding_funding_delta": 0.0,
+      "entry_delay_net_delta": -72135391.99992788,
+      "slippage_net_delta": -20618106.85769587,
+      "aggregate_fills": 39293946,
+      "fee_2x_is_not_a_noop": true,
+      "funding_2x_is_not_a_noop": true,
+      "cost_attrition_is_not_a_noop": true,
+      "no_funding_is_cost_free_track": true,
+      "entry_delay_is_not_a_noop": true,
+      "slippage_is_not_a_noop": true
+    },
+    "flags": {
+      "cost_boundary": true,
+      "symbol_concentration": false,
+      "oos_grid_instability": false
+    }
+  },
+  "terminal": {
+    "sentinel": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/attempts/stochastic-rsi-renko-2026-08-31-r1-u3/DONE",
+      "status": "DONE",
+      "sha256": "sha256:e2a11ff2ee5f53c50415534d1e01b9304b2db44a114f959fd0cbd83922de047b",
+      "verdict_hint": "CANDIDATE_REJECT",
+      "artifact_manifest_entries": 24,
+      "check": "python3 runtime/terminal_evidence.py check --attempt-dir <u3> -> rc=0, problems=[], host_boot_id boot-1789359252 == current boot id"
+    },
+    "state_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/attempts/stochastic-rsi-renko-2026-08-31-r1-u3/state.json",
+      "stage": "ARTIFACT_READY"
+    },
+    "result_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/attempts/stochastic-rsi-renko-2026-08-31-r1-u3/result.json",
+      "sha256": "sha256:ec1cb27c3a4ea32c4e85fe0a6dee63870270ca93ba632e600abc0abbb148e7f4"
+    },
+    "survivor_bundle": "not written (0 survivors; contract 10.8 requires >=1). The writer was run as a negative control -> rc=1, refused, nothing written into the round dir."
+  },
+  "verdict": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/stochastic-rsi-renko-2026-08-31/rounds/stochastic-rsi-renko-2026-08-31-r1/verdict.json",
+    "sha256": "sha256:08f3b8a7a8cc8a2619e9cdd817f8c1b197b9a9c446bd5dc835a4bb57d4fea485",
+    "verdict": "REJECT",
+    "performance_claimable": false,
+    "disposition": "REJECT / NO_SURVIVOR",
+    "disposition_band": "NO_SURVIVOR",
+    "cohort_survivors": [],
+    "cohort_count": 20,
+    "failure": {
+      "layer": null,
+      "class": null
+    },
+    "yield_decision": "STOP_REJECT",
+    "written_by": "Hermes default (card t_0546d31b) per contract 10.7; the runner's own verdict_recommendation is a hint only",
+    "container_verdict_hint": "CANDIDATE_REJECT (hint only, contract 9.3); the runner's own verdict_recommendation_final is REJECT"
+  },
+  "cross_checks": [
+    {
+      "script": "runtime/terminal_evidence.py check",
+      "result": "rc=0, problems=[]"
+    },
+    {
+      "script": "sha256 per grid, u1 vs u2",
+      "result": "10/10 byte-identical (the 1.0.1 fix was a no-op)"
+    },
+    {
+      "script": "sha256 + row-level diff per grid, u2 vs u3",
+      "result": "7,028 differing rows = exactly the 7,028 u2 defect rows; 0 outside, 0 defect rows unchanged, 0 residual min_entry_equity <= 0, 0 net-PnL sign flips; 79,372 of 86,400 rows byte-identical"
+    },
+    {
+      "script": "per-grid aggregates + histogram identity recomputed from the frozen CSVs",
+      "result": "level_00 == 86985257 == sum over the seven full-window grids"
+    },
+    {
+      "script": "engine identity three-way readback (repo / host deploy / container)",
+      "result": "1e0b679e... and 54523c1a... on all three"
+    },
+    {
+      "script": "parameter_contract.validate_round_spec_contract(round-spec)",
+      "result": "0 problems (v1.8 schema present in the frozen round-spec)"
+    }
+  ],
+  "repo_changes": [
+    "container/scripts/60_strategy_f_run.py (new engine + the 1.0.1 and 1.0.2 guard fixes)",
+    "container/scripts/tests/test_strategy_f_engine.py (new self-check, 25 -> 28 regressions)",
+    "runtime/_author_strategy_f_template.py, runtime/instantiate_strategy_f_v1.py, runtime/strategy_f_v1_counts.py, runtime/templates/strategy_f_v1_*.json (pre-registration tooling and the instantiation templates)",
+    "runtime/tests/* (template/counts tests; the engine-version pin moved 1.0.0 -> 1.0.1 -> 1.0.2)",
+    "evidence/strategy-f-v1-r1-run-20260916.json + an evidence/README.md row (this record)",
+    "commits 235928d (engine 1.0.0 + tooling), f2ede89 (engine 1.0.1), 81eec64 (engine 1.0.2)"
+  ],
+  "open_items": [
+    "disclosed latent blocker (does NOT affect this round): 60_strategy_f_run.py::family_disposition() writes 'REJECT'/'SURVIVOR' into result.json's `disposition`, but runtime/survivor_bundle.py requires that field to be the v1.4.0 band string ('REJECT / NO_SURVIVOR' / 'SURVIVOR_FOUND' / 'MULTIPLE_SURVIVORS'). The writer therefore refuses every F attempt, so a future F round WITH a survivor could not freeze its bundle -> no survivor index, no leaderboard entry, no section 28 evidence package. Needs an engine fix + a deployed re-read + a registered round to be re-measured under it.",
+    "disclosed latent blocker (does NOT affect this round): every F run-spec's expected_outputs omits artifacts/grid_*.csv, while contract 28.3 requires the grid list to agree between the run-spec and the DONE sentinel manifest (runtime/survivor_evidence.py::registered_grid_names raises on disagreement). Strategy E's run-spec lists its grid CSVs; F's template does not.",
+    "operator-only findings carried forward from the earlier attempts of this card (unrelated to any F artifact): container/scripts/40_strategy_d_run.py applies its tick slippage in the FAVOURABLE direction (that round's costs are understated by one tick per fill; its REJECT verdict sign is unaffected), and the pre-contract-era round ema-crossover-walkforward-momentum-long-short-v2-r1-u3 carries a DONE sentinel with no_entry_after_exhaustion=false.",
+    "the source's own limitation 'Renko construction contract is underspecified' is closed for this round by the frozen renko_contract/indicator_contract in the round-spec (geometric bricks from the source bar's close, stamped at that close; prefix-invariance regression in the engine self-check). Any CHANGE to that contract would move the signal and needs its own pre-registration."
+  ]
+}
