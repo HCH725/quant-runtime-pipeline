@@ -7,10 +7,13 @@ happen here.  Fixed output order: Leaderboard, Current, Research Funnel, Runtime
 
 Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the current family's newest
 `<family_id>/family.json`; its authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) for
-the progress and, while it is still RUNNING_QLIB, its latest *observable* cohort (newest streamed grid
-row); the canonical intake state for the funnel (reviewed = the four current_snapshot buckets,
-ingested = unique ingested_wiki_records, +N/24h read-only from the intake cron's own reports, distinct
-registered / backtested families); the board's live running / blocked counts.
+the progress (round-spec `expected.expected_case_evaluations` as the denominator, and the larger of the
+streamed `grid_*.csv` row count and the engine's own `artifacts/progress.json` cohort / pair counter
+converted with it as the numerator) and, while it is still RUNNING_QLIB, its latest *observable* cohort
+(newest streamed grid row); the canonical intake state for the funnel (reviewed = the four
+current_snapshot buckets, ingested = unique ingested_wiki_records, +N/24h read-only from the intake
+cron's own reports, distinct registered / backtested families); the board's live running / blocked
+counts.
 """
 import csv
 import datetime
@@ -123,6 +126,23 @@ def round_spec_total(results_root, family_id):
     return None
 
 
+def published_steps(attempt):
+    """(done, total) work units the attempt's own `artifacts/progress.json` reports; (None, None) if unusable.
+
+    The engines that write their phase grids only once every cohort is done (Strategy F) still publish
+    their running cohort counter after each one (Strategy E: `pairs_done` / `pairs_total`), so a
+    mid-run snapshot has a numerator while no grid has streamed a row yet.
+    """
+    doc = load_json(attempt.path / "artifacts" / "progress.json")
+    if not isinstance(doc, dict):
+        return None, None
+    for done_key, total_key in (("cohorts_done", "cohorts_total"), ("pairs_done", "pairs_total")):
+        done, total = doc.get(done_key), doc.get(total_key)
+        if type(done) is int and type(total) is int and total > 0 and 0 <= done <= total:
+            return done, total
+    return None, None
+
+
 def progress(results_root, family_id):
     """(pct, done, total, stage, note, attempt) for the family's authoritative attempt."""
     rounds = [r for r in discover_rounds(results_root) if r[0] == family_id]
@@ -150,6 +170,13 @@ def progress(results_root, family_id):
     note = attempt.run_id
     if total is None:
         return 0.0, done, None, stage, note + " (round-spec expected total unavailable)", attempt
+    # Only a non-terminal attempt reaches this line: its engine may still be mid-run, and the engines
+    # that write the grids once every cohort is done publish the cohort / pair counter in the meantime.
+    # Converted with the immutable denominator that counter is an estimate, so it is capped at the total
+    # and only used when it reads higher than the (exact, but late) streamed row count.
+    steps_done, steps_total = published_steps(attempt)
+    if steps_done is not None and steps_total:
+        done = max(done, min(total, total * steps_done // steps_total))
     return min(100.0, max(0.0, 100.0 * done / total)), done, total, stage, note, attempt
 
 

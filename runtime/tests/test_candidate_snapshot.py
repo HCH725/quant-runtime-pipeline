@@ -59,15 +59,16 @@ class Harness(unittest.TestCase):
         path.write_text(doc if isinstance(doc, str) else json.dumps(doc))
         return path
 
-    def family(self, family="fam-a", created="2026-09-13T00:00:00Z", round_id="fam-a-r1"):
+    def family(self, family="fam-a", created="2026-09-13T00:00:00Z", round_id="fam-a-r1",
+               expected=EXPECTED):
         self.write("%s/family.json" % family, {"family_id": family, "kanban_task_id": TASK,
                                                "kanban_board": BOARD, "created_at_utc": created})
         self.write("%s/rounds/%s/round-spec.json" % (family, round_id),
-                   {"expected": {"expected_case_evaluations": EXPECTED}})
+                   {"expected": {"expected_case_evaluations": expected}})
         return round_id
 
     def attempt(self, round_id, run_id, rows=0, created="2026-09-14T00:00:00Z", terminal=None,
-                stage="RUNNING_QLIB", family="fam-a", symbol="SYM", timeframe="5m"):
+                stage="RUNNING_QLIB", family="fam-a", symbol="SYM", timeframe="5m", progress=None):
         base = "%s/rounds/%s/attempts/%s" % (family, round_id, run_id)
         self.write(base + "/run-spec.json", {"family_id": family, "round_id": round_id,
                                              "run_id": run_id, "task_id": TASK,
@@ -77,6 +78,8 @@ class Harness(unittest.TestCase):
             grid = "symbol,timeframe,net_pnl\n" + "".join("%s,%s,%d\n" % (symbol, timeframe, i)
                                                           for i in range(rows))
             self.write(base + "/artifacts/grid_full.csv", grid)
+        if progress is not None:
+            self.write(base + "/artifacts/progress.json", progress)
         if terminal:
             self.write(base + "/" + terminal, {"task_id": TASK})
         return base
@@ -166,6 +169,44 @@ class Harness(unittest.TestCase):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=EXPECTED + 500)
         self.assertIn("100.0% (1,500 / 1,000)", self.snapshot())
+
+    def test_published_cohort_counter_advances_progress_before_any_grid_exists(self):
+        # Strategy F writes its phase grids only once every cohort is done and publishes
+        # cohorts_done/cohorts_total after each one: 1/20 of the immutable 86,400 must read ~5%, not 0.
+        round_id = self.family(expected=86400)
+        self.attempt(round_id, "fam-a-r1-u1", rows=0,
+                     progress={"cohorts_done": 1, "cohorts_total": 20})
+        out = self.snapshot()
+        self.assertIn("5.0% (4,320 / 86,400)", out)
+        self.assertIn("Cohort: unavailable", out)   # no grid row has streamed yet
+
+    def test_published_pair_counter_is_supported(self):
+        # Strategy E publishes pairs_done/pairs_total instead of the cohort keys.
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=0, progress={"pairs_done": 1, "pairs_total": 4})
+        self.assertIn("25.0% (250 / 1,000)", self.snapshot())
+
+    def test_unusable_published_counter_falls_back_to_the_grid_rows(self):
+        # done > total is not a legal counter, and a truncated file is not JSON: both keep the fallback.
+        round_id = self.family()
+        base = self.attempt(round_id, "fam-a-r1-u1", rows=7,
+                            progress={"cohorts_done": 5, "cohorts_total": 2})
+        self.assertIn("0.7% (7 / 1,000)", self.snapshot())
+        self.write(base + "/artifacts/progress.json", "{not json")
+        self.assertIn("0.7% (7 / 1,000)", self.snapshot())
+
+    def test_legal_but_lagging_counter_never_lowers_the_streamed_rows(self):
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=300,
+                     progress={"cohorts_done": 0, "cohorts_total": 20})
+        self.assertIn("30.0% (300 / 1,000)", self.snapshot())
+
+    def test_terminal_attempt_never_takes_progress_from_a_counter(self):
+        # a terminal attempt is not running: a complete-looking counter must not report progress.
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=0, terminal="FAILED", stage="FAILED_SCRIPT",
+                     progress={"cohorts_done": 20, "cohorts_total": 20})
+        self.assertIn("0.0% (0 / 1,000)", self.snapshot())
 
     def test_missing_round_spec_total_is_unavailable(self):
         round_id = self.family()
