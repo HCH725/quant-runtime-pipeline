@@ -1,0 +1,88 @@
+{
+ "author": "Hermes default (Xiaoqian)",
+ "authoritative_run_id": "bitcoin-intraday-time-series-momentum-volume-session-2026-08-31-r1-u2",
+ "card": "t_e74b5ecd",
+ "created_at_utc": "2026-09-16T16:07:11Z",
+ "engine": {
+  "path": "container/scripts/70_strategy_g_run.py",
+  "selfcheck": "container/scripts/tests/test_strategy_g_engine.py",
+  "selfcheck_result": "25 tests OK inside qlib-run (1 skip: survivor_bundle.py is not mounted in the container) and 25/25 on the host",
+  "selfcheck_sha256": "sha256:04c1d0f19819693b8561c3e0eb1b219dc81f8b78f81070c30c76e4a216a6c10f",
+  "sha256_host_deployed": "sha256:a64149ca970f2c7b30b6229b6a58fec6406c0d09ad86a28a7088ef0599e168da",
+  "sha256_repo": "sha256:a64149ca970f2c7b30b6229b6a58fec6406c0d09ad86a28a7088ef0599e168da",
+  "version": "g-v1-engine-1.0.0"
+ },
+ "family_id": "bitcoin-intraday-time-series-momentum-volume-session-2026-08-31",
+ "kind": "Strategy G v1 r1 production run evidence snapshot",
+ "launch": {
+  "mode": "container exec -d qlib-run sh -c '/opt/venv/bin/python /scripts/70_strategy_g_run.py <run-spec> > <attempt>/logs/run.log 2>&1'",
+  "preflight": "P1-P10 all PASS (P10 recomputed the deployed script sha256 host side)",
+  "u1_retry": "u1 FAILED_SCRIPT (missing run-spec funding key) -> same round, new run u2; round-spec reused verbatim"
+ },
+ "negative_controls": {
+  "coverage_gate": "measured cell sets equal the registered products on every grid (coverage_complete=true)",
+  "survivor_bundle_writer": "rc=1 refused for 0 survivors, round dir untouched"
+ },
+ "redaction": "host-specific absolute paths use <HOME> / <EXPANSION>; nothing else altered",
+ "registration": {
+  "counts": "3 cohorts x 12 strategy cases x 48 DCA configs x 10 phase grids = 17,280 case evaluations",
+  "round_spec_sha256": "sha256:0d797813b5635bff0aa90fe634b9181b4e7e99ac26a79749a052f83750545c1e",
+  "run_spec_sha256": "sha256:d563498866d65152528e6e40cb8c09810ebadc211a6bad50478563b69902337d",
+  "validator": "runtime/strategy_g_v1_counts.py (0 problems on the instantiated pair; the template pair reports only the template-era sha placeholder)"
+ },
+ "round_id": "bitcoin-intraday-time-series-momentum-volume-session-2026-08-31-r1",
+ "schema_version": 1,
+ "scope": {
+  "auditor_child_created": false,
+  "frozen_artifacts_rewritten": false,
+  "gates_relaxed": false,
+  "notes": "the verdict is a scientific outcome of the registered, pre-registered search domain; no parameter was adjusted after seeing any result",
+  "paper_or_live_touched": false
+ },
+ "terminal": {
+  "assertions_false": [],
+  "case_evaluations_total": 17280,
+  "cohort_cull_reasons": {
+   "BTCUSDT/15m": [
+    "no_qualifying_candidate"
+   ],
+   "BTCUSDT/30m": [
+    "no_qualifying_candidate"
+   ],
+   "BTCUSDT/5m": [
+    "no_qualifying_candidate"
+   ]
+  },
+  "cohort_survivor_count": 0,
+  "coverage_complete": true,
+  "disposition": "REJECT / NO_SURVIVOR",
+  "expected_case_evaluations": 17280,
+  "family_level_readers": {
+   "conditioning_vs_unconditional_baseline": false,
+   "cost_boundary": false,
+   "entry_rule_instability": false,
+   "session_definition_instability": false
+  },
+  "headline_medians_non_gating": {
+   "cagr": -0.09554155713035928,
+   "capital_utilization": 0.109768,
+   "ending_equity": 3196.8322200000002,
+   "episodes": 750.0,
+   "fees": 8674.56348,
+   "fills": 1576.0,
+   "funding": -0.275193,
+   "gross_pnl": -8719.98962,
+   "max_dd_pct": -0.933319,
+   "max_dd_usdt": -28131.45119,
+   "max_effective_leverage": 9.8182765,
+   "net_pnl": -26803.16778,
+   "sharpe": -1.5163285,
+   "total_return_pct": -0.8934390000000001,
+   "turnover_usdt": 17349126.960824
+  },
+  "performance_claimable": false,
+  "runtime_seconds": 424,
+  "stage": "ARTIFACT_READY -> DONE sentinel",
+  "verdict": "REJECT"
+ }
+}

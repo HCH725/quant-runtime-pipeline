@@ -1,0 +1,663 @@
+{
+ "costs": {
+  "baseline_slippage_ticks": 1,
+  "cost_attrition_fee_mult": 8.0,
+  "fee_bps": 5,
+  "funding": "charged per settlement inside the session's closed exposure interval; funding_2x doubles it and the no_funding grids zero it (descriptive)",
+  "funding_exposure_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1 s, exit instant + 1 s]. The measured raw jitter of the settlement timestamps is 0..28 ms LATE and never early, so a settlement sitting on a session boundary is charged to the window that holds the position at that instant. A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the session, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged.",
+  "maker_fee": 0.0002,
+  "source": "canonical instrument metadata, read at run time from /data/raw",
+  "taker_fee": 0.0005
+ },
+ "created_at_utc": "{{created_at_utc}}",
+ "data": {
+  "bar_labelling": "VERIFIED at pre-registration: open_time_ms is the bar START in UTC; 5m/15m/30m are exactly contiguous over the window (493,920 / 164,640 / 82,320 bars, 0 gaps, 0 off-grid steps), so the slot and session mapping is exact and the engine asserts it at run time.",
+  "end": "2026-09-11",
+  "funding_truth_status_windows": {
+   "engine_rule": "The position is exposed to every funding settlement whose raw instant lies in the CLOSED interval [entry instant - 1 s, exit instant + 1 s]. The measured raw jitter of the settlement timestamps is 0..28 ms LATE and never early, so a settlement sitting on a session boundary is charged to the window that holds the position at that instant. A settlement is charged on the position notional at the moment of the charge: the close of the bar that contains it inside the session, or the episode's exit fill price when it lands at the closing boundary. The sign follows the position: a positive rate is a cost to a long and a credit to a short. Settlements outside the closed interval are never charged.",
+   "modeled_funding": "2022-01-01T00:00:00Z .. 2023-10-31 (reconstruction; mark_price null)",
+   "official": "2023-10-31T08:00:00Z .. 2026-09-11T23:59:59Z (Binance mark price present)",
+   "primary_uses": "the complete registered series (modelled + official), as a COST only"
+  },
+  "historical_end": "2025-09-30",
+  "historical_start": "2022-01-01",
+  "oos_end": "2026-09-11",
+  "oos_start": "2025-10-01",
+  "read_only": true,
+  "source": "/data/raw",
+  "start": "2022-01-01",
+  "symbols": [
+   "BTCUSDT"
+  ],
+  "timeframes": [
+   {
+    "qlib_freq": "5min",
+    "raw_interval": "5m"
+   },
+   {
+    "qlib_freq": "15min",
+    "raw_interval": "15m"
+   },
+   {
+    "qlib_freq": "30min",
+    "raw_interval": "30m"
+   }
+  ]
+ },
+ "dca_domain": {
+  "base_quote": 1000,
+  "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+  "breakeven_tp_pct": [
+   0.01,
+   0.02,
+   0.03
+  ],
+  "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "config_count": 48,
+  "grid": [
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.01
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.02
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.03
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.0,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.01,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.02,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.05,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   },
+   {
+    "base_quote": 1000,
+    "breakeven_tp_pct": 0.03,
+    "invalidation_pct": 0.1,
+    "size_multiplier": 1.1,
+    "spacing_pct": 0.04
+   }
+  ],
+  "invalidation_pct": [
+   0.05,
+   0.1
+  ],
+  "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "size_multiplier": [
+   1.0,
+   1.1
+  ],
+  "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "spacing_pct": [
+   0.01,
+   0.02,
+   0.03,
+   0.04
+  ],
+  "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+ },
+ "disposition_version": "cohort-disposition-v1",
+ "document_kind": "run-spec (Strategy G v1; instantiate to /results/<family_id>/rounds/<round_id>/attempts/<run_id>/run-spec.json BEFORE launch)",
+ "engine_selfcheck": {
+  "must_run_before_launch": true,
+  "script": "/scripts/tests/test_strategy_g_engine.py",
+  "sha256": "{{engine_selfcheck_sha256}}"
+ },
+ "expected": {
+  "base_combinations_per_cohort": 576,
+  "case_evaluations_per_grid": 1728,
+  "cohort_grid_kinds": [
+   "historical",
+   "oos",
+   "full",
+   "fee_2x",
+   "funding_2x",
+   "entry_delay_1_bar",
+   "slippage_2ticks",
+   "no_funding",
+   "no_funding_full",
+   "cost_attrition_40bps"
+  ],
+  "cohorts": 3,
+  "dca_configs_per_cohort": 48,
+  "expected_case_evaluations": 17280,
+  "phase_grid_count": 10,
+  "strategy_cases_per_cohort": 12
+ },
+ "expected_outputs": [
+  "result.json",
+  "artifacts/cohort_results.json",
+  "artifacts/cohort_survivors.json",
+  "artifacts/assertions.json",
+  "artifacts/dca_layer_histogram.json",
+  "artifacts/session_schedule.json",
+  "artifacts/family_falsification.json",
+  "artifacts/robustness_diagnostics.json",
+  "artifacts/funding_series.json",
+  "artifacts/input_manifest.json",
+  "artifacts/bins_build.json",
+  "artifacts/progress.json",
+  "artifacts/grid_historical.csv",
+  "artifacts/grid_oos.csv",
+  "artifacts/grid_full.csv",
+  "artifacts/grid_fee_2x.csv",
+  "artifacts/grid_funding_2x.csv",
+  "artifacts/grid_entry_delay_1_bar.csv",
+  "artifacts/grid_slippage_2ticks.csv",
+  "artifacts/grid_no_funding.csv",
+  "artifacts/grid_no_funding_full.csv",
+  "artifacts/grid_cost_attrition_40bps.csv"
+ ],
+ "falsification": [
+  "no signal / insufficient sessions (G2)",
+  "no qualifying historical candidate (G3)",
+  "OOS economic rejection (G4)",
+  "full-window economic rejection (G5)",
+  "robustness economic failure (G6)",
+  "parameter-neighbourhood fragility (G7)",
+  "session-definition instability -> family-level, never PASS",
+  "entry-rule instability -> family-level, never PASS",
+  "cost boundary (40 bps attrition) -> family-level, never PASS",
+  "conditioning does not beat the unconditional baseline -> family-level, never PASS",
+  "coverage incomplete in any registered phase grid (G1)",
+  "any false assertion in assertions.json"
+ ],
+ "family_id": "bitcoin-intraday-time-series-momentum-volume-session-2026-08-31",
+ "gates": {
+  "min_episodes_is": 100,
+  "min_episodes_oos": 25,
+  "neighborhood_min_same_sign_fraction": 0.6
+ },
+ "kanban_board": "quant-strategy-research",
+ "notes": "One attempt of round {{round_id}}. The engine rebuilds the qlib .bin store from the read-only raw store, evaluates 3 cohorts x 12 strategy cases x 48 DCA configs on 10 registered phase grids, and writes the registered artifacts. The runner's verdict_recommendation is a recommendation; the final verdict.json is written by the Hermes default card after reading the artifacts back (contract 10.7).",
+ "parameter_domain": {
+  "conditioning_grid": [
+   "all_sessions",
+   "high_vol_only"
+  ],
+  "entry_rule_grid": [
+   "hold_to_close",
+   "last_half_hour"
+  ],
+  "entry_timing_status": "RESEARCH_DEFINED",
+  "exit_timing_status": "RESEARCH_DEFINED",
+  "grid_case_names": [
+   "trail7__hold_to_close__all",
+   "trail7__hold_to_close__highvol",
+   "trail7__last_half_hour__all",
+   "trail7__last_half_hour__highvol",
+   "trail30__hold_to_close__all",
+   "trail30__hold_to_close__highvol",
+   "trail30__last_half_hour__all",
+   "trail30__last_half_hour__highvol",
+   "trail90__hold_to_close__all",
+   "trail90__hold_to_close__highvol",
+   "trail90__last_half_hour__all",
+   "trail90__last_half_hour__highvol"
+  ],
+  "grid_cases": [
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 1,
+    "basis_trail90": 0,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 1,
+    "basis_trail90": 0,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 1,
+    "basis_trail90": 0,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 1,
+    "basis_trail90": 0,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   },
+   {
+    "basis_trail30": 1,
+    "basis_trail7": 0,
+    "basis_trail90": 0,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 1,
+    "basis_trail7": 0,
+    "basis_trail90": 0,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 1,
+    "basis_trail7": 0,
+    "basis_trail90": 0,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   },
+   {
+    "basis_trail30": 1,
+    "basis_trail7": 0,
+    "basis_trail90": 0,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 0,
+    "basis_trail90": 1,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 0,
+    "basis_trail90": 1,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 1,
+    "entry_last_half_hour": 0
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 0,
+    "basis_trail90": 1,
+    "cond_high_vol": 0,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   },
+   {
+    "basis_trail30": 0,
+    "basis_trail7": 0,
+    "basis_trail90": 1,
+    "cond_high_vol": 1,
+    "entry_hold_to_close": 0,
+    "entry_last_half_hour": 1
+   }
+  ],
+  "legal_cases_per_cohort": 12,
+  "session_basis_grid": [
+   "trail7",
+   "trail30",
+   "trail90"
+  ],
+  "session_contract": {
+   "anchor_rule": "anchor(D) = argmax over the 48 slots of the MEAN slot volume over the trailing `session_basis` days STRICTLY BEFORE the session's own day; ties resolve to the smallest slot; the anchor plays the role of the market open",
+   "conditioning": "all_sessions trades every session; high_vol_only trades only sessions whose PRE-session realised volatility (population stdev of base-bar log returns over the 24 h ending at the session start) is strictly above the trailing median of that same statistic over the previous 30 sessions (PIT; an incomplete volatility window cannot qualify)",
+   "entry_rule": "hold_to_close: the OPEN of the first base bar that opens at or after session_start + 30 min (the first executable price after the signal is complete); last_half_hour: the OPEN of the first base bar that opens at or after session_start + 23 h 30 min",
+   "exit_rule": "reduce-only flatten at the CLOSE of the session's last base bar (a hard boundary, never truncated into a fake time exit)",
+   "non_overlap": "a session whose entry bar falls inside an already open episode is skipped (non-overlapping primary protocol) and counted",
+   "point_in_time": "the anchor profile of day D reads only days < D, the signal is complete at the entry instant, and no path reads a future bar",
+   "session": "[day + anchor x 30 min, +24 h); first half hour = the anchor slot, last half hour = the session's final 30 minutes",
+   "signal": "R_first = close(first half hour) / open(first half hour) - 1; R_first > 0 -> LONG episode, R_first < 0 -> SHORT episode, R_first == 0 -> no episode",
+   "slot_grid": "the UTC day is sliced into 48 half-hour slots; every registered base grid (5m/15m/30m) divides a slot exactly"
+  },
+  "session_contract_status": "RESEARCH_DEFINED"
+ },
+ "provenance_mirror": {
+  "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+  "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+  "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+ },
+ "round_id": "{{round_id}}",
+ "round_spec_path": "{{round_spec_path}}",
+ "run_id": "{{run_id}}",
+ "schema_version": 1,
+ "script": {
+  "deployed_from": "HCH725/quant-runtime-pipeline container/scripts/70_strategy_g_run.py (byte-identical, P10 recomputes it host side)",
+  "path": "/scripts/70_strategy_g_run.py",
+  "sha256": "{{script_sha256}}"
+ },
+ "selector_version": "cohort-selector-v1",
+ "semantic_fingerprint": {
+  "fingerprint_input": "bitcoin-intraday-time-series-momentum-volume-session-2026-08-31|universe=portability=adapted/unproven (crypto-domain);window=record-faithful|dca=spacing_pct=0.01,0.02,0.03,0.04;size_multiplier=1.0,1.1;breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10|selector=cohort-selector-v1;disposition=cohort-disposition-v1|source=bitcoin-intraday-time-series-momentum-volume-session-2026-08-31.md",
+  "semantic_fingerprint": "sha256:f4da6ba48ca75f1595421215d2effcb4a73ce9e3d2eac7b1de2da1c015f886c8"
+ },
+ "task_id": "{{task_id}}",
+ "template_instantiation": {
+  "placeholders": [
+   "{{round_id}}",
+   "{{run_id}}",
+   "{{task_id}}",
+   "{{created_at_utc}}",
+   "{{script_sha256}}",
+   "{{engine_selfcheck_sha256}}",
+   "{{round_spec_path}}"
+  ],
+  "rule": "Domains, split, costs, gates and the selector/disposition versions are FROZEN before the first run and must be copied from the instantiated round-spec.json. Only the seven placeholders may be substituted. {{script_sha256}} must be the host-side recomputed sha256 of the deployed /scripts/70_strategy_g_run.py; {{engine_selfcheck_sha256}} the same for /scripts/tests/test_strategy_g_engine.py, which must run (rc=0) before launch."
+ }
+}
