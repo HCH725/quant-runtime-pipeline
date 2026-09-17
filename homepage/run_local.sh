@@ -3,7 +3,8 @@
 #
 # Both processes bind 127.0.0.1 only and are viewers: the server exposes one allowlisted file, the
 # dashboard renders it. Neither can start, stop, retry or unblock anything - the quant runtime does
-# not depend on them, and stopping them changes nothing except the display.
+# not depend on them, and stopping them changes nothing except the display.  The launcher verifies
+# Homepage's actual listening socket (`lsof`) instead of trusting the host env var.
 #
 #   sh homepage/run_local.sh          # start what is not already listening
 #   sh homepage/run_local.sh stop     # stop both
@@ -43,12 +44,23 @@ fi
 
 if ! curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null 2>&1; then
   cd "$APP"
+  # Bind, not just a Host-header guard: `next start` defaults to hostname 0.0.0.0, while the
+  # standalone server (the build is `output: standalone`) takes the host from HOSTNAME - which is
+  # also the invocation Next asks for, so the "output: standalone" warning goes away.
+  # HOMEPAGE_ALLOWED_HOSTS stays as the Host-header guard; it proves nothing about the socket.
   HOMEPAGE_CONFIG_DIR="$REPO/homepage" \
   HOMEPAGE_ALLOWED_HOSTS="localhost:$WEB_PORT,127.0.0.1:$WEB_PORT" \
+  HOSTNAME=127.0.0.1 \
   PORT="$WEB_PORT" \
-    nohup pnpm start >"$RUN/homepage.log" 2>&1 &
+    nohup node "$APP/.next/standalone/server.js" >"$RUN/homepage.log" 2>&1 &
   echo $! >"$RUN/homepage.pid"
   echo "started homepage (pid $(cat "$RUN/homepage.pid"))"
+  sleep 3
+  if ! lsof -nP -iTCP:"$WEB_PORT" -sTCP:LISTEN | grep -q "127\.0\.0\.1:$WEB_PORT"; then
+    echo "homepage did not bind 127.0.0.1:$WEB_PORT - refusing to call this a localhost dashboard:" >&2
+    lsof -nP -iTCP:"$WEB_PORT" -sTCP:LISTEN >&2 || true
+    exit 1
+  fi
 fi
 
 echo "dashboard:  http://localhost:$WEB_PORT/"

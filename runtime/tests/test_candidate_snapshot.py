@@ -31,8 +31,7 @@ TASK = "t_SMOKE"
 BOARD = "quant-strategy-research"
 EXPECTED = 1000
 STATE_NAME = "alpha-strategy-review-state.json"
-QUANT_CRON = {"id": "test-job", "name": "Quant handoff", "script": "quant_production_handoff.py",
-              "schedule": "5,35 * * * *", "state": "active", "last_status": "ok", "last_run_at": None}
+WATCHDOG_NAME = "quant_runtime_watchdog.json"
 
 
 class Harness(unittest.TestCase):
@@ -44,23 +43,20 @@ class Harness(unittest.TestCase):
         self._real_board_counts = snap.board_counts
         self._real_review_state = snap.REVIEW_STATE
         self._real_intake_output = snap.INTAKE_OUTPUT
-        self._real_container_runtime = snap.container_runtime
-        self._real_quant_crons = snap.quant_crons
+        self._real_watchdog_state = snap.WATCHDOG_STATE
         snap.card_status = lambda board, task_id: ("scheduled", "stub")
         snap.board_counts = lambda board: (1, 0)
-        snap.container_runtime = lambda: {"name": "qlib-run", "state": "running",
-                                          "image": "qlib:test", "started_utc": "2026-09-14T00:00:00Z"}
-        snap.quant_crons = lambda: [dict(QUANT_CRON)]
         snap.REVIEW_STATE = str(Path(self.state_dir) / STATE_NAME)
         snap.INTAKE_OUTPUT = str(Path(self.state_dir) / "intake-output")
+        snap.WATCHDOG_STATE = Path(self.state_dir) / WATCHDOG_NAME
+        self.watchdog_state()   # the watchdog's own state, healthy unless a test says otherwise
 
     def tearDown(self):
         snap.card_status = self._real_card_status
         snap.board_counts = self._real_board_counts
         snap.REVIEW_STATE = self._real_review_state
         snap.INTAKE_OUTPUT = self._real_intake_output
-        snap.container_runtime = self._real_container_runtime
-        snap.quant_crons = self._real_quant_crons
+        snap.WATCHDOG_STATE = self._real_watchdog_state
         shutil.rmtree(self.root, ignore_errors=True)
         shutil.rmtree(self.state_dir, ignore_errors=True)
         shutil.rmtree(self.out_dir, ignore_errors=True)
@@ -100,6 +96,13 @@ class Harness(unittest.TestCase):
     def review_state(self, buckets=None, ingested=None):
         self.write_state(STATE_NAME, {"current_snapshot": buckets or {},
                                       "ingested_wiki_records": ingested or []})
+
+    def watchdog_state(self, active=None, checked="2026-09-17T09:40:38Z", healthy=None):
+        """One watchdog state file, in `quant_runtime_watchdog.py`'s own schema-1 shape."""
+        self.write_state(WATCHDOG_NAME, {"schema_version": 1, "last_check_at_utc": checked,
+                                         "updated_at_utc": checked,
+                                         "last_healthy_at_utc": (checked if healthy is None else healthy),
+                                         "active_signatures": active or {}})
 
     def write_state(self, rel, doc):
         path = Path(self.state_dir) / rel
@@ -348,8 +351,11 @@ class Harness(unittest.TestCase):
         doc = self.dashboard()
         self.assertEqual(doc["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
         for key in ("generated_at_utc", "monitoring_only", "health", "sources", "current",
-                    "leaderboard", "funnel", "runtime", "agent"):
+                    "leaderboard", "funnel", "agent"):
             self.assertIn(key, doc)
+        # container / results-volume / cron re-checks are gone: health is the watchdog's, the board is
+        # the snapshot's own read-back, and nothing else is monitored from here.
+        self.assertNotIn("runtime", doc)
         cur = doc["current"]
         self.assertEqual(cur["family_id"], "fam-a")
         self.assertEqual((cur["round_id"], cur["attempt"], cur["stage"]),
@@ -372,8 +378,9 @@ class Harness(unittest.TestCase):
         self.assertIn("Sharpe 1.00", text)
         self.assertEqual(doc["agent"]["blocked"], 0)
         self.assertEqual(doc["agent"]["running"], 1)
-        self.assertEqual(doc["health"]["status"], "ok")
-        self.assertEqual(doc["health"]["reasons"], [])
+        self.assertEqual(doc["health"]["status"], "ok")     # the watchdog holds no active signature
+        self.assertEqual(doc["health"]["active"], [])
+        self.assertEqual(doc["health"]["active_count"], 0)
 
     def test_payload_top_five_is_capped_like_the_text(self):
         entries = [{"rank": i + 1, "cohort": "SYM%dm" % i, "evidence_state": "FROZEN_ONLY",
@@ -407,32 +414,107 @@ class Harness(unittest.TestCase):
         self.assertIsNone(doc["funnel"]["backtested"]["share_pct"])
         self.assertIn("unavailable", self.snapshot())
 
-    def test_payload_reports_absent_container_and_degraded_health(self):
-        # A measured "absent" is reported as such; a failed read-back (None) is `attention`, never a
-        # silently healthy dashboard.
-        snap.container_runtime = lambda: {"name": "qlib-run", "state": "absent", "image": None,
-                                          "started_utc": None}
-        self.assertEqual(self.dashboard()["runtime"]["container_summary"], "absent")
-        snap.container_runtime = lambda: None
+    def test_health_is_the_watchdog_state_passed_through(self):
+        # The watchdog is the single health truth: no active signature is "ok", and the timestamps in
+        # the payload are the watchdog's own - nothing here derives a status from results/board/container.
+        self.watchdog_state(checked="2026-09-17T09:40:38Z", healthy="2026-09-17T09:10:00Z")
+        doc = self.dashboard()
+        self.assertTrue(doc["health"]["available"])
+        self.assertEqual(doc["health"]["source"], "quant_runtime_watchdog")
+        self.assertEqual(doc["health"]["state_path"], str(snap.WATCHDOG_STATE))
+        self.assertEqual(doc["health"]["status"], "ok")
+        self.assertEqual(doc["health"]["active"], [])
+        self.assertEqual(doc["health"]["active_count"], 0)
+        self.assertEqual(doc["health"]["last_check_at_utc"], "2026-09-17T09:40:38Z")
+        self.assertEqual(doc["health"]["last_healthy_at_utc"], "2026-09-17T09:10:00Z")
+        self.assertEqual(doc["health"]["summary"], "ok")
+
+    def test_active_watchdog_signature_is_attention_and_the_signature_travels(self):
+        # An active signature *is* the finding: it is passed through verbatim (so a future watchdog
+        # check can never be dropped by a stale label table) with its kind relabelled for display.
+        self.watchdog_state(active={
+            "attempt|/runs/x|soft_stall": {"first_seen_utc": "2026-09-17T09:00:00Z"},
+            "cron|f6b9aa5e9034|stale": {"first_seen_utc": "2026-09-17T09:05:00Z"},
+            "future|check|brand_new": {"first_seen_utc": "2026-09-17T09:06:00Z"}})
         doc = self.dashboard()
         self.assertEqual(doc["health"]["status"], "attention")
-        self.assertIsNone(doc["runtime"]["container"])
-        self.assertEqual(doc["runtime"]["container_summary"], "unavailable")
-        snap.board_counts = lambda board: (None, None)
+        self.assertEqual(doc["health"]["active_count"], 3)
+        self.assertEqual([item["signature"] for item in doc["health"]["active"]],
+                         ["attempt|/runs/x|soft_stall", "cron|f6b9aa5e9034|stale",
+                          "future|check|brand_new"])
+        self.assertEqual([item["kind"] for item in doc["health"]["active"]],
+                         ["soft_stall", "stale", None])
+        self.assertEqual(doc["health"]["active"][0]["first_seen_utc"], "2026-09-17T09:00:00Z")
+        self.assertEqual(doc["health"]["active"][2]["label"], "future|check|brand_new")
+        self.assertIn("run stalled", doc["health"]["summary"])
+        self.assertIn("quant cron job stale", doc["health"]["summary"])
+
+    def test_unreadable_watchdog_state_is_unknown_never_ok(self):
+        Path(snap.WATCHDOG_STATE).unlink()
         doc = self.dashboard()
         self.assertEqual(doc["health"]["status"], "unknown")
+        self.assertFalse(doc["health"]["available"])
+        self.assertIsNone(doc["health"]["active_count"])    # never a fabricated 0
+        self.assertIsNone(doc["health"]["last_check_at_utc"])
+        self.assertIn("unreadable", doc["health"]["summary"])
+
+    def test_board_readback_failure_is_null_not_zero_and_never_moves_health(self):
+        snap.board_counts = lambda board: (None, None)
+        doc = self.dashboard()
         self.assertIsNone(doc["agent"]["running"])
         self.assertIsNone(doc["agent"]["blocked"])
+        self.assertEqual(doc["agent"]["board_summary"], "unavailable")
+        self.assertEqual(doc["health"]["status"], "ok")     # health is the watchdog's, not the board's
 
     def test_payload_write_is_atomic_and_outside_results(self):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=30)
         before = self.digest()
         target = Path(self.out_dir) / "dashboard" / "dashboard.json"
-        snap.write_json(target, self.payload())
+        snap.write_json(target, self.payload(), self.root)
         self.assertEqual(before, self.digest())                       # /results untouched
         self.assertEqual(json.loads(target.read_text())["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
         self.assertEqual(sorted(p.name for p in target.parent.iterdir()), ["dashboard.json"])  # no temp left
+
+    def test_write_json_refuses_a_target_inside_the_results_root(self):
+        # "never under /results" is a boundary of the writer, not a promise of its caller: the target
+        # is refused before anything is created (no file, no directory, no temp).
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=5)
+        before = self.digest()
+        for target in (Path(self.root) / "dashboard.json",
+                       Path(self.root) / "fam-a" / "nested" / "dashboard.json",
+                       Path(self.root) / ".." / Path(self.root).name / "dashboard.json"):
+            with self.assertRaises(ValueError):
+                snap.write_json(target, self.payload(), self.root)
+        self.assertEqual(before, self.digest())
+        self.assertFalse((Path(self.root) / "fam-a" / "nested").exists())
+
+    def test_cli_refuses_a_results_path_and_keeps_stdout_and_exit_code(self):
+        # Same guard through the CLI: rc=0 and byte-identical stdout (the Discord line is untouched),
+        # only a stderr note, and the results tree is bit-for-bit what it was.
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=250)
+        target = Path(self.root) / "dashboard.json"
+        before = self.digest()
+        argv, env = sys.argv, os.environ.get("QLIB_RESULTS_ROOT")
+        sys.argv = ["candidate_snapshot.py", "--dashboard-json", str(target)]
+        os.environ["QLIB_RESULTS_ROOT"] = self.root
+        out, err = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = snap.main()
+        finally:
+            sys.argv = argv
+            if env is None:
+                os.environ.pop("QLIB_RESULTS_ROOT", None)
+            else:
+                os.environ["QLIB_RESULTS_ROOT"] = env
+        self.assertEqual(rc, 0)
+        self.assertEqual(out.getvalue(), self.snapshot() + "\n")
+        self.assertIn("refusing to write inside the results root", err.getvalue())
+        self.assertFalse(target.exists())
+        self.assertEqual(before, self.digest())
 
     def test_cli_writes_the_dashboard_file_and_keeps_stdout_identical(self):
         round_id = self.family()

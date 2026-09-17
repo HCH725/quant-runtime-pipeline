@@ -12,7 +12,7 @@ depend on it - if both processes are down, every scheduled job keeps running unc
 | `homepage/{settings,services,widgets}.yaml`, `homepage/custom.css` | this repo | the dashboard config (this directory *is* `HOMEPAGE_CONFIG_DIR`) |
 | `runtime/candidate_snapshot.py --dashboard-json <path>` | this repo | the single producer of the payload (same helpers as the Discord `#candidate` line) |
 | `runtime/dashboard_serve.py` | this repo | stdlib server, 127.0.0.1 only, allowlist = `dashboard.json` (nothing else is reachable) |
-| Homepage app (v2.4.0 build) | `~/workspace/quant-homepage-app` | the viewer itself (`pnpm build` once, `pnpm start` to run) |
+| Homepage app (v2.4.0 build) | `~/workspace/quant-homepage-app` | the viewer itself (`pnpm install && pnpm build` once; started as `.next/standalone/server.js`, see below) |
 | payload + logs + pids | `~/quant-dashboard/` | `data/dashboard.json`, `run/*.log`, `run/*.pid` |
 
 ## Run
@@ -39,14 +39,16 @@ cd ~/workspace/quant-homepage-app && pnpm install && pnpm build
 
 ## Page layout
 
-1. **Quant Health** - the one overall status (`ok` / `attention` / `unknown`), the board read-back,
-   the container state and the payload age.
+1. **Quant Health** - the one overall status (`ok` / `attention` / `unknown`), which *is*
+   `quant_runtime_watchdog.py`'s own state passed through: `attention` exactly when the watchdog
+   holds an active signature, `unknown` when its state file cannot be read. Plus the payload age.
 2. **Current Research** - the newest family / round / attempt / stage / progress / cohort and when
    the attempt last wrote something. Research progress only: **not live PnL**.
 3. **Leaderboard** - the Top 5 frozen survivors, verbatim from `_survivors/leaderboard.json`
    (rows link to the raw payload).
 4. **Research Funnel** - reviewed → ingested Wiki records and registered → backtested families.
-5. **Runtime & Agent** - qlib container, results volume, Kanban board counts, quant cron jobs.
+5. **Runtime & Agent** - the watchdog's own W1-W4 state (status, active findings, last check, last
+   healthy) and the Kanban board read-back.
 
 Unknown values render as `unavailable` / blank, never as `0`.
 
@@ -58,4 +60,12 @@ Unknown values render as `unavailable` / blank, never as `0`.
   backtests anything; the payload is written by the monitoring job, never by the viewer.
 - No second computation: every number comes from `candidate_snapshot.py`'s existing helpers, so the
   dashboard and the Discord line are the same snapshot.
+- No second monitor: runtime health is the watchdog's own verdict passed through, never a health
+  algorithm of this dashboard's own - container / results-volume / cron re-checks are deliberately
+  absent, and the watchdog keeps owning W1-W4.
+- Loopback proven, not assumed: `run_local.sh` starts Homepage as the standalone server with
+  `HOSTNAME=127.0.0.1` and then asserts the real listening socket with `lsof` (`next start` would
+  default to `0.0.0.0`, and `HOMEPAGE_ALLOWED_HOSTS` is only a Host-header guard, not a bind).
+- The payload writer refuses any `--dashboard-json` target inside the results root, so "never under
+  /results" is enforced by the script rather than by caller discipline.
 - No Docker, no new service manager: two foreground-able processes bound to loopback.

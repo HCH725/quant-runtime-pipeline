@@ -5,8 +5,9 @@ Monitoring only: one short mobile-sized line set every run, read-only by constru
 /results is written, the only Kanban verbs are read-backs, and no launch / retry / unblock / verdict can
 happen here.  Fixed output order: Leaderboard, Current, Research Funnel, Runtime health.  The same
 document is available machine-readable for the read-only Homepage dashboard via `--dashboard-json
-PATH` (the only write this file can make, and never under /results), reusing these same helpers -
-never a second calculation.
+PATH` (the only write this file can make; a target under /results is refused), reusing these same
+helpers - never a second calculation.  Runtime health is not derived here either: it is the quant
+watchdog's own state, passed through.
 
 Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the current family's newest
 `<family_id>/family.json`; its authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) for
@@ -57,12 +58,28 @@ DELTA_HOURS = 24
 # value is display-only: no threshold, ranking or outcome is re-derived here, so the dashboard can
 # never disagree with the text the operator already gets.
 DASHBOARD_SCHEMA_VERSION = 1
-CONTAINER_NAME = os.environ.get("QLIB_CONTAINER", "qlib-run")
-CRON_JOBS = Path(os.environ.get("HERMES_CRON_JOBS", "~/.hermes/cron/jobs.json")).expanduser()
-# The quant loop's own scheduler entries: the dashboard reports their state, it never changes it.
-CRON_SCRIPTS = ("quant_production_handoff.py", "quant_runtime_reconcile.py", "quant_runtime_watchdog.py",
-                "quant_candidate_snapshot.py")
-CRON_NAMES = ("Research Intake Review",)
+# `quant_runtime_watchdog.py`'s own state file: the single authoritative alert/health truth for the
+# quant loop (its W1 results-root/space, W2 run/container/stall, W3 terminal-pending, W4 cron checks).
+# This module reads it; it never re-checks any of those conditions itself.
+WATCHDOG_STATE = Path(os.environ.get("QUANT_WATCHDOG_STATE",
+                                     "~/.hermes/state/quant_runtime_watchdog.json")).expanduser()
+# Watchdog signature kind -> the operator-facing phrase.  Pure relabelling of the watchdog's own
+# signature tokens: nothing is decided here, an unknown kind falls back to the signature verbatim,
+# and the raw signature always travels alongside its label.
+HEALTH_KINDS = {
+    "results_root": "results root not readable",
+    "low_space": "results volume below the 50 GiB floor",
+    "container_cli": "container CLI unavailable",
+    "cron_registry": "cron registry unreadable",
+    "repo_import": "watchdog cannot import the repo reconciler helpers",
+    "container_down": "run container not running",
+    "container_restart": "container restarted after the run began",
+    "host_reboot": "host rebooted after the run began",
+    "soft_stall": "run stalled (no run.log/artifacts for 90+ minutes)",
+    "terminal_pending": "run stopped without a published terminal",
+    "stale": "quant cron job stale",
+    "missing": "quant cron job missing from the registry",
+}
 
 
 def load_json(path):
@@ -369,60 +386,28 @@ def mtime_utc(path):
         return None
 
 
-def container_runtime():
-    """The qlib container's live state from `container list --all --format json`; None when the
-    read-back is unavailable.
+def watchdog_health():
+    """The quant watchdog's own state, passed through; None when that state is unreadable.
 
-    A name that is missing from a *successful* listing is `absent` (measured); a failed CLI or
-    unparsable listing is None (unknown). The dashboard must never read "unknown" as "down".
+    `quant_runtime_watchdog.py` is the single authoritative alert/health truth for the loop, so an
+    active signature *is* the finding - this module only relabels the signature kind for display and
+    never re-derives the condition.  An unreadable state is `unknown`, never a healthy dashboard.
     """
-    rc, out, _err = sh(["container", "list", "--all", "--format", "json"])
-    if rc != 0:
+    doc = load_json(WATCHDOG_STATE)
+    signatures = doc.get("active_signatures") if isinstance(doc, dict) else None
+    if not isinstance(signatures, dict):
         return None
-    try:
-        rows = json.loads(out)
-    except ValueError:
-        return None
-    if not isinstance(rows, list):
-        return None
-    for row in rows:
-        if not isinstance(row, dict) or row.get("id") != CONTAINER_NAME:
-            continue
-        status = row.get("status") if isinstance(row.get("status"), dict) else {}
-        config = row.get("configuration") if isinstance(row.get("configuration"), dict) else {}
-        image = config.get("image") if isinstance(config.get("image"), dict) else {}
-        return {"name": CONTAINER_NAME, "state": status.get("state"),
-                "image": image.get("reference"), "started_utc": status.get("startedDate")}
-    return {"name": CONTAINER_NAME, "state": "absent", "image": None, "started_utc": None}
-
-
-def quant_crons():
-    """Read-only view of the quant loop's scheduler entries; None when the jobs file is unreadable."""
-    doc = load_json(CRON_JOBS)
-    jobs = doc.get("jobs") if isinstance(doc, dict) else None
-    if not isinstance(jobs, list):
-        return None
-    out = []
-    for job in jobs:
-        if not isinstance(job, dict):
-            continue
-        if job.get("script") in CRON_SCRIPTS or job.get("name") in CRON_NAMES:
-            schedule = job.get("schedule") if isinstance(job.get("schedule"), dict) else {}
-            out.append({"id": job.get("id"), "name": job.get("name"), "script": job.get("script"),
-                        "schedule": schedule.get("display"),
-                        "state": "paused" if job.get("paused") else "active",
-                        "last_status": job.get("last_status"), "last_run_at": job.get("last_run_at")})
-    return out
-
-
-def results_volume(results_root):
-    """(free_gib, total_gib) of the filesystem holding the results root; (None, None) if unreadable."""
-    try:
-        st = os.statvfs(results_root)
-    except OSError:
-        return None, None
-    return (round(st.f_bavail * st.f_frsize / float(2 ** 30), 1),
-            round(st.f_blocks * st.f_frsize / float(2 ** 30), 1))
+    active = []
+    for signature in sorted(signatures):
+        seen = signatures[signature] if isinstance(signatures[signature], dict) else {}
+        kind = next((k for k in HEALTH_KINDS if k in str(signature).split("|")), None)
+        active.append({"signature": signature, "kind": kind,
+                       "label": HEALTH_KINDS.get(kind) or signature,
+                       "first_seen_utc": seen.get("first_seen_utc")})
+    return {"state_path": str(WATCHDOG_STATE), "schema_version": doc.get("schema_version"),
+            "last_check_at_utc": doc.get("last_check_at_utc"),
+            "last_healthy_at_utc": doc.get("last_healthy_at_utc"),
+            "active": active, "active_count": len(active)}
 
 
 def last_activity_utc(attempt, family):
@@ -448,9 +433,9 @@ def dashboard_payload(results_root, now=None):
 
     Nothing is recomputed here - every value comes from the helpers the Discord text already uses
     (leaderboard entries verbatim, the authoritative attempt's stage / streamed rows against the
-    immutable round-spec denominator, the canonical intake state, the board read-back). Unreadable
-    inputs are reported as null / available=false - never as 0 - and no strategy performance is
-    derived or ranked by this module.
+    immutable round-spec denominator, the canonical intake state, the board read-back), and runtime
+    health is `quant_runtime_watchdog.py`'s own state passed through. Unreadable inputs are reported
+    as null / available=false - never as 0 - and no strategy performance is derived or ranked here.
     """
     stamp = now if now is not None else datetime.datetime.now(datetime.timezone.utc)
     local_now = stamp.astimezone().replace(tzinfo=None) if stamp.tzinfo else stamp
@@ -478,6 +463,7 @@ def dashboard_payload(results_root, now=None):
 
     entries = leaderboard_entries(results_root) if root_present else []
     leaderboard_path = Path(results_root) / "_survivors" / "leaderboard.json"
+    leaderboard_as_of = mtime_utc(leaderboard_path) if root_present else None
     top = []
     for entry in entries[:TOP_N]:
         full = entry.get("full") or {}
@@ -510,31 +496,24 @@ def dashboard_payload(results_root, now=None):
     }
 
     running, blocked = board_counts(board)
-    container = container_runtime()
-    free_gib, total_gib = results_volume(results_root) if root_present else (None, None)
-    crons = quant_crons()
-    if crons is None:
-        crons_summary, crons_not_ok = "unavailable", None
+    # Runtime health is the watchdog's verdict, not this file's: `status` is "attention" exactly when
+    # the watchdog itself holds an active signature, and "unknown" when its state cannot be read.
+    watchdog = watchdog_health()
+    if watchdog is None:
+        health = {"available": False, "status": "unknown", "source": "quant_runtime_watchdog",
+                  "state_path": str(WATCHDOG_STATE), "active": [], "active_count": None,
+                  "last_check_at_utc": None, "last_healthy_at_utc": None,
+                  "summary": "unknown: watchdog state unreadable (%s)" % WATCHDOG_STATE}
     else:
-        paused = sum(1 for job in crons if job["state"] == "paused")
-        crons_summary = "%d jobs \u00b7 %d active \u00b7 %d paused" % (len(crons), len(crons) - paused, paused)
-        crons_not_ok = [job["name"] for job in crons if job["last_status"] not in (None, "ok")]
-
-    reasons = []
-    if not root_present:
-        status = "unknown"
-        reasons.append("results root not found: %s" % results_root)
-    elif blocked is None:
-        status = "unknown"
-        reasons.append("kanban board read-back unavailable (%s)" % board)
-    elif blocked > 0:
-        status = "attention"
-        reasons.append("%d blocked card(s) on %s" % (blocked, board))
-    elif container is None:
-        status = "attention"
-        reasons.append("container read-back unavailable")
-    else:
-        status = "ok"
+        labels = [item["label"] for item in watchdog["active"]]
+        health = {"available": True, "status": "attention" if labels else "ok",
+                  "source": "quant_runtime_watchdog", "state_path": watchdog["state_path"],
+                  "active": watchdog["active"], "active_count": watchdog["active_count"],
+                  "last_check_at_utc": watchdog["last_check_at_utc"],
+                  "last_healthy_at_utc": watchdog["last_healthy_at_utc"],
+                  "summary": ("attention: %s" % "; ".join(
+                      labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else [])))
+                  if labels else "ok"}
 
     return {
         "schema_version": DASHBOARD_SCHEMA_VERSION,
@@ -542,14 +521,9 @@ def dashboard_payload(results_root, now=None):
         "monitoring_only": True,
         "scope_note": ("Research progress snapshot, read-only. Not live PnL and not a control "
                        "plane: this file can start, stop or retry nothing."),
-        "health": {"status": status, "reasons": reasons,
-                   "summary": status if not reasons else "%s: %s" % (status, "; ".join(reasons)),
-                   "components": {"results_root_readable": root_present,
-                                  "board_readback_available": blocked is not None,
-                                  "container_readback_available": container is not None,
-                                  "blocked_cards": blocked}},
+        "health": health,
         "sources": {"results_root": results_root, "results_root_readable": root_present,
-                    "leaderboard_as_of_utc": mtime_utc(leaderboard_path) if root_present else None,
+                    "leaderboard_as_of_utc": leaderboard_as_of,
                     "family_created_at_utc": (family or {}).get("created_at_utc")},
         "current": {"family_id": (family or {}).get("family_id"),
                     "round_id": round_id,
@@ -565,24 +539,26 @@ def dashboard_payload(results_root, now=None):
                     "kanban_task_id": task_id or None, "board": board if family else None,
                     "card_status": card, "card_readback": card_why},
         "leaderboard": {"available": bool(entries), "count": len(entries), "shown": len(top),
-                        "as_of_utc": mtime_utc(leaderboard_path) if root_present else None,
+                        "as_of_utc": leaderboard_as_of,
                         "entries": top, "top_n": TOP_N},
         "funnel": funnel,
-        "runtime": {"container": container,
-                    "container_summary": (container or {}).get("state") or "unavailable",
-                    "results_volume": {"free_gib": free_gib, "total_gib": total_gib},
-                    "results_volume_summary": ("%.1f GiB free / %.1f GiB" % (free_gib, total_gib)
-                                               if free_gib is not None else "unavailable")},
         "agent": {"board": board, "running": running, "blocked": blocked,
                   "board_summary": ("Running %d \u00b7 Blocked %d" % (running, blocked)
-                                    if running is not None else "unavailable"),
-                  "crons": crons, "crons_summary": crons_summary, "crons_not_ok": crons_not_ok},
+                                    if running is not None else "unavailable")},
     }
 
 
-def write_json(path, payload):
-    """Publish one payload atomically (same-dir temp + replace) so a reader never sees a half file."""
+def write_json(path, payload, results_root=None):
+    """Publish one payload atomically (same-dir temp + replace) so a reader never sees a half file.
+
+    A target inside the results root is refused (ValueError, nothing created): "never under /results"
+    is enforced here rather than left to the caller.
+    """
     path = Path(path)
+    root = Path(results_root or os.environ.get("QLIB_RESULTS_ROOT", DEFAULT_RESULTS)).resolve()
+    target = path.resolve()
+    if target == root or root in target.parents:
+        raise ValueError("refusing to write inside the results root: %s" % target)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
@@ -604,7 +580,7 @@ def main():
         # stdout (the Discord payload) must never depend on the dashboard: a JSON write failure is
         # reported on stderr and leaves both stdout and the exit code untouched.
         try:
-            write_json(json_out, dashboard_payload(results_root))
+            write_json(json_out, dashboard_payload(results_root), results_root)
         except (OSError, ValueError) as exc:
             print("dashboard json not written (%s): %s" % (json_out, exc), file=sys.stderr)
     return 0

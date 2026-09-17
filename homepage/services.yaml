@@ -1,5 +1,6 @@
 # Read-only quant observability cards. Every value comes from the single dashboard.json payload
-# produced by runtime/candidate_snapshot.py (the same numbers as the Discord #candidate line).
+# produced by runtime/candidate_snapshot.py (the same numbers as the Discord #candidate line), and the
+# overall health is the quant watchdog's own state - nothing here re-checks the runtime.
 # No card links to a control surface: there is no start/stop/retry button anywhere in this config.
 #
 # Serve the payload first:  python3 runtime/dashboard_serve.py --port 8787
@@ -15,10 +16,11 @@
           mappings:
             - field: health.status
               label: Overall
-            - field: agent.board_summary
-              label: Board
-            - field: runtime.container_summary
-              label: qlib-run
+            - field: health.summary
+              label: Watchdog
+            - field: health.last_check_at_utc
+              label: Last check
+              format: relativeDate
             - field: generated_at_utc
               label: Snapshot
               format: relativeDate
@@ -83,19 +85,33 @@
               label: Backtested
 
 - Runtime & Agent:
-    - Runtime:
-        description: Compute plane, board and scheduler read-backs
+    - Runtime health:
+        description: quant_runtime_watchdog state — the single health truth (W1-W4)
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
           display: list
           mappings:
-            - field: runtime.container_summary
-              label: qlib-run container
-            - field: runtime.results_volume_summary
-              label: Results volume
+            - field: health.summary
+              label: Watchdog
+            - field: health.active_count
+              label: Active findings
+            - field: health.last_check_at_utc
+              label: Last check
+              format: relativeDate
+            - field: health.last_healthy_at_utc
+              label: Last healthy
+              format: relativeDate
+    - Agent:
+        description: Kanban board read-back (read-only)
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
             - field: agent.board_summary
-              label: Kanban board
-            - field: agent.crons_summary
-              label: Quant cron jobs
+              label: Board
+            - field: agent.board
+              label: Board name
