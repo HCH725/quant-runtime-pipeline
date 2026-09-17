@@ -1,0 +1,673 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_full_backtest_run_record",
+  "card": "t_54d994a2",
+  "author": "Hermes default (Xiaoqian)",
+  "created_at_utc": "2026-09-17T04:13:30Z",
+  "family_id": "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01",
+  "round_id": "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01-r1",
+  "authoritative_run_id": "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01-r1-u3",
+  "registration": {
+    "round_spec_sha256": "sha256:3600c5ddc9e1775c06682705844a71ec419dbb905069b491cf44d5a5579a8006",
+    "round_spec_bytes": 70564,
+    "run_spec_sha256": {
+      "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01-r1-u1": "sha256:2f5ea7e2e54aad43740ba563dedb0368f49a97932f296792121c09e756ac2f41",
+      "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01-r1-u2": "sha256:a45db6ad090f3bd0da3dea94b1537fe6e71e84f0309189af0af590aebe4b86c8",
+      "crypto-hourly-bitcoin-walk-forward-cost-aware-execution-2026-09-01-r1-u3": "sha256:e8e88a3b9ab577f43008fc9c58a1cd791d84dbca4ca4abdf75581006c42feca7"
+    },
+    "engine": {
+      "repo": "container/scripts/90_strategy_i_run.py",
+      "sha256_repo": "sha256:1bd19e2d5a8d6bae6627e2bf9e0f3d2f503fecb3c8dc759fd5fb7030be90e78f",
+      "sha256_host_deploy": "sha256:1bd19e2d5a8d6bae6627e2bf9e0f3d2f503fecb3c8dc759fd5fb7030be90e78f",
+      "version": "i-v1-engine-1.0.0",
+      "semantics": "walk-forward retrained tabular gradient-boosting regression (14 non-anchored rolling folds, 12m train / 3m val / 3m test) on OHLCV + the 10 train-selected rolling technical indicators + EGARCH(1,1)-t conditional-variance features, the record's lambda/c cost-aware execution filter turned into position-change entry events at the next bar's open, the record's position exit at the next bar's open, plus the registered DCA rail (see module docstring)"
+    },
+    "selfcheck": {
+      "script": "container/scripts/tests/test_strategy_i_engine.py",
+      "sha256": "sha256:564c6c3243d475b8792c916df9e6de73fd378a85e6dd58a733c0981edb99077e",
+      "result": "Ran 31 tests, OK inside qlib-run (before launch and on the final engine bytes)"
+    },
+    "authoring_script": "runtime/_author_strategy_i_template.py",
+    "counts": "1 cohort x 4 strategy cases x 48 DCA configs x 10 phase grids = 1920 case evaluations (all measured)",
+    "excerpts_asserted_before_write": 50,
+    "parameter_contract": "v1.8 generic block present; validate_contract and validate_round_spec_contract = 0 problems"
+  },
+  "launch": {
+    "mode": "container exec -d qlib-run sh -c '/opt/venv/bin/python /scripts/90_strategy_i_run.py <container run-spec> > <container log> 2>&1'",
+    "preflight_u3": "runtime/preflight.py --attempt-dir <u3> --launch -> P1-P10 all PASS, rc=0",
+    "attempts": {
+      "u1": {
+        "status": "FAILED",
+        "class": "script_bug",
+        "detail": "launched the run-spec as a python script by mistake (no compute), then a broadcast ValueError in _model_matrix on the corrected invocation"
+      },
+      "u2": {
+        "status": "FAILED",
+        "class": "script_bug",
+        "detail": "KeyError base_quote in rail_for from the family-level readers, after the complete 10-grid measurement (that measurement is not adopted)"
+      },
+      "u3": {
+        "status": "DONE",
+        "runtime_seconds": 616,
+        "sentinel_sha256": "sha256:08340afc7a2ae5023456f87c68bbdf1031ac830985e79fa00897d6913170b347",
+        "sentinel_manifest_entries": 26,
+        "terminal_evidence_check": "problems: []"
+      }
+    },
+    "retry_policy": "contract 13 card-local script_bug: same round, new run_id; the registered round-spec (domains, split, gates, costs, selector/disposition versions) was byte-identical in all three attempts, and both defects carry a regression test proved RED on the failing bytes"
+  },
+  "measurement": {
+    "window": {
+      "start": "2022-01-01",
+      "end": "2026-09-16",
+      "historical": [
+        "2022-01-01",
+        "2025-09-30"
+      ],
+      "oos": [
+        "2025-10-01",
+        "2026-09-16"
+      ],
+      "bars": 41280,
+      "coverage_complete": true,
+      "coverage": {
+        "historical": 192,
+        "oos": 192,
+        "full": 192,
+        "fee_2x": 192,
+        "funding_2x": 192,
+        "entry_delay_1_bar": 192,
+        "slippage_2ticks": 192,
+        "no_funding": 192,
+        "no_funding_full": 192,
+        "cost_attrition_40bps": 192
+      },
+      "case_evaluations_total": 1920,
+      "all_assertions_true": true
+    },
+    "cohort_decisions": [
+      {
+        "cohort": "BTCUSDT/1h",
+        "outcome": "CULLED",
+        "no_winner_reason": null,
+        "cull_reasons": [
+          "robustness_economic:fee_2x",
+          "parameter_neighbourhood"
+        ],
+        "winner": {
+          "spacing_pct": 0.04,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1,
+          "dir_long_only": 1,
+          "dir_long_short": 0,
+          "model_lightgbm": 0,
+          "model_sklearn": 1
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 2,
+          "same_sign_fraction": 0.333333,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        },
+        "metrics": {
+          "historical": {
+            "net_pnl": 5988.59598,
+            "sharpe": 0.519524,
+            "episodes": 534,
+            "ending_equity": 35988.59598,
+            "fees": 6526.605961,
+            "funding": 696.719695,
+            "max_dd_usdt": -5743.213078,
+            "max_dd_pct": -0.157359,
+            "max_effective_leverage": 6.072649,
+            "capital_utilization": 0.03476,
+            "annualized_return": 0.05325869689759098,
+            "cagr": 0.049757271934558034
+          },
+          "oos": {
+            "net_pnl": 2478.234058,
+            "sharpe": 1.064077,
+            "episodes": 227,
+            "ending_equity": 32478.234058,
+            "fees": 2612.595664,
+            "funding": 100.49891,
+            "max_dd_usdt": -1953.344384,
+            "max_dd_pct": -0.063963,
+            "max_effective_leverage": 5.013227,
+            "capital_utilization": 0.038348,
+            "annualized_return": 0.08596153748322616,
+            "cagr": 0.08610202250807975
+          },
+          "full": {
+            "net_pnl": 8466.830038,
+            "sharpe": 0.592054,
+            "episodes": 761,
+            "ending_equity": 38466.830038,
+            "fees": 9139.201625,
+            "funding": 797.218605,
+            "max_dd_usdt": -5743.213078,
+            "max_dd_pct": -0.157359,
+            "max_effective_leverage": 6.072649,
+            "capital_utilization": 0.034016,
+            "annualized_return": 0.05993235797058979,
+            "cagr": 0.05420943913183618
+          },
+          "robustness": {
+            "fee_2x": {
+              "net_pnl": -672.371587,
+              "sharpe": 0.012952,
+              "episodes": 761,
+              "ending_equity": 29327.628413,
+              "fees": 18278.40325,
+              "funding": 797.218605,
+              "max_dd_usdt": -6668.32574,
+              "max_dd_pct": -0.198387,
+              "max_effective_leverage": 7.328773,
+              "capital_utilization": 0.039075,
+              "annualized_return": -0.004759374463133203,
+              "cagr": -0.004801953055407537
+            },
+            "funding_2x": {
+              "net_pnl": 7669.611433,
+              "sharpe": 0.540697,
+              "episodes": 761,
+              "ending_equity": 37669.611433,
+              "fees": 9139.201625,
+              "funding": 1594.437209,
+              "max_dd_usdt": -5836.648432,
+              "max_dd_pct": -0.16156,
+              "max_effective_leverage": 6.184,
+              "capital_utilization": 0.034461,
+              "annualized_return": 0.054289255347518266,
+              "cagr": 0.0495315056175043
+            },
+            "entry_delay_1_bar": {
+              "net_pnl": 917.324638,
+              "sharpe": 0.115585,
+              "episodes": 747,
+              "ending_equity": 30917.324638,
+              "fees": 8635.145796,
+              "funding": 739.121376,
+              "max_dd_usdt": -6865.395407,
+              "max_dd_pct": -0.187849,
+              "max_effective_leverage": 5.834801,
+              "capital_utilization": 0.034908,
+              "annualized_return": 0.0064932717826250465,
+              "cagr": 0.006416474143246864
+            },
+            "slippage_2ticks": {
+              "net_pnl": 8444.03709,
+              "sharpe": 0.590558,
+              "episodes": 761,
+              "ending_equity": 38444.03709,
+              "fees": 9139.190222,
+              "funding": 797.217163,
+              "max_dd_usdt": -5745.592078,
+              "max_dd_pct": -0.157467,
+              "max_effective_leverage": 6.075565,
+              "capital_utilization": 0.034029,
+              "annualized_return": 0.0597710183533522,
+              "cagr": 0.054076759533802754
+            }
+          },
+          "no_funding_reference": {
+            "net_pnl": 6685.315674,
+            "sharpe": 0.574064,
+            "episodes": 534,
+            "ending_equity": 36685.315674,
+            "fees": 6526.605961,
+            "funding": 0.0,
+            "max_dd_usdt": -5649.777724,
+            "max_dd_pct": -0.153242,
+            "max_effective_leverage": 5.965237,
+            "capital_utilization": 0.034409,
+            "annualized_return": 0.059454870953389485,
+            "cagr": 0.05514133162013013
+          },
+          "no_funding_full_reference": {
+            "net_pnl": 9264.048642,
+            "sharpe": 0.643541,
+            "episodes": 761,
+            "ending_equity": 39264.048642,
+            "fees": 9139.201625,
+            "funding": 0.0,
+            "max_dd_usdt": -5649.777724,
+            "max_dd_pct": -0.153242,
+            "max_effective_leverage": 5.965237,
+            "capital_utilization": 0.033587,
+            "annualized_return": 0.06557546059366116,
+            "cagr": 0.05881162329412892
+          },
+          "cost_attrition_40bps": {
+            "net_pnl": -30005.127565,
+            "sharpe": -1.942335,
+            "episodes": 373,
+            "ending_equity": -5.127565,
+            "fees": 34981.866623,
+            "funding": 489.916636,
+            "max_dd_usdt": -30005.127565,
+            "max_dd_pct": -1.000171,
+            "max_effective_leverage": 9.899574,
+            "capital_utilization": 0.111117,
+            "annualized_return": null,
+            "cagr": null
+          }
+        },
+        "winner_case_label": "long_only__sklearn_hist_gbm"
+      }
+    ],
+    "dca_layer_histogram": {
+      "level_00": 626423,
+      "level_01": 687326,
+      "level_02": 102002,
+      "level_03": 23374,
+      "level_04": 6861,
+      "level_05": 2525,
+      "level_06": 1134,
+      "level_07": 570,
+      "level_08": 211,
+      "level_09": 97,
+      "level_10": 73,
+      "level_11": 0
+    },
+    "stress_medians": {
+      "fee_2x": -29736.199985,
+      "funding_2x": -25935.206869,
+      "entry_delay_1_bar": -26530.844772,
+      "slippage_2ticks": -25769.7963265,
+      "cost_attrition_40bps": -30070.539781,
+      "no_funding": -21858.950057000002,
+      "no_funding_full": -25308.38925
+    },
+    "descriptive": {
+      "median_full_net_pnl": -25649.901385,
+      "median_oos_net_pnl": -15791.3855505,
+      "median_historical_net_pnl": -22144.029774,
+      "positive_case_share_historical": 0.046875,
+      "positive_case_share_full": 0.026041666666666668
+    },
+    "writer_cell_metrics": {
+      "historical": {
+        "net_pnl": 5988.59598,
+        "sharpe": 0.519524,
+        "episodes": 534,
+        "ending_equity": 35988.59598,
+        "fees": 6526.605961,
+        "funding": 696.719695,
+        "max_dd_usdt": -5743.213078,
+        "max_dd_pct": -0.157359,
+        "max_effective_leverage": 6.072649,
+        "capital_utilization": 0.03476,
+        "annualized_return": 0.05325869689759098,
+        "cagr": 0.049757271934558034
+      },
+      "oos": {
+        "net_pnl": 2478.234058,
+        "sharpe": 1.064077,
+        "episodes": 227,
+        "ending_equity": 32478.234058,
+        "fees": 2612.595664,
+        "funding": 100.49891,
+        "max_dd_usdt": -1953.344384,
+        "max_dd_pct": -0.063963,
+        "max_effective_leverage": 5.013227,
+        "capital_utilization": 0.038348,
+        "annualized_return": 0.08596153748322616,
+        "cagr": 0.08610202250807975
+      },
+      "full": {
+        "net_pnl": 8466.830038,
+        "sharpe": 0.592054,
+        "episodes": 761,
+        "ending_equity": 38466.830038,
+        "fees": 9139.201625,
+        "funding": 797.218605,
+        "max_dd_usdt": -5743.213078,
+        "max_dd_pct": -0.157359,
+        "max_effective_leverage": 6.072649,
+        "capital_utilization": 0.034016,
+        "annualized_return": 0.05993235797058979,
+        "cagr": 0.05420943913183618
+      },
+      "robustness": {
+        "fee_2x": {
+          "net_pnl": -672.371587,
+          "sharpe": 0.012952,
+          "episodes": 761,
+          "ending_equity": 29327.628413,
+          "fees": 18278.40325,
+          "funding": 797.218605,
+          "max_dd_usdt": -6668.32574,
+          "max_dd_pct": -0.198387,
+          "max_effective_leverage": 7.328773,
+          "capital_utilization": 0.039075,
+          "annualized_return": -0.004759374463133203,
+          "cagr": -0.004801953055407537
+        },
+        "funding_2x": {
+          "net_pnl": 7669.611433,
+          "sharpe": 0.540697,
+          "episodes": 761,
+          "ending_equity": 37669.611433,
+          "fees": 9139.201625,
+          "funding": 1594.437209,
+          "max_dd_usdt": -5836.648432,
+          "max_dd_pct": -0.16156,
+          "max_effective_leverage": 6.184,
+          "capital_utilization": 0.034461,
+          "annualized_return": 0.054289255347518266,
+          "cagr": 0.0495315056175043
+        },
+        "entry_delay_1_bar": {
+          "net_pnl": 917.324638,
+          "sharpe": 0.115585,
+          "episodes": 747,
+          "ending_equity": 30917.324638,
+          "fees": 8635.145796,
+          "funding": 739.121376,
+          "max_dd_usdt": -6865.395407,
+          "max_dd_pct": -0.187849,
+          "max_effective_leverage": 5.834801,
+          "capital_utilization": 0.034908,
+          "annualized_return": 0.0064932717826250465,
+          "cagr": 0.006416474143246864
+        },
+        "slippage_2ticks": {
+          "net_pnl": 8444.03709,
+          "sharpe": 0.590558,
+          "episodes": 761,
+          "ending_equity": 38444.03709,
+          "fees": 9139.190222,
+          "funding": 797.217163,
+          "max_dd_usdt": -5745.592078,
+          "max_dd_pct": -0.157467,
+          "max_effective_leverage": 6.075565,
+          "capital_utilization": 0.034029,
+          "annualized_return": 0.0597710183533522,
+          "cagr": 0.054076759533802754
+        }
+      },
+      "no_funding_reference": {
+        "net_pnl": 6685.315674,
+        "sharpe": 0.574064,
+        "episodes": 534,
+        "ending_equity": 36685.315674,
+        "fees": 6526.605961,
+        "funding": 0.0,
+        "max_dd_usdt": -5649.777724,
+        "max_dd_pct": -0.153242,
+        "max_effective_leverage": 5.965237,
+        "capital_utilization": 0.034409,
+        "annualized_return": 0.059454870953389485,
+        "cagr": 0.05514133162013013
+      },
+      "no_funding_full_reference": {
+        "net_pnl": 9264.048642,
+        "sharpe": 0.643541,
+        "episodes": 761,
+        "ending_equity": 39264.048642,
+        "fees": 9139.201625,
+        "funding": 0.0,
+        "max_dd_usdt": -5649.777724,
+        "max_dd_pct": -0.153242,
+        "max_effective_leverage": 5.965237,
+        "capital_utilization": 0.033587,
+        "annualized_return": 0.06557546059366116,
+        "cagr": 0.05881162329412892
+      },
+      "cost_attrition_40bps": {
+        "net_pnl": -30005.127565,
+        "sharpe": -1.942335,
+        "episodes": 373,
+        "ending_equity": -5.127565,
+        "fees": 34981.866623,
+        "funding": 489.916636,
+        "max_dd_usdt": -30005.127565,
+        "max_dd_pct": -1.000171,
+        "max_effective_leverage": 9.899574,
+        "capital_utilization": 0.111117,
+        "annualized_return": null,
+        "cagr": null
+      }
+    }
+  },
+  "outcome": {
+    "disposition": "REJECT / NO_SURVIVOR",
+    "verdict": "REJECT",
+    "performance_claimable": false,
+    "cohort_survivors": [],
+    "cohort_cull_reasons": [
+      "robustness_economic:fee_2x",
+      "parameter_neighbourhood"
+    ],
+    "winner": {
+      "spacing_pct": 0.04,
+      "size_multiplier": 1.0,
+      "breakeven_tp_pct": 0.01,
+      "invalidation_pct": 0.1,
+      "dir_long_only": 1,
+      "dir_long_short": 0,
+      "model_lightgbm": 0,
+      "model_sklearn": 1
+    },
+    "winner_case": "long_only__sklearn_hist_gbm",
+    "neighbourhood": {
+      "neighbours": 6,
+      "agreeing": 2,
+      "same_sign_fraction": 0.333333,
+      "winner_net_pnl_positive": true,
+      "threshold": 0.6,
+      "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+      "passed": false
+    },
+    "verdict_json_sha256": "sha256:712f97f730aa4e272ebcd5ba3dd5d9206bc311674e0cfdece6bba2f5005eaac2",
+    "survivor_bundle": "none (0 survivors; contract 10.8 requires >=1)"
+  },
+  "record_falsification_battery": {
+    "item_1_forward_extension_12m": {
+      "registered_item": "forward-extension-12m-sharpe",
+      "evaluated": true,
+      "hit": false,
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "threshold_sharpe": 0.0,
+      "cohorts": {
+        "BTCUSDT/1h": {
+          "slice": [
+            "2025-09-16",
+            "2026-09-16"
+          ],
+          "bars": 8784,
+          "sharpe": 0.913495,
+          "net_pnl": 2091.87491,
+          "threshold_sharpe": 0.0,
+          "hit": false,
+          "oos_slice_sharpe": 1.064077,
+          "case_name": "long_only__sklearn_hist_gbm"
+        }
+      }
+    },
+    "item_2_cost_sensitivity": {
+      "registered_item": "cost-sensitivity-c-15-25bps",
+      "evaluated": true,
+      "hit": true,
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "taker_fee_bps": 5.0,
+      "c_bps_tracks": {
+        "c_5_bps": {
+          "fee_mult": 1.0,
+          "c_bps": 5.0,
+          "sharpe": 0.592054,
+          "net_pnl": 8466.830038,
+          "fees": 9139.201625,
+          "sharpe_negative": false
+        },
+        "c_10_bps": {
+          "fee_mult": 2.0,
+          "c_bps": 10.0,
+          "sharpe": 0.012952,
+          "net_pnl": -672.371587,
+          "fees": 18278.40325,
+          "sharpe_negative": false
+        },
+        "c_15_bps": {
+          "fee_mult": 3.0,
+          "c_bps": 15.0,
+          "sharpe": -0.580528,
+          "net_pnl": -9811.573213,
+          "fees": 27417.604875,
+          "sharpe_negative": true
+        },
+        "c_20_bps": {
+          "fee_mult": 4.0,
+          "c_bps": 20.0,
+          "sharpe": -1.393877,
+          "net_pnl": -20514.567522,
+          "fees": 36313.183241,
+          "sharpe_negative": true
+        },
+        "c_25_bps": {
+          "fee_mult": 5.0,
+          "c_bps": 25.0,
+          "sharpe": -0.921773,
+          "net_pnl": -30021.558795,
+          "fees": 43285.041645,
+          "sharpe_negative": true
+        },
+        "cross_check_vs_fee_2x_grid": {
+          "net_pnl_grid": -672.371587,
+          "net_pnl_reader": -672.371587,
+          "matches": true
+        }
+      },
+      "threshold_c_bps": 15.0,
+      "threshold_sharpe": 0.0,
+      "cohorts": {
+        "BTCUSDT/1h": {
+          "tracks": {
+            "c_5_bps": {
+              "fee_mult": 1.0,
+              "c_bps": 5.0,
+              "sharpe": 0.592054,
+              "net_pnl": 8466.830038,
+              "fees": 9139.201625,
+              "sharpe_negative": false
+            },
+            "c_10_bps": {
+              "fee_mult": 2.0,
+              "c_bps": 10.0,
+              "sharpe": 0.012952,
+              "net_pnl": -672.371587,
+              "fees": 18278.40325,
+              "sharpe_negative": false
+            },
+            "c_15_bps": {
+              "fee_mult": 3.0,
+              "c_bps": 15.0,
+              "sharpe": -0.580528,
+              "net_pnl": -9811.573213,
+              "fees": 27417.604875,
+              "sharpe_negative": true
+            },
+            "c_20_bps": {
+              "fee_mult": 4.0,
+              "c_bps": 20.0,
+              "sharpe": -1.393877,
+              "net_pnl": -20514.567522,
+              "fees": 36313.183241,
+              "sharpe_negative": true
+            },
+            "c_25_bps": {
+              "fee_mult": 5.0,
+              "c_bps": 25.0,
+              "sharpe": -0.921773,
+              "net_pnl": -30021.558795,
+              "fees": 43285.041645,
+              "sharpe_negative": true
+            },
+            "cross_check_vs_fee_2x_grid": {
+              "net_pnl_grid": -672.371587,
+              "net_pnl_reader": -672.371587,
+              "matches": true
+            }
+          },
+          "hit": true,
+          "case_name": "long_only__sklearn_hist_gbm",
+          "fragile_below_or_at_c_bps": [
+            15.0
+          ]
+        }
+      }
+    },
+    "item_3_cross_asset_replication": {
+      "registered_item": "cross-asset-replication",
+      "evaluated": true,
+      "hit": true,
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "assets": {
+        "ETHUSDT": {
+          "case_name": "long_only__sklearn_hist_gbm",
+          "bars": 41280,
+          "net_pnl": 6838.667737,
+          "sharpe": 0.58717,
+          "episodes": 1158,
+          "fees": 13220.435509,
+          "funding": 811.914966,
+          "positive_net_return": true,
+          "hit": false
+        },
+        "SOLUSDT": {
+          "case_name": "long_only__sklearn_hist_gbm",
+          "bars": 41280,
+          "net_pnl": -21763.553278,
+          "sharpe": -0.39528,
+          "episodes": 1549,
+          "fees": 18858.760491,
+          "funding": 425.775661,
+          "positive_net_return": false,
+          "hit": true
+        }
+      },
+      "non_cohort_note": "falsification measurements only - never cohorts"
+    },
+    "reader_hits": [
+      "cost_sensitivity_c_15_25bps",
+      "cross_asset_replication"
+    ]
+  },
+  "disclosures": {
+    "source_claim_under_test": "Bysik & Slepaczuk (2026), arXiv:2606.00060: a 1-hour gradient-boosted return forecast plus the lambda*c cost-aware execution filter is reported to restore net-of-cost performance (XGBoost long-only: ARC 65.40%, Sharpe 1.08, 251 trades, c = 10 bps)",
+    "local_instantiation_differences": [
+      "model library: the pinned production image ships LightGBM (and scikit-learn) and no XGBoost, so the registered strategy axis carries both available tabular gradient-boosting implementations instead of one library name (disclosed in the round-spec's record_to_local_substitutions)",
+      "features: 5 OHLCV-derived + the top 10 of 40 technical candidates selected per fold by |Spearman| on the train segment + 2 EGARCH(1,1)-t columns (the intake caveat refuses to read the record's parenthetical list as its exact feature set)",
+      "window: the record's own sample (2017-12-01..2026-01-01, 97 months) is 49.5% absent from the canonical raw store; the registered window is 2022-01-01..2026-09-16 with the same fold STRUCTURE (12m train / 3m val / 3m test, non-anchored rolling, 3-month steps) yielding 14 folds instead of the record's 27",
+      "execution envelope: the inherited A/B DCA rail (11 routine tranche levels, breakeven-anchored TP, resting invalidation) at 10x margin-based sizing replaces the source's 1x unlevered sign position; the rail is what the card registers and what every sibling family runs",
+      "costs: fills pay the instrument's own 5 bps taker fee plus one adverse tick; the record's all-in c = 10 bps is the registered fee_2x track and the cost-sensitivity reader's c = 10/15/20/25 bps tracks"
+    ],
+    "interpretation": [
+      "the round does NOT reproduce the source's headline performance under this instantiation: the elected winner cell is positive on the historical (+5,988.60) and OOS (+2,478.23) slices and on the full window (+8,466.83) at the canonical cost, but turns negative under fee_2x (-672.37) and under the 40 bps attrition grid (-30,005.13), and only 2 of its 6 legal face-adjacent neighbours agree in historical net-PnL sign (0.333 < 0.6), so the cohort is culled",
+      "the record's own falsification battery partially fires: the 12-month forward extension is NOT hit (Sharpe +0.913, net +2,091.87) while cost sensitivity IS hit (Sharpe +0.013 at c = 10 bps, -0.581 at c = 15 bps) and cross-asset replication IS hit (ETHUSDT +6,838.67 but SOLUSDT -21,763.55)",
+      "this REJECT is a rejection of the family's registered instantiation, not a refutation of the source: the differences above (window, model library, feature set, execution envelope, leverage) are large enough that the source's narrow claim remains untested rather than falsified. The record's own limitation 'not independently reproduced' therefore still stands"
+    ],
+    "registered_dca_rail_semantics": "the inherited rail walks from rung 1 on every bar and refills a rung the price re-enters (pinned by a self-check test and disclosed in the round-spec); this is the A/B semantics, unchanged by this family",
+    "no_survivor_bundle": "contract 10.8 requires a terminal DONE attempt with coverage/assertions complete AND >=1 survivor; this round has 0 survivors, so no frozen survivor bundle exists"
+  },
+  "verification": {
+    "engine_selfcheck": "container exec qlib-run env SI_ENGINE_PATH=/scripts/90_strategy_i_run.py /opt/venv/bin/python /scripts/tests/test_strategy_i_engine.py -> Ran 31 tests, OK (before launch and for the final engine bytes)",
+    "engine_sha256_repo": "sha256:1bd19e2d5a8d6bae6627e2bf9e0f3d2f503fecb3c8dc759fd5fb7030be90e78f",
+    "engine_sha256_deployed": "sha256:1bd19e2d5a8d6bae6627e2bf9e0f3d2f503fecb3c8dc759fd5fb7030be90e78f",
+    "selfcheck_sha256_repo": "sha256:564c6c3243d475b8792c916df9e6de73fd378a85e6dd58a733c0981edb99077e",
+    "preflight": "runtime/preflight.py --attempt-dir <u3> --launch -> P1-P10 all PASS, rc=0 (P10 recomputed script.sha256 against the host deploy)",
+    "terminal_evidence_check": "runtime/terminal_evidence.py check --attempt-dir <u3> -> problems: [] (every manifest checksum re-verified)",
+    "readers_executed": "all three family-level readers report evaluated=true"
+  },
+  "environment": {
+    "container": "qlib-run (qlib:0.9.7-arm64, linux/arm64)",
+    "python": "/opt/venv/bin/python 3.12.14, qlib 0.9.7, numpy 2.5.3, lightgbm 4.7.0, scikit-learn 1.9.1, scipy 1.18.1",
+    "note": "no package was added to the pinned image; the registered model axis uses the two gradient-boosting implementations the image already ships"
+  },
+  "redaction": "host paths under the user's home and the expansion volume appear in full only for the results-tree artifacts this card owns; no credential, token or personal data is included"
+}
