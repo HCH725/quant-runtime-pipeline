@@ -1,0 +1,2026 @@
+{
+ "snapshot_kind": "prerequisite-gate terminal (contract 6.4 / 13; no Qlib launch)",
+ "snapshot_taken_at_utc": "2026-09-17T06:42:57Z",
+ "snapshot_boundary": "values are re-measured from the live machine at snapshot time; the immutable artifacts under /results are read, never written by this snapshot",
+ "card": {
+  "kanban_task_id": "t_7347811a",
+  "board": "quant-strategy-research",
+  "family_id": "crypto-low-price-anchor-cross-sectional-reversal-2026-09-01",
+  "round_id": "crypto-low-price-anchor-cross-sectional-reversal-2026-09-01-r1",
+  "assignee": "default",
+  "chain_parent": "t_8d648066",
+  "origin": "contract 14.4 automatic production handoff (created 2026-09-17T05:36:14Z by production_handoff; candidateized during the t_86d04b09 backlog backfill)"
+ },
+ "contract_basis": {
+  "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+  "universe_prohibition_verbatim": [
+   "- 本卡註冊：record 自身提供 Crypto portability 段落 → 依該 portability canonicalize（原文節錄見上），未在 intake 之後另設 suitability 篩選。 若本機 canonical raw 不含本 record 所需的 universe／venue／資料，一律走 §13 prerequisite 條款（technical failure），不得縮減 universe 以硬造可執行性。"
+  ],
+  "exit_semantics": "card LIFECYCLE FOOTER + contract 6.4: a prerequisite that objectively does not exist, with its absence proven by measured evidence and the round's immutable terminal artifacts written, IS this card's goal - close with kanban_complete, do not block",
+  "frozen_card_body": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01.md",
+   "sha256": "sha256:753732d4c694a80eff377925b4e5d6cfdac3aa1103e646b8df3e82bc194f549c",
+   "bytes": 20441
+  },
+  "reviewed_source": {
+   "path": "/Users/hong/.hermes/wiki/quant/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01.md",
+   "sha256": "sha256:5e32510408b47bcb5c28907299e7d91211247df09046b52943e8b54eaa4e5348",
+   "bytes": 14511
+  },
+  "contract": {
+   "path": "/Users/hong/workspace/quant-runtime-pipeline/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  },
+  "primary_sources": [
+   "https://doi.org/10.1016/j.frl.2025.107800",
+   "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5001299",
+   "https://ideas.repec.org/a/eee/finlet/v85y2025ipas154461232501058x.html"
+  ]
+ },
+ "determination": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "taxonomy_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, with the mismatch disclosed rather than hidden",
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "rounds_used": 1,
+  "no_progress_rounds": 0,
+  "attempts_launched": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "no_scientific_claim": "this is a technical failure, NOT a scientific REJECT: the candidate is neither validated nor refuted (card 13)",
+  "why_not_DEFERRED": "contract 6.4 defines DEFERRED as an intentional resource/priority stop; this round stopped because the record's required data does not exist locally"
+ },
+ "measured_canonical_raw": {
+  "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+  "store_top_level": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "binance_subdirs": [
+   "usdm"
+  ],
+  "usdm_subdirs": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "cross_section_size": 4,
+  "klines_dataset_dirs": 28,
+  "klines_1d_rows": 1720,
+  "klines_1d_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-16T00:00:00Z"
+  ],
+  "klines_finest_step_seconds": 300.0,
+  "klines_1d_row_keys": [
+   "close",
+   "close_time_ms",
+   "high",
+   "low",
+   "open",
+   "open_time_ms",
+   "volume"
+  ],
+  "klines_columns_missing_vs_venue_12": [
+   "quote_volume",
+   "num_trades",
+   "taker_buy_base_volume"
+  ],
+  "funding_symbol_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "funding_rows": 5161,
+  "funding_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-17T00:00:00Z"
+  ],
+  "instrument_count": 4,
+  "instrument_types": [
+   "CryptoPerpetual"
+  ],
+  "instrument_listing_fields": [],
+  "instrument_size_fields": [],
+  "instrument_fee_fields": [
+   "maker_fee",
+   "taker_fee"
+  ],
+  "instrument_tick_sizes": {
+   "BNBUSDT-PERP.BINANCE": "0.010",
+   "BTCUSDT-PERP.BINANCE": "0.10",
+   "ETHUSDT-PERP.BINANCE": "0.01",
+   "SOLUSDT-PERP.BINANCE": "0.0100"
+  },
+  "schema_dataset_sections": [
+   "klines (Binance USD-M perpetual futures, UTC)",
+   "funding",
+   "instruments"
+  ],
+  "schema_quote_volume_documented_absent": true,
+  "raw_entry_count": 1658,
+  "probe_tokens_tested": 34,
+  "probe_hit_counts_entry_names": {},
+  "probe_hits_unexplained_name": [],
+  "payload_scan_files": 1614,
+  "payload_scan_bytes": 79056050,
+  "payload_hit_counts": {
+   "membership": 1,
+   "pit": 1,
+   "exchange_info": 1,
+   "listing": 1,
+   "book_ticker": 1,
+   "bybit": 1,
+   "coinbase": 1,
+   "bitfinex": 1,
+   "binance_vision": 1,
+   "bars": 5,
+   "quote_volume": 1,
+   "num_trades": 1
+  },
+  "probe_payload_data_ext_hits": 0,
+  "probe_hits_unexplained_payload": [],
+  "series_shaped_tokens": [],
+  "formation_window_prices_computable_local": true,
+  "surface_flags": {
+   "universe_membership_series_present": false,
+   "delisting_history_series_present": false,
+   "market_cap_series_present": false,
+   "liquidity_series_present": false,
+   "spread_series_present": false,
+   "second_venue_series_present": false,
+   "adjustment_series_present": false,
+   "venue_or_vendor_dirs": [],
+   "wide_price_panel_present": false
+  },
+  "note": "single venue (BINANCE USD-M perpetual), four fixed contracts, OHLCV-only klines (no quote_volume / trade count / taker splits), funding, instrument metadata with fee+tick; no membership, listing/delisting, market-cap, liquidity, spread, adjustment or second-venue surface"
+ },
+ "measured_host_side": {
+  "totals": {
+   "roots": 18,
+   "files_scanned": 4029,
+   "token_files": 2704,
+   "data_extension_hits": 12,
+   "prose_extension_hits": 2692,
+   "classified_data_hits": 12,
+   "unclassified_data_hits": 0
+  },
+  "classified_data_hits": [
+   {
+    "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+    "path": "membership_cells.jsonl",
+    "tokens": [
+     "listing",
+     "membership"
+    ],
+    "ext": ".jsonl",
+    "class": "pit_membership_cells_declared_unsupported",
+    "why": "the machine's own PIT-membership attempt: 14,760 daily cells for 12 declared instruments, every one `membership_status=unknown`, `supported=false`; its gate_handoff.json classifies the phase DATA_BLOCKED with pit_supported_asset_count=0"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+    "path": "membership_observations.csv",
+    "tokens": [
+     "exchange_info",
+     "listing",
+     "membership",
+     "onboard"
+    ],
+    "ext": ".csv",
+    "class": "pit_membership_observations_declared_unsupported",
+    "why": "59 evidence rows behind the same attempt (present-state snapshots + official boundary notices); its own manifest reports daily_supported_rows=0"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830",
+    "path": "lifecycle_events.csv",
+    "tokens": [
+     "delist",
+     "listing",
+     "market_cap",
+     "spot"
+    ],
+    "ext": ".csv",
+    "class": "binance_lifecycle_event_points_declared_bounded",
+    "why": "772 official USD-M lifecycle notices (listing 736 / delisting 22 / conversion 11 / migration 2 / suspension 1) whose own gate classifies the evidence BOUNDED with pit_supported_asset_count=0 and states an event point is never projected into a daily valid interval; no prices exist for those symbols"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+    "path": "capture_manifest.jsonl",
+    "tokens": [
+     "exchange_info"
+    ],
+    "ext": ".jsonl",
+    "class": "present_state_exchangeinfo_snapshot",
+    "why": "prospective capture manifest of /fapi/v1/exchangeInfo bytes; the store's own contract marks current-state snapshots cross-check only, never historical backfill"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+    "path": "snapshot_observations.jsonl",
+    "tokens": [
+     "exchange_info",
+     "membership"
+    ],
+    "ext": ".jsonl",
+    "class": "present_state_exchangeinfo_snapshot",
+    "why": "same present-state snapshot store (observation ledger)"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+    "path": "cohort_manifest.jsonl",
+    "tokens": [
+     "exchange_info"
+    ],
+    "ext": ".jsonl",
+    "class": "present_state_exchangeinfo_snapshot",
+    "why": "cohort-level present-state snapshot manifest; explicit no-backfill policy"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+    "path": "snapshot_observations.jsonl",
+    "tokens": [
+     "exchange_info",
+     "membership"
+    ],
+    "ext": ".jsonl",
+    "class": "present_state_exchangeinfo_snapshot",
+    "why": "same cohort snapshot store (observation ledger)"
+   },
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "path": "data/derived/quote_volume_wide.csv",
+    "tokens": [
+     "quote_volume"
+    ],
+    "ext": ".csv",
+    "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+    "why": "the wide (date x symbol) quote-volume form of the same 12-symbol derived panel; same non-point-in-time provenance, 1d only, no market cap, not the canonical raw"
+   },
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "path": "data/derived/real_daily.csv",
+    "tokens": [
+     "quote_volume"
+    ],
+    "ext": ".csv",
+    "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+    "why": "a 12-symbol fixed daily panel (Binance USD-M 1d, 2022-01-01..2025-05-14, 14,760 rows, with quote_volume and trade count). Its own data_provenance.md states the current exchangeInfo list '不等於 point-in-time universe' and that results '不能宣稱無 survivorship bias'; it is 1d only, carries no market cap, and is not the canonical raw"
+   },
+   {
+    "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+    "path": "data/pit_events.sqlite",
+    "tokens": [
+     "pit"
+    ],
+    "ext": ".sqlite",
+    "class": "phase10_pit_contract_demonstration_spot_example",
+    "why": "the Phase 10 bitemporal/PIT contract demonstration: 12 records, 19 lifecycle events, 6 snapshots for *spot* symbols (KGST, USDS, ...), with snapshot counts 'eligible 0-1 / unknown 12'; a capability example, not a USD-M point-in-time universe panel and not price data"
+   },
+   {
+    "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+    "path": "data/real_lifecycle_evidence.csv",
+    "tokens": [
+     "delist",
+     "listing",
+     "spot"
+    ],
+    "ext": ".csv",
+    "class": "binance_spot_delisting_sample_prose_scale",
+    "why": "8 hand-built Binance *spot* delisting notice records for the Phase 10 research contract; no USD-M price panel and no continuous membership interval"
+   },
+   {
+    "root": "/Users/hong/workspace/alpha-strategy-research",
+    "path": "coverage_manifest.csv",
+    "tokens": [
+     "adjusted",
+     "bars",
+     "liquidity",
+     "spread",
+     "supply"
+    ],
+    "ext": ".csv",
+    "class": "research_corpus_index",
+    "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (liquidity / spread / supply / adjusted), not in any market series"
+   }
+  ],
+  "unclassified_data_candidates": [],
+  "pit_gates_read_back": {
+   "sources": {
+    "membership_gate": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/gate_handoff.json",
+    "membership_cells": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+    "lifecycle_gate": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/pit_handoff.json",
+    "lifecycle_events": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+    "phase7_panel": "/Users/hong/workspace/phase7-alpha-research/data/derived/real_daily.csv",
+    "phase7_provenance": "/Users/hong/workspace/phase7-alpha-research/data_provenance.md"
+   },
+   "membership_gate_classification": "DATA_BLOCKED",
+   "membership_gate_pit_supported_asset_count": 0,
+   "membership_gate_supported_cells": 0,
+   "membership_gate_total_cells": 14760,
+   "membership_gate_unknown_cells": 14760,
+   "membership_gate_next_gate": "independent hermes-auditor review required; no A2 self-authorization",
+   "membership_cells_rows": 14760,
+   "membership_cells_supported": 0,
+   "lifecycle_classification": "BOUNDED",
+   "lifecycle_pit_supported_asset_count": 0,
+   "lifecycle_daily_membership_pit_supported_asset_count": 0,
+   "lifecycle_bounded_event_point_asset_count": 674,
+   "lifecycle_bounded_event_point_event_count": 691,
+   "lifecycle_current_exchange_info_policy": "present_state_cross_check_only_never_historical_backfill",
+   "lifecycle_event_points_only": true,
+   "lifecycle_event_rows": 772,
+   "lifecycle_event_type_counts": {
+    "listing": 736,
+    "delisting": 22,
+    "suspension": 1,
+    "contract_migration": 2,
+    "contract_conversion": 11
+   },
+   "lifecycle_event_support_scopes": {
+    "boundary_history": 55,
+    "event_point": 691,
+    "target_window": 26
+   },
+   "lifecycle_event_symbols": 705,
+   "phase7_panel_rows": 14760,
+   "phase7_panel_symbol_count": 12,
+   "phase7_panel_symbols": [
+    "ADAUSDT",
+    "AVAXUSDT",
+    "BCHUSDT",
+    "BNBUSDT",
+    "BTCUSDT",
+    "DOGEUSDT",
+    "ETCUSDT",
+    "ETHUSDT",
+    "LINKUSDT",
+    "LTCUSDT",
+    "SOLUSDT",
+    "XRPUSDT"
+   ],
+   "phase7_panel_window": [
+    "2022-01-01",
+    "2025-05-14"
+   ],
+   "phase7_panel_columns": [
+    "close",
+    "close_time_ms",
+    "date",
+    "high",
+    "low",
+    "num_trades",
+    "open",
+    "open_time_ms",
+    "quote_volume",
+    "symbol",
+    "taker_buy_base_volume",
+    "taker_buy_quote_volume",
+    "volume"
+   ],
+   "phase7_provenance_declares_not_pit": true,
+   "phase7_provenance_survivorship_statement": true
+  },
+  "any_store_carries_pit_membership_panel": false,
+  "widest_host_price_panel_symbol_count": 12,
+  "widest_host_price_panel_is_declared_non_pit": true,
+  "finding": "the machine's own PIT evidence stores declare zero supported daily membership (a1-1: 0 of 14,760 cells, DATA_BLOCKED; a1-usdm-pit-lifecycle: BOUNDED, pit_supported_asset_count=0, event points never projected into daily intervals), and the widest host price panel is a 12-symbol derived daily panel whose own provenance document states it is not a point-in-time universe; no measured store carries a market-cap, spread or second-venue series"
+ },
+ "requirement_vs_available": [
+  {
+   "item": "point-in-time cryptocurrency universe membership",
+   "origin": "record / Required data",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "0 entry-name hits over 1658 raw entries and no membership dataset at any depth; the symbol set is the four fixed 2026-listed majors, and the machine's own PIT attempt (a1-1) declares 0 of 14,760 daily cells supported"
+  },
+  {
+   "item": "timestamped historical prices sufficient to identify each formation window's exact minimum price",
+   "origin": "record / Required data",
+   "status": "PRESENT_FOR_FOUR_CONTRACTS_ONLY",
+   "note": "28 kline datasets cover BNBUSDT/BTCUSDT/ETHUSDT/SOLUSDT at 1d..5m (1d window 2022-01-01T00:00:00Z → 2026-09-16T00:00:00Z, finest step 300s), so a formation-window minimum is computable for those four contracts and for no other coin"
+  },
+  {
+   "item": "total-return or adjusted price treatment appropriate for crypto instruments",
+   "origin": "record / Required data",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "no adjustment / redenomination / total-return field or table exists (instrument field names are base_currency, id, info, is_inverse, lot_size, maker_fee, margin_init, margin_maint); prices are verbatim venue decimal strings and the record's own portability section warns about token migration and stablecoin quote differences"
+  },
+  {
+   "item": "market capitalization fields for universe controls",
+   "origin": "record / Required data",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "no market-cap or supply field, column or dataset anywhere (instrument size-like fields: none)"
+  },
+  {
+   "item": "liquidity / turnover fields for universe controls",
+   "origin": "record / Required data",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "kline rows carry base volume only (close, close_time_ms, high, low, open, open_time_ms, volume); quote_volume, trade count and taker-buy splits are documented absent by the store's own schema and measured absent from every row key; no turnover series exists"
+  },
+  {
+   "item": "delisting / death histories to avoid survivorship bias",
+   "origin": "record / Required data",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "the instrument export carries no listing/delisting/onboard field; the host's own lifecycle store holds 772 official notice event points (listing 736 / delisting 22 / conversion 11 / migration 2 / suspension 1) but its gate classifies the evidence BOUNDED with pit_supported_asset_count=0 and states an event point is never projected into a daily interval - and no prices exist for those symbols"
+  },
+  {
+   "item": "trading volume for execution realism",
+   "origin": "record / Required data",
+   "status": "PRESENT_FOR_FOUR_CONTRACTS_ONLY",
+   "note": "base volume is present in every kline row (row keys close, close_time_ms, high, low, open, open_time_ms, volume) for the four local contracts"
+  },
+  {
+   "item": "spread / cost data for execution realism",
+   "origin": "record / Required data",
+   "status": "ABSENT",
+   "note": "no spread, bid-ask, order-book or book-ticker series exists in the raw tree (1614 payload files / 79056050 B scanned, 0 data-extension token hits) and none of the measured host stores carries one"
+  },
+  {
+   "item": "instrument fee and tick metadata (for the card's cost convention)",
+   "origin": "record / Required data",
+   "status": "PRESENT",
+   "note": "maker_fee / taker_fee and price_increment exist for all four instruments ({\"BNBUSDT-PERP.BINANCE\": \"0.010\", \"BTCUSDT-PERP.BINANCE\": \"0.10\", \"ETHUSDT-PERP.BINANCE\": \"0.01\", \"SOLUSDT-PERP.BINANCE\": \"0.0100\"})"
+  },
+  {
+   "item": "consistent 24/7 timestamp convention and rebalance boundaries",
+   "origin": "record / Required data",
+   "status": "PRESENT",
+   "note": "UTC bars are documented in the store schema and gap-audited per dataset (VERIFY_GAPS.txt); the measured 1d step is exactly 86400s over 1720 bars"
+  },
+  {
+   "item": "venue-level spot or perpetual OHLCV with explicit listing/delisting timestamps",
+   "origin": "record / Required data (modern replication clause)",
+   "status": "ABSENT",
+   "note": "venue-level perpetual OHLCV exists for the four local contracts, but no listing/delisting timestamp exists anywhere in the store, and there is no spot venue (binance subdirs: usdm)"
+  },
+  {
+   "item": "cross-sectional universe of coins to sort (the portfolio-sort input)",
+   "origin": "record / Signal",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "the only cross-section the raw can offer is 4 fixed survivor contracts; the card forbids shrinking the registered universe to manufacture executability, so this is recorded as absent rather than replaced"
+  },
+  {
+   "item": "lowest price inside each formation window (the anchor variable)",
+   "origin": "record / Signal",
+   "status": "PRESENT_FOR_FOUR_CONTRACTS_ONLY",
+   "note": "computable from the 1d..5m bars of the four local contracts; not computable for any broader universe"
+  },
+  {
+   "item": "multiple formation periods evaluated by the source (exact lengths)",
+   "origin": "record / Signal",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "the record marks the lengths 'underspecified'; disclosed, not decisive - the card's research-defined rule covers execution details and nothing here narrows the source"
+  },
+  {
+   "item": "portfolio breakpoint scheme (median / tercile / quintile / decile)",
+   "origin": "record / Signal",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "recorded as 'underspecified' by the record; disclosed, not decisive"
+  },
+  {
+   "item": "portfolio weighting, long-only vs long-short, holding period, rebalance frequency, overlap handling",
+   "origin": "record / Signal",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "recorded as 'underspecified' by the record; disclosed, not decisive"
+  },
+  {
+   "item": "the source's exact lowest-price-anchor decomposition equations",
+   "origin": "record / Signal",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "not exposed by the reviewed public material (record limitation `underspecified`); the card registers the record's research-proposed operationalization as the testable form, so this is disclosed rather than decisive - the decisive gap is the absent point-in-time universe"
+  },
+  {
+   "item": "falsification item 1: survivorship-safe point-in-time universe across bull / bear / crash / sideways",
+   "origin": "record / Falsification item 1",
+   "status": "ABSENT",
+   "note": "requires exactly the membership + delisting + price panel that does not exist (0 supported PIT assets machine-wide)"
+  },
+  {
+   "item": "falsification item 2: conventional cross-sectional reversal baseline",
+   "origin": "record / Falsification item 2",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "the baseline is a cross-sectional portfolio sort over the same absent universe; a four-name sort is not the registered baseline"
+  },
+  {
+   "item": "falsification item 3: the source's exact anchor decomposition once recovered",
+   "origin": "record / Falsification item 3",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "the reviewed canon does not contain the equations; disclosed, not decisive"
+  },
+  {
+   "item": "falsification item 4 controls: prior return, maximum drawdown, realized / downside volatility",
+   "origin": "record / Falsification item 4",
+   "status": "PRESENT_FOR_FOUR_CONTRACTS_ONLY",
+   "note": "derivable from the four contracts' own bars; not derivable cross-sectionally"
+  },
+  {
+   "item": "falsification item 4 controls: size, liquidity, turnover, listing age",
+   "origin": "record / Falsification item 4",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "no market cap, no quote volume/turnover, no listing age anywhere in the raw tree"
+  },
+  {
+   "item": "falsification item 4 control: lottery proxies",
+   "origin": "record / Falsification item 4",
+   "status": "UNDERSPECIFIED_IN_REVIEWED_SOURCE",
+   "note": "no lottery-proxy definition is registered by the source and none is asserted here"
+  },
+  {
+   "item": "falsification item 5: overlapping / non-overlapping constructions with serial-correlation inference",
+   "origin": "record / Falsification item 5",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "constructible only over the absent panel; nothing is substituted"
+  },
+  {
+   "item": "falsification item 6: realistic fees, spread, slippage, funding/borrow and impact",
+   "origin": "record / Falsification item 6",
+   "status": "ABSENT",
+   "note": "fees and perp funding exist locally, but spread, borrow and impact do not; the record's own execution section leaves all of them 'underspecified'"
+  },
+  {
+   "item": "falsification item 7: frozen-specification out-of-sample / walk-forward evaluation",
+   "origin": "record / Falsification item 7",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "note": "the registered split exists (historical 2022-01-01 → 2025-09-30 / OOS 2025-10-01 → 2026-09-11) but no registered universe exists to evaluate"
+  },
+  {
+   "item": "falsification item 8: multiple venue universes",
+   "origin": "record / Falsification item 8",
+   "status": "ABSENT",
+   "note": "single venue (BINANCE USD-M perpetuals); no spot and no second venue anywhere in the raw tree or in any measured host store"
+  },
+  {
+   "item": "host-side alternative: a daily point-in-time membership panel",
+   "origin": "machine / host stores",
+   "status": "ABSENT",
+   "note": "the machine's own PIT attempt has 14,760 daily cells, 0 supported (classification DATA_BLOCKED, next gate: independent hermes-auditor review required; no A2 self-authorization)"
+  },
+  {
+   "item": "host-side alternative: a wide price panel",
+   "origin": "machine / host stores",
+   "status": "PRESENT_12_SYMBOLS_DERIVED_NOT_PIT",
+   "note": "the widest host panel is a 12-symbol derived daily panel (2022-01-01 → 2025-05-14, 14760 rows) whose own provenance document states the current-exchangeInfo list '不等於 point-in-time universe' and that results '不能宣稱無 survivorship bias'; it is not the canonical raw, carries no market cap, is 1d only, and cannot stand in for the registered universe"
+  }
+ ],
+ "requirement_vs_available_counts": {
+  "ABSENT_FROM_CANONICAL_RAW": 10,
+  "PRESENT_FOR_FOUR_CONTRACTS_ONLY": 4,
+  "ABSENT": 6,
+  "PRESENT": 2,
+  "UNDERSPECIFIED_IN_REVIEWED_SOURCE": 6,
+  "PRESENT_12_SYMBOLS_DERIVED_NOT_PIT": 1
+ },
+ "decisive_absences": [
+  "point_in_time_universe_absent: 0 of 1658 raw entries carry a universe/membership token and no membership dataset exists at any depth; the raw symbol set is the four fixed 2026-listed majors (cross_section_size=4)",
+  "market_cap_and_liquidity_absent: no market-cap or supply field/dataset and no quote_volume / trade-count / turnover series (kline row keys are close, close_time_ms, high, low, open, open_time_ms, volume; the store's own schema documents quote_volume, trade count and taker-buy splits as not present)",
+  "delisting_history_absent: no listing/delisting field in the instrument export; the host's 772 official lifecycle notice event points are classified BOUNDED with pit_supported_asset_count=0 and are never projected into a daily interval, and no prices exist for those symbols",
+  "machine_wide_pit_absence: the machine's own PIT membership attempt supports 0 of 14,760 daily cells (classification DATA_BLOCKED), and its lifecycle store reports daily_membership_pit_supported_asset_count=0",
+  "spread_and_second_venue_absent: 0 spread/bid-ask/order-book/book-ticker data-extension hits over 1614 payload files (79056050 B); no spot market and no second venue (binance subdirs: usdm)",
+  "adjustment_metadata_absent: no total-return / redenomination / adjustment field or table exists, so the record's adjusted-price requirement cannot be met",
+  "falsification_battery_blocked: items 1, 2, 5, 7 and 8 are defined on the absent universe / venue surface, item 4 misses size, liquidity, turnover and listing age, and item 6 misses spread, borrow and impact; item 3 is disclosed separately as under-specified in the reviewed canon",
+  "host_side_scan: 18 roots / 4020 files scanned; 10 data-extension token hits, all classified as measured PIT/derived research stores that do not satisfy the requirement (binance_lifecycle_event_points_declared_bounded; binance_spot_delisting_sample_prose_scale; derived_research_price_panel_12_fixed_symbols_not_pit; pit_membership_cells_declared_unsupported; pit_membership_observations_declared_unsupported; present_state_exchangeinfo_snapshot; research_corpus_index); 0 unclassified",
+  "universe_kept_whole: the registered universe was NOT shrunk to the four local contracts and no proxy panel (including the 12-symbol derived host panel) was substituted for it"
+ ],
+ "environment_readback": {
+  "command": "python3 runtime/preflight.py --json (environment checks P1-P8; --attempt-dir absent so the P9/P10 launch gate is NOT evaluated)",
+  "overall": "PASS",
+  "checks": [
+   {
+    "id": "P1",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+   },
+   {
+    "id": "P2",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+   },
+   {
+    "id": "P3",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-58960.tmp"
+   },
+   {
+    "id": "P4",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "container system status=running (rc=0)"
+   },
+   {
+    "id": "P5",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "qlib-run state=running"
+   },
+   {
+    "id": "P6",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+   },
+   {
+    "id": "P7",
+    "status": "PASS",
+    "layer": "card-local",
+    "detail": "/qlib/work writable: work_ok"
+   },
+   {
+    "id": "P8",
+    "status": "PASS",
+    "layer": "shared-layer",
+    "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+   },
+   {
+    "id": "P9",
+    "status": "NA",
+    "layer": "-",
+    "detail": "no --attempt-dir; launch gate NOT evaluated"
+   },
+   {
+    "id": "P10",
+    "status": "NA",
+    "layer": "-",
+    "detail": "no --attempt-dir; launch gate NOT evaluated"
+   }
+  ],
+  "meaning": "the execution plane is healthy; the blocker is the record's required data, not the environment - therefore no section 12.5 freeze"
+ },
+ "artifact_hashes": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01/rounds/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01-r1/round-spec.json",
+   "bytes": 112986,
+   "sha256": "sha256:31da68bbb8e39496100d8e24fead43d09cbc01fdec86f4214f5656324bf79603"
+  },
+  "verdict": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01/rounds/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01-r1/verdict.json",
+   "bytes": 6659,
+   "sha256": "sha256:5b3e29bbd7c55767b12240c4ac29ecdd5c3bbade661c7a9591a1ad0f0f88373b"
+  },
+  "family_json": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/crypto-low-price-anchor-cross-sectional-reversal-2026-09-01/family.json",
+   "sha256": "sha256:361ce9a6bf820420d1f954b7f85d821455d165140f307f5731572c8ae32c4a8e"
+  },
+  "checker": {
+   "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py",
+   "bytes": 81097,
+   "sha256": "sha256:4d2d22911e1890d281bbb547d5f0a7ab54d67bf31f22cc8397a27016d75dccd3"
+  },
+  "round_dir_files": [
+   "round-spec.json",
+   "verdict.json"
+  ],
+  "attempts_dir_exists": false
+ },
+ "executable_verification": {
+  "live_check": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py --json",
+   "rc": 0,
+   "captured_from": "/tmp/t7347811a_modes/live.stdout",
+   "stdout_json": {
+    "ok": true,
+    "checks": [
+     {
+      "id": "C1",
+      "name": "canonical raw identity is a single crypto-perp venue carrying the three dataset families",
+      "ok": true,
+      "detail": {
+       "venue": "BINANCE",
+       "market_type": "usdm_perp",
+       "usdm_subdirs": [
+        "funding",
+        "instruments",
+        "klines"
+       ],
+       "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+       ]
+      }
+     },
+     {
+      "id": "C2",
+      "name": "instrument surface carries four crypto perpetuals, fee/tick metadata and no listing or market-cap field",
+      "ok": true,
+      "detail": {
+       "ids": [
+        "BNBUSDT-PERP.BINANCE",
+        "BTCUSDT-PERP.BINANCE",
+        "ETHUSDT-PERP.BINANCE",
+        "SOLUSDT-PERP.BINANCE"
+       ],
+       "types": [
+        "CryptoPerpetual"
+       ],
+       "listing_fields": [],
+       "size_fields": [],
+       "fee_fields": [
+        "maker_fee",
+        "taker_fee"
+       ],
+       "tick_sizes": {
+        "BNBUSDT-PERP.BINANCE": "0.010",
+        "BTCUSDT-PERP.BINANCE": "0.10",
+        "ETHUSDT-PERP.BINANCE": "0.01",
+        "SOLUSDT-PERP.BINANCE": "0.0100"
+       }
+      }
+     },
+     {
+      "id": "C3",
+      "name": "kline surface is OHLCV-only on seven intervals with no universe/market-cap column",
+      "ok": true,
+      "detail": {
+       "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+       ],
+       "intervals": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+       ],
+       "datasets": 28,
+       "row_keys": [
+        "close",
+        "close_time_ms",
+        "high",
+        "low",
+        "open",
+        "open_time_ms",
+        "volume"
+       ],
+       "1d_window": [
+        "2022-01-01T00:00:00Z",
+        "2026-09-16T00:00:00Z"
+       ],
+       "1d_rows": 1720,
+       "step_s": 86400.0,
+       "finest_step_s": 300.0
+      }
+     },
+     {
+      "id": "C4",
+      "name": "funding surface is perp funding only, with no universe/membership field",
+      "ok": true,
+      "detail": {
+       "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+       ],
+       "keys": [
+        "funding_price_source",
+        "funding_rate",
+        "funding_time_ms",
+        "mark_price",
+        "market_type",
+        "rate_type",
+        "symbol",
+        "truth_status",
+        "venue"
+       ],
+       "venues": [
+        "BINANCE"
+       ],
+       "window": [
+        "2022-01-01T00:00:00Z",
+        "2026-09-17T00:00:00Z"
+       ],
+       "rows": 5161
+      }
+     },
+     {
+      "id": "C5",
+      "name": "entry-name probe over the whole raw tree finds no universe/market-cap/liquidity/spread token",
+      "ok": true,
+      "detail": {
+       "entries": 1658,
+       "tokens": 34,
+       "hit_counts": {},
+       "unexplained": []
+      }
+     },
+     {
+      "id": "C6",
+      "name": "payload probe over every raw file finds only classified prose mentions and no data-extension hit",
+      "ok": true,
+      "detail": {
+       "files": 1614,
+       "bytes": 79056050,
+       "hit_counts": {
+        "membership": 1,
+        "pit": 1,
+        "exchange_info": 1,
+        "listing": 1,
+        "book_ticker": 1,
+        "bybit": 1,
+        "coinbase": 1,
+        "bitfinex": 1,
+        "binance_vision": 1,
+        "bars": 5,
+        "quote_volume": 1,
+        "num_trades": 1
+       },
+       "data_ext_token_files": {
+        "membership": [],
+        "pit": [],
+        "exchange_info": [],
+        "listing": [],
+        "book_ticker": [],
+        "bybit": [],
+        "coinbase": [],
+        "bitfinex": [],
+        "binance_vision": [],
+        "bars": [],
+        "quote_volume": [],
+        "num_trades": []
+       },
+       "classified": [
+        {
+         "token": "membership",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "the store's migration inventory, listing *other* (non-migrated) stores by path: 'a1-1-phase9-pit-membership/raw/** | S3 XML listings (not data) ...'"
+        },
+        {
+         "token": "pit",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "same inventory row: the path token 'pit' inside 'a1-1-phase9-pit-membership'"
+        },
+        {
+         "token": "exchange_info",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "same inventory row: 'old data.binance.vision probes' / store-path prose"
+        },
+        {
+         "token": "listing",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "same inventory row: 'S3 XML listings (not data)' - bucket listings, not instrument listing dates"
+        },
+        {
+         "token": "book_ticker",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "a Spotlight/mdfind sweep token list in the inventory's method paragraph ('... aggTrade / bookTicker / openInterest ...'), i.e. a description of a search, not an order-book series"
+        },
+        {
+         "token": "bybit",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "the inventory's 'other stores (not migrated)' table naming LEAN sample datasets ('... plus bitfinex/coinbase/bybit/dydx crypto')"
+        },
+        {
+         "token": "coinbase",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "same not-migrated table row naming LEAN sample datasets"
+        },
+        {
+         "token": "bitfinex",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "same not-migrated table row naming LEAN sample datasets"
+        },
+        {
+         "token": "binance_vision",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "the same table row's provenance prose ('old data.binance.vision probes'); the inventory states no Vision archive was ever retained locally"
+        },
+        {
+         "token": "bars",
+         "entry": "_meta/INVENTORY.md",
+         "series_shaped": false,
+         "why": "the store's migration inventory prose ('parquet bars (engine store)')"
+        },
+        {
+         "token": "bars",
+         "entry": "_meta/SCHEMA.md",
+         "series_shaped": false,
+         "why": "the store's own schema prose describing bar partitioning ('Bar interval = interval in the path')"
+        },
+        {
+         "token": "bars",
+         "entry": "_meta/TRANSCODE_MANIFEST.json",
+         "series_shaped": false,
+         "why": "the per-file provenance manifest naming the transcoded bar files"
+        },
+        {
+         "token": "bars",
+         "entry": "_tools/README.md",
+         "series_shaped": false,
+         "why": "the updater's own README describing the bar store"
+        },
+        {
+         "token": "bars",
+         "entry": "_tools/market_data_sync.py",
+         "series_shaped": false,
+         "why": "the standalone updater's own source code, which calls kline rows 'bars' in its docstrings and assertions"
+        },
+        {
+         "token": "quote_volume",
+         "entry": "_meta/SCHEMA.md",
+         "series_shaped": false,
+         "why": "the schema's Known coverage limit paragraph, which states that quote_volume, trade count and taker-buy splits are **not** present"
+        },
+        {
+         "token": "num_trades",
+         "entry": "_meta/SCHEMA.md",
+         "series_shaped": false,
+         "why": "the same Known coverage limit paragraph: 'trade count' is documented absent"
+        }
+       ],
+       "unexplained": []
+      }
+     },
+     {
+      "id": "C7",
+      "name": "point-in-time universe membership is absent from the canonical raw",
+      "ok": true,
+      "detail": {
+       "universe_membership_series": false,
+       "delisting_history_series": false,
+       "schema_dataset_sections": [
+        "klines (Binance USD-M perpetual futures, UTC)",
+        "funding",
+        "instruments"
+       ],
+       "schema_universe_mentions": [],
+       "schema_listing_mentions": [],
+       "series_shaped_tokens": []
+      }
+     },
+     {
+      "id": "C8",
+      "name": "market-capitalization and liquidity/turnover controls are absent from the raw",
+      "ok": true,
+      "detail": {
+       "market_cap_series": false,
+       "liquidity_series": false,
+       "columns_missing_vs_venue_12": [
+        "quote_volume",
+        "num_trades",
+        "taker_buy_base_volume"
+       ],
+       "quote_volume_documented_absent": true,
+       "size_fields": []
+      }
+     },
+     {
+      "id": "C9",
+      "name": "spread / order-book cost data and any second venue are absent",
+      "ok": true,
+      "detail": {
+       "spread_series": false,
+       "second_venue_series": false,
+       "adjustment_series": false,
+       "binance_subdirs": [
+        "usdm"
+       ],
+       "venue_or_vendor_dirs": [],
+       "store_top_level": [
+        "_meta",
+        "_tools",
+        "binance"
+       ]
+      }
+     },
+     {
+      "id": "C10",
+      "name": "the raw can offer only four fixed survivor contracts; the published round did not shrink the registered universe to them",
+      "ok": true,
+      "detail": {
+       "cross_section_size": 4,
+       "wide_price_panel_present": false,
+       "universe_shrunk_to_local_list": false,
+       "required_data_available_local": false,
+       "price_panel_symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+       ]
+      }
+     },
+     {
+      "id": "C11",
+      "name": "round-spec states the contract-mandated terminal values",
+      "ok": true,
+      "detail": {
+       "verdict": "TECHNICAL_INCOMPLETE",
+       "layer": "card-local",
+       "class": "data_window_invalid",
+       "last_run_id": null,
+       "attempts": 0
+      }
+     },
+     {
+      "id": "C12",
+      "name": "verdict.json states the same terminal values and an empty survivor/coverage surface",
+      "ok": true,
+      "detail": {
+       "verdict": "TECHNICAL_INCOMPLETE",
+       "performance_claimable": false,
+       "attempts": {
+        "launched": 0,
+        "run_specs": 0,
+        "terminal_sentinels": 0,
+        "run_spec": null,
+        "terminal_sentinel": null,
+        "attempt_dir": null
+       },
+       "survivors": [],
+       "coverage": {
+        "cells_registered_per_grid": 48,
+        "cells_registered_total": 480,
+        "cells_computed": 0,
+        "phase_grids": [
+         "historical",
+         "oos",
+         "full",
+         "fee_2x",
+         "funding_2x",
+         "entry_delay_1_bar",
+         "slippage_2ticks",
+         "no_funding",
+         "no_funding_full",
+         "cost_attrition_40bps"
+        ]
+       },
+       "cohorts": {
+        "registered_slots": 1,
+        "realized": 0
+       }
+      }
+     },
+     {
+      "id": "C13",
+      "name": "nothing was ever submitted: no run-spec, no attempt dir, no sentinel",
+      "ok": true,
+      "detail": {
+       "attempts_dir_exists": false,
+       "round_dir_listing": [
+        "round-spec.json",
+        "verdict.json"
+       ],
+       "family_dir_listing": [
+        "family.json",
+        "rounds"
+       ],
+       "stray": []
+      }
+     },
+     {
+      "id": "C14",
+      "name": "DCA domain carries the 7.2 v1.3.1 provenance classes and the complete 48-cell product",
+      "ok": true,
+      "detail": {
+       "dca_configs": 48,
+       "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+       "search_axes_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+       "axes": [
+        "breakeven_tp_pct",
+        "invalidation_pct",
+        "size_multiplier",
+        "spacing_pct"
+       ],
+       "dca_ok": true
+      }
+     },
+     {
+      "id": "C15",
+      "name": "coverage is registered but empty; no survivor surface exists",
+      "ok": true,
+      "detail": {
+       "cells_registered_per_grid": 48,
+       "cells_computed": 0,
+       "phase_grids": 10,
+       "cohorts_realized": 0,
+       "selector": "cohort-selector-v1",
+       "disposition": "cohort-disposition-v1"
+      }
+     },
+     {
+      "id": "C16",
+      "name": "the machine's own PIT evidence stores declare zero supported daily membership",
+      "ok": true,
+      "detail": {
+       "membership_gate": {
+        "classification": "DATA_BLOCKED",
+        "pit_supported_asset_count": 0,
+        "supported_cells": 0,
+        "unknown_cells": 14760,
+        "total_cells": 14760
+       },
+       "lifecycle_gate": {
+        "classification": "BOUNDED",
+        "pit_supported_asset_count": 0,
+        "daily_membership_pit_supported_asset_count": 0,
+        "event_rows": 772,
+        "event_types": {
+         "listing": 736,
+         "delisting": 22,
+         "suspension": 1,
+         "contract_migration": 2,
+         "contract_conversion": 11
+        },
+        "support_scopes": {
+         "boundary_history": 55,
+         "event_point": 691,
+         "target_window": 26
+        }
+       },
+       "any_store_carries_pit_membership_panel": false
+      }
+     },
+     {
+      "id": "C17",
+      "name": "every host data-extension hit is classified and the widest host price panel is declared non-point-in-time by its own provenance",
+      "ok": true,
+      "detail": {
+       "roots": 18,
+       "files_scanned": 4035,
+       "token_files": 2703,
+       "data_extension_hits": 12,
+       "prose_extension_hits": 2691,
+       "classified_data_hits": 12,
+       "unclassified_data_hits": 0,
+       "data_candidates": [
+        {
+         "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+         "path": "membership_cells.jsonl",
+         "tokens": [
+          "listing",
+          "membership"
+         ],
+         "ext": ".jsonl",
+         "class": "pit_membership_cells_declared_unsupported",
+         "why": "the machine's own PIT-membership attempt: 14,760 daily cells for 12 declared instruments, every one `membership_status=unknown`, `supported=false`; its gate_handoff.json classifies the phase DATA_BLOCKED with pit_supported_asset_count=0"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+         "path": "membership_observations.csv",
+         "tokens": [
+          "exchange_info",
+          "listing",
+          "membership",
+          "onboard"
+         ],
+         "ext": ".csv",
+         "class": "pit_membership_observations_declared_unsupported",
+         "why": "59 evidence rows behind the same attempt (present-state snapshots + official boundary notices); its own manifest reports daily_supported_rows=0"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830",
+         "path": "lifecycle_events.csv",
+         "tokens": [
+          "delist",
+          "listing",
+          "market_cap",
+          "spot"
+         ],
+         "ext": ".csv",
+         "class": "binance_lifecycle_event_points_declared_bounded",
+         "why": "772 official USD-M lifecycle notices (listing 736 / delisting 22 / conversion 11 / migration 2 / suspension 1) whose own gate classifies the evidence BOUNDED with pit_supported_asset_count=0 and states an event point is never projected into a daily valid interval; no prices exist for those symbols"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+         "path": "capture_manifest.jsonl",
+         "tokens": [
+          "exchange_info"
+         ],
+         "ext": ".jsonl",
+         "class": "present_state_exchangeinfo_snapshot",
+         "why": "prospective capture manifest of /fapi/v1/exchangeInfo bytes; the store's own contract marks current-state snapshots cross-check only, never historical backfill"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+         "path": "snapshot_observations.jsonl",
+         "tokens": [
+          "exchange_info",
+          "membership"
+         ],
+         "ext": ".jsonl",
+         "class": "present_state_exchangeinfo_snapshot",
+         "why": "same present-state snapshot store (observation ledger)"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+         "path": "cohort_manifest.jsonl",
+         "tokens": [
+          "exchange_info"
+         ],
+         "ext": ".jsonl",
+         "class": "present_state_exchangeinfo_snapshot",
+         "why": "cohort-level present-state snapshot manifest; explicit no-backfill policy"
+        },
+        {
+         "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+         "path": "snapshot_observations.jsonl",
+         "tokens": [
+          "exchange_info",
+          "membership"
+         ],
+         "ext": ".jsonl",
+         "class": "present_state_exchangeinfo_snapshot",
+         "why": "same cohort snapshot store (observation ledger)"
+        },
+        {
+         "root": "/Users/hong/workspace/phase7-alpha-research",
+         "path": "data/derived/quote_volume_wide.csv",
+         "tokens": [
+          "quote_volume"
+         ],
+         "ext": ".csv",
+         "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+         "why": "the wide (date x symbol) quote-volume form of the same 12-symbol derived panel; same non-point-in-time provenance, 1d only, no market cap, not the canonical raw"
+        },
+        {
+         "root": "/Users/hong/workspace/phase7-alpha-research",
+         "path": "data/derived/real_daily.csv",
+         "tokens": [
+          "quote_volume"
+         ],
+         "ext": ".csv",
+         "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+         "why": "a 12-symbol fixed daily panel (Binance USD-M 1d, 2022-01-01..2025-05-14, 14,760 rows, with quote_volume and trade count). Its own data_provenance.md states the current exchangeInfo list '不等於 point-in-time universe' and that results '不能宣稱無 survivorship bias'; it is 1d only, carries no market cap, and is not the canonical raw"
+        },
+        {
+         "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+         "path": "data/pit_events.sqlite",
+         "tokens": [
+          "pit"
+         ],
+         "ext": ".sqlite",
+         "class": "phase10_pit_contract_demonstration_spot_example",
+         "why": "the Phase 10 bitemporal/PIT contract demonstration: 12 records, 19 lifecycle events, 6 snapshots for *spot* symbols (KGST, USDS, ...), with snapshot counts 'eligible 0-1 / unknown 12'; a capability example, not a USD-M point-in-time universe panel and not price data"
+        },
+        {
+         "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+         "path": "data/real_lifecycle_evidence.csv",
+         "tokens": [
+          "delist",
+          "listing",
+          "spot"
+         ],
+         "ext": ".csv",
+         "class": "binance_spot_delisting_sample_prose_scale",
+         "why": "8 hand-built Binance *spot* delisting notice records for the Phase 10 research contract; no USD-M price panel and no continuous membership interval"
+        },
+        {
+         "root": "/Users/hong/workspace/alpha-strategy-research",
+         "path": "coverage_manifest.csv",
+         "tokens": [
+          "adjusted",
+          "bars",
+          "liquidity",
+          "spread",
+          "supply"
+         ],
+         "ext": ".csv",
+         "class": "research_corpus_index",
+         "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (liquidity / spread / supply / adjusted), not in any market series"
+        }
+       ],
+       "unclassified": [],
+       "phase7_panel": {
+        "symbols": 12,
+        "rows": 14760,
+        "window": [
+         "2022-01-01",
+         "2025-05-14"
+        ],
+        "declared_non_pit": true
+       }
+      }
+     },
+     {
+      "id": "C18",
+      "name": "family.json binds this round's family to this card and fingerprint",
+      "ok": true,
+      "detail": {
+       "family_id": "crypto-low-price-anchor-cross-sectional-reversal-2026-09-01",
+       "kanban_task_id": "t_7347811a",
+       "semantic_fingerprint": "sha256:5ea70fbb5584e01e6b5fd45dd168ff9d3cfe311ccc173269366174c4d423a3dd"
+      }
+     },
+     {
+      "id": "C19",
+      "name": "failure taxonomy kept separated: infrastructure terminal, not a scientific failure",
+      "ok": true,
+      "detail": {
+       "expected": "PREREQUISITE_ABSENT",
+       "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+       "note": "this round's terminal is an infrastructure/technical failure (prerequisite absent, measured), not a scientific failure: the record's hypothesis was never evaluated, so no cull and no REJECT is recorded, and operator failure plays no part"
+      }
+     },
+     {
+      "id": "C20",
+      "name": "the falsification battery is registered unchanged and recorded as not executed",
+      "ok": true,
+      "detail": {
+       "status": "NOT_EXECUTED: item 1 needs the absent survivorship-safe point-in-time universe, items 2 and 5 need the same cross-sectional panel, item 4 misses size / liquidity / turnover / listing age, item 6 misses spread, borrow and impact, item 8 needs a second venue, and item 3's exact decomposition is not in the reviewed canon (disclosed separately)",
+       "no_threshold_lowering": true,
+       "no_item_removal": true
+      }
+     }
+    ],
+    "failed": [],
+    "raw_summary": {
+     "entries": 1658,
+     "payload_files": 1614,
+     "payload_bytes": 79056050
+    },
+    "stores_summary": {
+     "roots": 18,
+     "files_scanned": 4035,
+     "token_files": 2703,
+     "data_extension_hits": 12,
+     "prose_extension_hits": 2691,
+     "classified_data_hits": 12,
+     "unclassified_data_hits": 0
+    }
+   },
+   "stderr": ""
+  },
+  "live_check_human_view": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py ",
+   "rc": 0,
+   "raw_text": "C1   PASS canonical raw identity is a single crypto-perp venue carrying the three dataset families\nC2   PASS instrument surface carries four crypto perpetuals, fee/tick metadata and no listing or market-cap field\nC3   PASS kline surface is OHLCV-only on seven intervals with no universe/market-cap column\nC4   PASS funding surface is perp funding only, with no universe/membership field\nC5   PASS entry-name probe over the whole raw tree finds no universe/market-cap/liquidity/spread token\nC6   PASS payload probe over every raw file finds only classified prose mentions and no data-extension hit\nC7   PASS point-in-time universe membership is absent from the canonical raw\nC8   PASS market-capitalization and liquidity/turnover controls are absent from the raw\nC9   PASS spread / order-book cost data and any second venue are absent\nC10  PASS the raw can offer only four fixed survivor contracts; the published round did not shrink the registered universe to them\nC11  PASS round-spec states the contract-mandated terminal values\nC12  PASS verdict.json states the same terminal values and an empty survivor/coverage surface\nC13  PASS nothing was ever submitted: no run-spec, no attempt dir, no sentinel\nC14  PASS DCA domain carries the 7.2 v1.3.1 provenance classes and the complete 48-cell product\nC15  PASS coverage is registered but empty; no survivor surface exists\nC16  PASS the machine's own PIT evidence stores declare zero supported daily membership\nC17  PASS every host data-extension hit is classified and the widest host price panel is declared non-point-in-time by its own provenance\nC18  PASS family.json binds this round's family to this card and fingerprint\nC19  PASS failure taxonomy kept separated: infrastructure terminal, not a scientific failure\nC20  PASS the falsification battery is registered unchanged and recorded as not executed\n\nok=True failed=[]\nraw: {\"entries\": 1658, \"payload_files\": 1614, \"payload_bytes\": 79056050}\nstores: {\"roots\": 18, \"files_scanned\": 4035, \"token_files\": 2703, \"data_extension_hits\": 12, \"prose_extension_hits\": 2691, \"classified_data_hits\": 12, \"unclassified_data_hits\": 0}\n"
+  },
+  "verify_verbatim": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py --verify-verbatim",
+   "rc": 0,
+   "captured_from": "/tmp/t7347811a_modes/verbatim.stdout",
+   "stdout_json": {
+    "ok": true,
+    "checked": 50,
+    "leaves": 50,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 16466,
+     "record": 14499,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   },
+   "stderr": ""
+  },
+  "self_test": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py --self-test",
+   "rc": 0,
+   "captured_from": "/tmp/t7347811a_modes/selftest.stdout",
+   "stdout_json": {
+    "ok": true,
+    "variants": [
+     {
+      "variant": "verdict->PASS",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "performance_claimable->true",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "failure.layer->shared-layer",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "failure.class->script_bug",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "failure.last_run_id->u1",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "attempts.launched->1",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "survivors->[one]",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "coverage.cells_computed->48",
+      "expected": "C12",
+      "failed": [
+       "C12"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "yield_decision->CONTINUE",
+      "expected": "C19",
+      "failed": [
+       "C19"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "spec.launch.launched->true",
+      "expected": "C11",
+      "failed": [
+       "C11"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "spec.gate.verdict->REJECT",
+      "expected": "C11",
+      "failed": [
+       "C11"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "spec.gate.failure_layer->shared-layer",
+      "expected": "C11",
+      "failed": [
+       "C11"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "spec.gate.last_run_id->u1",
+      "expected": "C11",
+      "failed": [
+       "C11"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "spec.expected->RUN",
+      "expected": "C19",
+      "failed": [
+       "C19"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "universe_shrunk_to_local_list->true",
+      "expected": "C10",
+      "failed": [
+       "C10"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "required_data_available_local->true",
+      "expected": "C10",
+      "failed": [
+       "C10"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "dca.configs->12",
+      "expected": "C14",
+      "failed": [
+       "C14"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "dca.base_quote_status->USER_FIXED",
+      "expected": "C14",
+      "failed": [
+       "C14"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "dca axes leak into user_fixed_invariants",
+      "expected": "C14",
+      "failed": [
+       "C14"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "coverage.cells_computed->48 (spec)",
+      "expected": "C15",
+      "failed": [
+       "C15"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "cohorts_realized->2",
+      "expected": "C15",
+      "failed": [
+       "C15"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "selector version changed",
+      "expected": "C15",
+      "failed": [
+       "C15"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "falsification item removed",
+      "expected": "C20",
+      "failed": [
+       "C20"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "falsification status -> EXECUTED",
+      "expected": "C20",
+      "failed": [
+       "C20"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "family.kanban_task_id->other",
+      "expected": "C18",
+      "failed": [
+       "C18"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "family.semantic_fingerprint mismatch",
+      "expected": "C18",
+      "failed": [
+       "C18"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "stray run-spec.json present",
+      "expected": "C13",
+      "failed": [
+       "C13"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "stray terminal sentinel present",
+      "expected": "C13",
+      "failed": [
+       "C13"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "extra file in family dir",
+      "expected": "C13",
+      "failed": [
+       "C13"
+      ],
+      "flipped": true,
+      "ok": true
+     },
+     {
+      "variant": "benign round-spec note",
+      "expected": "NO_FLIP",
+      "failed": [],
+      "flipped": [],
+      "ok": true
+     }
+    ]
+   },
+   "stderr": ""
+  },
+  "raw_fixture_control": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py --raw-fixture-control",
+   "rc": 0,
+   "captured_from": "/tmp/t7347811a_modes/fixture.stdout",
+   "stdout_json": {
+    "ok": true,
+    "expected_flip": [
+     "C5",
+     "C6",
+     "C7",
+     "C8",
+     "C9"
+    ],
+    "flipped": [
+     "C5",
+     "C6",
+     "C7",
+     "C8",
+     "C9"
+    ],
+    "other_flips": [],
+    "missing_flip": [],
+    "unexpected_flip": [],
+    "fixture_shape": {
+     "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+     ],
+     "intervals": 7,
+     "btcusdt_1d_rows": 1720,
+     "funding_rows_btcusdt": 5100,
+     "instruments": 4
+    },
+    "fixture_flags": {
+     "universe_membership_series": true,
+     "delisting_history_series": true,
+     "market_cap_series": true,
+     "liquidity_series": true,
+     "spread_series": true,
+     "second_venue_series": true,
+     "adjustment_series": true,
+     "schema_sections": [
+      "klines (Binance USD-M perpetual futures, UTC)",
+      "funding",
+      "instruments",
+      "universe_membership (point-in-time cryptocurrency universe membership)",
+      "market_cap (point-in-time market capitalization and liquidity)",
+      "spread (bid-ask spread / order-book cost)",
+      "okx_spot (second venue)"
+     ],
+     "unexplained_name": [
+      "coingecko",
+      "mcap",
+      "membership",
+      "okx",
+      "spot",
+      "spread",
+      "universe"
+     ],
+     "unexplained_payload": [
+      "adjusted",
+      "bid_ask",
+      "book_ticker",
+      "circulating_supply",
+      "delist",
+      "liquidity",
+      "listing",
+      "market_cap",
+      "membership",
+      "okx",
+      "orderbook",
+      "point_in_time",
+      "quote_volume",
+      "spot",
+      "spread",
+      "supply",
+      "token_migration",
+      "turnover",
+      "universe",
+      "universe_membership"
+     ]
+    }
+   },
+   "stderr": ""
+  },
+  "host_scan": {
+   "command": "python3 runtime/crypto_low_price_anchor_cross_sectional_reversal_prerequisite_check.py --host-scan",
+   "rc": 0,
+   "captured_from": "/tmp/t7347811a_modes/hostscan.stdout",
+   "totals": {
+    "roots": 18,
+    "files_scanned": 4035,
+    "token_files": 2703,
+    "data_extension_hits": 12,
+    "prose_extension_hits": 2691,
+    "classified_data_hits": 12,
+    "unclassified_data_hits": 0
+   },
+   "details": {
+    "pid_gates": {
+     "sources": {
+      "membership_gate": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/gate_handoff.json",
+      "membership_cells": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+      "lifecycle_gate": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/pit_handoff.json",
+      "lifecycle_events": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+      "phase7_panel": "/Users/hong/workspace/phase7-alpha-research/data/derived/real_daily.csv",
+      "phase7_provenance": "/Users/hong/workspace/phase7-alpha-research/data_provenance.md"
+     },
+     "membership_gate_classification": "DATA_BLOCKED",
+     "membership_gate_pit_supported_asset_count": 0,
+     "membership_gate_supported_cells": 0,
+     "membership_gate_total_cells": 14760,
+     "membership_gate_unknown_cells": 14760,
+     "membership_gate_next_gate": "independent hermes-auditor review required; no A2 self-authorization",
+     "membership_cells_rows": 14760,
+     "membership_cells_supported": 0,
+     "lifecycle_classification": "BOUNDED",
+     "lifecycle_pit_supported_asset_count": 0,
+     "lifecycle_daily_membership_pit_supported_asset_count": 0,
+     "lifecycle_bounded_event_point_asset_count": 674,
+     "lifecycle_bounded_event_point_event_count": 691,
+     "lifecycle_current_exchange_info_policy": "present_state_cross_check_only_never_historical_backfill",
+     "lifecycle_event_points_only": true,
+     "lifecycle_event_rows": 772,
+     "lifecycle_event_type_counts": {
+      "listing": 736,
+      "delisting": 22,
+      "suspension": 1,
+      "contract_migration": 2,
+      "contract_conversion": 11
+     },
+     "lifecycle_event_support_scopes": {
+      "boundary_history": 55,
+      "event_point": 691,
+      "target_window": 26
+     },
+     "lifecycle_event_symbols": 705,
+     "phase7_panel_rows": 14760,
+     "phase7_panel_symbol_count": 12,
+     "phase7_panel_symbols": [
+      "ADAUSDT",
+      "AVAXUSDT",
+      "BCHUSDT",
+      "BNBUSDT",
+      "BTCUSDT",
+      "DOGEUSDT",
+      "ETCUSDT",
+      "ETHUSDT",
+      "LINKUSDT",
+      "LTCUSDT",
+      "SOLUSDT",
+      "XRPUSDT"
+     ],
+     "phase7_panel_window": [
+      "2022-01-01",
+      "2025-05-14"
+     ],
+     "phase7_panel_columns": [
+      "close",
+      "close_time_ms",
+      "date",
+      "high",
+      "low",
+      "num_trades",
+      "open",
+      "open_time_ms",
+      "quote_volume",
+      "symbol",
+      "taker_buy_base_volume",
+      "taker_buy_quote_volume",
+      "volume"
+     ],
+     "phase7_provenance_declares_not_pit": true,
+     "phase7_provenance_survivorship_statement": true
+    },
+    "classified": [
+     {
+      "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+      "path": "membership_cells.jsonl",
+      "tokens": [
+       "listing",
+       "membership"
+      ],
+      "ext": ".jsonl",
+      "class": "pit_membership_cells_declared_unsupported",
+      "why": "the machine's own PIT-membership attempt: 14,760 daily cells for 12 declared instruments, every one `membership_status=unknown`, `supported=false`; its gate_handoff.json classifies the phase DATA_BLOCKED with pit_supported_asset_count=0"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+      "path": "membership_observations.csv",
+      "tokens": [
+       "exchange_info",
+       "listing",
+       "membership",
+       "onboard"
+      ],
+      "ext": ".csv",
+      "class": "pit_membership_observations_declared_unsupported",
+      "why": "59 evidence rows behind the same attempt (present-state snapshots + official boundary notices); its own manifest reports daily_supported_rows=0"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830",
+      "path": "lifecycle_events.csv",
+      "tokens": [
+       "delist",
+       "listing",
+       "market_cap",
+       "spot"
+      ],
+      "ext": ".csv",
+      "class": "binance_lifecycle_event_points_declared_bounded",
+      "why": "772 official USD-M lifecycle notices (listing 736 / delisting 22 / conversion 11 / migration 2 / suspension 1) whose own gate classifies the evidence BOUNDED with pit_supported_asset_count=0 and states an event point is never projected into a daily valid interval; no prices exist for those symbols"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+      "path": "capture_manifest.jsonl",
+      "tokens": [
+       "exchange_info"
+      ],
+      "ext": ".jsonl",
+      "class": "present_state_exchangeinfo_snapshot",
+      "why": "prospective capture manifest of /fapi/v1/exchangeInfo bytes; the store's own contract marks current-state snapshots cross-check only, never historical backfill"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-2-prospective-pit-foundation-20260830",
+      "path": "snapshot_observations.jsonl",
+      "tokens": [
+       "exchange_info",
+       "membership"
+      ],
+      "ext": ".jsonl",
+      "class": "present_state_exchangeinfo_snapshot",
+      "why": "same present-state snapshot store (observation ledger)"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+      "path": "cohort_manifest.jsonl",
+      "tokens": [
+       "exchange_info"
+      ],
+      "ext": ".jsonl",
+      "class": "present_state_exchangeinfo_snapshot",
+      "why": "cohort-level present-state snapshot manifest; explicit no-backfill policy"
+     },
+     {
+      "root": "/Users/hong/workspace/a1-3-prospective-pit-cohort-20260830",
+      "path": "snapshot_observations.jsonl",
+      "tokens": [
+       "exchange_info",
+       "membership"
+      ],
+      "ext": ".jsonl",
+      "class": "present_state_exchangeinfo_snapshot",
+      "why": "same cohort snapshot store (observation ledger)"
+     },
+     {
+      "root": "/Users/hong/workspace/phase7-alpha-research",
+      "path": "data/derived/quote_volume_wide.csv",
+      "tokens": [
+       "quote_volume"
+      ],
+      "ext": ".csv",
+      "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+      "why": "the wide (date x symbol) quote-volume form of the same 12-symbol derived panel; same non-point-in-time provenance, 1d only, no market cap, not the canonical raw"
+     },
+     {
+      "root": "/Users/hong/workspace/phase7-alpha-research",
+      "path": "data/derived/real_daily.csv",
+      "tokens": [
+       "quote_volume"
+      ],
+      "ext": ".csv",
+      "class": "derived_research_price_panel_12_fixed_symbols_not_pit",
+      "why": "a 12-symbol fixed daily panel (Binance USD-M 1d, 2022-01-01..2025-05-14, 14,760 rows, with quote_volume and trade count). Its own data_provenance.md states the current exchangeInfo list '不等於 point-in-time universe' and that results '不能宣稱無 survivorship bias'; it is 1d only, carries no market cap, and is not the canonical raw"
+     },
+     {
+      "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+      "path": "data/pit_events.sqlite",
+      "tokens": [
+       "pit"
+      ],
+      "ext": ".sqlite",
+      "class": "phase10_pit_contract_demonstration_spot_example",
+      "why": "the Phase 10 bitemporal/PIT contract demonstration: 12 records, 19 lifecycle events, 6 snapshots for *spot* symbols (KGST, USDS, ...), with snapshot counts 'eligible 0-1 / unknown 12'; a capability example, not a USD-M point-in-time universe panel and not price data"
+     },
+     {
+      "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+      "path": "data/real_lifecycle_evidence.csv",
+      "tokens": [
+       "delist",
+       "listing",
+       "spot"
+      ],
+      "ext": ".csv",
+      "class": "binance_spot_delisting_sample_prose_scale",
+      "why": "8 hand-built Binance *spot* delisting notice records for the Phase 10 research contract; no USD-M price panel and no continuous membership interval"
+     },
+     {
+      "root": "/Users/hong/workspace/alpha-strategy-research",
+      "path": "coverage_manifest.csv",
+      "tokens": [
+       "adjusted",
+       "bars",
+       "liquidity",
+       "spread",
+       "supply"
+      ],
+      "ext": ".csv",
+      "class": "research_corpus_index",
+      "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (liquidity / spread / supply / adjusted), not in any market series"
+     }
+    ],
+    "unclassified": []
+   }
+  }
+ },
+ "generation_notes": [
+  "one earlier draft of this snapshot was discarded before publication (never committed, no hash published anywhere) because the --host-scan mode prints two JSON documents and the first parser read only a single document; the parser now decodes both documents of that mode's stdout",
+  "the CLI-mode outputs embedded here were captured by .kanban-scratch/t_7347811a/capture_modes.sh from the shipped checker; every number in this file comes from either those captures or the checker's own measurement functions"
+ ],
+ "measurement_revision_disclosure": [
+  "the round-spec.json was authored and published (O_EXCL) before the probe was tightened to normalise snake_case/kebab-case separators before token matching; the author re-run refuses O_EXCL exactly as contract 10 requires, so the artifact was not rewritten",
+  "raw-side consequence: none - every raw-side number recorded in the spec was re-measured after the change and is identical (entry count 1658, payload files 1614 / 79056050 B, identical payload hit files, 0 unexplained, 0 data-extension hits)",
+  "host-side consequence: the host scan found two additional *classified* hits of stores already classified in the spec (phase7 quote_volume_wide.csv - the wide form of the same derived 12-symbol panel - and phase10 pit_events.sqlite - the Phase 10 PIT/bitemporal demonstration store for spot symbols); the spec's embedded host totals therefore read 10 hits / 4017 files while the live measurement reads 12 hits / 4029 files, both with 0 unclassified"
+ ],
+ "disclosures": [
+  "section 13 still registers no dedicated prerequisite-missing class; the closest registered card-local class data_window_invalid ('區間內無 bar、instrument 缺失') is used as-is - whether to add a named class is an operator/contract decision",
+  "the reviewed source is an abstract-level record: the exact anchor decomposition, universe screen, formation/holding windows, breakpoints, weighting, overlap handling and cost schedule are `underspecified` there. They are disclosed in the round-spec and in the matrix, but they are NOT the decisive blocker - the absent point-in-time universe is, and the card's research-defined rule would have covered execution details",
+  "the raw store keeps growing after the window the card registers (measured 1d window reaches 2026-09-16T00:00:00Z, funding reaches 2026-09-17T00:00:00Z); the registered window and split are recorded in the spec so the round is reproducible against artifacts rather than against a moving store",
+  "the inherited USER_FIXED envelope describes a single-instrument tranche ladder while this record's object is a cross-sectional portfolio; the tension is recorded in round-spec.execution_invariants_disclosure for any future re-entry round",
+  "the 12-symbol derived host panel is recorded as measured, non-point-in-time and unused: it was NOT adopted as a substitute universe, and no four-name or twelve-name run was performed"
+ ],
+ "untouched": {
+  "other_families": "no other family's artifact, frozen bundle, verdict or leaderboard was read into or written by this card",
+  "cron": "no cron job was created, resumed or modified",
+  "board": "no auditor sub-card, no board mutation beyond this card's own terminal transition",
+  "paper_live": "no Paper/Live activity; no runner deployed to the host /scripts tree (nothing launched)"
+ }
+}
