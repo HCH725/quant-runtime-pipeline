@@ -3,8 +3,9 @@
 #
 # Both processes bind 127.0.0.1 only and are viewers: the server exposes one allowlisted file, the
 # dashboard renders it. Neither can start, stop, retry or unblock anything - the quant runtime does
-# not depend on them, and stopping them changes nothing except the display.  The launcher verifies
-# Homepage's actual listening socket (`lsof`) instead of trusting the host env var.
+# not depend on them, and stopping them changes nothing except the display.  The launcher judges each
+# port by its actual listening socket (`lsof`), not by an HTTP probe or the host env var, and refuses
+# any listener that is not 127.0.0.1 - wildcard (`*:PORT`) and IPv6 (`[::1]:PORT`) included.
 #
 #   sh homepage/run_local.sh          # start what is not already listening
 #   sh homepage/run_local.sh stop     # stop both
@@ -35,14 +36,52 @@ if [ "${1:-start}" = "stop" ]; then
   exit 0
 fi
 
-if ! curl -sf "http://127.0.0.1:$PAYLOAD_PORT/dashboard.json" >/dev/null 2>&1; then
+# Ports are judged by their real listeners, never by a reachability probe: a wildcard (`*:PORT`) or
+# IPv6 (`[::1]:PORT`) bind answers on 127.0.0.1 too, so a successful HTTP probe proves nothing about
+# the bind.  Both paths - a process this script just started, and one that was already running -
+# are asserted unconditionally, and any listener that is not 127.0.0.1 is a refusal.
+START_WAIT="${START_WAIT:-10}"
+
+listeners() {
+  lsof -nP -iTCP:"$1" -sTCP:LISTEN -F n 2>/dev/null | sed -n 's/^n//p' | sort -u
+}
+
+# A process that was just started needs a moment to bind; the wait only buys time for a listener to
+# appear, it never excuses one that is not loopback (that is checked next, and refused at once).
+wait_for_listener() {
+  waited=0
+  while [ -z "$(listeners "$1")" ] && [ "$waited" -lt "$START_WAIT" ]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+}
+
+require_loopback() {
+  found="$(listeners "$1")"
+  if [ -z "$found" ]; then
+    echo "refusing: nothing is listening on 127.0.0.1:$1" >&2
+    return 1
+  fi
+  for sock in $found; do
+    if [ "$sock" != "127.0.0.1:$1" ]; then
+      echo "refusing: port $1 is bound by '$sock', not 127.0.0.1 only:" >&2
+      lsof -nP -iTCP:"$1" -sTCP:LISTEN >&2 || true
+      return 1
+    fi
+  done
+  return 0
+}
+
+if [ -z "$(listeners "$PAYLOAD_PORT")" ]; then
   nohup "$PYTHON" "$REPO/runtime/dashboard_serve.py" --data-dir "$DATA" --port "$PAYLOAD_PORT" \
     >"$RUN/dashboard_serve.log" 2>&1 &
   echo $! >"$RUN/dashboard_serve.pid"
   echo "started dashboard_serve (pid $(cat "$RUN/dashboard_serve.pid"))"
+  wait_for_listener "$PAYLOAD_PORT"
 fi
+require_loopback "$PAYLOAD_PORT" || exit 1
 
-if ! curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null 2>&1; then
+if [ -z "$(listeners "$WEB_PORT")" ]; then
   cd "$APP"
   # Bind, not just a Host-header guard: `next start` defaults to hostname 0.0.0.0, while the
   # standalone server (the build is `output: standalone`) takes the host from HOSTNAME - which is
@@ -55,13 +94,9 @@ if ! curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null 2>&1; then
     nohup node "$APP/.next/standalone/server.js" >"$RUN/homepage.log" 2>&1 &
   echo $! >"$RUN/homepage.pid"
   echo "started homepage (pid $(cat "$RUN/homepage.pid"))"
-  sleep 3
-  if ! lsof -nP -iTCP:"$WEB_PORT" -sTCP:LISTEN | grep -q "127\.0\.0\.1:$WEB_PORT"; then
-    echo "homepage did not bind 127.0.0.1:$WEB_PORT - refusing to call this a localhost dashboard:" >&2
-    lsof -nP -iTCP:"$WEB_PORT" -sTCP:LISTEN >&2 || true
-    exit 1
-  fi
+  wait_for_listener "$WEB_PORT"
 fi
+require_loopback "$WEB_PORT" || exit 1
 
 echo "dashboard:  http://localhost:$WEB_PORT/"
 echo "payload:    http://127.0.0.1:$PAYLOAD_PORT/dashboard.json"

@@ -64,8 +64,11 @@ Unknown values render as `unavailable` / blank, never as `0`.
   algorithm of this dashboard's own - container / results-volume / cron re-checks are deliberately
   absent, and the watchdog keeps owning W1-W4.
 - Loopback proven, not assumed: `run_local.sh` starts Homepage as the standalone server with
-  `HOSTNAME=127.0.0.1` and then asserts the real listening socket with `lsof` (`next start` would
-  default to `0.0.0.0`, and `HOMEPAGE_ALLOWED_HOSTS` is only a Host-header guard, not a bind).
+  `HOSTNAME=127.0.0.1`, and every port is then judged by its real listening socket (`lsof`) - both
+  when the process was already running and when this script just started it - requiring each socket
+  to be exactly `127.0.0.1:<port>`. A wildcard (`*:<port>`) or IPv6 (`[::1]:<port>`) listener is a
+  refusal, not a warning, because both also answer on 127.0.0.1. `next start` would default to
+  `0.0.0.0`, and `HOMEPAGE_ALLOWED_HOSTS` is only a Host-header guard, not a bind.
 - The payload writer refuses any `--dashboard-json` target inside the results root, so "never under
   /results" is enforced by the script rather than by caller discipline.
 - No Docker, no new service manager: two foreground-able processes bound to loopback.
