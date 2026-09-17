@@ -1,0 +1,775 @@
+{
+ "schema_version": 1,
+ "document_kind": "prerequisite-gate evidence snapshot (contract 6.4 / 13); read-only re-derivation material for a TECHNICAL_INCOMPLETE terminal with zero computation",
+ "family_id": "bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01",
+ "round_id": "bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1",
+ "round_number": 1,
+ "kanban_task_id": "t_8e8c3752",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-17T02:20:31Z",
+ "verdict": "TECHNICAL_INCOMPLETE",
+ "performance_claimable": false,
+ "failure": {
+  "layer": "card-local",
+  "class": "data_window_invalid",
+  "detail": "the record's explanatory variable - a point-in-time, timestamped daily net-flow series for U.S. spot Bitcoin ETFs (plus its revision history, the U.S. ETF business-day calendar, ETF AUM and the control series the falsification battery needs) - is absent from the canonical raw, which holds only BINANCE USD-M crypto perpetual klines/funding for BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT",
+  "failure_class_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, with the mismatch disclosed rather than hidden",
+  "last_run_id": null,
+  "terminal_evidence": {
+   "round_spec": "rounds/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1/round-spec.json",
+   "verdict": "rounds/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1/verdict.json",
+   "checker": "runtime/bitcoin_us_spot_etf_net_flow_next_day_drift_prerequisite_check.py",
+   "repo_evidence": "evidence/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-prerequisite-gate-20260917.json"
+  },
+  "incomplete_reason": "prerequisite absent and measured: zero attempts were launched, so no backtest output exists and none will be fabricated",
+  "definitive_absences": [
+   "etf_net_flow_series_absent: 0 of 1,658 raw entries and 0 of 1,614 payload files carry any U.S. spot Bitcoin ETF net-flow surface",
+   "etf_fund_level_series_absent: no IBIT/FBTC/GBTC/ARKB/BITB/BTCO/EZBC/BRRR/BTCW/HODL series in the raw store or in any of the 17 measured host stores",
+   "point_in_time_publication_timestamps=ABSENT",
+   "flow_revision_history=ABSENT",
+   "us_etf_business_day_calendar=NOT_CONSTRUCTIBLE",
+   "flow_normalisations (flow/AUM, flow/BTC market cap)=ABSENT",
+   "controls: CME basis, dollar strength, equity risk sentiment, lagged ETF flow=ABSENT",
+   "falsification_battery (record items 1,3,4,6,7,8) cannot be executed from local data",
+   "local_store_is_the_wrong_object: the only locally present BTC surface is a USD-M perpetual (the response variable), never the explanatory variable the hypothesis is built on"
+  ]
+ },
+ "yield": {
+  "rounds_used": 1,
+  "max_rounds": 3,
+  "no_progress_rounds": 0,
+  "progress_evidence": [
+   "round 1 terminated at the prerequisite gate before any computation: the record's explanatory variable is measurably absent from the canonical raw and from all 17 measured host stores (checker C5-C9 + the required-data matrix)"
+  ],
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE"
+ },
+ "attempts": {
+  "launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_spec": null,
+  "terminal_sentinel": null,
+  "attempt_dir": null
+ },
+ "evidence_run_ids": [],
+ "cohorts_realized": 0,
+ "universe_shrunk_to_local_list": false,
+ "artifacts": {
+  "round_spec": {
+   "path": "<RESULTS>/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01/rounds/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1/round-spec.json",
+   "sha256": "sha256:b06a8aefb123468cce23563461d0038ac9d21a6941cbc15ca5e52e18085e787d",
+   "bytes": 81347,
+   "postcontrol_readback_sha256": "sha256:b06a8aefb123468cce23563461d0038ac9d21a6941cbc15ca5e52e18085e787d",
+   "postcontrol_readback_bytes": 81347
+  },
+  "verdict_json": {
+   "path": "<RESULTS>/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01/rounds/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1/verdict.json",
+   "sha256": "sha256:dbfcc31bdcb2834aa084819c1ac3f2ca063b614f34190d494f14517088c0d716",
+   "bytes": 4306,
+   "postcontrol_readback_sha256": "sha256:dbfcc31bdcb2834aa084819c1ac3f2ca063b614f34190d494f14517088c0d716",
+   "postcontrol_readback_bytes": 4306
+  },
+  "checker": {
+   "path": "<REPO>/runtime/bitcoin_us_spot_etf_net_flow_next_day_drift_prerequisite_check.py",
+   "sha256": "sha256:cf2aae104e8881783fccb66f7f6eb255966c4372741480399f1a476a20205700",
+   "bytes": 49205
+  }
+ },
+ "sources": {
+  "card": {
+   "kanban_task_id": "t_8e8c3752",
+   "title": "Production Candidate — Bitcoin U.S. Spot ETF Net-Flow Next-Day Drift (full backtest)",
+   "frozen_candidate_body_bytes": 19357,
+   "frozen_candidate_body_sha256": "sha256:bed500708d8a09da5bb93bb3aa6dfbff83010c5663cfe2ebaa399fafc8f53a58",
+   "frozen_pool_body_path": "<RESULTS>/_handoff/bodies/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md",
+   "frozen_pool_body_sha256_readback": "sha256:bed500708d8a09da5bb93bb3aa6dfbff83010c5663cfe2ebaa399fafc8f53a58",
+   "board_body_sha256": "read back through the board DB by --verify-verbatim (card_source=board_db); the board body equals the frozen pool body after stripping the system-owned lifecycle footer",
+   "lifecycle_footer_appended_by": "runtime/production_handoff.py LIFECYCLE_FOOTER (contract 6.4 / 14.4)"
+  },
+  "record": {
+   "path": "<HOME>/.hermes/wiki/quant/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md",
+   "sha256": "sha256:c7112460e4a2cc9bdf76662f7d7f1afc7d8970dac26baf327422596d29cfd572",
+   "bytes": 12140,
+   "title": "Bitcoin U.S. Spot ETF Net-Flow Next-Day Drift",
+   "status": "research-only",
+   "implementation_status": "not-implemented",
+   "adoption": "not-approved",
+   "approval_scope": "research-only",
+   "contested": true,
+   "source_as_of": "2025-04-30",
+   "intake_decision": "PASS-WITH-CAVEAT",
+   "intake_caveat": "Core source-backed finding is useful, but causal interpretation is not clean: ETF flows and BTC returns exhibit feedback, flow persistence can generate apparent multi-day drift, and exact point-in-time publication timestamp, execution cutoff, threshold, sizing, and costed standalone trading rule remain underspecified.",
+   "contradictions": [
+    "The primary working paper reports both flow-to-return predictability and return-to-flow feedback, so causal interpretation is not clean.",
+    "The same paper reports that individual flow shocks reverse after conditioning on future flows, implying that observed multi-day drift may reflect persistent follow-on flows rather than permanent information."
+   ],
+   "primary_sources": [
+    "https://doi.org/10.2139/ssrn.6592830",
+    "https://doi.org/10.3905/jai.2025.1.239"
+   ]
+  },
+  "family": {
+   "family_json_path": "<RESULTS>/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01/family.json",
+   "kanban_task_id": "t_8e8c3752",
+   "parent_family": null,
+   "lineage_note": "Independent family canonicalized during the contract-14.4 backlog backfill (card t_86d04b09) from the already-reviewed wiki record quant/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md. Kanban parent edge is scheduling/order only; scientific lineage is null: parent_family=null - this family does not refine, inherit parameters from, or shrink the universe of any earlier family. Candidate eligibility was decided once, by the historical Research Intake Review decision that accepted this record; Wiki Brain is knowledge preservation, not a second eligibility gate.",
+   "created_at_utc": "2026-09-17T01:35:08Z",
+   "handoff": {
+    "source": "production_handoff",
+    "contract_section": "14.4",
+    "pool_fingerprint_source": "<HOME>/.hermes/wiki/quant/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md"
+   }
+  },
+  "contract": {
+   "path": "<REPO>/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  },
+  "semantic_fingerprint": {
+   "fingerprint_input": "bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01|universe=portability=adapted/unproven (crypto-domain);window=record-faithful|dca=spacing_pct=0.01,0.02,0.03,0.04;size_multiplier=1.0,1.1;breakeven_tp_pct=0.01,0.02,0.03;invalidation_pct=0.05,0.10|selector=cohort-selector-v1;disposition=cohort-disposition-v1|source=bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01.md",
+   "semantic_fingerprint": "sha256:eadfe782fedb8260d0fb04d42346b55c4cf0851488e490fff41c1cdedd9a6721",
+   "note": "read back from the frozen family.json; neither recomputed nor rewritten here"
+  }
+ },
+ "contract_semantics": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "clause": "- `[C]`（**文件對齊；卡片 `t_2acfd339`，2026-09-16；不改任何 gate／stage／append 條件**）**prerequisite-missing 的終結語意**：必要 prerequisite（資料／市場／universe）客觀不存在、且該缺席已由 measured evidence 證實，是 §13 `card-local` failure 的一個例子；此時本節的 `TECHNICAL_INCOMPLETE`（附 failure 層級、last run_id、terminal evidence 路徑、未完成原因）就是誠實且合法的終結，required terminal evidence（`round-spec.json` ＋ `verdict.json`）齊備後該卡即 `done`，**不得**僅因 full-backtest outputs 不可能存在而形成 human gate（不 `blocked`、不 `needs_input`）；`kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 huma",
+  "layer_rule": "- `[C]` 判定層級的判準：**「同一動作在另一張卡上是否也會失敗？」** 會 → shared-layer；只在此卡 → card-local。",
+  "failure_class_used": "data_window_invalid",
+  "failure_class_note": "The contract's section 13 table has no dedicated prerequisite-missing class; `data_window_invalid` (card-local; 'instrument missing in the window') is used as the closest registered class, exactly as the sibling prerequisite-gate rounds in this board did, and the mismatch is stated here rather than hidden. Whether a dedicated class should be added is an operator/contract decision."
+ },
+ "decisive_absences": [
+  "etf_net_flow_series_absent: 0 of 1,658 raw entries and 0 of 1,614 payload files carry any U.S. spot Bitcoin ETF net-flow surface",
+  "etf_fund_level_series_absent: no IBIT/FBTC/GBTC/ARKB/BITB/BTCO/EZBC/BRRR/BTCW/HODL series in the raw store or in any of the 17 measured host stores",
+  "point_in_time_publication_timestamps=ABSENT",
+  "flow_revision_history=ABSENT",
+  "us_etf_business_day_calendar=NOT_CONSTRUCTIBLE",
+  "flow_normalisations (flow/AUM, flow/BTC market cap)=ABSENT",
+  "controls: CME basis, dollar strength, equity risk sentiment, lagged ETF flow=ABSENT",
+  "falsification_battery (record items 1,3,4,6,7,8) cannot be executed from local data",
+  "local_store_is_the_wrong_object: the only locally present BTC surface is a USD-M perpetual (the response variable), never the explanatory variable the hypothesis is built on"
+ ],
+ "required_data_matrix": [
+  {
+   "item": "required_data_1_etf_net_flow_point_in_time",
+   "requirement": "Daily net subscriptions/redemptions or equivalent net-flow estimates for U.S. spot Bitcoin ETFs, point-in-time and timestamped.",
+   "status": "ABSENT",
+   "basis": "entry-name probe of all 1,658 raw entries x 29 ETF/flow tokens -> 0 hits; payload probe of 1,614 files / 79,011,404 B -> 0 token files; the store's own SCHEMA.md documents only two dataset families (klines, funding)"
+  },
+  {
+   "item": "required_data_2_etf_level_flows_aggregate_no_lookahead",
+   "requirement": "ETF-level flows for at least the dominant funds, with an aggregate series constructed without look-ahead revisions.",
+   "status": "ABSENT",
+   "basis": "no fund-level (IBIT/FBTC/GBTC/ARKB/...) series exists anywhere in the raw store or in any of the 17 measured host stores; 0 data-extension files carry an ETF token"
+  },
+  {
+   "item": "required_data_3_btc_spot_prices_utc",
+   "requirement": "BTC spot prices with precise UTC timestamps.",
+   "status": "PRESENT_AS_PERP_ONLY",
+   "basis": "BTCUSDT USD-M perpetual klines, 7 intervals, open_time_ms in UTC (2022-01-01T00:00:00Z -> 2026-09-15T00:00:00Z); the store holds no spot market, only USD-M perpetuals. The record's instrument clause admits 'a closely tracking liquid Bitcoin derivative', so the traded-instrument leg is the one leg that could be met locally - but it is the response variable, not the signal"
+  },
+  {
+   "item": "required_data_4_perp_implementation_surface",
+   "requirement": "If trading a perpetual or futures implementation: mark/index price, funding, basis, contract availability, and roll data where applicable.",
+   "status": "PARTIAL_PERP_ONLY",
+   "basis": "funding rows exist for all 4 symbols (2022-01-01T00:00:00Z -> 2026-09-16T08:00:00Z, fields funding_price_source,funding_rate,funding_time_ms,mark_price,market_type,rate_type,symbol,truth_status,venue); the mark_price column is present but null in every sampled row; no futures contract, basis surface or roll calendar exists (perpetuals have none)"
+  },
+  {
+   "item": "required_data_5_us_etf_business_day_calendar",
+   "requirement": "Trading calendar mapping between U.S. ETF business days and Bitcoin's 24/7 market.",
+   "status": "NOT_CONSTRUCTIBLE",
+   "basis": "no U.S. exchange/ETF business-day calendar, holiday calendar or publication schedule exists in the raw store or the measured host stores; without the flow series there is also no event to map"
+  },
+  {
+   "item": "required_data_6_etf_flow_revision_history",
+   "requirement": "Revision history for ETF-flow data because same-day preliminary estimates may differ from finalized values.",
+   "status": "ABSENT",
+   "basis": "no flow print of any vintage exists locally; the raw store's only revision-like surface is FUNDING_EXPORT.json's own integrity rollback metadata (excluded class)"
+  },
+  {
+   "item": "falsification_1_point_in_time_flow_database",
+   "requirement": "Falsification 1: build a point-in-time ETF-flow database preserving first-publication timestamp and subsequent revisions.",
+   "status": "ABSENT",
+   "basis": "same absence as required_data_1/2/6; the raw store holds no publication timestamps for any flow figure"
+  },
+  {
+   "item": "falsification_3_post_april_2025_holdout",
+   "requirement": "Falsification 3: genuine post-April-2025 holdout across 2025-2026 bull, bear, high-outflow and low-basis regimes.",
+   "status": "ABSENT",
+   "basis": "the holdout is defined on ETF-flow regimes; with no flow series the regimes cannot be labelled at all"
+  },
+  {
+   "item": "falsification_4_flow_normalisations",
+   "requirement": "Falsification 4: compare raw dollar flow with flow normalised by ETF AUM, BTC market cap, rolling volatility and trailing flow dispersion.",
+   "status": "ABSENT",
+   "basis": "raw dollar flow, ETF AUM and BTC market-cap series are all absent; only rolling volatility of the price series is derivable locally"
+  },
+  {
+   "item": "falsification_5_control_variables",
+   "requirement": "Falsification 5: control for prior BTC return, CME basis, perpetual funding, realized volatility, dollar strength, equity risk sentiment and lagged ETF flow.",
+   "status": "PARTIAL_3_OF_7",
+   "basis": "prior BTC return and realized volatility are derivable from the local klines and perpetual funding is present; CME basis, dollar strength (DXY), equity risk sentiment and lagged ETF flow are absent from the raw and from all measured host stores"
+  },
+  {
+   "item": "falsification_6_flow_shock_residual",
+   "requirement": "Falsification 6: separate flow shocks from predictable flow continuation with an AR/VAR residual or other ex-ante innovation measure.",
+   "status": "ABSENT",
+   "basis": "an innovation measure is defined on the flow series; there is no flow series to residualise"
+  },
+  {
+   "item": "falsification_7_actual_release_timestamps",
+   "requirement": "Falsification 7: test multiple feasible signal timestamps based on actual public release times rather than end-of-day hindsight.",
+   "status": "ABSENT",
+   "basis": "no vendor publication timestamp, latency record or revision vintage exists locally for any ETF-flow print"
+  },
+  {
+   "item": "falsification_8_friday_weekend_branch",
+   "requirement": "Falsification 8: include Friday/weekend handling as a pre-specified branch, not a post-hoc optimisation.",
+   "status": "NOT_CONSTRUCTIBLE",
+   "basis": "the branch is defined on the U.S. ETF publication calendar (Friday prints, weekend gaps, U.S. holidays); with neither the calendar nor the flow series the branch cannot be specified from local data"
+  }
+ ],
+ "required_data_matrix_counts": {
+  "ABSENT": 8,
+  "PRESENT_AS_PERP_ONLY": 1,
+  "PARTIAL_PERP_ONLY": 1,
+  "NOT_CONSTRUCTIBLE": 2,
+  "PARTIAL_3_OF_7": 1
+ },
+ "raw_measurement": {
+  "raw_root": "<RAW>",
+  "documented_venue": "BINANCE",
+  "documented_market_type": "usdm_perp",
+  "documented_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "documented_intervals": [
+   "1d",
+   "1w",
+   "15m",
+   "30m",
+   "4h",
+   "5m",
+   "1h"
+  ],
+  "store_top_level": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "usdm_subdirs": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "schema_dataset_sections": [
+   "klines (Binance USD-M perpetual futures, UTC)",
+   "funding",
+   "instruments"
+  ],
+  "raw_entry_count": 1658,
+  "probe_tokens_tested": 29,
+  "probe_hits_in_entry_names": {},
+  "payload_scan_files": 1614,
+  "payload_scan_bytes": 79011404,
+  "payload_token_files": {},
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "instrument_types": [
+   "CryptoPerpetual"
+  ],
+  "instrument_flow_fields": [],
+  "klines_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "klines_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "klines_1d_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-15T00:00:00Z"
+  ],
+  "klines_1d_rows": 1719,
+  "klines_1d_row_keys": [
+   "close",
+   "close_time_ms",
+   "high",
+   "low",
+   "open",
+   "open_time_ms",
+   "volume"
+  ],
+  "funding_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "funding_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-16T08:00:00Z"
+  ],
+  "funding_rows": 5159,
+  "funding_row_keys": [
+   "funding_price_source",
+   "funding_rate",
+   "funding_time_ms",
+   "mark_price",
+   "market_type",
+   "rate_type",
+   "symbol",
+   "truth_status",
+   "venue"
+  ],
+  "registered_vs_measured_note": "the raw store keeps updating after the window the card registers (measured klines to 2026-09-15T00:00:00Z, funding to 2026-09-16T08:00:00Z); the registered window is kept as the card states it and the measured values are recorded separately rather than silently reconciled"
+ },
+ "other_local_stores": {
+  "roots": {
+   "<HOME>/workspace/phase7-alpha-research": {
+    "exists": true,
+    "files_scanned": 31,
+    "token_files": 2,
+    "token_file_counts": {
+     "subscription": 2,
+     "shares_outstanding": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase3-portfolio-risk": {
+    "exists": true,
+    "files_scanned": 4,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase4-market-microstructure": {
+    "exists": true,
+    "files_scanned": 5,
+    "token_files": 2,
+    "token_file_counts": {
+     "aum": 2
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase5-crypto-derivatives": {
+    "exists": true,
+    "files_scanned": 74,
+    "token_files": 12,
+    "token_file_counts": {
+     "nav": 11,
+     "subscription": 2,
+     "redemption": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase9-cross-sectional-factors": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase12-l2-l3-execution-tca": {
+    "exists": true,
+    "files_scanned": 50,
+    "token_files": 1,
+    "token_file_counts": {
+     "subscription": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase10-pit-bitemporal": {
+    "exists": true,
+    "files_scanned": 59,
+    "token_files": 2,
+    "token_file_counts": {
+     "ishares": 1,
+     "invesco": 1,
+     "subscription": 2
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/phase11-options-volatility": {
+    "exists": true,
+    "files_scanned": 39,
+    "token_files": 4,
+    "token_file_counts": {
+     "subscription": 3,
+     "nav": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/ml4t-real-evidence-remediation": {
+    "exists": true,
+    "files_scanned": 1441,
+    "token_files": 24,
+    "token_file_counts": {
+     "subscription": 5,
+     "grayscale": 15,
+     "bitwise": 4
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830": {
+    "exists": true,
+    "files_scanned": 671,
+    "token_files": 13,
+    "token_file_counts": {
+     "redemption": 3,
+     "ishares": 6,
+     "invesco": 2,
+     "vaneck": 2,
+     "subscription": 2
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/a1-1-phase9-pit-membership-20260830": {
+    "exists": true,
+    "files_scanned": 49,
+    "token_files": 1,
+    "token_file_counts": {
+     "ishares": 1,
+     "invesco": 1,
+     "subscription": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830": {
+    "exists": true,
+    "files_scanned": 28,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/workspace/alpha-strategy-research": {
+    "exists": true,
+    "files_scanned": 933,
+    "token_files": 144,
+    "token_file_counts": {
+     "fidelity": 27,
+     "bitwise": 3,
+     "aum": 36,
+     "nav": 20,
+     "spot_etf": 9,
+     "blackrock": 2,
+     "ticker_ibit": 3,
+     "net_flow": 14,
+     "shares_outstanding": 14,
+     "ishares": 10,
+     "ark_invest": 1,
+     "ticker_hodl": 12,
+     "redemption": 20,
+     "subscription": 6,
+     "grayscale": 1,
+     "franklin": 1,
+     "invesco": 10,
+     "ticker_fbtc": 1,
+     "ticker_gbtc": 1,
+     "vaneck": 1,
+     "21shares": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<EXPANSION>/daily-crypto-brief": {
+    "exists": true,
+    "files_scanned": 184,
+    "token_files": 6,
+    "token_file_counts": {
+     "invesco": 3,
+     "ark_invest": 1,
+     "ishares": 2,
+     "vaneck": 1
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<RESULTS>/_handoff/bodies": {
+    "exists": true,
+    "files_scanned": 293,
+    "token_files": 32,
+    "token_file_counts": {
+     "aum": 11,
+     "spot_etf": 3,
+     "blackrock": 1,
+     "shares_outstanding": 7,
+     "nav": 3,
+     "ticker_ibit": 1,
+     "redemption": 5,
+     "ticker_hodl": 1,
+     "subscription": 1,
+     "net_flow": 3,
+     "ishares": 3,
+     "fidelity": 3,
+     "invesco": 3
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   },
+   "<HOME>/.hermes/wiki/quant": {
+    "exists": true,
+    "files_scanned": 420,
+    "token_files": 71,
+    "token_file_counts": {
+     "bitwise": 3,
+     "aum": 25,
+     "subscription": 8,
+     "spot_etf": 7,
+     "blackrock": 1,
+     "nav": 9,
+     "ticker_ibit": 1,
+     "net_flow": 7,
+     "shares_outstanding": 7,
+     "ishares": 4,
+     "vaneck": 1,
+     "redemption": 5,
+     "ticker_hodl": 1,
+     "franklin": 1,
+     "fidelity": 11,
+     "invesco": 3
+    },
+    "data_ext_hits": 0,
+    "carries_etf_net_flow_data": false
+   }
+  },
+  "totals": {
+   "roots": 17,
+   "files_scanned": 4315,
+   "token_files": 314,
+   "data_extension_hits": 0,
+   "data_candidates": 0
+  },
+  "data_candidates": []
+ },
+ "controls": {
+  "checker_default": {
+   "command": "python3 runtime/bitcoin_us_spot_etf_net_flow_next_day_drift_prerequisite_check.py",
+   "ok": true,
+   "failed": [],
+   "tail": [
+    "ok=True failed=[]",
+    "raw: {\"entries\": 1658, \"payload_files\": 1614, \"payload_bytes\": 79011404}",
+    "stores: {\"roots\": 17, \"files_scanned\": 4321, \"token_files\": 314, \"data_extension_hits\": 0, \"data_candidates\": 0}"
+   ]
+  },
+  "verify_verbatim": {
+   "pool_body_source": {
+    "ok": true,
+    "checked": 50,
+    "leaves": 50,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 15402,
+     "record": 12140,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   },
+   "board_db_source": {
+    "ok": true,
+    "checked": 50,
+    "leaves": 50,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "card_source": "board_db"
+   }
+  },
+  "self_test": {
+   "ok": true,
+   "variants": 27,
+   "bad": []
+  },
+  "raw_fixture_control": {
+   "ok": true,
+   "expected_flip": [
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "flipped": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "missing_flip": [],
+   "unexpected_flip": [],
+   "fixture_flags": {
+    "etf_flow_series_present": true,
+    "publication_timestamps": true,
+    "revision_history": false,
+    "us_etf_calendar": true,
+    "etf_aum": true,
+    "btc_market_cap": true,
+    "schema_sections": [
+     "klines",
+     "funding",
+     "etf_flows (U.S. spot Bitcoin ETF net flows)"
+    ]
+   }
+  },
+  "host_scan": {
+   "totals": {
+    "roots": 17,
+    "files_scanned": 4315,
+    "token_files": 314,
+    "data_extension_hits": 0,
+    "data_candidates": 0
+   },
+   "data_candidates": []
+  },
+  "preflight": {
+   "schema_version": 1,
+   "kind": "preflight",
+   "contract_section": "16",
+   "checked_at_utc": "2026-09-17T02:15:21Z",
+   "host_boot_id": "boot-1789570820",
+   "attempt_dir": null,
+   "launch_gate": "not_evaluated",
+   "recovery": {
+    "attempted": false,
+    "ok": true,
+    "fail_reason": null,
+    "actions": []
+   },
+   "overall": "PASS",
+   "checks": [
+    {
+     "id": "P1",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "mounted+readable: <EXPANSION> (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+    },
+    {
+     "id": "P2",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+    },
+    {
+     "id": "P3",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "results writable: wrote+removed <RESULTS>/.preflight-probe-10978.tmp"
+    },
+    {
+     "id": "P4",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "container system status=running (rc=0)"
+    },
+    {
+     "id": "P5",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "qlib-run state=running"
+    },
+    {
+     "id": "P6",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+    },
+    {
+     "id": "P7",
+     "status": "PASS",
+     "layer": "card-local",
+     "detail": "/qlib/work writable: work_ok"
+    },
+    {
+     "id": "P8",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+    },
+    {
+     "id": "P9",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    },
+    {
+     "id": "P10",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    }
+   ]
+  },
+  "repo_suite": {
+   "tail": [
+    "test_survivor_bundle.py                          rc=0 ran=18 OK",
+    "test_survivor_evidence.py                        rc=0 ran=14 OK",
+    "files=19 tests=404 failures=none"
+   ]
+  },
+  "rerun_refusal": {
+   "stdout": "",
+   "stderr_tail": [
+    "    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^",
+    "  File \"<HOME>/workspace/quant-runtime-pipeline/.kanban-scratch/t_8e8c3752/author_spec.py\", line 700, in write_exclusive",
+    "    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)",
+    "FileExistsError: [Errno 17] File exists: '<RESULTS>/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01/rounds/bitcoin-us-spot-etf-net-flow-next-day-drift-2026-09-01-r1/round-spec.json'"
+   ]
+  }
+ },
+ "removed_drafts": {
+  "removed": [],
+  "note": "no draft artifact was removed or rebuilt: the first authored round-spec/verdict pair is the published one (the authoring script is O_EXCL and its re-run is refused)"
+ },
+ "disclosures": [
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class and the mismatch is disclosed rather than hidden",
+  "the raw store keeps updating after the window the card registers (measured klines to 2026-09-15T00:00:00Z, funding to 2026-09-16T08:00:00Z); registered and measured values are recorded separately",
+  "the host scan is a word-boundary re-scan: a first pass with bare substring matching produced false positives ('ibit' inside 'exhibit/prohibit', 'nav' inside 'navigation') and was replaced; the reported totals come from the boundary-matched pass",
+  "the ETF-token hits that remain in the host scan are prose/config/code files (wiki records, handoff bodies, research notes, brief outputs, site-packages) — 0 of them is a data-extension file, so no local dataset could stand in for the registered requirement",
+  "no network fetch was attempted: the card's prerequisite clause makes the absent local prerequisite terminal, and fetching a substitute series would be a different candidate",
+  "repo-suite honesty note: the first full-suite pass in this run reported runtime/tests/test_post_survivor.py rc=1 with its output not captured; three consecutive targeted re-runs of that file and a second full-suite pass are green (19 files / 404 tests, failures=none), so the single earlier rc=1 is recorded as an unexplained one-off rather than hidden or silently averaged away"
+ ]
+}
