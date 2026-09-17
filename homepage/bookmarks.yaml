@@ -1,4 +1,18 @@
 ---
-# No bookmarks: this dashboard answers "what is the quant runtime doing", so every card is a data
-# card in services.yaml. (Homepage re-creates this file from its skeleton whenever it is missing,
-# which is why it exists here with no entries rather than not existing at all.)
+- 快速入口 · Quick Access:
+    - Quant Detail:
+        - icon: mdi-view-dashboard-outline
+          href: https://quant.vicchong1983.trade/detail
+          description: 研究與 runtime 詳細資訊
+    - Runtime GitHub:
+        - icon: si-github
+          href: https://github.com/HCH725/quant-runtime-pipeline
+          description: Runtime SOP / source
+    - Strategy Research:
+        - icon: mdi-flask-outline
+          href: https://github.com/HCH725/alpha-strategy-research
+          description: Alpha strategy research pool
+    - CatDesk:
+        - icon: mdi-cat
+          href: https://catdesk.vicchong1983.trade
+          description: 本機 Agent 工作介面

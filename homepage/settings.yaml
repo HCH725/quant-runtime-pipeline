@@ -1,32 +1,30 @@
-# Quant runtime observability (localhost stage) -----------------------------------------------
-# Read-only viewer over the JSON written by runtime/candidate_snapshot.py --dashboard-json.
-# Nothing here can start, stop, retry or unblock anything: Homepage only renders the payload.
-title: Quant Runtime
-description: Read-only observability for the quant research loop
+# Quant Research Control Center — presentation only.
+# Read-only viewer over the existing dashboard.json truth. No control actions live here.
+title: 棠元宗 · Quant Research Control Center
+description: 量化研究 · 系統控制中心
 theme: dark
 color: zinc
+headerStyle: clean
+cardBlur: sm
 hideVersion: true
 disableIndexing: true
 useEqualHeights: true
+disableCollapse: true
 target: _self
-# keep Homepage's own logfile out of the repo (the config dir is versioned)
 logpath: /Users/hong/quant-dashboard/logs
 
-# One section per question the operator asks, biggest first: is the system healthy, what is the
-# current research doing, what has survived, how full is the funnel, is the machinery up.
+# Desktop follows the six-card control-center composition from the approved concept.
+# Homepage's native responsive column map automatically becomes 2 columns on iPad and 1 on phone.
 layout:
-  Quant Health:
+  控制中心 · Control Center:
     style: row
-    columns: 1
-  Current Research:
+    columns: 6
+    header: true
+  關注與近況 · Attention:
     style: row
-    columns: 1
-  Leaderboard:
+    columns: 2
+    header: true
+  快速入口 · Quick Access:
     style: row
-    columns: 1
-  Research Funnel:
-    style: row
-    columns: 1
-  Runtime & Agent:
-    style: row
-    columns: 1
+    columns: 4
+    header: true

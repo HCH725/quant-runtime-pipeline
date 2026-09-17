@@ -1,69 +1,325 @@
-/* Quant Runtime dashboard: Apple hierarchy + restrained Binance-yellow accent.
- *
- * Only two things are overridden: the theme's neutral scale (a quieter, warmer dark than pure
- * slate) and Homepage's own semantic hooks (.service*, .service-group-*) - so a Homepage upgrade
- * that renames utility classes cannot silently break the look. No layout JS, no per-widget rules.
+/*
+ * 棠元宗 · Quant Research Control Center
+ * Apple hierarchy + restrained Binance accent, implemented only through Homepage's stable hooks.
+ * No JS, no custom frontend, no duplicated runtime state.
  */
 
 .theme-zinc {
-  /* dark surface scale, slightly warm (Apple gray) */
-  --color-200: 32 32 35;
-  --color-300: 58 58 63;
-  --color-700: 168 168 176;
-  --color-800: 214 214 220;
-  --color-900: 18 18 20;
-
+  --color-200: 31 37 47;
+  --color-300: 57 68 84;
+  --color-700: 157 170 190;
+  --color-800: 223 229 238;
+  --color-900: 8 18 31;
   --color-logo-start: 240 185 11;
-  --color-logo-stop: 214 214 220;
+  --color-logo-stop: 110 168 254;
 }
 
 :root {
-  --quant-yellow: 240 185 11; /* Binance yellow, used sparingly */
-  --quant-radius: 18px;
-  --quant-gap: 14px;
+  --quant-yellow: 240 185 11;
+  --quant-blue: 72 135 255;
+  --quant-green: 48 209 88;
+  --quant-red: 255 69 58;
+  --quant-panel: rgba(13, 29, 48, 0.78);
+  --quant-panel-strong: rgba(16, 36, 60, 0.92);
+  --quant-line: rgba(126, 162, 204, 0.16);
+  --quant-line-soft: rgba(255, 255, 255, 0.07);
+  --quant-muted: #9eacc0;
+  --quant-radius: 16px;
 }
 
-/* Cards: one radius everywhere, hairline border instead of a hard edge, gentle lift on hover. */
-.service {
-  border-radius: var(--quant-radius);
-  border: 1px solid rgb(var(--color-200) / 45%);
-  margin-bottom: var(--quant-gap);
-  transition: border-color 150ms ease-out, transform 150ms ease-out;
+html,
+body {
+  background:
+    radial-gradient(circle at 72% -10%, rgba(67, 116, 178, 0.18), transparent 34rem),
+    radial-gradient(circle at 12% 4%, rgba(31, 84, 143, 0.16), transparent 28rem),
+    linear-gradient(180deg, #091523 0%, #07111d 45%, #06101a 100%) !important;
+  color: #f4f7fb;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang TC", sans-serif;
 }
 
-.service:hover {
-  border-color: rgb(var(--quant-yellow) / 45%);
+#page_wrapper {
+  max-width: 1540px;
+  margin: 0 auto;
+}
+
+/* Hero: stable Homepage header container, no DOM injection or custom JS. */
+#information-widgets {
+  position: relative;
+  min-height: 144px;
+  margin: 18px 16px 10px !important;
+  padding: 22px 24px !important;
+  overflow: hidden;
+  border: 1px solid rgba(112, 151, 199, 0.18);
+  border-radius: 20px;
+  background:
+    linear-gradient(90deg, rgba(5, 16, 29, 0.97) 0%, rgba(9, 30, 50, 0.92) 48%, rgba(12, 30, 48, 0.82) 100%),
+    radial-gradient(circle at 82% 18%, rgba(196, 211, 235, 0.16), transparent 11rem);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+#information-widgets::before {
+  content: "棠元宗";
+  position: absolute;
+  left: 28px;
+  top: 22px;
+  z-index: 2;
+  color: #f5f7fb;
+  font-family: "Songti TC", "STSong", "Noto Serif TC", serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
+}
+
+#information-widgets::after {
+  content: "量化研究 · 系統控制中心\AQuant Research Control Center\A以數為道 · 以智致遠   DATA · DISCIPLINE · FREEDOM";
+  position: absolute;
+  left: 230px;
+  top: 25px;
+  z-index: 2;
+  white-space: pre;
+  color: #dde6f3;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+}
+
+#widgets-wrap,
+#widgets-wrap-left,
+#widgets-wrap-right,
+#information-widgets-right {
+  position: relative;
+  z-index: 4;
+}
+
+#widgets-wrap,
+#information-widgets-right {
+  justify-content: flex-end !important;
+  align-items: flex-start;
+}
+
+#information-widgets .information-widget,
+#information-widgets [class*="widget"] {
+  color: #dce7f4;
+}
+
+/* Section labels echo the concept's compact control-center headings. */
+.services-group,
+.bookmark-group {
+  padding-inline: 7px !important;
+}
+
+.service-group-name,
+.bookmark-group-name {
+  color: #d9e4f1 !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.025em !important;
+}
+
+.services-group button,
+.bookmark-group button {
+  margin-top: 12px !important;
+  margin-bottom: 7px !important;
+}
+
+.service-group-name::before,
+.bookmark-group-name::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  min-height: 14px;
+  margin-right: 9px;
+  border-radius: 999px;
+  background: rgb(var(--quant-yellow));
+  box-shadow: 0 0 16px rgba(240, 185, 11, 0.25);
+}
+
+/* Operational cards. */
+.service-card,
+.bookmark > a {
+  border: 1px solid var(--quant-line) !important;
+  border-radius: var(--quant-radius) !important;
+  background: linear-gradient(180deg, var(--quant-panel-strong), var(--quant-panel)) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.service-card {
+  min-height: 168px;
+}
+
+.service-card:hover,
+.bookmark > a:hover {
+  border-color: rgba(93, 150, 226, 0.42) !important;
+  background: linear-gradient(180deg, rgba(20, 45, 74, 0.96), rgba(15, 33, 54, 0.9)) !important;
   transform: translateY(-1px);
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
-.service-title-text {
-  border-radius: 0 var(--quant-radius) var(--quant-radius) 0;
+.service-title {
+  min-height: 60px;
+}
+
+.service-icon {
+  width: 42px !important;
+  height: 42px;
+  margin: 10px 2px 6px 10px;
+  border: 1px solid rgba(99, 153, 255, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(63, 118, 230, 0.28), rgba(42, 82, 167, 0.08));
+  color: #8bb8ff;
+}
+
+.service-icon svg,
+.service-icon img {
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .service-name {
-  letter-spacing: -0.01em;
-  font-weight: 600;
+  color: #f2f6fc !important;
+  font-size: 0.94rem !important;
+  font-weight: 680 !important;
+  letter-spacing: -0.012em;
 }
 
 .service-description {
-  letter-spacing: 0;
+  color: var(--quant-muted) !important;
+  line-height: 1.35;
 }
 
-/* Widget rows breathe a little more than the stock density. */
 .service-container {
-  padding: 2px 4px 4px;
+  gap: 4px;
+  padding: 3px 7px 9px;
 }
 
-/* Section headings: Apple-lean type with one yellow tick to the left. */
-.service-group-name {
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  padding-left: 10px;
-  border-left: 3px solid rgb(var(--quant-yellow));
-  border-radius: 2px;
+.service-block {
+  border: 1px solid rgba(104, 145, 192, 0.09);
+  border-radius: 10px !important;
+  background: rgba(4, 14, 26, 0.34) !important;
 }
 
-.service-group-icon svg,
-.service-group-icon img {
-  border-radius: 8px;
+.service-block > div:first-child {
+  color: #f6f8fc;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.service-block > div:last-child {
+  color: #8191a7;
+  letter-spacing: 0.035em;
+}
+
+/* Custom API list rows: compact, scan-first. */
+.service-overflow .service-container,
+.service-card .flex.flex-col.pb-1 {
+  padding-inline: 10px;
+  padding-bottom: 9px;
+}
+
+.service-card .flex.flex-col.pb-1 > div {
+  border-bottom: 1px solid var(--quant-line-soft);
+  padding-block: 4px;
+}
+
+.service-card .flex.flex-col.pb-1 > div:last-child {
+  border-bottom: 0;
+}
+
+/* The attention section is intentionally wider; long family/note text can breathe. */
+.service[data-name="需要關注"] .service-card,
+.service[data-name="系統近況"] .service-card {
+  min-height: 150px;
+}
+
+.service[data-name="需要關注"] .service-icon {
+  color: #ffd36a;
+  border-color: rgba(240, 185, 11, 0.22);
+  background: linear-gradient(145deg, rgba(240, 185, 11, 0.18), rgba(240, 185, 11, 0.04));
+}
+
+/* Quick access approximates the concept's bottom action rail using native bookmarks. */
+.bookmark > a {
+  min-height: 58px;
+  margin-bottom: 0 !important;
+}
+
+.bookmark-icon {
+  background: rgba(41, 83, 142, 0.25) !important;
+  color: #8ab7ff !important;
+}
+
+.bookmark-name {
+  color: #f0f4fa;
+  font-weight: 650;
+}
+
+.bookmark-description {
+  color: #8191a7 !important;
+}
+
+#footer {
+  opacity: 0.45;
+}
+
+@media (max-width: 1023px) {
+  #information-widgets {
+    min-height: 132px;
+  }
+
+  #information-widgets::before {
+    font-size: 2rem;
+  }
+
+  #information-widgets::after {
+    left: 205px;
+    font-size: 0.78rem;
+  }
+
+  .service-card {
+    min-height: 156px;
+  }
+}
+
+@media (max-width: 639px) {
+  #page_wrapper {
+    padding-inline: 5px;
+  }
+
+  #information-widgets {
+    min-height: 156px;
+    margin: 10px 7px 5px !important;
+    padding: 18px !important;
+  }
+
+  #information-widgets::before {
+    left: 18px;
+    top: 17px;
+    font-size: 1.75rem;
+  }
+
+  #information-widgets::after {
+    left: 18px;
+    top: 64px;
+    max-width: 72%;
+    font-size: 0.71rem;
+    line-height: 1.55;
+  }
+
+  #widgets-wrap,
+  #information-widgets-right {
+    align-items: flex-end;
+    min-height: 118px;
+  }
+
+  .service-card,
+  .bookmark > a {
+    border-radius: 14px !important;
+  }
+
+  .service-card {
+    min-height: 0;
+  }
 }

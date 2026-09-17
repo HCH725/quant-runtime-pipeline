@@ -1,19 +1,13 @@
-# Read-only quant observability cards. Every value comes from the single dashboard.json payload
-# produced by runtime/candidate_snapshot.py (the same numbers as the Discord #candidate line), and the
-# overall health is the quant watchdog's own state - nothing here re-checks the runtime.
-# No card links to a control surface: there is no start/stop/retry button anywhere in this config.
-#
-# href/target use the public hostname on purpose: /detail is the read-only page
-# runtime/dashboard_serve.py renders from this payload, and the existing Access app plus tunnel
-# route it to the loopback viewer. This also keeps local Homepage card taps from landing on its
-# unrelated :3000 origin. The widget `url:` values stay 127.0.0.1 - Homepage fetches those
-# server-side, so they still work remotely; only the browser-side links were broken.
-#
-# Serve the payload first:  python3 runtime/dashboard_serve.py --port 8787
-- Quant Health:
-    - Snapshot:
+# Quant Research Control Center — read-only operational overview.
+# Every live value comes from the single dashboard.json payload produced by candidate_snapshot.py.
+# The browser links only to the existing Access-protected /detail view; the server-side widget URL
+# remains loopback so Homepage never traverses Cloudflare Access to fetch its own data.
+
+- 控制中心 · Control Center:
+    - 系統健康:
+        icon: mdi-heart-pulse
         href: https://quant.vicchong1983.trade/detail#health
-        description: Read-only research progress, not live PnL
+        description: Watchdog 單一健康真值
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -21,48 +15,82 @@
           display: block
           mappings:
             - field: health.status
-              label: Overall
-            - field: health.summary
-              label: Watchdog
+              label: 狀態
+              remap:
+                - value: ok
+                  to: 正常
+            - field: health.active_count
+              label: 警示
+              format: number
             - field: health.last_check_at_utc
-              label: Last check
-              format: relativeDate
-            - field: generated_at_utc
-              label: Snapshot
+              label: 最後檢查
               format: relativeDate
 
-- Current Research:
-    - Current:
+    - 目前研究:
+        icon: mdi-flask-outline
         href: https://quant.vicchong1983.trade/detail#current
-        description: Research progress — not live PnL
+        description: 當前策略研究進度
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
           display: list
           mappings:
-            - field: current.family_id
-              label: Family
-            - field: current.round_id
-              label: Round
-            - field: current.attempt
-              label: Attempt
             - field: current.stage
               label: Stage
             - field: current.progress_text
               label: Progress
-            - field: current.cohort
-              label: Cohort
-            - field: current.last_activity_utc
-              label: Last activity
-              format: relativeDate
             - field: current.card_status
-              label: Kanban card
+              label: Kanban
+              remap:
+                - value: running
+                  to: 執行中
+                - value: blocked
+                  to: 需關注
+                - value: done
+                  to: 完成
+            - field: current.last_activity_utc
+              label: Activity
+              format: relativeDate
 
-- Leaderboard:
-    - Top 5:
+    - Kanban:
+        icon: mdi-view-kanban-outline
+        href: https://quant.vicchong1983.trade/detail#agent
+        description: Quant Strategy Research board
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: block
+          mappings:
+            - field: agent.running
+              label: 執行中
+              format: number
+            - field: agent.blocked
+              label: 已阻塞
+              format: number
+            - field: agent.board
+              label: Board
+
+    - 研究漏斗:
+        icon: mdi-filter-variant
+        href: https://quant.vicchong1983.trade/detail#funnel
+        description: Review → Intake → Backtest
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
+            - field: funnel.wiki_brain.summary
+              label: Research Pool
+            - field: funnel.backtested.summary
+              label: Backtested
+
+    - Leaderboard:
+        icon: mdi-trophy-outline
         href: https://quant.vicchong1983.trade/detail#leaderboard
-        description: Frozen survivor ranking (verbatim from leaderboard.json)
+        description: Frozen survivor ranking
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -72,57 +100,77 @@
             items: leaderboard.entries
             name: cohort
             label: summary
+            limit: 2
             target: https://quant.vicchong1983.trade/detail#leaderboard
 
-- Research Funnel:
-    - Funnel:
-        href: https://quant.vicchong1983.trade/detail#funnel
-        description: Reviewed → ingested → backtested
+    - Runtime Evidence:
+        icon: mdi-database-check-outline
+        href: https://quant.vicchong1983.trade/detail#sources
+        description: Authoritative evidence freshness
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
-          display: list
+          display: block
           mappings:
-            - field: funnel.wiki_brain.share_pct
-              label: Wiki Brain reviewed %
-            - field: funnel.wiki_brain.summary
-              label: Ingested
-            - field: funnel.backtested.share_pct
-              label: Families backtested %
-            - field: funnel.backtested.summary
-              label: Backtested
+            - field: sources.results_root_readable
+              label: Results
+              remap:
+                - value: true
+                  to: Ready
+            - field: sources.leaderboard_as_of_utc
+              label: Leaderboard
+              format: relativeDate
+            - field: generated_at_utc
+              label: Snapshot
+              format: relativeDate
 
-- Runtime & Agent:
-    - Runtime health:
-        href: https://quant.vicchong1983.trade/detail#health
-        description: quant_runtime_watchdog state — the single health truth (W1-W4)
+- 關注與近況 · Attention:
+    - 需要關注:
+        icon: mdi-alert-circle-outline
+        href: https://quant.vicchong1983.trade/detail#current
+        description: 只呈現現有卡片狀態，不自動修復
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
           display: list
           mappings:
-            - field: health.summary
-              label: Watchdog
-            - field: health.active_count
-              label: Active findings
+            - field: current.card_status
+              label: Card status
+              remap:
+                - value: running
+                  to: 執行中
+                - value: blocked
+                  to: 需關注
+                - value: done
+                  to: 完成
+            - field: current.note
+              label: Note
+            - field: current.family_id
+              label: Family
+            - field: current.last_activity_utc
+              label: Last activity
+              format: relativeDate
+
+    - 系統近況:
+        icon: mdi-clock-outline
+        href: https://quant.vicchong1983.trade/detail#metadata
+        description: Snapshot / watchdog / board read-back
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
+            - field: generated_at_utc
+              label: Snapshot
+              format: relativeDate
             - field: health.last_check_at_utc
-              label: Last check
+              label: Watchdog
               format: relativeDate
-            - field: health.last_healthy_at_utc
-              label: Last healthy
-              format: relativeDate
-    - Agent:
-        href: https://quant.vicchong1983.trade/detail#agent
-        description: Kanban board read-back (read-only)
-        widget:
-          type: customapi
-          url: http://127.0.0.1:8787/dashboard.json
-          refreshInterval: 60000
-          display: list
-          mappings:
             - field: agent.board_summary
-              label: Board
-            - field: agent.board
-              label: Board name
+              label: Kanban
+            - field: leaderboard.as_of_utc
+              label: Leaderboard
+              format: relativeDate
