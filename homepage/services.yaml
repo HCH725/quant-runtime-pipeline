@@ -3,10 +3,16 @@
 # overall health is the quant watchdog's own state - nothing here re-checks the runtime.
 # No card links to a control surface: there is no start/stop/retry button anywhere in this config.
 #
+# href/target are RELATIVE on purpose: /detail is the read-only page runtime/dashboard_serve.py
+# renders from this very payload, so taps resolve against whichever origin the dashboard is opened
+# from (localhost or the public hostname) instead of dying at http://127.0.0.1:8787 on a phone. The
+# widget `url:` values stay 127.0.0.1 - Homepage fetches those server-side, so they still work
+# remotely; only the browser-side links were broken.
+#
 # Serve the payload first:  python3 runtime/dashboard_serve.py --port 8787
 - Quant Health:
     - Snapshot:
-        href: http://127.0.0.1:8787/dashboard.json
+        href: /detail#health
         description: Read-only research progress, not live PnL
         widget:
           type: customapi
@@ -27,6 +33,7 @@
 
 - Current Research:
     - Current:
+        href: /detail#current
         description: Research progress — not live PnL
         widget:
           type: customapi
@@ -54,6 +61,7 @@
 
 - Leaderboard:
     - Top 5:
+        href: /detail#leaderboard
         description: Frozen survivor ranking (verbatim from leaderboard.json)
         widget:
           type: customapi
@@ -64,10 +72,11 @@
             items: leaderboard.entries
             name: cohort
             label: summary
-            target: http://127.0.0.1:8787/dashboard.json
+            target: /detail#leaderboard
 
 - Research Funnel:
     - Funnel:
+        href: /detail#funnel
         description: Reviewed → ingested → backtested
         widget:
           type: customapi
@@ -86,6 +95,7 @@
 
 - Runtime & Agent:
     - Runtime health:
+        href: /detail#health
         description: quant_runtime_watchdog state — the single health truth (W1-W4)
         widget:
           type: customapi
@@ -104,6 +114,7 @@
               label: Last healthy
               format: relativeDate
     - Agent:
+        href: /detail#agent
         description: Kanban board read-back (read-only)
         widget:
           type: customapi

@@ -4,7 +4,9 @@
 The server is the only thing the dashboard can reach, so these checks pin the boundary rather than
 the rendering: loopback-only bind, the allowlist route table (no results root, no kanban.db, no
 traversal, no directory walking), GET/HEAD only, and an unreadable payload surfacing as 503 instead
-of an invented value.  Nothing here touches the real data dir, board or results tree.
+of an invented value.  The `/detail` page the cards link to is pinned the same way: it is the same
+payload, escaped, and it is the only route added.  Nothing here touches the real data dir, board or
+results tree.
 
 Run: python3 runtime/tests/test_dashboard_serve.py     (stdlib unittest, no dependencies)
 """
@@ -46,7 +48,7 @@ class ServerChecks(unittest.TestCase):
         try:
             conn.request(method, path)
             resp = conn.getresponse()
-            return resp.status, resp.read().decode("utf-8", "replace")
+            return resp.status, resp.read().decode("utf-8", "replace"), resp.getheader("Content-Type") or ""
         finally:
             conn.close()
 
@@ -56,7 +58,7 @@ class ServerChecks(unittest.TestCase):
 
     def test_serves_the_payload_at_root_and_its_route(self):
         for path in ("/", "/dashboard.json"):
-            status, body = self.request(path)
+            status, body, _ = self.request(path)
             self.assertEqual(status, 200)
             self.assertEqual(body, PAYLOAD)
 
@@ -71,19 +73,56 @@ class ServerChecks(unittest.TestCase):
         for path in ("/kanban.db", "/not-listed.json", "/results/_survivors/leaderboard.json",
                      "/%2e%2e/kanban.db", "/..%2fkanban.db", "/dashboard.json/../kanban.db",
                      "/../../etc/passwd"):
-            status, body = self.request(path)
+            status, body, _ = self.request(path)
             self.assertEqual(status, 404, path)
             self.assertNotIn("schema_version", body)
 
     def test_missing_payload_is_503_not_a_fabricated_value(self):
         (self.dir / "dashboard.json").unlink()
-        status, body = self.request("/dashboard.json")
+        status, body, _ = self.request("/dashboard.json")
         self.assertEqual(status, 503)
         self.assertIn("unavailable", body)
 
     def test_no_other_file_in_the_data_dir_is_reachable(self):
         (self.dir / "extra.json").write_text('{"leak": true}\n')
         self.assertEqual(self.request("/extra.json")[0], 404)
+
+    def test_detail_serves_the_same_payload_as_a_read_only_page(self):
+        status, body, ctype = self.request("/detail")
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", ctype)
+        # the section id is the payload's own key, which is what services.yaml links to
+        self.assertIn('<section id="health">', body)
+        self.assertIn("ok", body)  # health.status, verbatim from the payload file
+        self.assertIn('<section id="schema_version">', body)
+        self.assertNotIn("<a ", body)  # a read-only page: nothing to click through to
+        # the JSON route is untouched by the page route
+        self.assertEqual(self.request("/dashboard.json"),
+                         (200, PAYLOAD, "application/json; charset=utf-8"))
+
+    def test_detail_escapes_the_payload_and_never_invents_a_value(self):
+        # the payload is written by another process: markup in it must not become markup here
+        (self.dir / "dashboard.json").write_text('{"health": {"status": "<script>x</script>"}}')
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        self.assertNotIn("<script>", body)
+        self.assertIn("&lt;script&gt;", body)
+        # no payload (or an unparseable one) is a 503 for the page too, never an empty page
+        for broken in ("{not json", "[]"):
+            (self.dir / "dashboard.json").write_text(broken)
+            status, body, _ = self.request("/detail")
+            self.assertEqual(status, 503, broken)
+            self.assertIn("unavailable", body)
+
+    def test_detail_is_the_only_route_added(self):
+        for path in ("/detail/", "/detail/json", "/detail/../kanban.db", "/dashboard.json/detail"):
+            self.assertEqual(self.request(path)[0], 404, path)
+        self.assertEqual(self.request("/detail", method="HEAD")[0], 200)
+        self.assertEqual(self.request("/detail", method="POST")[0], 501)
+        # a query string selects nothing: the page is always the whole payload
+        status, body, _ = self.request("/detail?card=/etc/passwd")
+        self.assertEqual(status, 200)
+        self.assertIn('<section id="health">', body)
 
 
 if __name__ == "__main__":
