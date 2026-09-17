@@ -1,0 +1,479 @@
+{
+ "schema_version": 1,
+ "kind": "prerequisite-gate-evidence",
+ "family_id": "bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01",
+ "round_id": "bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1",
+ "kanban_task_id": "t_05ef4352",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-17T12:34:35Z",
+ "outcome": "PREREQUISITE_ABSENT",
+ "terminal": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "last_run_id": null,
+  "attempts": {
+   "launched": 0,
+   "run_specs": 0,
+   "terminal_sentinels": 0,
+   "run_spec": null,
+   "terminal_sentinel": null,
+   "attempt_dir": null
+  },
+  "cohorts": {
+   "registered_slots": 0,
+   "realized": 0
+  },
+  "survivors": [],
+  "survivor_bundle": null,
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "final_verdict_written_by": "Hermes default (card t_05ef4352), contract 10.7"
+ },
+ "artifact_hashes": {
+  "round_spec": {
+   "path": "rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/round-spec.json",
+   "bytes": 126654,
+   "sha256": "58d8a361c1c0225059683547550acacc1b26c42f48c4a33028db3648cc3fe586"
+  },
+  "verdict": {
+   "path": "rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/verdict.json",
+   "bytes": 6230,
+   "sha256": "99666f6321e61a6c1f0e9aae49b3c45430adf6be6d34cf209f89cdc44d0c9256"
+  },
+  "checker": {
+   "path": "runtime/bitcoin_option_rnd_low_volatility_high_vrp_regime_prerequisite_check.py",
+   "bytes": 90766,
+   "sha256": "7a8b661b18282c2465f02f2cf466c0313c9bea6a05f838e5d306d5487573b99e"
+  },
+  "sources": {
+   "card_body_sha256_footer_stripped": "sha256:46c28b3ba4890ed68f0c122669c671c4e21c3e3519b6a77c53946a76d8849739",
+   "record": {
+    "path": "wiki quant/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01.md",
+    "sha256": "sha256:4b170d401ee384709cab265e305c34283f872f115a8c499dc15446a086121a48"
+   },
+   "contract": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18"
+  },
+  "authoring_script": {
+   "path": ".kanban-scratch/t_05ef4352/author_spec.py",
+   "sha256": "0fad2f4e36da1d584e49b13cb76599b1cc0372a6c924a1e7e8493eb8a3722770"
+  },
+  "evidence_builder": {
+   "path": ".kanban-scratch/t_05ef4352/make_evidence.py",
+   "sha256": "677fd9c8f30535d3f227d931c0bcfd7aa1a268d92ee3d656a46b5ce01f2dfeb1"
+  }
+ },
+ "measured_absence": [
+  "deribit_option_surface_absent: 0 occurrences of the 26 decisive option/venue/RND/rate tokens in the raw tree (entry-name and payload probes over 1613 entries, 17 payload files); `deribit`, `dvol`, `bvix`, `strike`, `maturity`, `expiry`, `implied_vol`, `risk_neutral_density`, `risk_neutral_variance`, `variance_risk_premium`, `risk_free` are all 0",
+  "option_row_shape_absent: no raw row shape carries any decisive requirement group (series-shaped hits per group: {\"option_market_surface\": [], \"option_venue_surface\": [], \"rnd_state_surface\": [], \"rate_discount_surface\": []}); the kline rows are exactly open_time_ms/close_time_ms/open/high/low/close/volume and the funding rows are exactly the nine funding fields",
+  "instrument_surface_is_perpetual_only: four instruments, all CryptoPerpetual, all with `-PERP` ids; no dated contract, no strike/expiry field, and no option-shaped instrument field exists",
+  "risk_free_and_discount_surface_absent: no risk-free rate, SOFR, treasury, yield-curve, discount-factor or LIBOR series exists anywhere in the raw tree",
+  "fixed_maturity_and_iv_curve_absent: the record's 27-day fixed-maturity interpolation and its 9/27/45-day IV curves are not constructible - there is no option surface to interpolate",
+  "point_in_time_option_availability_absent: no option availability, quote timestamp or venue lifecycle surface exists",
+  "host_store_scan: 5016 files over 19 roots; 6 store-shaped hits, all classified (coverage_manifest.csv, lifecycle_events.csv, membership_cells.jsonl, membership_observations.csv, snapshot_observations.jsonl, snapshot_observations.jsonl); 0 unclassified; no option/rate TIME SERIES exists anywhere measured",
+  "non_canonical_single_instant_snapshot_disclosed: the host does carry a Deribit BTC option snapshot under an unrelated Phase-11 competency harness - 1012 instruments, 1012 book summaries, 936 mechanically valid joined quotes at ONE instant (2026-08-28T12:19:42Z), disclosed here and never used; it cannot express a 2010-day daily RND panel",
+  "falsification_battery_blocked: all seven record falsification items need the option-implied RND panel, the option basket or the post-2022 option sample; none exists locally; nothing was lowered and nothing was trimmed",
+  "universe_kept_whole: the registered instruments were NOT shrunk to the four local contracts, no proxy market, no proxy option surface and no rewritten hypothesis were used, and no attempt was launched"
+ ],
+ "required_data_matrix_status_counts": {
+  "PARTIAL_PERP_PROXY_ONLY": 1,
+  "ABSENT": 11,
+  "NOT_CONSTRUCTIBLE": 2,
+  "PARTIALLY_DERIVABLE_FROM_PERP_ONLY": 1,
+  "PRESENT_AS_STORE_CONVENTION": 1,
+  "BLOCKED_BY_ABSENCE": 4,
+  "NOT_REGISTERED_BY_RECORD": 1,
+  "ABSENT_FOR_OPTIONS": 1,
+  "NOT_EXECUTED_BLOCKED": 7,
+  "PARTIAL_WINDOW_OVERLAP": 1,
+  "DEFINED_NOT_EVALUATED": 1,
+  "REGISTERED_NOT_APPLIED": 1,
+  "DISCLOSURE_ONLY": 1
+ },
+ "decisive_matrix_item_count": 25,
+ "non_canonical_option_material": {
+  "root": "<HOME>/workspace/phase11-options-volatility",
+  "exists": true,
+  "files": {
+   "data/decision_time_witness.json": {
+    "exists": true,
+    "bytes": 916
+   },
+   "data/real_snapshot_summary.json": {
+    "exists": true,
+    "bytes": 7013
+   },
+   "data/real_valid_quotes.json": {
+    "exists": true,
+    "bytes": 1615126
+   },
+   "data/synthetic_surface.json": {
+    "exists": true,
+    "bytes": 35455
+   },
+   "data/variance_report.json": {
+    "exists": true,
+    "bytes": 663
+   },
+   "raw/deribit_get_book_summary_btc.json": {
+    "exists": true,
+    "bytes": 453141
+   },
+   "raw/deribit_get_instruments_btc.json": {
+    "exists": true,
+    "bytes": 883716
+   }
+  },
+  "file_classes": {
+   "data/decision_time_witness.json": "decision-time witness for the same single snapshot",
+   "data/real_snapshot_summary.json": "the project's own snapshot summary and quality/exclusion counts",
+   "data/real_valid_quotes.json": "joined, mechanically valid quote rows (strike, expiry, option_type, iv, risk_free_rate, discount_factor, forward, greeks) at one available_at instant",
+   "data/synthetic_surface.json": "fixed-seed SYNTHETIC surface (not market data)",
+   "data/variance_report.json": "model-free variance / RND witness computed from that single snapshot",
+   "raw/deribit_get_book_summary_btc.json": "venue book-summary snapshot: bid/ask/mark_price/mark_iv/open_interest per instrument, one collection instant",
+   "raw/deribit_get_instruments_btc.json": "venue instrument catalogue snapshot: kind=option, strike/expiry encoded in instrument_name, expiration_timestamp"
+  },
+  "quote_rows": 936,
+  "quote_row_keys": [
+   "T_years",
+   "ask",
+   "available_at",
+   "base_currency",
+   "bid",
+   "carry_or_q",
+   "contract_size",
+   "discount_factor",
+   "exercise_style",
+   "expiry",
+   "forward",
+   "forward_moneyness",
+   "greeks",
+   "instrument_id",
+   "instrument_name",
+   "iv",
+   "log_forward_moneyness",
+   "mid",
+   "normalized_usd_mid",
+   "observation_time",
+   "option_type",
+   "quote_currency",
+   "quote_quality",
+   "risk_free_rate",
+   "settlement",
+   "settlement_currency",
+   "source_hash",
+   "source_id",
+   "spot_moneyness",
+   "spot_or_index",
+   "strike",
+   "underlying",
+   "venue",
+   "venue_mark_iv_percent"
+  ],
+  "instrument_count": 1012,
+  "book_summary_count": 1012,
+  "kind_values": [
+   "option"
+  ],
+  "distinct_available_at": [
+   "2026-08-28T12:19:42Z"
+  ],
+  "distinct_expiries": [
+   "2026-08-29T08:00:00Z",
+   "2026-08-30T08:00:00Z",
+   "2026-08-31T08:00:00Z",
+   "2026-09-01T08:00:00Z",
+   "2026-09-04T08:00:00Z",
+   "2026-09-11T08:00:00Z",
+   "2026-09-18T08:00:00Z",
+   "2026-09-25T08:00:00Z",
+   "2026-10-30T08:00:00Z",
+   "2026-11-27T08:00:00Z",
+   "2026-12-25T08:00:00Z",
+   "2027-03-26T08:00:00Z",
+   "2027-06-25T08:00:00Z"
+  ],
+  "distinct_strikes": 86,
+  "venues": [
+   "deribit.com"
+  ],
+  "single_instant": true,
+  "snapshot_instant": "2026-08-28T12:19:42Z",
+  "project_boundary_statement_present": true,
+  "forbidden_shortcuts": [
+   "latest quote as historical",
+   "mark IV treated as future realized volatility",
+   "fitted surface called arbitrage-free",
+   "IV-RV spread called guaranteed profit",
+   "future outcome used in decision-time quote analysis"
+  ],
+  "latest_quote_as_historical_forbidden": true,
+  "used": false,
+  "cannot_satisfy_record_because": [
+   "single instant: every quote row carries the same available_at (2026-08-28T12:19:42Z); the record needs a DAILY risk-neutral-density panel over its option sample (2017-07 -> 2022-12), so one observation cannot produce a regime panel, a BVRP series or any OOS comparison",
+   "not the canonical raw: the card permits reads only through the canonical raw store (/data/raw, read-only); this material lives in an unrelated Phase-11 competency harness and would be a substitute store, i.e. a different estimand",
+   "the material's own lineage forbids exactly this use: its `forbidden_shortcuts` list contains 'latest quote as historical' and its README states the snapshot is a venue/time-bounded descriptive witness only",
+   "no point-in-time availability series and no option-availability surface: the record marks PIT option availability and timestamps as mandatory for live/OOS replication",
+   "no risk-free/discount history beyond the single implied discount factor in the same row set, and no historical realized-variance alignment to a 27-day option horizon"
+  ]
+ },
+ "other_local_stores": {
+  "scan_roots_count": 19,
+  "files_scanned": 5016,
+  "token_files": 3224,
+  "data_extension_hit_count": 6,
+  "data_extension_hits": [
+   "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_cells.jsonl",
+   "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_observations.csv",
+   "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv",
+   "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+   "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+   "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+  ],
+  "unclassified_data_hits": [],
+  "series_shaped_decisive": []
+ },
+ "verification": {
+  "checker_default_all_pass": {
+   "rc": 0,
+   "ok": true,
+   "checks": 25,
+   "failed": []
+  },
+  "checker_host_scan_all_pass": {
+   "rc": 0,
+   "ok": true,
+   "checks": 29,
+   "failed": [],
+   "per_check": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS",
+    "C5": "PASS",
+    "C6": "PASS",
+    "C7": "PASS",
+    "C8": "PASS",
+    "C9": "PASS",
+    "C10": "PASS",
+    "C11": "PASS",
+    "C12": "PASS",
+    "C13": "PASS",
+    "C14": "PASS",
+    "C15": "PASS",
+    "C15b": "PASS",
+    "C16": "PASS",
+    "C17": "PASS",
+    "C18": "PASS",
+    "C18b": "PASS",
+    "C18c": "PASS",
+    "C19": "PASS",
+    "C20": "PASS",
+    "C21": "PASS",
+    "C22": "PASS",
+    "C23": "PASS",
+    "C24": "PASS",
+    "C25": "PASS",
+    "C26": "PASS"
+   },
+   "raw_summary": {
+    "entries": 1613,
+    "kline_files": 1596,
+    "probe_files": 17
+   },
+   "stores_summary": {
+    "files_scanned": 5028,
+    "token_files": 3226,
+    "bytes": 213377004
+   }
+  },
+  "self_test": {
+   "ok": true,
+   "variants": 36,
+   "flipped": 35,
+   "not_flipped": [],
+   "benign_variant_failed": [
+    []
+   ]
+  },
+  "raw_fixture_control": {
+   "ok": true,
+   "flipped": [
+    "C1",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C18c",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "expected_subset": [
+    "C1",
+    "C10",
+    "C11",
+    "C13",
+    "C18c",
+    "C2",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "not_flipped": []
+  },
+  "verify_verbatim_board_db": {
+   "ok": true,
+   "checked": 63,
+   "leaves": 63,
+   "orphans": [],
+   "problems": [],
+   "misses": [],
+   "card_source": "board_db"
+  },
+  "verify_verbatim_pool_body": {
+   "ok": true,
+   "checked": 63,
+   "leaves": 63,
+   "orphans": [],
+   "problems": [],
+   "misses": [],
+   "card_source": "pool_body_file"
+  },
+  "excluded_token_pass": {
+   "raw_token_hit_counts": {
+    "ask": 1,
+    "index": 1,
+    "quote": 2
+   },
+   "raw_data_shaped": [
+    {
+     "entry": "binance/usdm/instruments/usdm-perp-instruments.json",
+     "tokens": [
+      "quote"
+     ]
+    }
+   ],
+   "host_token_hit_counts_sample": {
+    "ask": 868,
+    "bid": 800,
+    "call": 476,
+    "delta": 853,
+    "gamma": 317,
+    "index": 2077,
+    "put": 161,
+    "quote": 1434,
+    "spot": 2031,
+    "vega": 60
+   },
+   "host_data_shaped": [
+    {
+     "entry": "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv",
+     "tokens": [
+      "quote"
+     ],
+     "row_keys_sample": [
+      "close",
+      "close_time_ms",
+      "date",
+      "high",
+      "low",
+      "num_trades",
+      "open",
+      "open_time_ms"
+     ]
+    }
+   ],
+   "note": "the generic tokens call/put/delta/gamma/vega/spot/index/quote/bid/ask are excluded from the decisive vocabulary; this disclosed second pass re-probes them so an exclusion cannot hide a hit. Raw: 4 token hits in 3 files (the instrument export's `quote_currency` field and store prose); host: the same tokens appear in unrelated code/prose and in a non-canonical phase7 derived daily panel (token 'quote'), all classified, none an option surface."
+  },
+  "preflight": {
+   "overall": "PASS",
+   "launch_gate": "not_evaluated",
+   "checks": {
+    "P1": "PASS",
+    "P2": "PASS",
+    "P3": "PASS",
+    "P4": "PASS",
+    "P5": "PASS",
+    "P6": "PASS",
+    "P7": "PASS",
+    "P8": "PASS",
+    "P9": "NA",
+    "P10": "NA"
+   },
+   "host_boot_id": "boot-1789570820"
+  },
+  "repo_suite": {
+   "tail": [
+    "----------------------------------------------------------------------",
+    "Ran 432 tests in 9.353s",
+    "OK"
+   ],
+   "ran_line": "Ran 432 tests in 9.353s",
+   "ok": true
+  },
+  "author_rerun_refused": {
+   "rc": 1,
+   "stdout": "empty of any WROTE line",
+   "error": "FileExistsError: [Errno 17] File exists: '<EXPANSION>/qlib-results/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01/rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/round-spec.json'",
+   "note": "re-running the authoring script against the published pair is refused by O_CREAT|O_EXCL; the published bytes are untouched"
+  }
+ },
+ "draft_removals": [
+  {
+   "removed_at_utc": "2026-09-17T12:58:00Z",
+   "reason": "nested `*_verbatim` duplicate leaves had no excerpt_source_map entry (the round's own --verify-verbatim reported 16 unmapped leaves); the author script was fixed to map byte-identical nested duplicates and the pair was rebuilt once. Zero computation: no attempt dir, no run-spec, no sentinel, run_id null.",
+   "artifacts": [
+    {
+     "path": "<EXPANSION>/qlib-results/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01/rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/round-spec.json",
+     "bytes": 123669,
+     "sha256": "835264d35e9d5b103bba4df805fb60c1a3169d00114a46b9e1bed425f02fca5c",
+     "backup": "<REPO>/.kanban-scratch/t_05ef4352/removed_drafts/round-spec.json",
+     "removed": true
+    },
+    {
+     "path": "<EXPANSION>/qlib-results/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01/rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/verdict.json",
+     "bytes": 6230,
+     "sha256": "99666f6321e61a6c1f0e9aae49b3c45430adf6be6d34cf209f89cdc44d0c9256",
+     "backup": "<REPO>/.kanban-scratch/t_05ef4352/removed_drafts/verdict.json",
+     "removed": true
+    }
+   ]
+  }
+ ],
+ "disclosures": [
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class (its definition covers 'instrument 缺失') with the contract 6.4 prerequisite-missing alignment bullet as the terminal basis. Adding a dedicated class is an operator/contract decision.",
+  "the record's option sample (2017-07 -> 2022-12) overlaps the raw window only from 2022-01-01 onwards, so the pre-2022 segment has no local coverage in principle; the registered split convention (in-sample 2022-01-01→2025-09-30 / OOS 2025-10-01→2026-09-11) is written into the round-spec as research-defined and was NOT applied (zero computation)",
+  "a real Deribit BTC option snapshot DOES exist on this host, in the unrelated Phase-11 competency harness: 1012 instruments, 1012 book summaries, 936 mechanically valid joined quotes at the single instant 2026-08-28T12:19:42Z with strikes, expiries, implied vols, greeks and a risk-free rate. It is measured, disclosed in the round-spec's `non_canonical_option_material` block, and used=false; it cannot express a daily RND panel over the record's sample, lives outside the canonical raw (the card permits reads only through /data/raw), and its own lineage forbids 'latest quote as historical'.",
+  "the raw store is updated nightly by ai.marketdata.raw-sync (last run 2026-09-17T02:15:05.539000+00:00); measured values are recorded next to the card's quoted values, and the claimed-measurement check (C18c) compares against the live tree, so a post-sync re-run would legitimately show drift in the totals while the hit STRUCTURE is the invariant",
+  "this repo root is itself inside the scanned roots, so host-scan totals drift between reads (4985 / 4986 / 4990 files across the three reads in this run); the invariant is the hit structure: 6 data-shaped hits, all classified, 0 unclassified, and the only row surface carrying decisive option/rate tokens is the declared single-instant snapshot",
+  "the round-spec/verdict pair was removed and rebuilt ONCE in this run because the round's own --verify-verbatim found 16 nested `*_verbatim` duplicate leaves without excerpt_source_map entries; the removed bytes are backed up and hashed in `draft_removals` (round-spec 123669 B / sha256 835264d3…, verdict 6230 B / sha256 99666f63…). The round computed NOTHING: no attempt dir, no run-spec, no terminal sentinel, run_id null — and the rebuilt verdict carries identical bytes",
+  "no network fetch was attempted: the missing prerequisite is itself the terminal condition, and fetching a substitute option history would be a different candidate",
+  "host-specific absolute paths in this snapshot are redacted to <HOME> / <EXPANSION> / <REPO>; the on-disk artifacts are unredacted and re-hashable"
+ ],
+ "no_fabrication": {
+  "attempts_launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "performance_fields": "none exist and none were invented (no CAGR, Sharpe, Max DD, net PnL, fee, funding, turnover or DCA histogram value is present anywhere in the round)",
+  "falsification_battery": "registered unchanged (7 items), status NOT_EXECUTED, none lowered, none removed, none simulated"
+ },
+ "readback": {
+  "round_dir": "rounds/bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-r1/",
+  "round_dir_contents": [
+   "round-spec.json",
+   "verdict.json"
+  ],
+  "attempt_dir_exists": false,
+  "survivor_bundle_exists": false,
+  "evidence_file": "bitcoin-option-rnd-low-volatility-high-vrp-regime-2026-09-01-prerequisite-gate-20260917.json"
+ }
+}
