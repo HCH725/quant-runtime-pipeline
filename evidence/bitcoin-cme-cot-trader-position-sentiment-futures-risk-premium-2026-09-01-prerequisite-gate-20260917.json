@@ -1,0 +1,1231 @@
+{
+ "schema_version": 1,
+ "document_kind": "prerequisite-gate evidence snapshot (contract 6.4 / 13); re-runnable read-back of the live filesystem and the frozen round artifacts",
+ "family_id": "bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01",
+ "round_id": "bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1",
+ "round_number": 1,
+ "kanban_task_id": "t_8d648066",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-17T05:17:55Z",
+ "verdict": "TECHNICAL_INCOMPLETE",
+ "performance_claimable": false,
+ "failure": {
+  "layer": "card-local",
+  "class": "data_window_invalid",
+  "detail": "the record's hypothesis is defined on regulated CME Bitcoin futures and on weekly CFTC COT/TFF trader-positioning reports (long/short by trader category, total open interest, report date, actual publication timestamp) plus CME roll information and named macro series; the canonical raw holds one venue's USD-M perpetual klines/funding/instruments for BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT and nothing else",
+  "failure_class_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, with the mismatch disclosed rather than hidden",
+  "last_run_id": null,
+  "terminal_evidence": {
+   "round_spec": "rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/round-spec.json",
+   "verdict": "rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/verdict.json",
+   "checker": "runtime/bitcoin_cme_cot_trader_position_sentiment_futures_risk_premium_prerequisite_check.py",
+   "repo_evidence": "evidence/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-prerequisite-gate-20260917.json"
+  },
+  "incomplete_reason": "prerequisite absent and measured: zero attempts were launched, so no backtest output exists and none will be fabricated",
+  "definitive_absences": [
+   "cme_price_surface_absent: canonical raw is one venue (BINANCE) of USD-M perpetuals; 0 of 1658 entries and 0 of 1614 payload files carry a CME/CBOT/Globex token",
+   "cftc_positioning_absent: 0 occurrences of cftc/cot/commitments-of-traders/tff tokens anywhere in the raw tree (entry names: {})",
+   "trader_category_and_report_fields_absent: no reportable/dealer/leveraged-fund/asset-manager/speculator/retailer field, no report date, no publication timestamp, no open-interest series",
+   "contract_roll_surface_absent: no expiry/roll/continuous-contract surface and no contract-month grid (interval set 15m, 1d, 1h, 1w, 30m, 4h, 5m)",
+   "macro_series_absent: 0 occurrences of NFCI / TED-spread / M2 / money-supply / funding-cost tokens",
+   "sample_window_mismatch: the source's sample is 2018-2021 (public figure 2018-04-10 → 2021-06-29) while the canonical raw begins 2022-01-01T00:00:00Z",
+   "falsification_battery: items 1, 2, 3, 5, 6 cannot be constructed and item 4 has only 2 of its 5 baseline controls locally derivable, each for the wrong instrument",
+   "host_side_scan: 19 roots / 16631 files scanned; 3 data-extension token hits, all classified as non-data carriers (vendor_library_archive; binance_venue_lifecycle_prose; research_corpus_index); 0 unclassified",
+   "licensed_fields: the study's Bloomberg-sourced fields are license-restricted and no documented local substitute exists"
+  ]
+ },
+ "yield": {
+  "rounds_used": 1,
+  "max_rounds": 3,
+  "no_progress_rounds": 0,
+  "progress_evidence": [
+   "round 1 terminated at the prerequisite gate before any computation: the registered CME-futures price surface and the CFTC positioning surface are measurably absent from the canonical raw and from all measured host stores (checker C1-C9, C15, C18 + the required-data matrix)"
+  ],
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE"
+ },
+ "attempts": {
+  "launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_spec": null,
+  "terminal_sentinel": null,
+  "attempt_dir": null
+ },
+ "evidence_run_ids": [],
+ "cohorts_registered_slots": 1,
+ "cohorts_realized": 0,
+ "universe_shrunk_to_local_list": false,
+ "artifacts": {
+  "round_spec": {
+   "path": "<RESULTS>/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/round-spec.json",
+   "sha256": "sha256:a335fdf862bef344a5a52518f44e7c5be3dfb909535d3c7412f138eeebb9482e",
+   "bytes": 93615,
+   "postcontrol_readback_sha256": "sha256:a335fdf862bef344a5a52518f44e7c5be3dfb909535d3c7412f138eeebb9482e",
+   "postcontrol_readback_bytes": 93615,
+   "artifact_bytes_unchanged_by_controls": true
+  },
+  "verdict_json": {
+   "path": "<RESULTS>/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/verdict.json",
+   "sha256": "sha256:ada6c13d8505be2580bd691dfabc36712e64d513d365d3266c77f5e68977ced5",
+   "bytes": 5654,
+   "postcontrol_readback_sha256": "sha256:ada6c13d8505be2580bd691dfabc36712e64d513d365d3266c77f5e68977ced5",
+   "postcontrol_readback_bytes": 5654
+  },
+  "checker": {
+   "path": "<REPO>/runtime/bitcoin_cme_cot_trader_position_sentiment_futures_risk_premium_prerequisite_check.py",
+   "sha256": "sha256:ffe6ad2071ab46426f34060069d4c15b06a7d99ed88292e5d5d3463a571ba8eb",
+   "bytes": 63346
+  }
+ },
+ "sources": {
+  "card": {
+   "kanban_task_id": "t_8d648066",
+   "frozen_candidate_body_bytes": 20394,
+   "frozen_candidate_body_sha256": "sha256:42d0915c324034fc4b526992e20b4641870b8c45da5871c89d9dc411a6ef1b6c",
+   "frozen_pool_body_path": "<RESULTS>/_handoff/bodies/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+   "lifecycle_footer_appended_by": "runtime/production_handoff.py LIFECYCLE_FOOTER (contract 6.4 / 14.4)",
+   "card_body_sha256_note": "the pool body is hashed in the round-spec at authoring time; --verify-verbatim re-reads it from the pool file and, separately, from the board DB after stripping the system-owned footer"
+  },
+  "record": {
+   "path": "<HOME>/.hermes/wiki/quant/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+   "sha256": "sha256:b8efd12315267b975bc4e04216d37ded3c5972681198845c49d3731a7d5dc4e9",
+   "bytes": 13154,
+   "intake_decision": "PASS-WITH-CAVEAT"
+  },
+  "contract": {
+   "path": "<REPO>/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  }
+ },
+ "raw_measurement": {
+  "raw_root": "<EXPANSION>/market-data-raw",
+  "store_top_level": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "binance_subdirs": [
+   "usdm"
+  ],
+  "usdm_subdirs": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "documented_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "documented_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "klines_symbol_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "klines_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "klines_dataset_dirs": 28,
+  "klines_1d_rows": 1720,
+  "klines_1d_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-16T00:00:00Z"
+  ],
+  "klines_1d_open_step_seconds": 86400.0,
+  "klines_1d_row_keys": [
+   "close",
+   "close_time_ms",
+   "high",
+   "low",
+   "open",
+   "open_time_ms",
+   "volume"
+  ],
+  "klines_cot_columns": [],
+  "instrument_count": 4,
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "instrument_types": [
+   "CryptoPerpetual"
+  ],
+  "instrument_field_names": [
+   "base_currency",
+   "id",
+   "info",
+   "is_inverse",
+   "lot_size",
+   "maker_fee",
+   "margin_init",
+   "margin_maint",
+   "max_notional",
+   "max_price",
+   "max_quantity",
+   "min_notional",
+   "min_price",
+   "min_quantity",
+   "multiplier",
+   "price_increment",
+   "price_precision",
+   "quote_currency",
+   "raw_symbol",
+   "settlement_currency",
+   "size_increment",
+   "size_precision",
+   "taker_fee",
+   "tick_scheme",
+   "ts_event",
+   "ts_init",
+   "type"
+  ],
+  "instrument_cot_fields": [],
+  "funding_symbol_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "funding_row_keys": [
+   "funding_price_source",
+   "funding_rate",
+   "funding_time_ms",
+   "mark_price",
+   "market_type",
+   "rate_type",
+   "symbol",
+   "truth_status",
+   "venue"
+  ],
+  "funding_venues": [
+   "BINANCE"
+  ],
+  "funding_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-17T00:00:00Z"
+  ],
+  "funding_rows": 5161,
+  "funding_cot_fields": [],
+  "schema_dataset_sections": [
+   "klines (Binance USD-M perpetual futures, UTC)",
+   "funding",
+   "instruments"
+  ],
+  "schema_cme_mentions": [],
+  "schema_futures_mentions": [
+   "futures"
+  ],
+  "schema_documents_cme_or_cot_dataset": false,
+  "decisive_flags": {
+   "cme_price_series_present": false,
+   "cme_roll_surface_present": false,
+   "cftc_positioning_series_present": false,
+   "trader_category_fields_present": false,
+   "report_date_field_present": false,
+   "publication_timestamps_present": false,
+   "open_interest_series_present": false,
+   "macro_series_present": false,
+   "cme_or_cftc_data_present": false,
+   "required_data_available": false
+  },
+  "series_shaped_tokens": [],
+  "mentions": {
+   "cme": [],
+   "roll": [],
+   "cftc": [],
+   "trader_category": [],
+   "macro": []
+  },
+  "authoring_time_window": {
+   "klines_1d": [
+    "2022-01-01T00:00:00Z",
+    "2026-09-16T00:00:00Z"
+   ],
+   "funding": [
+    "2022-01-01T00:00:00Z",
+    "2026-09-17T00:00:00Z"
+   ]
+  },
+  "registered_vs_measured_note": "the raw store keeps updating after the window the card registers (authoring-time 1d window 2022-01-01T00:00:00Z → 2026-09-16T00:00:00Z; evidence-time 2022-01-01T00:00:00Z → 2026-09-16T00:00:00Z); registered and measured values are recorded separately"
+ },
+ "measurement_source": "live re-measurement by this builder through the checker's own measure_raw / measure_host_stores (single source of truth); the checker-suite runs quoted under controls were executed after the artifacts were published (freshness asserted, mtime >= artifact mtime)",
+ "probe_measurement": {
+  "raw_entry_count": 1658,
+  "probe_tokens_tested": 35,
+  "entry_name_hit_counts": {},
+  "entry_name_hits_unexplained": [],
+  "payload_scan_files": 1614,
+  "payload_scan_bytes": 79056050,
+  "payload_hit_counts": {
+   "futures": 2,
+   "perp_futures": 2,
+   "open_interest": 1
+  },
+  "payload_token_files": {
+   "futures": [
+    "_meta/INVENTORY.md",
+    "_meta/SCHEMA.md"
+   ],
+   "perp_futures": [
+    "_meta/INVENTORY.md",
+    "_meta/SCHEMA.md"
+   ],
+   "open_interest": [
+    "_meta/INVENTORY.md"
+   ]
+  },
+  "classified_payload_hits": [
+   {
+    "token": "futures",
+    "entry": "_meta/INVENTORY.md",
+    "series_shaped": false,
+    "why": "the store's migration inventory prose describing the same Binance USD-M perpetual product"
+   },
+   {
+    "token": "futures",
+    "entry": "_meta/SCHEMA.md",
+    "series_shaped": false,
+    "why": "the store's own dataset heading 'klines (Binance USD-M perpetual futures, UTC)' - venue product name, not a CME contract"
+   },
+   {
+    "token": "perp_futures",
+    "entry": "_meta/INVENTORY.md",
+    "series_shaped": false,
+    "why": "same inventory prose"
+   },
+   {
+    "token": "perp_futures",
+    "entry": "_meta/SCHEMA.md",
+    "series_shaped": false,
+    "why": "same heading: 'perpetual futures' is Binance's USD-M product name"
+   },
+   {
+    "token": "open_interest",
+    "entry": "_meta/INVENTORY.md",
+    "series_shaped": false,
+    "why": "a Spotlight-sweep token list in the inventory's method paragraph ('... aggTrade / bookTicker / openInterest ...'), i.e. a description of a search, not an open-interest series"
+   }
+  ],
+  "payload_hits_unexplained": [],
+  "raw_hit_classes": {
+   "futures": {
+    "_meta/SCHEMA.md": "the store's own dataset heading 'klines (Binance USD-M perpetual futures, UTC)' - venue product name, not a CME contract",
+    "_meta/INVENTORY.md": "the store's migration inventory prose describing the same Binance USD-M perpetual product"
+   },
+   "perp_futures": {
+    "_meta/SCHEMA.md": "same heading: 'perpetual futures' is Binance's USD-M product name",
+    "_meta/INVENTORY.md": "same inventory prose"
+   },
+   "open_interest": {
+    "_meta/INVENTORY.md": "a Spotlight-sweep token list in the inventory's method paragraph ('... aggTrade / bookTicker / openInterest ...'), i.e. a description of a search, not an open-interest series"
+   }
+  },
+  "note": "tokens are word-boundary regexes: a substring scan would fire 'cot' on 'scotland' and 'futures' on the store's own 'perpetual futures' heading"
+ },
+ "required_data_matrix_counts": {
+  "ABSENT_FROM_CANONICAL_RAW": 2,
+  "ABSENT": 13,
+  "NOT_EXECUTABLE_AS_REGISTERED": 4,
+  "LICENSE_RESTRICTED": 1,
+  "PRESENT_WRONG_INSTRUMENT": 3,
+  "WINDOW_MISMATCH": 1
+ },
+ "required_data_matrix_items": 24,
+ "decisive_matrix_items": [
+  "CME Bitcoin futures continuous-contract prices",
+  "CME Bitcoin futures contract-level prices (contract months)",
+  "CFTC COT/TFF weekly report: long contracts by trader category",
+  "CFTC COT/TFF weekly report: short contracts by trader category",
+  "CFTC COT/TFF weekly report: total open interest",
+  "CFTC COT/TFF weekly report: report date",
+  "CFTC COT/TFF weekly report: actual publication timestamp",
+  "Trader-category taxonomy (dealer/intermediary, asset manager, leveraged fund, other reportable)",
+  "Contract roll information for CME Bitcoin futures",
+  "Macro-state variable: NFCI",
+  "Macro-state variable: TED spread",
+  "Macro-state variable: U.S. M2",
+  "Macro-state variable: funding costs of financial institutions",
+  "Baseline control: open interest (falsification item 4)",
+  "Baseline control: basis (falsification item 4)",
+  "Source sample window 2018-2021 (falsification item 3 replication stage)"
+ ],
+ "decisive_matrix_status": {
+  "CME Bitcoin futures continuous-contract prices": "ABSENT_FROM_CANONICAL_RAW",
+  "CME Bitcoin futures contract-level prices (contract months)": "ABSENT_FROM_CANONICAL_RAW",
+  "CFTC COT/TFF weekly report: long contracts by trader category": "ABSENT",
+  "CFTC COT/TFF weekly report: short contracts by trader category": "ABSENT",
+  "CFTC COT/TFF weekly report: total open interest": "ABSENT",
+  "CFTC COT/TFF weekly report: report date": "ABSENT",
+  "CFTC COT/TFF weekly report: actual publication timestamp": "ABSENT",
+  "Trader-category taxonomy (dealer/intermediary, asset manager, leveraged fund, other reportable)": "ABSENT",
+  "Contract roll information for CME Bitcoin futures": "ABSENT",
+  "Macro-state variable: NFCI": "ABSENT",
+  "Macro-state variable: TED spread": "ABSENT",
+  "Macro-state variable: U.S. M2": "ABSENT",
+  "Macro-state variable: funding costs of financial institutions": "ABSENT",
+  "Baseline control: open interest (falsification item 4)": "ABSENT",
+  "Baseline control: basis (falsification item 4)": "ABSENT",
+  "Source sample window 2018-2021 (falsification item 3 replication stage)": "WINDOW_MISMATCH"
+ },
+ "other_local_stores": {
+  "roots": {
+   "<HOME>/workspace/phase7-alpha-research": {
+    "exists": true,
+    "files_scanned": 31,
+    "token_files": 5,
+    "token_file_counts": {
+     "futures": 3,
+     "continuous_contract": 1,
+     "open_interest": 1,
+     "commercial": 1,
+     "publication_time": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase3-portfolio-risk": {
+    "exists": true,
+    "files_scanned": 4,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase4-market-microstructure": {
+    "exists": true,
+    "files_scanned": 5,
+    "token_files": 1,
+    "token_file_counts": {
+     "futures": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase5-crypto-derivatives": {
+    "exists": true,
+    "files_scanned": 74,
+    "token_files": 26,
+    "token_file_counts": {
+     "dealer": 1,
+     "open_interest": 4,
+     "oi_field": 4,
+     "futures": 24,
+     "expiry": 9,
+     "perp_futures": 9,
+     "continuous_contract": 2,
+     "m2": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase9-cross-sectional-factors": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 2,
+    "token_file_counts": {
+     "noncommercial": 1,
+     "commercial": 2,
+     "asset_manager": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase12-l2-l3-execution-tca": {
+    "exists": true,
+    "files_scanned": 50,
+    "token_files": 18,
+    "token_file_counts": {
+     "futures": 17,
+     "open_interest": 4,
+     "continuous_contract": 3
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase10-pit-bitemporal": {
+    "exists": true,
+    "files_scanned": 59,
+    "token_files": 17,
+    "token_file_counts": {
+     "futures": 14,
+     "publication_time": 1,
+     "perp_futures": 2,
+     "expiry": 3
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/phase11-options-volatility": {
+    "exists": true,
+    "files_scanned": 39,
+    "token_files": 18,
+    "token_file_counts": {
+     "expiry": 12,
+     "oi_field": 1,
+     "open_interest": 2,
+     "futures": 5,
+     "m2": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/ml4t-real-evidence-remediation": {
+    "exists": true,
+    "files_scanned": 12710,
+    "token_files": 301,
+    "token_file_counts": {
+     "futures": 33,
+     "commercial": 8,
+     "m2": 148,
+     "oi_field": 9,
+     "positioning": 34,
+     "expiry": 2,
+     "cot": 74,
+     "reportable": 3,
+     "roll": 3,
+     "publication_time": 1,
+     "noncommercial": 2
+    },
+    "data_ext_hits": 1,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830": {
+    "exists": true,
+    "files_scanned": 671,
+    "token_files": 659,
+    "token_file_counts": {
+     "futures": 659,
+     "publication_time": 3,
+     "expiry": 6,
+     "perp_futures": 93
+    },
+    "data_ext_hits": 1,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/a1-1-phase9-pit-membership-20260830": {
+    "exists": true,
+    "files_scanned": 49,
+    "token_files": 25,
+    "token_file_counts": {
+     "futures": 24,
+     "publication_time": 1,
+     "perp_futures": 2,
+     "expiry": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830": {
+    "exists": true,
+    "files_scanned": 28,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/alpha-strategy-research": {
+    "exists": true,
+    "files_scanned": 961,
+    "token_files": 557,
+    "token_file_counts": {
+     "futures": 466,
+     "open_interest": 122,
+     "perp_futures": 383,
+     "oi_field": 36,
+     "positioning": 76,
+     "expiry": 75,
+     "funding_cost": 77,
+     "commercial": 36,
+     "cme": 43,
+     "dealer": 18,
+     "cot": 5,
+     "report_date": 2,
+     "leveraged_fund": 1,
+     "roll": 21,
+     "cftc": 12,
+     "reportable": 2,
+     "net_position": 5,
+     "speculator": 6,
+     "traders_in_financial_futures": 1,
+     "nfci": 1,
+     "continuous_contract": 4,
+     "publication_time": 36,
+     "commitments_of_traders": 1,
+     "m2": 10,
+     "tff": 1,
+     "retailer": 1,
+     "cme_futures": 14,
+     "ted_spread": 2,
+     "asset_manager": 5,
+     "globex": 5,
+     "money_supply": 2,
+     "cbot": 4,
+     "noncommercial": 6
+    },
+    "data_ext_hits": 1,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/workspace/btc-relative-entry-score": {
+    "exists": true,
+    "files_scanned": 80,
+    "token_files": 4,
+    "token_file_counts": {
+     "m2": 3,
+     "futures": 1
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<REPO>": {
+    "exists": true,
+    "files_scanned": 971,
+    "token_files": 129,
+    "token_file_counts": {
+     "futures": 108,
+     "cme": 29,
+     "cot": 17,
+     "perp_futures": 86,
+     "funding_cost": 19,
+     "expiry": 30,
+     "roll": 17,
+     "cme_futures": 14,
+     "oi_field": 8,
+     "open_interest": 15,
+     "report_date": 6,
+     "cftc": 8,
+     "speculator": 8,
+     "net_position": 7,
+     "nfci": 7,
+     "publication_time": 11,
+     "m2": 14,
+     "tff": 8,
+     "retailer": 8,
+     "ted_spread": 7,
+     "positioning": 11,
+     "dealer": 6,
+     "leveraged_fund": 6,
+     "reportable": 6,
+     "nonreportable": 5,
+     "continuous_contract": 6,
+     "money_supply": 5,
+     "cbot": 5,
+     "commitments_of_traders": 5,
+     "globex": 5,
+     "asset_manager": 6,
+     "noncommercial": 4,
+     "traders_in_financial_futures": 4,
+     "commercial": 4
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<EXPANSION>/daily-crypto-brief": {
+    "exists": true,
+    "files_scanned": 184,
+    "token_files": 14,
+    "token_file_counts": {
+     "publication_time": 3,
+     "positioning": 8,
+     "futures": 5,
+     "oi_field": 3
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<RESULTS>/_handoff/bodies": {
+    "exists": true,
+    "files_scanned": 293,
+    "token_files": 189,
+    "token_file_counts": {
+     "futures": 155,
+     "open_interest": 38,
+     "perp_futures": 128,
+     "oi_field": 10,
+     "positioning": 11,
+     "commercial": 7,
+     "cme": 20,
+     "funding_cost": 17,
+     "dealer": 8,
+     "cot": 1,
+     "report_date": 1,
+     "leveraged_fund": 1,
+     "roll": 6,
+     "cftc": 4,
+     "reportable": 1,
+     "net_position": 2,
+     "speculator": 1,
+     "nfci": 1,
+     "continuous_contract": 4,
+     "publication_time": 7,
+     "m2": 1,
+     "tff": 1,
+     "retailer": 1,
+     "cme_futures": 5,
+     "ted_spread": 2,
+     "asset_manager": 2,
+     "globex": 2,
+     "expiry": 25,
+     "cbot": 3
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   },
+   "<HOME>/.hermes/wiki/quant": {
+    "exists": true,
+    "files_scanned": 420,
+    "token_files": 265,
+    "token_file_counts": {
+     "futures": 220,
+     "open_interest": 57,
+     "perp_futures": 165,
+     "oi_field": 20,
+     "positioning": 29,
+     "funding_cost": 36,
+     "commercial": 18,
+     "cme": 25,
+     "dealer": 10,
+     "cot": 4,
+     "report_date": 2,
+     "leveraged_fund": 1,
+     "roll": 12,
+     "cftc": 7,
+     "reportable": 1,
+     "net_position": 5,
+     "speculator": 2,
+     "traders_in_financial_futures": 1,
+     "nfci": 1,
+     "continuous_contract": 5,
+     "publication_time": 17,
+     "commitments_of_traders": 1,
+     "m2": 6,
+     "tff": 1,
+     "retailer": 1,
+     "cme_futures": 10,
+     "ted_spread": 2,
+     "asset_manager": 4,
+     "globex": 2,
+     "expiry": 41,
+     "cbot": 4,
+     "noncommercial": 2
+    },
+    "data_ext_hits": 0,
+    "carries_cme_or_cftc_data": false
+   }
+  },
+  "totals": {
+   "roots": 19,
+   "files_scanned": 16663,
+   "token_files": 2230,
+   "data_extension_hits": 3,
+   "prose_extension_hits": 2227,
+   "classified_data_hits": 3,
+   "unclassified_data_hits": 0
+  },
+  "data_candidates": [
+   {
+    "root": "<HOME>/workspace/ml4t-real-evidence-remediation",
+    "path": "p3/.venv-causal/lib/python3.12/site-packages/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz",
+    "tokens": [
+     "oi_field"
+    ],
+    "ext": ".gz"
+   },
+   {
+    "root": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830",
+    "path": "lifecycle_events.csv",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".csv"
+   },
+   {
+    "root": "<HOME>/workspace/alpha-strategy-research",
+    "path": "coverage_manifest.csv",
+    "tokens": [
+     "futures",
+     "positioning"
+    ],
+    "ext": ".csv"
+   }
+  ],
+  "classified_data_hits": [
+   {
+    "root": "<HOME>/workspace/ml4t-real-evidence-remediation",
+    "path": "p3/.venv-causal/lib/python3.12/site-packages/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz",
+    "tokens": [
+     "oi_field"
+    ],
+    "ext": ".gz",
+    "class": "vendor_library_archive",
+    "why": "python-dateutil timezone payload (members: GMT+0, METADATA, Zulu, CET, ...); the bare `oi` token matches inside the compressed binary blob"
+   },
+   {
+    "root": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830",
+    "path": "lifecycle_events.csv",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".csv",
+    "class": "binance_venue_lifecycle_prose",
+    "why": "perp listing/delisting events whose `product_family` column carries Binance's own product name 'USD-M Futures'; no CME venue, no CFTC series"
+   },
+   {
+    "root": "<HOME>/workspace/alpha-strategy-research",
+    "path": "coverage_manifest.csv",
+    "tokens": [
+     "futures",
+     "positioning"
+    ],
+    "ext": ".csv",
+    "class": "research_corpus_index",
+    "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md'), not in any price or positioning series"
+   }
+  ],
+  "unclassified_data_candidates": [],
+  "prose_hits_sample": [
+   {
+    "root": "<HOME>/workspace/phase7-alpha-research",
+    "path": "README.md",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase7-alpha-research",
+    "path": "data_provenance.md",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase7-alpha-research",
+    "path": "source_cache/binance-usdm-market-data-docs.md",
+    "tokens": [
+     "continuous_contract",
+     "futures",
+     "open_interest"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase7-alpha-research",
+    "path": "source_cache/ding-fundamental-law-2010.pdf-extract.md",
+    "tokens": [
+     "commercial"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase7-alpha-research",
+    "path": "source_cache/ding-sun-time-varying-ic.md",
+    "tokens": [
+     "publication_time"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase4-market-microstructure",
+    "path": "run_tests.py",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".py"
+   },
+   {
+    "root": "<HOME>/workspace/phase5-crypto-derivatives",
+    "path": "README.md",
+    "tokens": [
+     "dealer",
+     "oi_field",
+     "open_interest"
+    ],
+    "ext": ".md"
+   },
+   {
+    "root": "<HOME>/workspace/phase5-crypto-derivatives",
+    "path": "explore_data.py",
+    "tokens": [
+     "oi_field"
+    ],
+    "ext": ".py"
+   },
+   {
+    "root": "<HOME>/workspace/phase5-crypto-derivatives",
+    "path": "fetch_data.py",
+    "tokens": [
+     "futures",
+     "open_interest"
+    ],
+    "ext": ".py"
+   },
+   {
+    "root": "<HOME>/workspace/phase5-crypto-derivatives",
+    "path": "fetch_data2.py",
+    "tokens": [
+     "futures"
+    ],
+    "ext": ".py"
+   }
+  ],
+  "host_hit_classes": [
+   {
+    "suffix": "site-packages/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz",
+    "class": "vendor_library_archive",
+    "why": "python-dateutil timezone payload (members: GMT+0, METADATA, Zulu, CET, ...); the bare `oi` token matches inside the compressed binary blob"
+   },
+   {
+    "suffix": "a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+    "class": "binance_venue_lifecycle_prose",
+    "why": "perp listing/delisting events whose `product_family` column carries Binance's own product name 'USD-M Futures'; no CME venue, no CFTC series"
+   },
+   {
+    "suffix": "alpha-strategy-research/coverage_manifest.csv",
+    "class": "research_corpus_index",
+    "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md'), not in any price or positioning series"
+   }
+  ],
+  "any_store_carries_cme_or_cftc_data": false
+ },
+ "controls": {
+  "checker_default": {
+   "command": "python3 runtime/bitcoin_cme_cot_trader_position_sentiment_futures_risk_premium_prerequisite_check.py",
+   "rc": 0,
+   "ok": true,
+   "tail": [
+    "C18  PASS the source's named macro conditioning series (NFCI / TED / M2 / funding costs) are absent",
+    "ok=True failed=[]",
+    "raw: {\"entries\": 1658, \"payload_files\": 1614, \"payload_bytes\": 79056050}",
+    "stores: {\"roots\": 19, \"files_scanned\": 16662, \"token_files\": 2227, \"data_extension_hits\": 3, \"prose_extension_hits\": 2224, \"classified_data_hits\": 3, \"unclassified_data_hits\": 0}"
+   ]
+  },
+  "verify_verbatim": {
+   "pool_body_source": {
+    "ok": true,
+    "checked": 50,
+    "leaves": 50,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 16419,
+     "record": 13154,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   },
+   "board_db_source": {
+    "ok": true,
+    "checked": 50,
+    "leaves": 50,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 16419,
+     "record": 13154,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "board_db"
+   },
+   "verbatim_by_source": {
+    "record": 12,
+    "card": 31,
+    "contract": 6,
+    "footer": 1
+   }
+  },
+  "self_test": {
+   "rc": 0,
+   "ok": true,
+   "variants": 27,
+   "bad": []
+  },
+  "raw_fixture_control": {
+   "ok": true,
+   "expected_flip": [
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C18"
+   ],
+   "flipped": [
+    "C18",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "other_flips": [],
+   "missing_flip": [],
+   "unexpected_flip": [],
+   "fixture_shape": {
+    "symbols": [
+     "BNBUSDT",
+     "BTCUSDT",
+     "ETHUSDT",
+     "SOLUSDT"
+    ],
+    "intervals": 7,
+    "btcusdt_1d_rows": 1720,
+    "funding_rows_btcusdt": 5100,
+    "instruments": 4
+   },
+   "fixture_flags": {
+    "cme_price_series": true,
+    "cme_roll_surface": true,
+    "cftc_series": false,
+    "trader_category_fields": true,
+    "report_date_field": true,
+    "publication_timestamps": true,
+    "open_interest_series": true,
+    "macro_series": true,
+    "schema_sections": [
+     "klines (Binance USD-M perpetual futures, UTC)",
+     "funding",
+     "instruments",
+     "cme_btc_futures (CME Bitcoin futures, contract months + rolls)",
+     "cftc_cot_tff (CFTC Commitments of Traders / Traders in Financial Futures weekly positioning; long/short contracts by trader category, total open interest, report date, publication timestamp)",
+     "macro (NFCI, TED spread, U.S. M2, funding costs)"
+    ],
+    "unexplained_name": [
+     "cftc",
+     "cme",
+     "cot",
+     "futures",
+     "tff"
+    ],
+    "unexplained_payload": [
+     "cftc",
+     "cme",
+     "cme_futures",
+     "commitments_of_traders",
+     "expiry",
+     "funding_cost",
+     "futures",
+     "leveraged_fund",
+     "m2",
+     "nfci",
+     "open_interest",
+     "positioning",
+     "publication_time",
+     "report_date",
+     "roll",
+     "ted_spread",
+     "traders_in_financial_futures"
+    ]
+   },
+   "rc": 0
+  },
+  "host_scan": {
+   "rc": 0,
+   "totals": {
+    "roots": 19,
+    "files_scanned": 16656,
+    "token_files": 2227,
+    "data_extension_hits": 3,
+    "prose_extension_hits": 2224,
+    "classified_data_hits": 3,
+    "unclassified_data_hits": 0
+   },
+   "classified_data_hits": [
+    {
+     "root": "<HOME>/workspace/ml4t-real-evidence-remediation",
+     "path": "p3/.venv-causal/lib/python3.12/site-packages/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz",
+     "tokens": [
+      "oi_field"
+     ],
+     "ext": ".gz",
+     "class": "vendor_library_archive",
+     "why": "python-dateutil timezone payload (members: GMT+0, METADATA, Zulu, CET, ...); the bare `oi` token matches inside the compressed binary blob"
+    },
+    {
+     "root": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830",
+     "path": "lifecycle_events.csv",
+     "tokens": [
+      "futures"
+     ],
+     "ext": ".csv",
+     "class": "binance_venue_lifecycle_prose",
+     "why": "perp listing/delisting events whose `product_family` column carries Binance's own product name 'USD-M Futures'; no CME venue, no CFTC series"
+    },
+    {
+     "root": "<HOME>/workspace/alpha-strategy-research",
+     "path": "coverage_manifest.csv",
+     "tokens": [
+      "futures",
+      "positioning"
+     ],
+     "ext": ".csv",
+     "class": "research_corpus_index",
+     "why": "an index of strategy markdown candidates; the tokens appear inside candidate file *titles* (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md'), not in any price or positioning series"
+    }
+   ],
+   "unclassified": []
+  },
+  "preflight": {
+   "schema_version": 1,
+   "kind": "preflight",
+   "contract_section": "16",
+   "checked_at_utc": "2026-09-17T05:20:22Z",
+   "host_boot_id": "boot-1789570820",
+   "attempt_dir": null,
+   "launch_gate": "not_evaluated",
+   "recovery": {
+    "attempted": false,
+    "ok": true,
+    "fail_reason": null,
+    "actions": []
+   },
+   "overall": "PASS",
+   "checks": [
+    {
+     "id": "P1",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+    },
+    {
+     "id": "P2",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+    },
+    {
+     "id": "P3",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-48202.tmp"
+    },
+    {
+     "id": "P4",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "container system status=running (rc=0)"
+    },
+    {
+     "id": "P5",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "qlib-run state=running"
+    },
+    {
+     "id": "P6",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+    },
+    {
+     "id": "P7",
+     "status": "PASS",
+     "layer": "card-local",
+     "detail": "/qlib/work writable: work_ok"
+    },
+    {
+     "id": "P8",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+    },
+    {
+     "id": "P9",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    },
+    {
+     "id": "P10",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    }
+   ]
+  },
+  "repo_suite": {
+   "rc": 0,
+   "tail": [
+    "test_survivor_evidence.py                        rc=0 ran=14 OK",
+    "files=19 tests=404 failures=none"
+   ]
+  },
+  "rerun_refusal": {
+   "rc": 1,
+   "stdout": "verbatim leaves: 50, all resolved to a declared source\nspec bytes: 93617  sha=sha256:ffe3670abfdd0a5329fa3667f5c1df79f94c42560c25066129e9a3694b7b86db\nverdict bytes: 5654  sha=sha256:766b7a3d310893e291f4c8bc4800d685248e274224b2911d0cff559841c06b47\n",
+   "stderr_tail": [
+    "    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^",
+    "  File \"/Users/hong/workspace/quant-runtime-pipeline/.kanban-scratch/t_8d648066/author_spec.py\", line 848, in write_exclusive",
+    "    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)",
+    "FileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/round-spec.json'"
+   ],
+   "named_paths": {
+    "round_spec": true,
+    "verdict": false,
+    "note": "O_EXCL refuses on the first existing path, so the verdict path is never reached; only the round-spec path can appear in stderr"
+   },
+   "draft_vs_published": {
+    "published_round_spec_bytes": 93615,
+    "published_verdict_bytes": 5654,
+    "note": "the refused re-run prints its in-memory draft sizes before failing; those bytes can differ by a few characters from the published artifact because live measurements (host file counts, raw window) drift between runs - the published files are byte-identical, asserted by artifact_bytes_unchanged_by_controls"
+   },
+   "round_dir_listing": [
+    "round-spec.json",
+    "verdict.json"
+   ],
+   "family_dir_listing": [
+    "family.json",
+    "rounds"
+   ]
+  }
+ },
+ "disclosures": [
+  "contract section 13 still has no dedicated prerequisite-missing failure class; `data_window_invalid` is used as the closest registered card-local class and the mismatch is recorded in both artifacts — whether to add a class is an operator/contract decision",
+  "the record's required surface (CME futures prices + CFTC COT/TFF positioning) is absent from the canonical raw; the four locally available USD-M perpetuals are the study's *response* instrument, so no perpetual-only strategy was built and no proxy series was invented for the positioning data",
+  "the source's sample (2018-2021, public figure 2018-04-10 → 2021-06-29) does not overlap the canonical raw at all: the raw begins 2022-01-01",
+  "the record's own 'underspecified' items (extreme-sentiment construction/threshold, speculator/retailer → COT/TFF mapping, horizon-by-horizon coefficients) are recorded as NOT_EXECUTABLE_AS_REGISTERED rather than guessed",
+  "the raw store keeps updating after the card's registered window (authoring-time 1d window 2022-01-01T00:00:00Z → 2026-09-16T00:00:00Z; evidence-time 2022-01-01T00:00:00Z → 2026-09-16T00:00:00Z); registered and measured values are recorded separately",
+  "the host-store scan is a live measurement and its file counts drift between the authoring run and this build (round-spec recorded 16631 files; this build measured 16663) because the scanned roots keep changing; the decisive numbers (classified data-extension hits and unclassified hits) are identical in both runs",
+  "the host scan is depth-8 bounded per root with a 60,000-file per-root cap; that depth is disclosed because a vendored library payload sits ~8 levels deep and is exactly one of the classified hits",
+  "no network fetch was attempted: the absent prerequisite is already terminal, and fetching a substitute series would be a different candidate",
+  "the O_EXCL re-run prints its in-memory draft byte counts before failing; those drafts can differ from the published artifact by a few characters because live measurements drift between runs - the published files themselves are byte-identical and that is asserted (artifact_bytes_unchanged_by_controls)"
+ ],
+ "removed_drafts": {
+  "removed": [],
+  "note": "no draft artifact was removed or rebuilt: the first authored round-spec and verdict are the published ones (both written exactly once, O_EXCL)"
+ }
+}
