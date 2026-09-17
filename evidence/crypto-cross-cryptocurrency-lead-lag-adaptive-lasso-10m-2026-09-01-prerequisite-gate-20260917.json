@@ -1,0 +1,1134 @@
+{
+ "schema_version": 1,
+ "document_kind": "prerequisite-gate evidence snapshot (contract 6.4 / 13); re-runnable read-back of the live filesystem and the frozen round artifacts",
+ "family_id": "crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01",
+ "round_id": "crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1",
+ "round_number": 1,
+ "kanban_task_id": "t_7ee25fe3",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-17T03:15:50Z",
+ "verdict": "TECHNICAL_INCOMPLETE",
+ "performance_claimable": false,
+ "failure": {
+  "layer": "card-local",
+  "class": "data_window_invalid",
+  "detail": "the record's hypothesis is defined on a minute-frequency cross-coin panel over a point-in-time liquid Binance universe; the canonical raw holds four fixed USD-M perpetual contracts (BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT) at 5m/15m/30m/1h/4h/1d/1w with no membership, listing/delisting, spread or mark/index surface",
+  "failure_class_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, with the mismatch disclosed rather than hidden",
+  "last_run_id": null,
+  "terminal_evidence": {
+   "round_spec": "rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/round-spec.json",
+   "verdict": "rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/verdict.json",
+   "checker": "runtime/crypto_cross_cryptocurrency_lead_lag_adaptive_lasso_10m_prerequisite_check.py",
+   "repo_evidence": "evidence/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-prerequisite-gate-20260917.json"
+  },
+  "incomplete_reason": "prerequisite absent and measured: zero attempts were launched, so no backtest output exists and none will be fabricated",
+  "definitive_absences": [
+   "minute_resolution_absent: 0 of 28 kline datasets is at or below one minute; finest measured bar step 300 s",
+   "registered_horizon_grid_mostly_unreachable: horizons 1, 2, 3, 4, 6, 7, 8, 9 minutes cannot be formed on a 300 s grid (8 of 10)",
+   "point_in_time_universe_absent: no membership/listing/delisting surface in the canonical raw; 4 instrument definitions, zero lifecycle fields",
+   "cross_section_breadth_is_four_contracts_one_venue: BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT",
+   "bid_ask_spread_series_absent_for_the_traded_instruments",
+   "mark_index_price_series_absent: funding mark_price null in all 2000 modelled-prefix rows",
+   "contract_availability_at_each_timestamp_absent",
+   "flow_volume_trade_count_taker_split_absent: kline rows carry open/high/low/close/volume only",
+   "falsification_battery: items 1, 2, 4 cannot be constructed and items 3, 5, 8 cannot run; item 6 is 2-of-7 locally available",
+   "host_side_scan: 0 data files carrying a minute-resolution token; the only bid/ask surfaces are single-instant snapshots (BTC options chain, 20-level BTCUSDT depth)"
+  ]
+ },
+ "yield": {
+  "rounds_used": 1,
+  "max_rounds": 3,
+  "no_progress_rounds": 0,
+  "progress_evidence": [
+   "round 1 terminated at the prerequisite gate before any computation: the registered minute panel and the point-in-time universe are measurably absent from the canonical raw and from all measured host stores (checker C2-C3, C7-C11 + the required-data matrix)"
+  ],
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE"
+ },
+ "attempts": {
+  "launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_spec": null,
+  "terminal_sentinel": null,
+  "attempt_dir": null
+ },
+ "evidence_run_ids": [],
+ "cohorts_registered_slots": 1,
+ "cohorts_realized": 0,
+ "universe_shrunk_to_local_list": false,
+ "artifacts": {
+  "round_spec": {
+   "path": "<RESULTS>/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01/rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/round-spec.json",
+   "sha256": "sha256:4e5849b08a4c54de0c264785c2f22803ec7e37f2660d09b7f3859e40a64f0554",
+   "bytes": 97732,
+   "postcontrol_readback_sha256": "sha256:4e5849b08a4c54de0c264785c2f22803ec7e37f2660d09b7f3859e40a64f0554",
+   "postcontrol_readback_bytes": 97732,
+   "artifact_bytes_unchanged_by_controls": true
+  },
+  "verdict_json": {
+   "path": "<RESULTS>/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01/rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/verdict.json",
+   "sha256": "sha256:3340cf55ab9e9236986fb0a46c954a0455ffc5d2029bd0352c198e46c4018705",
+   "bytes": 4640,
+   "postcontrol_readback_sha256": "sha256:3340cf55ab9e9236986fb0a46c954a0455ffc5d2029bd0352c198e46c4018705",
+   "postcontrol_readback_bytes": 4640
+  },
+  "checker": {
+   "path": "<REPO>/runtime/crypto_cross_cryptocurrency_lead_lag_adaptive_lasso_10m_prerequisite_check.py",
+   "sha256": "sha256:fcb1adf6bc9d340e48d1591f491deaff8a4b51efa7078ef643fcaba5a23572dc",
+   "bytes": 82233
+  }
+ },
+ "sources": {
+  "card": {
+   "kanban_task_id": "t_7ee25fe3",
+   "frozen_candidate_body_bytes": 19530,
+   "frozen_candidate_body_sha256": "sha256:028001d4577ebbd221104f0ab5f12802a80fc4f421d5dcc2c4985dc8fb30835a",
+   "frozen_pool_body_path": "<RESULTS>/_handoff/bodies/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01.md",
+   "lifecycle_footer_appended_by": "runtime/production_handoff.py LIFECYCLE_FOOTER (contract 6.4 / 14.4)",
+   "card_body_sha256_note": "the pool body is hashed in the round-spec at authoring time; --verify-verbatim re-reads it from the pool file and, separately, from the board DB after stripping the system-owned footer"
+  },
+  "record": {
+   "path": "<HOME>/.hermes/wiki/quant/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01.md",
+   "sha256": "sha256:280a74d7575a04fd8372dfb7ef24eee7f7ba9b7ab016ff396d866d45f5f10681",
+   "bytes": 11385,
+   "intake_decision": "PASS-WITH-CAVEAT"
+  },
+  "contract": {
+   "path": "<REPO>/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  }
+ },
+ "raw_measurement": {
+  "raw_root": "<EXPANSION>/market-data-raw",
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "documented_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "documented_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "usdm_subdirs": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "klines_symbol_dirs": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "klines_datasets": 28,
+  "intervals_identical_across_symbols": true,
+  "minute_datasets": [],
+  "sub_minute_datasets": [],
+  "distinct_measured_steps_seconds": [
+   300.0,
+   900.0,
+   1800.0,
+   3600.0,
+   14400.0,
+   86400.0
+  ],
+  "finest_dataset": "BNBUSDT/5m",
+  "finest_step_seconds": 300.0,
+  "registered_horizon_grid_minutes": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "reachable_horizons_minutes": [
+   5,
+   10
+  ],
+  "unreachable_horizons_minutes": [
+   1,
+   2,
+   3,
+   4,
+   6,
+   7,
+   8,
+   9
+  ],
+  "kline_row_keys": [
+   "close",
+   "close_time_ms",
+   "high",
+   "low",
+   "open",
+   "open_time_ms",
+   "volume"
+  ],
+  "kline_columns_absent": [
+   "count",
+   "quote_volume",
+   "taker_buy_base",
+   "taker_buy_quote"
+  ],
+  "five_m_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-16T23:55:00Z"
+  ],
+  "five_m_files": 57,
+  "grid_5m_identical_across_symbols": true,
+  "instrument_count": 4,
+  "instrument_types": [
+   "CryptoPerpetual"
+  ],
+  "instrument_fee_fields": [
+   "maker_fee",
+   "taker_fee"
+  ],
+  "instrument_fees": [
+   [
+    "0.0002",
+    "0.0005"
+   ]
+  ],
+  "instrument_tick_fields": [
+   "price_increment",
+   "size_increment"
+  ],
+  "instrument_lifecycle_fields": [],
+  "instrument_mark_index_fields": [],
+  "funding_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "funding_rows": 5161,
+  "funding_window_utc": [
+   "2022-01-01T00:00:00Z",
+   "2026-09-17T00:00:00Z"
+  ],
+  "funding_truth_status": [
+   "modeled_funding",
+   "official"
+  ],
+  "funding_mark_price_null_first_2000": 2000,
+  "schema_dataset_sections": [
+   "klines (Binance USD-M perpetual futures, UTC)",
+   "funding",
+   "instruments"
+  ],
+  "schema_interval_alphabet": [
+   "15m",
+   "1d",
+   "1h",
+   "1m",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "schema_documents_minute_dataset": false,
+  "inventory_states_no_other_store": true,
+  "inventory_states_no_vision_copy": true,
+  "inventory_notes_lean_minute_is_30m": true,
+  "registered_vs_measured_note": "the raw store keeps updating after the window the card registers (measured klines to 2026-09-16T23:55:00Z, funding to 2026-09-17T00:00:00Z); registered and measured values are recorded separately"
+ },
+ "measurement_source": "measure.json (authoring-time snapshot from the checker's own measure_raw/probe_raw/measure_host_stores); the checker re-run in controls.checker_default re-derives C1-C18 from the live filesystem",
+ "probe_measurement": {
+  "raw_entry_count": 1658,
+  "probe_tokens_tested": 11,
+  "entry_name_hits": {},
+  "entry_name_hits_unexplained": [],
+  "payload_scan_files": 1614,
+  "payload_scan_bytes": 79056050,
+  "payload_data_ext_hit_count": 0,
+  "hit_files": {
+   "_meta/INVENTORY.md": "store_inventory_search_scope",
+   "_meta/SCHEMA.md": "store_schema_interval_vocabulary",
+   "_tools/README.md": "token_collision_prose",
+   "_tools/binance_public.py": "upstream_klines_reconstruction_code",
+   "_tools/market_data_sync.py": "updater_interval_map"
+  },
+  "unclassified_hit_files": [],
+  "ambiguous_bare_1m_files": [
+   "_meta/SCHEMA.md",
+   "_tools/binance_public.py",
+   "_tools/market_data_sync.py"
+  ],
+  "hit_classes": {
+   "_meta/SCHEMA.md": "store_schema_interval_vocabulary",
+   "_meta/INVENTORY.md": "store_inventory_search_scope",
+   "_tools/README.md": "token_collision_prose",
+   "_tools/binance_public.py": "upstream_klines_reconstruction_code",
+   "_tools/market_data_sync.py": "updater_interval_map"
+  },
+  "hit_class_notes": {
+   "store_schema_interval_vocabulary": "SCHEMA.md documents the store's interval alphabet as `1m 5m 15m 30m 1h 4h 1d 1w`; it is the documented vocabulary, not a dataset - the store's own CONFIG.json (what the updater maintains) lists seven intervals and none of them is 1m, and the on-disk kline inventory contains no 1m dataset",
+   "store_inventory_search_scope": "INVENTORY.md records the host-wide Spotlight sweep for `binance / klines / aggTrade / bookTicker / openInterest / tardis / market-data` and its own result - 'No other Binance/klines/tardis/aggTrade store was found on the host or on /Volumes/ExpansionDrive' and 'no local raw copy of Binance Vision was ever retained'; the same table records that the retired LEAN `minute/` directory actually held 30-minute bars",
+   "token_collision_prose": "_tools/README.md line 37 'asks the venue for everything after it' - the verb, not a quote",
+   "upstream_klines_reconstruction_code": "the vendored client can reconstruct coarser bars from 1-minute rows *upstream* (`_aggregate_klines(..., \"1m\", ...)`); the published store retains only the derived 5m+ bars, and INVENTORY.md states no Binance Vision copy was retained",
+   "updater_interval_map": "market_data_sync.py carries the 1-minute millisecond constant in its interval table; the updater's own CONFIG.json does not maintain a 1m stream"
+  }
+ },
+ "required_data_matrix_counts": {
+  "ABSENT_FROM_CANONICAL_RAW": 2,
+  "ABSENT": 4,
+  "PARTIAL_AT_5M_ONLY": 1,
+  "ABSENT_FOR_TRADED_INSTRUMENTS": 1,
+  "PRESENT": 3,
+  "NOT_CONSTRUCTIBLE_AT_MINUTE_RESOLUTION": 1,
+  "NOT_CONSTRUCTIBLE": 1,
+  "NOT_EXECUTABLE": 3,
+  "NOT_EXECUTABLE_AS_REGISTERED": 1,
+  "NOT_CONSTRUCTIBLE_ON_A_300_S_GRID": 1,
+  "PARTIAL_2_OF_7": 1,
+  "PARTIAL_WINDOW_ONLY": 1,
+  "UNDEFINED_BY_RECORD_RESEARCH_DEFINED_WINDOW": 1
+ },
+ "required_data_matrix_items": 21,
+ "decisive_matrix_items": [
+  "point_in_time_binance_instrument_universe",
+  "minute_level_tradeable_prices_or_ohlcv",
+  "delisting_listing_history_survivorship",
+  "bid_ask_spread_surface",
+  "mark_index_price_series",
+  "contract_availability_at_each_timestamp",
+  "data_quality_handling_stale_missing_minutes_outages",
+  "falsification_1_pit_liquid_universe_minute_bars",
+  "falsification_2_walk_forward_adaptive_lasso",
+  "falsification_4_horizons_1_to_10_minutes"
+ ],
+ "decisive_matrix_status": {
+  "point_in_time_binance_instrument_universe": "ABSENT_FROM_CANONICAL_RAW",
+  "minute_level_tradeable_prices_or_ohlcv": "ABSENT",
+  "delisting_listing_history_survivorship": "ABSENT_FROM_CANONICAL_RAW",
+  "bid_ask_spread_surface": "ABSENT_FOR_TRADED_INSTRUMENTS",
+  "mark_index_price_series": "ABSENT",
+  "contract_availability_at_each_timestamp": "ABSENT",
+  "data_quality_handling_stale_missing_minutes_outages": "NOT_CONSTRUCTIBLE_AT_MINUTE_RESOLUTION",
+  "falsification_1_pit_liquid_universe_minute_bars": "NOT_CONSTRUCTIBLE",
+  "falsification_2_walk_forward_adaptive_lasso": "NOT_EXECUTABLE",
+  "falsification_4_horizons_1_to_10_minutes": "NOT_CONSTRUCTIBLE_ON_A_300_S_GRID"
+ },
+ "other_local_stores": {
+  "roots": {
+   "<HOME>/workspace/phase7-alpha-research": {
+    "exists": true,
+    "files_scanned": 31,
+    "token_files": 11,
+    "token_file_counts": {
+     "listing_delisting": 6,
+     "universe": 8,
+     "membership": 5,
+     "bid_ask": 9,
+     "order_book": 1,
+     "tick_data": 2
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase3-portfolio-risk": {
+    "exists": true,
+    "files_scanned": 4,
+    "token_files": 0,
+    "token_file_counts": {},
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase4-market-microstructure": {
+    "exists": true,
+    "files_scanned": 5,
+    "token_files": 3,
+    "token_file_counts": {
+     "order_book": 1,
+     "bid_ask": 3,
+     "tick_data": 2
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase5-crypto-derivatives": {
+    "exists": true,
+    "files_scanned": 74,
+    "token_files": 20,
+    "token_file_counts": {
+     "tick_data": 3,
+     "bid_ask": 16,
+     "listing_delisting": 15,
+     "order_book": 7,
+     "latency": 3
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase9-cross-sectional-factors": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 11,
+    "token_file_counts": {
+     "universe": 6,
+     "membership": 7,
+     "breakpoints": 7,
+     "bid_ask": 4,
+     "listing_delisting": 3
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase12-l2-l3-execution-tca": {
+    "exists": true,
+    "files_scanned": 50,
+    "token_files": 29,
+    "token_file_counts": {
+     "latency": 9,
+     "order_book": 20,
+     "bid_ask": 22,
+     "tick_data": 18,
+     "membership": 2,
+     "one_minute": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase10-pit-bitemporal": {
+    "exists": true,
+    "files_scanned": 59,
+    "token_files": 39,
+    "token_file_counts": {
+     "listing_delisting": 29,
+     "universe": 12,
+     "membership": 18,
+     "breakpoints": 4,
+     "tick_data": 1
+    },
+    "data_ext_hits": 1,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/phase11-options-volatility": {
+    "exists": true,
+    "files_scanned": 39,
+    "token_files": 19,
+    "token_file_counts": {
+     "latency": 5,
+     "bid_ask": 16,
+     "membership": 4,
+     "listing_delisting": 3,
+     "order_book": 1,
+     "tick_data": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/ml4t-real-evidence-remediation": {
+    "exists": true,
+    "files_scanned": 1441,
+    "token_files": 90,
+    "token_file_counts": {
+     "listing_delisting": 32,
+     "latency": 2,
+     "breakpoints": 7,
+     "bid_ask": 25,
+     "tick_data": 28,
+     "structured_1m": 1,
+     "order_book": 2,
+     "membership": 7
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830": {
+    "exists": true,
+    "files_scanned": 671,
+    "token_files": 665,
+    "token_file_counts": {
+     "listing_delisting": 664,
+     "membership": 9,
+     "universe": 2,
+     "breakpoints": 1,
+     "tick_data": 417,
+     "bid_ask": 2,
+     "order_book": 2,
+     "latency": 3
+    },
+    "data_ext_hits": 1,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/a1-1-phase9-pit-membership-20260830": {
+    "exists": true,
+    "files_scanned": 49,
+    "token_files": 29,
+    "token_file_counts": {
+     "listing_delisting": 29,
+     "universe": 6,
+     "membership": 9,
+     "bid_ask": 4,
+     "latency": 4,
+     "tick_data": 3
+    },
+    "data_ext_hits": 2,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830": {
+    "exists": true,
+    "files_scanned": 17,
+    "token_files": 7,
+    "token_file_counts": {
+     "membership": 7,
+     "listing_delisting": 1,
+     "universe": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830": {
+    "exists": true,
+    "files_scanned": 28,
+    "token_files": 9,
+    "token_file_counts": {
+     "listing_delisting": 4,
+     "membership": 9,
+     "bid_ask": 4,
+     "universe": 2
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/alpha-strategy-research": {
+    "exists": true,
+    "files_scanned": 940,
+    "token_files": 681,
+    "token_file_counts": {
+     "order_book": 261,
+     "membership": 501,
+     "bid_ask": 576,
+     "latency": 387,
+     "universe": 484,
+     "listing_delisting": 304,
+     "breakpoints": 167,
+     "minute_bars": 91,
+     "tick_data": 205,
+     "one_minute": 13,
+     "structured_1m": 3
+    },
+    "data_ext_hits": 1,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/workspace/btc-relative-entry-score": {
+    "exists": true,
+    "files_scanned": 80,
+    "token_files": 7,
+    "token_file_counts": {
+     "order_book": 5,
+     "bid_ask": 5,
+     "listing_delisting": 1,
+     "universe": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<EXPANSION>/daily-crypto-brief": {
+    "exists": true,
+    "files_scanned": 184,
+    "token_files": 4,
+    "token_file_counts": {
+     "listing_delisting": 3,
+     "bid_ask": 4
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<RESULTS>/_handoff/bodies": {
+    "exists": true,
+    "files_scanned": 293,
+    "token_files": 293,
+    "token_file_counts": {
+     "universe": 291,
+     "membership": 167,
+     "bid_ask": 170,
+     "order_book": 73,
+     "tick_data": 285,
+     "minute_bars": 31,
+     "breakpoints": 47,
+     "listing_delisting": 106,
+     "latency": 70,
+     "one_minute": 6,
+     "structured_1m": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   },
+   "<HOME>/.hermes/wiki/quant": {
+    "exists": true,
+    "files_scanned": 420,
+    "token_files": 381,
+    "token_file_counts": {
+     "order_book": 111,
+     "membership": 251,
+     "bid_ask": 292,
+     "latency": 183,
+     "universe": 243,
+     "breakpoints": 79,
+     "minute_bars": 44,
+     "listing_delisting": 164,
+     "tick_data": 113,
+     "one_minute": 8,
+     "structured_1m": 1
+    },
+    "data_ext_hits": 0,
+    "minute_resolution_data_hits": 0,
+    "carries_minute_panel": false,
+    "carries_priced_pit_membership": false,
+    "carries_spread_surface": false,
+    "used_as_input": false
+   }
+  },
+  "totals": {
+   "roots": 18,
+   "files_scanned": 4402,
+   "token_files": 2298,
+   "data_extension_hits": 5,
+   "minute_token_data_hits": 0,
+   "resolution_json_hits": 455,
+   "panel_shaped_hits": 1,
+   "unexplained_panel_hits": 0,
+   "unclassified_data_candidates": 0,
+   "wide_roots": 2,
+   "wide_files_scanned": 208308,
+   "wide_name_hits": 11,
+   "wide_data_extension_name_hits": 2
+  },
+  "data_candidates": [
+   {
+    "rel": "phase10-pit-bitemporal/data/real_lifecycle_evidence.csv",
+    "ext": ".csv",
+    "tokens": [
+     "listing_delisting"
+    ],
+    "class": "lifecycle_boundary_events_official_venue_notices",
+    "note": "listing/delisting boundary events parsed from official Binance notices, with explicit effective times - a boundary archive, not a continuous daily membership panel, and it carries no prices of any frequency"
+   },
+   {
+    "rel": "a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+    "ext": ".csv",
+    "tokens": [
+     "listing_delisting"
+    ],
+    "class": "lifecycle_boundary_events_official_venue_notices",
+    "note": "listing/delisting boundary events parsed from official Binance notices, with explicit effective times - a boundary archive, not a continuous daily membership panel, and it carries no prices of any frequency"
+   },
+   {
+    "rel": "a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+    "ext": ".jsonl",
+    "tokens": [
+     "listing_delisting"
+    ],
+    "class": "daily_pit_membership_cells_all_unsupported",
+    "note": "the sibling PIT project's own daily cell ledger; every one of its cells is recorded `supported: false` with `membership_status: unknown`, i.e. the local PIT work itself declares daily membership unsupported"
+   },
+   {
+    "rel": "a1-1-phase9-pit-membership-20260830/membership_observations.csv",
+    "ext": ".csv",
+    "tokens": [
+     "listing_delisting",
+     "membership"
+    ],
+    "class": "membership_observations_unsupported_for_daily_cell",
+    "note": "membership observations whose own column `supported_for_daily_cell` is False in every sampled row (current-state snapshots cannot be backfilled; notice-derived points are not continuous intervals)"
+   },
+   {
+    "rel": "alpha-strategy-research/coverage_manifest.csv",
+    "ext": ".csv",
+    "tokens": [
+     "bid_ask",
+     "tick_data"
+    ],
+    "class": "prose_lexical_collision_manifest",
+    "note": "a candidate-coverage manifest whose rows say `Lexical collision risk with 'spread'`: the token is the manifest's own collision label, not market data"
+   }
+  ],
+  "unclassified_data_candidates": [],
+  "json_snapshot_hits": [
+   {
+    "rel": "phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json",
+    "tokens": [
+     "bid_ask"
+    ],
+    "class": "single_symbol_depth_snapshot_20_levels",
+    "note": "one depth snapshot (top 20 levels, BTCUSDT). It is the only bid/ask surface on the machine that is not prose; it is a single instant for a single symbol and cannot supply the record's spread series",
+    "is_panel": false
+   },
+   {
+    "rel": "phase11-options-volatility/data/real_valid_quotes.json",
+    "tokens": [
+     "bid_ask"
+    ],
+    "class": "single_instant_single_underlying_options_chain",
+    "note": "936 BTC *options* quotes (13 expiries) all stamped at ONE instant (2026-08-28T12:19:42Z), single underlying (BTC), quote currency BTC, every row carrying bid/ask - a Phase-11 option-pricing validation input. It is a single-instant chain snapshot: not a time series, not the family's traded instruments (USD-M perpetuals), not a cross-section of coins, and therefore not the record's spread series. Measured-but-unused.",
+    "is_panel": true
+   }
+  ],
+  "report_json_hits": 453,
+  "report_json_sample": [
+   "phase7-alpha-research/test_results.json",
+   "phase7-alpha-research/raw/universe_manifest.json",
+   "phase4-market-microstructure/test_results.json",
+   "phase12-l2-l3-execution-tca/baseline_audit.json",
+   "phase12-l2-l3-execution-tca/capture_manifest.json",
+   "phase12-l2-l3-execution-tca/source_manifest.json",
+   "phase12-l2-l3-execution-tca/test_results.json",
+   "phase12-l2-l3-execution-tca/data/causal_replay_witness.json",
+   "phase12-l2-l3-execution-tca/data/latency_markout_report.json",
+   "phase12-l2-l3-execution-tca/data/real_data_descriptive_report.json"
+  ],
+  "panel_shaped_hits": [
+   "phase11-options-volatility/data/real_valid_quotes.json"
+  ],
+  "unexplained_panel_hits": [],
+  "wide_name_probe": {
+   "<HOME>/workspace": {
+    "exists": true,
+    "files_scanned": 24224,
+    "name_hits": 9,
+    "name_hit_samples": [
+     "alpha-strategy-research/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02.md",
+     "alpha-strategy-research/bitcoin-turn-of-15min-candle-seasonality-1m-2026-08-31.md",
+     "alpha-strategy-research/crypto-btc-smallcap-altcoin-1m-liquidity-lag-lightgbm-2026-09-04.md",
+     "tmp/ml4t-p1/ml4t-src/03_market_microstructure/13_algoseek_minute_bars_eda.ipynb",
+     "tmp/ml4t-p1/ml4t-src/03_market_microstructure/13_algoseek_minute_bars_eda.py",
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m.json",
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m.parquet",
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m_win.json",
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m_win.parquet"
+    ],
+    "data_extension_name_hits": 2,
+    "data_extension_samples": [
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m.parquet",
+     "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m_win.parquet"
+    ]
+   },
+   "<EXPANSION>": {
+    "exists": true,
+    "files_scanned": 184084,
+    "name_hits": 2,
+    "name_hit_samples": [
+     "qlib-results/_handoff/bodies/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02.md",
+     "qlib-results/_handoff/bodies/crypto-btc-smallcap-altcoin-1m-liquidity-lag-lightgbm-2026-09-04.md"
+    ],
+    "data_extension_name_hits": 0,
+    "data_extension_samples": []
+   }
+  },
+  "wide_data_extension_hits": [
+   {
+    "rel": "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m.parquet",
+    "class": "us_equity_monthly_label_benchmark_result",
+    "note": "the label is `fwd_ret_1m` = one-MONTH forward return (`periods_per_year: 12`, 2006-01..2016-12, 120 periods, 795 B) from the ml4t US-firm-characteristics tutorial benchmark; US equities, monthly, and not a minute dataset - the filename token is a month, not a minute"
+   },
+   {
+    "rel": "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m_win.parquet",
+    "class": "us_equity_monthly_label_benchmark_result",
+    "note": "the label is `fwd_ret_1m` = one-MONTH forward return (`periods_per_year: 12`, 2006-01..2016-12, 120 periods, 795 B) from the ml4t US-firm-characteristics tutorial benchmark; US equities, monthly, and not a minute dataset - the filename token is a month, not a minute"
+   }
+  ],
+  "any_store_carries_minute_panel": false,
+  "any_store_carries_priced_pit_membership": false,
+  "any_store_carries_spread_surface": false
+ },
+ "controls": {
+  "checker_default": {
+   "command": "python3 runtime/crypto_cross_cryptocurrency_lead_lag_adaptive_lasso_10m_prerequisite_check.py",
+   "rc": 0,
+   "ok": true,
+   "tail": [
+    "C17  PASS family.json binds this round's family to this card and fingerprint",
+    "C18  PASS failure taxonomy kept separated: infrastructure terminal, not a scientific failure",
+    "ok=True failed=[]",
+    "raw: {\"entries\": 1658, \"klines_datasets\": 28, \"minute_datasets\": [], \"finest_step_s\": 300.0, \"unreachable_horizons\": [1, 2, 3, 4, 6, 7, 8, 9], \"contracts\": [\"BNBUSDT\", \"BTCUSDT\", \"ETHUSDT\", \"SOLUSDT\"]}",
+    "probe: {\"entries\": 1658, \"payload_files\": 1614, \"payload_bytes\": 79056050, \"data_ext_hits\": 0, \"hit_file_classes\": {\"_meta/INVENTORY.md\": \"store_inventory_search_scope\", \"_meta/SCHEMA.md\": \"store_schema_interval_vocabulary\", \"_tools/README.md\": \"token_collision_prose\", \"_tools/binance_public.py\": \"upstream_klines_reconstruction_code\", \"_tools/market_data_sync.py\": \"updater_interval_map\"}}",
+    "stores: {\"roots\": 18, \"files_scanned\": 4408, \"token_files\": 2301, \"data_extension_hits\": 5, \"minute_token_data_hits\": 0, \"resolution_json_hits\": 455, \"panel_shaped_hits\": 1, \"unexplained_panel_hits\": 0, \"unclassified_data_candidates\": 0, \"wide_roots\": 2, \"wide_files_scanned\": 220634, \"wide_name_hits\": 12, \"wide_data_extension_name_hits\": 2}"
+   ]
+  },
+  "verify_verbatim": {
+   "pool_body_source": {
+    "ok": true,
+    "checked": 49,
+    "leaves": 49,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 15595,
+     "record": 11385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "source_counts": {
+     "card": 15595,
+     "record": 11385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   },
+   "board_db_source": {
+    "ok": true,
+    "checked": 49,
+    "leaves": 49,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 15595,
+     "record": 11385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "source_counts": {
+     "card": 15595,
+     "record": 11385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "board_db"
+   },
+   "verbatim_by_source": {
+    "record": 11,
+    "card": 31,
+    "contract": 6,
+    "footer": 1
+   }
+  },
+  "self_test": {
+   "rc": 0,
+   "ok": true,
+   "variants": 45,
+   "bad": []
+  },
+  "raw_fixture_control": {
+   "ok": true,
+   "expected_flip": [
+    "C2",
+    "C3",
+    "C5",
+    "C7",
+    "C8",
+    "C9",
+    "C10"
+   ],
+   "flipped": [
+    "C10",
+    "C2",
+    "C3",
+    "C5",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "missing_flip": [],
+   "unexpected_flip": [],
+   "rc": 0
+  },
+  "host_scan": {
+   "rc": 0,
+   "measurement_source": "measure.json (authoring-time snapshot from the checker's own measure_raw/probe_raw/measure_host_stores); the checker re-run in controls.checker_default re-derives C1-C18 from the live filesystem",
+   "totals": {
+    "roots": 18,
+    "files_scanned": 4402,
+    "token_files": 2298,
+    "data_extension_hits": 5,
+    "minute_token_data_hits": 0,
+    "resolution_json_hits": 455,
+    "panel_shaped_hits": 1,
+    "unexplained_panel_hits": 0,
+    "unclassified_data_candidates": 0,
+    "wide_roots": 2,
+    "wide_files_scanned": 208308,
+    "wide_name_hits": 11,
+    "wide_data_extension_name_hits": 2
+   },
+   "data_candidates": [
+    {
+     "rel": "phase10-pit-bitemporal/data/real_lifecycle_evidence.csv",
+     "ext": ".csv",
+     "tokens": [
+      "listing_delisting"
+     ],
+     "class": "lifecycle_boundary_events_official_venue_notices",
+     "note": "listing/delisting boundary events parsed from official Binance notices, with explicit effective times - a boundary archive, not a continuous daily membership panel, and it carries no prices of any frequency"
+    },
+    {
+     "rel": "a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+     "ext": ".csv",
+     "tokens": [
+      "listing_delisting"
+     ],
+     "class": "lifecycle_boundary_events_official_venue_notices",
+     "note": "listing/delisting boundary events parsed from official Binance notices, with explicit effective times - a boundary archive, not a continuous daily membership panel, and it carries no prices of any frequency"
+    },
+    {
+     "rel": "a1-1-phase9-pit-membership-20260830/membership_cells.jsonl",
+     "ext": ".jsonl",
+     "tokens": [
+      "listing_delisting"
+     ],
+     "class": "daily_pit_membership_cells_all_unsupported",
+     "note": "the sibling PIT project's own daily cell ledger; every one of its cells is recorded `supported: false` with `membership_status: unknown`, i.e. the local PIT work itself declares daily membership unsupported"
+    },
+    {
+     "rel": "a1-1-phase9-pit-membership-20260830/membership_observations.csv",
+     "ext": ".csv",
+     "tokens": [
+      "listing_delisting",
+      "membership"
+     ],
+     "class": "membership_observations_unsupported_for_daily_cell",
+     "note": "membership observations whose own column `supported_for_daily_cell` is False in every sampled row (current-state snapshots cannot be backfilled; notice-derived points are not continuous intervals)"
+    },
+    {
+     "rel": "alpha-strategy-research/coverage_manifest.csv",
+     "ext": ".csv",
+     "tokens": [
+      "bid_ask",
+      "tick_data"
+     ],
+     "class": "prose_lexical_collision_manifest",
+     "note": "a candidate-coverage manifest whose rows say `Lexical collision risk with 'spread'`: the token is the manifest's own collision label, not market data"
+    }
+   ],
+   "json_snapshot_hits": [
+    {
+     "rel": "phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json",
+     "tokens": [
+      "bid_ask"
+     ],
+     "class": "single_symbol_depth_snapshot_20_levels",
+     "note": "one depth snapshot (top 20 levels, BTCUSDT). It is the only bid/ask surface on the machine that is not prose; it is a single instant for a single symbol and cannot supply the record's spread series",
+     "is_panel": false
+    },
+    {
+     "rel": "phase11-options-volatility/data/real_valid_quotes.json",
+     "tokens": [
+      "bid_ask"
+     ],
+     "class": "single_instant_single_underlying_options_chain",
+     "note": "936 BTC *options* quotes (13 expiries) all stamped at ONE instant (2026-08-28T12:19:42Z), single underlying (BTC), quote currency BTC, every row carrying bid/ask - a Phase-11 option-pricing validation input. It is a single-instant chain snapshot: not a time series, not the family's traded instruments (USD-M perpetuals), not a cross-section of coins, and therefore not the record's spread series. Measured-but-unused.",
+     "is_panel": true
+    }
+   ],
+   "wide_data_extension_hits": [
+    {
+     "rel": "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m.parquet",
+     "class": "us_equity_monthly_label_benchmark_result",
+     "note": "the label is `fwd_ret_1m` = one-MONTH forward return (`periods_per_year: 12`, 2006-01..2016-12, 120 periods, 795 B) from the ml4t US-firm-characteristics tutorial benchmark; US equities, monthly, and not a minute dataset - the filename token is a month, not a minute"
+    },
+    {
+     "rel": "tmp/ml4t-p1/ml4t-src/case_studies/us_firm_characteristics/benchmark/fwd_ret_1m_win.parquet",
+     "class": "us_equity_monthly_label_benchmark_result",
+     "note": "the label is `fwd_ret_1m` = one-MONTH forward return (`periods_per_year: 12`, 2006-01..2016-12, 120 periods, 795 B) from the ml4t US-firm-characteristics tutorial benchmark; US equities, monthly, and not a minute dataset - the filename token is a month, not a minute"
+    }
+   ]
+  },
+  "preflight": {
+   "schema_version": 1,
+   "kind": "preflight",
+   "contract_section": "16",
+   "checked_at_utc": "2026-09-17T03:18:04Z",
+   "host_boot_id": "boot-1789570820",
+   "attempt_dir": null,
+   "launch_gate": "not_evaluated",
+   "recovery": {
+    "attempted": false,
+    "ok": true,
+    "fail_reason": null,
+    "actions": []
+   },
+   "overall": "PASS",
+   "checks": [
+    {
+     "id": "P1",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+    },
+    {
+     "id": "P2",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+    },
+    {
+     "id": "P3",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-23899.tmp"
+    },
+    {
+     "id": "P4",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "container system status=running (rc=0)"
+    },
+    {
+     "id": "P5",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "qlib-run state=running"
+    },
+    {
+     "id": "P6",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+    },
+    {
+     "id": "P7",
+     "status": "PASS",
+     "layer": "card-local",
+     "detail": "/qlib/work writable: work_ok"
+    },
+    {
+     "id": "P8",
+     "status": "PASS",
+     "layer": "shared-layer",
+     "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+    },
+    {
+     "id": "P9",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    },
+    {
+     "id": "P10",
+     "status": "NA",
+     "layer": "-",
+     "detail": "no --attempt-dir; launch gate NOT evaluated"
+    }
+   ]
+  },
+  "repo_suite": {
+   "rc": 0,
+   "tail": [
+    "test_survivor_bundle.py                          rc=0 ran=18 OK",
+    "test_survivor_evidence.py                        rc=0 ran=14 OK",
+    "files=19 tests=404 failures=none"
+   ]
+  },
+  "rerun_refusal": {
+   "rc": 1,
+   "stdout": "",
+   "stderr_tail": [
+    "    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^",
+    "  File \"/Users/hong/workspace/quant-runtime-pipeline/.kanban-scratch/t_7ee25fe3/author_spec.py\", line 911, in write_exclusive",
+    "    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)",
+    "FileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01/rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/round-spec.json'"
+   ],
+   "stderr_last_line": [
+    "FileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01/rounds/crypto-cross-cryptocurrency-lead-lag-adaptive-lasso-10m-2026-09-01-r1/round-spec.json'"
+   ],
+   "named_paths_present": false,
+   "round_dir_listing": [
+    "round-spec.json",
+    "verdict.json"
+   ],
+   "family_dir_listing": [
+    "family.json",
+    "rounds"
+   ]
+  }
+ },
+ "disclosures": [
+  "contract section 13 still has no dedicated prerequisite-missing failure class; `data_window_invalid` is used as the closest registered card-local class and the mismatch is recorded in both artifacts — whether to add a class is an operator/contract decision",
+  "the record leaves its universe membership underspecified, so the cohort set is registered at the portfolio-object level (1 slot) rather than as an invented per-coin enumeration",
+  "the inherited USER_FIXED execution envelope describes a linear USD-M perpetual while the record leaves 'spot, futures, or both' open for its economic-value tables; the tension is recorded in `execution_invariants_disclosure` and was not rewritten",
+  "the raw store keeps updating after the card's registered window (measured klines to 2026-09-16T23:55:00Z, funding to 2026-09-17T00:00:00Z); registered and measured values are recorded separately",
+  "the host scan is depth-6 bounded per root with a per-root file cap; the wide filename probe is depth-6 bounded over the whole workspace and data volume",
+  "no network fetch was attempted: the absent prerequisite is already terminal, and fetching substitute series would be a different candidate"
+ ],
+ "removed_drafts": {
+  "removed": [],
+  "note": "no draft artifact was removed or rebuilt: the first authored round-spec and verdict are the published ones (both written exactly once, O_EXCL)"
+ }
+}
