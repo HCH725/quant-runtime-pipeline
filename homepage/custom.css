@@ -1,0 +1,69 @@
+/* Quant Runtime dashboard: Apple hierarchy + restrained Binance-yellow accent.
+ *
+ * Only two things are overridden: the theme's neutral scale (a quieter, warmer dark than pure
+ * slate) and Homepage's own semantic hooks (.service*, .service-group-*) - so a Homepage upgrade
+ * that renames utility classes cannot silently break the look. No layout JS, no per-widget rules.
+ */
+
+.theme-zinc {
+  /* dark surface scale, slightly warm (Apple gray) */
+  --color-200: 32 32 35;
+  --color-300: 58 58 63;
+  --color-700: 168 168 176;
+  --color-800: 214 214 220;
+  --color-900: 18 18 20;
+
+  --color-logo-start: 240 185 11;
+  --color-logo-stop: 214 214 220;
+}
+
+:root {
+  --quant-yellow: 240 185 11; /* Binance yellow, used sparingly */
+  --quant-radius: 18px;
+  --quant-gap: 14px;
+}
+
+/* Cards: one radius everywhere, hairline border instead of a hard edge, gentle lift on hover. */
+.service {
+  border-radius: var(--quant-radius);
+  border: 1px solid rgb(var(--color-200) / 45%);
+  margin-bottom: var(--quant-gap);
+  transition: border-color 150ms ease-out, transform 150ms ease-out;
+}
+
+.service:hover {
+  border-color: rgb(var(--quant-yellow) / 45%);
+  transform: translateY(-1px);
+}
+
+.service-title-text {
+  border-radius: 0 var(--quant-radius) var(--quant-radius) 0;
+}
+
+.service-name {
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.service-description {
+  letter-spacing: 0;
+}
+
+/* Widget rows breathe a little more than the stock density. */
+.service-container {
+  padding: 2px 4px 4px;
+}
+
+/* Section headings: Apple-lean type with one yellow tick to the left. */
+.service-group-name {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  padding-left: 10px;
+  border-left: 3px solid rgb(var(--quant-yellow));
+  border-radius: 2px;
+}
+
+.service-group-icon svg,
+.service-group-icon img {
+  border-radius: 8px;
+}

@@ -1,0 +1,8 @@
+# The only information widget: a clock, so a stale browser tab is obvious at a glance.
+# (The data cards live in services.yaml - Homepage's information-widget registry has no customapi
+# type, so every dashboard value is a service card there.)
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: short
+      timeStyle: short

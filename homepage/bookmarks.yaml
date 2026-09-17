@@ -1,0 +1,4 @@
+---
+# No bookmarks: this dashboard answers "what is the quant runtime doing", so every card is a data
+# card in services.yaml. (Homepage re-creates this file from its skeleton whenever it is missing,
+# which is why it exists here with no entries rather than not existing at all.)

@@ -1,0 +1,101 @@
+# Read-only quant observability cards. Every value comes from the single dashboard.json payload
+# produced by runtime/candidate_snapshot.py (the same numbers as the Discord #candidate line).
+# No card links to a control surface: there is no start/stop/retry button anywhere in this config.
+#
+# Serve the payload first:  python3 runtime/dashboard_serve.py --port 8787
+- Quant Health:
+    - Snapshot:
+        href: http://127.0.0.1:8787/dashboard.json
+        description: Read-only research progress, not live PnL
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: block
+          mappings:
+            - field: health.status
+              label: Overall
+            - field: agent.board_summary
+              label: Board
+            - field: runtime.container_summary
+              label: qlib-run
+            - field: generated_at_utc
+              label: Snapshot
+              format: relativeDate
+
+- Current Research:
+    - Current:
+        description: Research progress — not live PnL
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
+            - field: current.family_id
+              label: Family
+            - field: current.round_id
+              label: Round
+            - field: current.attempt
+              label: Attempt
+            - field: current.stage
+              label: Stage
+            - field: current.progress_text
+              label: Progress
+            - field: current.cohort
+              label: Cohort
+            - field: current.last_activity_utc
+              label: Last activity
+              format: relativeDate
+            - field: current.card_status
+              label: Kanban card
+
+- Leaderboard:
+    - Top 5:
+        description: Frozen survivor ranking (verbatim from leaderboard.json)
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: dynamic-list
+          mappings:
+            items: leaderboard.entries
+            name: cohort
+            label: summary
+            target: http://127.0.0.1:8787/dashboard.json
+
+- Research Funnel:
+    - Funnel:
+        description: Reviewed → ingested → backtested
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
+            - field: funnel.wiki_brain.share_pct
+              label: Wiki Brain reviewed %
+            - field: funnel.wiki_brain.summary
+              label: Ingested
+            - field: funnel.backtested.share_pct
+              label: Families backtested %
+            - field: funnel.backtested.summary
+              label: Backtested
+
+- Runtime & Agent:
+    - Runtime:
+        description: Compute plane, board and scheduler read-backs
+        widget:
+          type: customapi
+          url: http://127.0.0.1:8787/dashboard.json
+          refreshInterval: 60000
+          display: list
+          mappings:
+            - field: runtime.container_summary
+              label: qlib-run container
+            - field: runtime.results_volume_summary
+              label: Results volume
+            - field: agent.board_summary
+              label: Kanban board
+            - field: agent.crons_summary
+              label: Quant cron jobs

@@ -11,8 +11,10 @@ counts with their unavailable fallbacks, and that a snapshot writes nothing at a
 
 Run: python3 runtime/tests/test_candidate_snapshot.py     (stdlib unittest, no dependencies)
 """
+import contextlib
 import datetime
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -29,18 +31,26 @@ TASK = "t_SMOKE"
 BOARD = "quant-strategy-research"
 EXPECTED = 1000
 STATE_NAME = "alpha-strategy-review-state.json"
+QUANT_CRON = {"id": "test-job", "name": "Quant handoff", "script": "quant_production_handoff.py",
+              "schedule": "5,35 * * * *", "state": "active", "last_status": "ok", "last_run_at": None}
 
 
 class Harness(unittest.TestCase):
     def setUp(self):
         self.root = tempfile.mkdtemp(prefix="qrp-snapshot-test-")
         self.state_dir = tempfile.mkdtemp(prefix="qrp-snapshot-state-")
+        self.out_dir = tempfile.mkdtemp(prefix="qrp-snapshot-out-")
         self._real_card_status = snap.card_status
         self._real_board_counts = snap.board_counts
         self._real_review_state = snap.REVIEW_STATE
         self._real_intake_output = snap.INTAKE_OUTPUT
+        self._real_container_runtime = snap.container_runtime
+        self._real_quant_crons = snap.quant_crons
         snap.card_status = lambda board, task_id: ("scheduled", "stub")
         snap.board_counts = lambda board: (1, 0)
+        snap.container_runtime = lambda: {"name": "qlib-run", "state": "running",
+                                          "image": "qlib:test", "started_utc": "2026-09-14T00:00:00Z"}
+        snap.quant_crons = lambda: [dict(QUANT_CRON)]
         snap.REVIEW_STATE = str(Path(self.state_dir) / STATE_NAME)
         snap.INTAKE_OUTPUT = str(Path(self.state_dir) / "intake-output")
 
@@ -49,8 +59,11 @@ class Harness(unittest.TestCase):
         snap.board_counts = self._real_board_counts
         snap.REVIEW_STATE = self._real_review_state
         snap.INTAKE_OUTPUT = self._real_intake_output
+        snap.container_runtime = self._real_container_runtime
+        snap.quant_crons = self._real_quant_crons
         shutil.rmtree(self.root, ignore_errors=True)
         shutil.rmtree(self.state_dir, ignore_errors=True)
+        shutil.rmtree(self.out_dir, ignore_errors=True)
 
     # --- fixture helpers -------------------------------------------------
     def write(self, rel, doc):
@@ -315,7 +328,142 @@ class Harness(unittest.TestCase):
         self.assertIn(snap.CURRENT + "\nunavailable", out)
         self.assertIn("Cohort: unavailable", out)
 
-    # --- read-only invariant ---------------------------------------------
+    # --- dashboard payload (Homepage JSON twin) ---------------------------
+    def payload(self, now=None):
+        return snap.dashboard_payload(self.root, now=now)
+
+    def dashboard(self):
+        """The payload as a reader sees it: through json round-trip, nothing held by reference."""
+        return json.loads(json.dumps(self.payload(), ensure_ascii=False))
+
+    def test_payload_carries_the_required_sections_and_the_text_numbers(self):
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=250, symbol="BTCUSDT", timeframe="1h")
+        self.review_state({"pass": ["p1"]}, ["p1"])
+        self.intake_report(5, "- Ingested records: 31 total (+5 this run)")
+        self.write("_survivors/leaderboard.json", {"entries": [
+            {"rank": 1, "cohort": "SYM/5m", "evidence_state": "FROZEN_ONLY",
+             "full": {"sharpe": 1.0, "max_dd_pct": -0.01}}]})
+        text = self.snapshot()
+        doc = self.dashboard()
+        self.assertEqual(doc["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
+        for key in ("generated_at_utc", "monitoring_only", "health", "sources", "current",
+                    "leaderboard", "funnel", "runtime", "agent"):
+            self.assertIn(key, doc)
+        cur = doc["current"]
+        self.assertEqual(cur["family_id"], "fam-a")
+        self.assertEqual((cur["round_id"], cur["attempt"], cur["stage"]),
+                         (round_id, "fam-a-r1-u1", "RUNNING_QLIB"))
+        self.assertEqual((cur["progress_pct"], cur["progress_done"], cur["progress_total"]),
+                         (25.0, 250, 1000))
+        self.assertEqual(cur["cohort"], "BTCUSDT / 1h")
+        self.assertEqual(cur["kanban_task_id"], TASK)
+        self.assertEqual(cur["board"], BOARD)
+        self.assertEqual(cur["card_status"], "scheduled")
+        self.assertEqual(doc["sources"]["results_root"], self.root)
+        self.assertTrue(doc["sources"]["results_root_readable"])
+        # the payload is a twin, not a second calculation: its numbers are the text's numbers
+        self.assertIn(cur["progress_text"], text)
+        self.assertIn(str(doc["funnel"]["wiki_brain"]["ingested"]), text)
+        self.assertEqual(doc["funnel"]["wiki_brain"]["delta_24h"], 5)
+        self.assertEqual(doc["funnel"]["wiki_brain"]["share_pct"], 100.0)
+        self.assertEqual(doc["leaderboard"]["entries"][0]["summary"],
+                         "Sharpe 1.00 \u00b7 MaxDD -0.010000 \u00b7 FROZEN_ONLY")
+        self.assertIn("Sharpe 1.00", text)
+        self.assertEqual(doc["agent"]["blocked"], 0)
+        self.assertEqual(doc["agent"]["running"], 1)
+        self.assertEqual(doc["health"]["status"], "ok")
+        self.assertEqual(doc["health"]["reasons"], [])
+
+    def test_payload_top_five_is_capped_like_the_text(self):
+        entries = [{"rank": i + 1, "cohort": "SYM%dm" % i, "evidence_state": "FROZEN_ONLY",
+                    "full": {"sharpe": 1.0 + i}} for i in range(6)]
+        self.write("_survivors/leaderboard.json", {"entries": entries})
+        doc = self.dashboard()
+        self.assertEqual(doc["leaderboard"]["count"], 6)
+        self.assertEqual(doc["leaderboard"]["shown"], 5)
+        self.assertEqual([e["cohort"] for e in doc["leaderboard"]["entries"]],
+                         ["SYM0m", "SYM1m", "SYM2m", "SYM3m", "SYM4m"])
+
+    def test_unknown_values_are_null_never_zero(self):
+        # An empty results root measures nothing: every unavailable field has to read null (the text
+        # line says "unavailable"), never a fabricated 0.
+        doc = self.dashboard()
+        self.assertIsNone(doc["current"]["family_id"])
+        self.assertIsNone(doc["current"]["stage"])
+        self.assertIsNone(doc["current"]["progress_pct"])
+        self.assertIsNone(doc["current"]["progress_done"])
+        self.assertIsNone(doc["current"]["progress_total"])
+        self.assertFalse(doc["current"]["progress_available"])
+        self.assertIsNone(doc["current"]["cohort"])
+        self.assertIsNone(doc["current"]["card_status"])
+        self.assertFalse(doc["leaderboard"]["available"])
+        self.assertEqual(doc["leaderboard"]["entries"], [])
+        self.assertIsNone(doc["leaderboard"]["as_of_utc"])
+        self.assertIsNone(doc["funnel"]["wiki_brain"]["reviewed"])
+        self.assertIsNone(doc["funnel"]["wiki_brain"]["delta_24h"])
+        self.assertFalse(doc["funnel"]["wiki_brain"]["available"])
+        self.assertIsNone(doc["funnel"]["backtested"]["registered"])
+        self.assertIsNone(doc["funnel"]["backtested"]["share_pct"])
+        self.assertIn("unavailable", self.snapshot())
+
+    def test_payload_reports_absent_container_and_degraded_health(self):
+        # A measured "absent" is reported as such; a failed read-back (None) is `attention`, never a
+        # silently healthy dashboard.
+        snap.container_runtime = lambda: {"name": "qlib-run", "state": "absent", "image": None,
+                                          "started_utc": None}
+        self.assertEqual(self.dashboard()["runtime"]["container_summary"], "absent")
+        snap.container_runtime = lambda: None
+        doc = self.dashboard()
+        self.assertEqual(doc["health"]["status"], "attention")
+        self.assertIsNone(doc["runtime"]["container"])
+        self.assertEqual(doc["runtime"]["container_summary"], "unavailable")
+        snap.board_counts = lambda board: (None, None)
+        doc = self.dashboard()
+        self.assertEqual(doc["health"]["status"], "unknown")
+        self.assertIsNone(doc["agent"]["running"])
+        self.assertIsNone(doc["agent"]["blocked"])
+
+    def test_payload_write_is_atomic_and_outside_results(self):
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=30)
+        before = self.digest()
+        target = Path(self.out_dir) / "dashboard" / "dashboard.json"
+        snap.write_json(target, self.payload())
+        self.assertEqual(before, self.digest())                       # /results untouched
+        self.assertEqual(json.loads(target.read_text())["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
+        self.assertEqual(sorted(p.name for p in target.parent.iterdir()), ["dashboard.json"])  # no temp left
+
+    def test_cli_writes_the_dashboard_file_and_keeps_stdout_identical(self):
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=250)
+        target = Path(self.state_dir) / "dashboard.json"
+        argv, env = sys.argv, os.environ.get("QLIB_RESULTS_ROOT")
+        sys.argv = ["candidate_snapshot.py", "--dashboard-json", str(target)]
+        os.environ["QLIB_RESULTS_ROOT"] = self.root
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                rc = snap.main()
+        finally:
+            sys.argv = argv
+            if env is None:
+                os.environ.pop("QLIB_RESULTS_ROOT", None)
+            else:
+                os.environ["QLIB_RESULTS_ROOT"] = env
+        self.assertEqual(rc, 0)
+        self.assertEqual(out.getvalue(), self.snapshot() + "\n")      # the Discord payload is unchanged
+        self.assertEqual(json.loads(target.read_text())["current"]["progress_pct"], 25.0)
+
+    def test_cli_rejects_unknown_arguments(self):
+        argv = sys.argv
+        sys.argv = ["candidate_snapshot.py", "--nope"]
+        try:
+            with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+                snap.main()
+        finally:
+            sys.argv = argv
+
     def test_snapshot_writes_nothing_under_results(self):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=30)
@@ -323,6 +471,7 @@ class Harness(unittest.TestCase):
         self.intake_report(5, "- Ingested records: 26 total (+4 this run)")
         before = self.digest()
         self.snapshot()
+        self.payload()
         self.assertEqual(before, self.digest())
 
     def digest(self):

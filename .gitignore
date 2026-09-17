@@ -42,3 +42,8 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# --- homepage (dashboard config dir): the viewer writes these into its own config on start ---
+homepage/kubernetes.yaml
+homepage/docker.yaml
+homepage/proxmox.yaml

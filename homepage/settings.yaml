@@ -1,0 +1,32 @@
+# Quant runtime observability (localhost stage) -----------------------------------------------
+# Read-only viewer over the JSON written by runtime/candidate_snapshot.py --dashboard-json.
+# Nothing here can start, stop, retry or unblock anything: Homepage only renders the payload.
+title: Quant Runtime
+description: Read-only observability for the quant research loop
+theme: dark
+color: zinc
+hideVersion: true
+disableIndexing: true
+useEqualHeights: true
+target: _self
+# keep Homepage's own logfile out of the repo (the config dir is versioned)
+logpath: /Users/hong/quant-dashboard/logs
+
+# One section per question the operator asks, biggest first: is the system healthy, what is the
+# current research doing, what has survived, how full is the funnel, is the machinery up.
+layout:
+  Quant Health:
+    style: row
+    columns: 1
+  Current Research:
+    style: row
+    columns: 1
+  Leaderboard:
+    style: row
+    columns: 1
+  Research Funnel:
+    style: row
+    columns: 1
+  Runtime & Agent:
+    style: row
+    columns: 1
