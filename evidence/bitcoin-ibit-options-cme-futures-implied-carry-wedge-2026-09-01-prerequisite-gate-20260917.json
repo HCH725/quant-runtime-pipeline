@@ -1,0 +1,845 @@
+{
+ "snapshot_kind": "prerequisite-gate evidence snapshot (contract 13 card-local technical terminal; no launch, no performance claim)",
+ "snapshot_taken_at_utc": "2026-09-17T10:58:07Z",
+ "snapshot_boundary": "read-only snapshot: the canonical raw and the results tree were only read; the round's two artifacts were published exactly once (O_EXCL) and are re-read here by hash",
+ "card": {
+  "kanban_task_id": "t_6e26cfa9",
+  "board": "quant-strategy-research",
+  "family_id": "bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01",
+  "round_id": "bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-r1",
+  "assignee": "default",
+  "chain_parent": "t_545f5a69",
+  "origin": "contract 14.4 automatic production handoff from the research-intake PASS-WITH-CAVEAT on wiki record quant/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md (candidateised exactly once by card t_86d04b09)"
+ },
+ "contract_basis": {
+  "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+  "universe_prohibition_verbatim": [
+   "the four local perpetuals were NOT registered as a substitute universe; the record's instruments are TradFi wrappers and the record itself says the trade cannot be run crypto-natively"
+  ],
+  "exit_semantics": "card LIFECYCLE FOOTER: an honest prerequisite-missing TECHNICAL_INCOMPLETE terminal with the required immutable artifacts SATISFIES THIS CARD GOAL; block is reserved for shared-layer failure or an undecided contract needing a human decision",
+  "frozen_card_body": {
+   "sha256": "sha256:d8a2cc0bac7d318d09cd28ec5450b8aeaca6b6941fde044bb77bc53aa4cb38a4",
+   "bytes": 20545,
+   "path_note": "read back from the board DB at authoring time with the system-owned lifecycle footer stripped"
+  },
+  "reviewed_source": {
+   "record": "wiki brain quant/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+   "sha256": "sha256:a6948f388ac8e1a8f8a089cd673df814851968bf4d73a95bce778514691a34dd",
+   "intake_decision": "PASS-WITH-CAVEAT (accepted as source-faithful, research-only knowledge; source-reported results not independently reproduced)"
+  },
+  "contract": {
+   "file": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  },
+  "primary_sources": [
+   "Mallory, M. L. (2026). Implied ETF Carry Rates and the Limits of Arbitrage in Segmented Bitcoin Markets. arXiv preprint arXiv:2605.29309v1 [q-fin.PR]. https://arxiv.org/abs/2605.29309"
+  ]
+ },
+ "determination": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "taxonomy_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is the closest registered card-local class and its definition explicitly covers 'instrument 缺失'. The calendar windows overlap (raw 2022-01-01..2026-09-16 vs record sample 2024-2026), so this is an instrument/market absence, not a window mismatch - disclosed rather than hidden",
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "rounds_used": 1,
+  "no_progress_rounds": 0,
+  "attempts_launched": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "no_scientific_claim": "no scientific verdict was produced: the falsification battery is registered NOT_EXECUTED and the round carries no performance number of any kind",
+  "why_not_DEFERRED": "the record's instruments do not exist on this machine and the card forbids substituting a proxy or shrinking the universe; DEFERRED is for an intentional resource/priority stop, which this is not"
+ },
+ "measured_canonical_raw": {
+  "raw_root": "<EXPANSION>/market-data-raw",
+  "store_top_level": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "dataset_families": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "intervals": [
+   "1d",
+   "1w",
+   "15m",
+   "30m",
+   "4h",
+   "5m",
+   "1h"
+  ],
+  "venue_dirs": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "second_venue_present": false,
+  "spot_market_present": false,
+  "instrument_count": 4,
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "instrument_fields_option_shaped": [],
+  "kline_datasets": 28,
+  "kline_files": 1596,
+  "kline_key_violations": [],
+  "kline_sampled_files": 1596,
+  "klines_daily_window_utc": {
+   "BNBUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "BTCUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "ETHUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "SOLUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   }
+  },
+  "funding_rows": {
+   "BNBUSDT": 5161,
+   "BTCUSDT": 5161,
+   "ETHUSDT": 5161,
+   "SOLUSDT": 5236
+  },
+  "funding_window_utc": {
+   "BNBUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "BTCUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "ETHUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "SOLUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ]
+  },
+  "funding_row_keys": [
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ]
+  ],
+  "funding_truth_status": [
+   "modeled_funding",
+   "official"
+  ],
+  "schema_dataset_names": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "raw_entry_count": 1613,
+  "raw_byte_total": 79039607,
+  "payload_scan_files": 17,
+  "probe_tokens_tested": 56,
+  "payload_hit_counts": {
+   "bid_ask": 1,
+   "funding": 8,
+   "futures": 3,
+   "klines": 7,
+   "option": 2,
+   "perpetual": 7,
+   "sec": 1
+  },
+  "probe_hits_unexplained_name": [],
+  "probe_hits_unexplained_payload": [],
+  "probe_payload_data_ext_hits": [
+   "_meta/CONFIG.json",
+   "_meta/FUNDING_EXPORT.json",
+   "_meta/INSTRUMENTS_EXPORT.json",
+   "_meta/STATE.json",
+   "_meta/TRANSCODE_MANIFEST.json",
+   "binance/usdm/instruments/usdm-perp-instruments.json"
+  ],
+  "decisive_group_series_hits": {
+   "ibit_wrapper": [],
+   "listed_options": [],
+   "cme_futures": [],
+   "benchmark_rate": [],
+   "clearing_margin": []
+  },
+  "decisive_group_prose_hits": {
+   "ibit_wrapper": [],
+   "listed_options": [
+    "_meta/INVENTORY.md",
+    "_tools/README.md"
+   ],
+   "cme_futures": [
+    "_meta/INVENTORY.md",
+    "_meta/SCHEMA.md",
+    "_tools/market_data_sync.py"
+   ],
+   "benchmark_rate": [],
+   "clearing_margin": []
+  },
+  "decisive_group_data_shape_hits": {
+   "ibit_wrapper": [],
+   "listed_options": [],
+   "cme_futures": [],
+   "benchmark_rate": [],
+   "clearing_margin": []
+  },
+  "required_sample_window": [
+   "2024-01-01",
+   "2026-05-28"
+  ],
+  "required_sample_days": 879,
+  "available_daily_window": [
+   "2022-01-01",
+   "2026-09-16"
+  ],
+  "available_funding_window": [
+   "2022-01-01",
+   "2026-09-17"
+  ],
+  "window_overlap_days": 879,
+  "window_overlap_exists": true,
+  "overlap_note": "the raw's calendar window DOES overlap the record's sample years, so the terminalising absence is NOT a window mismatch: it is the instrument / market surface (IBIT listed options, CME bitcoin futures, BRRNY, SOFR, OCC/CME margin) that does not exist in the raw or anywhere measured on the machine. Contract §13's `data_window_invalid` row explicitly covers 'instrument 缺失' alongside '區間內無 bar'.",
+  "required_data_available": false,
+  "full_payload_token_scan": {
+   "note": "independent full-tree token scan of every raw payload file (the checker itself probes klines structurally by asserting each file's payload key set, so this run is the text-level cross-check)",
+   "entries": 1613,
+   "bytes": 79039607,
+   "token_files": 12,
+   "payload_hit_counts": {
+    "bid_ask": 1,
+    "funding": 8,
+    "futures": 3,
+    "klines": 7,
+    "option": 2,
+    "perpetual": 7,
+    "sec": 1
+   },
+   "instrument_ids": [
+    "BNBUSDT-PERP.BINANCE",
+    "BTCUSDT-PERP.BINANCE",
+    "ETHUSDT-PERP.BINANCE",
+    "SOLUSDT-PERP.BINANCE"
+   ],
+   "klines_datasets": 28
+  }
+ },
+ "measured_host_side": {
+  "roots": 18,
+  "files_scanned": 4145,
+  "token_files": 2821,
+  "bytes": 176911271,
+  "payload_hit_counts": {
+   "american_style": 15,
+   "annualized": 832,
+   "basis": 894,
+   "basket": 213,
+   "bid_ask": 982,
+   "blackrock": 19,
+   "brr": 8,
+   "brrny": 11,
+   "btc_per_share": 11,
+   "call": 260,
+   "carry": 664,
+   "cash_settled": 34,
+   "cftc": 42,
+   "clearing": 431,
+   "cme": 137,
+   "cme_cf": 10,
+   "creation_unit": 8,
+   "cross_margin": 51,
+   "deferred": 448,
+   "etf": 380,
+   "expiry": 216,
+   "fcm": 8,
+   "forward_price": 24,
+   "front_month": 47,
+   "funding": 2034,
+   "futures": 2037,
+   "globex": 24,
+   "greek": 782,
+   "haircut": 407,
+   "ibit": 30,
+   "implied_carry": 15,
+   "implied_forward": 9,
+   "implied_vol": 107,
+   "initial_margin": 422,
+   "interest_rate": 211,
+   "ishares": 38,
+   "klines": 654,
+   "maintenance_margin": 493,
+   "nav": 65,
+   "occ": 21,
+   "open_interest": 265,
+   "option": 394,
+   "perpetual": 2284,
+   "put": 112,
+   "put_call_parity": 27,
+   "risk_free": 200,
+   "sec": 71,
+   "settlement": 949,
+   "shares_outstanding": 53,
+   "shares_per_btc": 9,
+   "sofr": 27,
+   "spot_etf": 67,
+   "strike": 94,
+   "treasury": 153,
+   "wedge": 45,
+   "yield_curve": 23
+  },
+  "data_extension_hits": [
+   {
+    "root": "<HOME>/workspace/a1-1-phase9-pit-membership-20260830",
+    "rel": "membership_cells.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": "binance_usdm_pit_membership_cells_not_market_data",
+    "why": "binance_usdm_pit_membership_cells_not_market_data: point-in-time membership cells (cell_id 'BTCUSDT|2022-01-01', membership_status 'unknown', supported=false, evidence_tier null); the only token hit is 'perpetual' inside the instrument id - no price, quote, rate, strike or settlement field"
+   },
+   {
+    "root": "<HOME>/workspace/a1-1-phase9-pit-membership-20260830",
+    "rel": "membership_observations.csv",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": "binance_usdm_pit_membership_observations_not_market_data",
+    "why": "binance_usdm_pit_membership_observations_not_market_data: same store's observation rows for USD-M perpetual membership; only token 'perpetual' in the instrument id"
+   },
+   {
+    "root": "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830",
+    "rel": "snapshot_observations.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": "binance_usdm_pit_snapshot_observations_not_market_data",
+    "why": "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT snapshot observations for USD-M perpetuals; only token 'perpetual'"
+   },
+   {
+    "root": "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830",
+    "rel": "snapshot_observations.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": "binance_usdm_pit_snapshot_observations_not_market_data",
+    "why": "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT cohort snapshot observations for USD-M perpetuals; only token 'perpetual'"
+   },
+   {
+    "root": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830",
+    "rel": "lifecycle_events.csv",
+    "tokens": [
+     "funding",
+     "futures",
+     "maintenance_margin",
+     "perpetual",
+     "settlement"
+    ],
+    "class": "binance_usdm_perpetual_lifecycle_notice_store",
+    "why": "binance_usdm_perpetual_lifecycle_notice_store: listing/delisting event rows for Binance USD-M perpetuals; the token hits are vendor prose inside the stored notice text ('Binance Futures will conduct an automatic settlement on the USDT-Margined ... Contract', '-0.75 * Maintenance Margin Ratio' from the contract specification) plus the venue column value 'USD-M Futures' and the symbol/venue metadata - not a CME/IBIT/options/rate data surface"
+   },
+   {
+    "root": "<HOME>/workspace/alpha-strategy-research",
+    "rel": "coverage_manifest.csv",
+    "tokens": [
+     "basis",
+     "bid_ask",
+     "call",
+     "etf",
+     "funding",
+     "futures",
+     "greek",
+     "occ",
+     "open_interest",
+     "option",
+     "strike",
+     "wedge"
+    ],
+    "class": "research_corpus_index_filenames_and_reasons_only",
+    "why": "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits are substrings of those file names and of reason prose (e.g. '...-OCC-Strategy-R51.md', 'Triple-Strike', 'Leveraged-ETF', 'Falling-Wedge', and a reason line about a lexical collision with 'open interest') - not market data"
+   }
+  ],
+  "data_hit_classes": [
+   "binance_usdm_pit_membership_cells_not_market_data",
+   "binance_usdm_pit_membership_observations_not_market_data",
+   "binance_usdm_pit_snapshot_observations_not_market_data",
+   "binance_usdm_pit_snapshot_observations_not_market_data",
+   "binance_usdm_perpetual_lifecycle_notice_store",
+   "research_corpus_index_filenames_and_reasons_only"
+  ],
+  "unclassified_data_hits": 0,
+  "measurement_note": "measured by the checker's own host scan at authoring time; totals drift between runs because a scanned root is the repo this card writes to (the invariant is the hit structure: 6 data-shaped hits, all classified, 0 unclassified)",
+  "row_shape_probe": "every data-shaped hit is probed by first-row column names and every token occurrence in a data-shaped file must be classified; no series-shaped row carries a decisive requirement group",
+  "series_shaped_decisive": [],
+  "decisive_host_groups": {
+   "ibit_wrapper": {
+    "tokens_hit": [
+     "basket",
+     "blackrock",
+     "btc_per_share",
+     "creation_unit",
+     "ibit",
+     "ishares",
+     "nav",
+     "shares_outstanding",
+     "shares_per_btc",
+     "spot_etf"
+    ],
+    "data_shape_hits": []
+   },
+   "listed_options": {
+    "tokens_hit": [
+     "american_style",
+     "bid_ask",
+     "call",
+     "expiry",
+     "greek",
+     "implied_vol",
+     "occ",
+     "open_interest",
+     "option",
+     "put",
+     "put_call_parity",
+     "strike"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "cme_futures": {
+    "tokens_hit": [
+     "cash_settled",
+     "cme",
+     "deferred",
+     "front_month",
+     "futures",
+     "globex",
+     "settlement"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv",
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "benchmark_rate": {
+    "tokens_hit": [
+     "brr",
+     "brrny",
+     "cme_cf",
+     "interest_rate",
+     "risk_free",
+     "sofr",
+     "treasury",
+     "yield_curve"
+    ],
+    "data_shape_hits": []
+   },
+   "clearing_margin": {
+    "tokens_hit": [
+     "cftc",
+     "clearing",
+     "cross_margin",
+     "fcm",
+     "haircut",
+     "initial_margin",
+     "maintenance_margin"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv"
+    ]
+   }
+  },
+  "settled_non_migrated_stores_absent": [
+   "<HOME>/workspace/lean-system",
+   "<HOME>/workspace/microsoft-quant-stack",
+   "<HOME>/workspace/nautilus-system"
+  ]
+ },
+ "requirement_vs_available": [
+  {
+   "item": "IBIT listed-options bid/ask quotes for all strikes and expirations",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "no option dataset anywhere: the raw declares exactly klines/funding/instruments; the 16-series row-shape probe finds no strike/expiry/bid/ask/implied-vol column; the four instruments are USD-M perpetuals"
+  },
+  {
+   "item": "IBIT listed-options open interest",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "no open-interest field in any raw row shape; the only host data-shaped hits are a Binance USD-M perpetual lifecycle notice store and a research-corpus index (both classified)"
+  },
+  {
+   "item": "IBIT listed-options implied volatilities",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "no implied-vol surface; the vocabulary probe finds 'implied_vol' 0 times in the raw"
+  },
+  {
+   "item": "IBIT listed-options strike/expiry catalogue",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "no strike or expiry field; instrument fields are perpetual contract fields (lot_size, price_increment, maker_fee, margin_init, ...)"
+  },
+  {
+   "item": "IBIT ETF daily multiplier: BlackRock NAV disclosure",
+   "status": "ABSENT",
+   "evidence": "no NAV field or dataset; 'nav' token 0 hits in the raw tree"
+  },
+  {
+   "item": "IBIT ETF daily multiplier: shares outstanding",
+   "status": "ABSENT",
+   "evidence": "no shares-outstanding field; token 0 hits in the raw tree"
+  },
+  {
+   "item": "IBIT ETF daily multiplier: BTC per share ratio M_t",
+   "status": "ABSENT",
+   "evidence": "no btc_per_share / shares_per_btc field; token 0 hits in the raw tree"
+  },
+  {
+   "item": "CME bitcoin futures: front-month and deferred trade/settlement prices",
+   "status": "ABSENT",
+   "evidence": "no dated contract of any kind exists locally: all four instruments are perpetuals (instrument id suffix '-PERP'); 'front_month'/'settlement' 0 hits in raw payloads"
+  },
+  {
+   "item": "CME standard ($5 BTC) and micro ($0.1 BTC) contract metadata",
+   "status": "ABSENT",
+   "evidence": "no CME contract specification; the only contract metadata is the four Binance USD-M perpetual definitions"
+  },
+  {
+   "item": "BRRNY reference rate (CME CF Bitcoin Reference Rate New York Variant, 16:00 ET)",
+   "status": "ABSENT",
+   "evidence": "no reference-rate series; 'brrny'/'cme_cf' 0 hits anywhere in the raw tree"
+  },
+  {
+   "item": "SOFR or US Treasury yield curve matching derivative maturities",
+   "status": "ABSENT",
+   "evidence": "no rate series; 'sofr' 0 hits, no treasury/yield-curve dataset"
+  },
+  {
+   "item": "OCC initial/maintenance margin parameters",
+   "status": "ABSENT",
+   "evidence": "the only margin fields are the four perps' margin_init/margin_maint (0.1) from Binance instrument metadata - not an OCC equity-options margin schedule"
+  },
+  {
+   "item": "CME Clearing initial/maintenance margin parameters",
+   "status": "ABSENT",
+   "evidence": "no CME Clearing margin schedule; no haircut or cross-margining table"
+  },
+  {
+   "item": "Point-in-time synchronization at 16:00 ET (US equity close / BRRNY window)",
+   "status": "ABSENT",
+   "evidence": "the raw is UTC-aligned Binance bar data; no 16:00 ET snapshot convention, no US trading calendar, no equity-session dataset exists"
+  },
+  {
+   "item": "Signal: put-call-parity implied forward F_IBIT (needs IBIT option quotes + r)",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "requires the absent option quotes and the absent risk-free curve"
+  },
+  {
+   "item": "Signal: ETF-to-BTC conversion F_IBIT-BTC = F_IBIT x M_t",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "requires the absent BlackRock daily shares-per-BTC multiplier"
+  },
+  {
+   "item": "Signal: CME futures carry c_CME (needs CME futures + BRRNY)",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "requires absent CME futures prices and the absent BRRNY benchmark"
+  },
+  {
+   "item": "Signal: carry wedge W_t = c_CME - c_IBIT and its entry threshold",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "both legs of the wedge are non-constructible; the record itself leaves the numeric threshold firm-specific and the card forbids inventing one"
+  },
+  {
+   "item": "Exit: hold to contract expiry where both derivatives settle to terminal reference prices",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "no dated contracts and no settlement reference exist locally"
+  },
+  {
+   "item": "Exit: early exit when the wedge falls to the record's 0.25% example level",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "requires the wedge series"
+  },
+  {
+   "item": "Execution: dual-venue margin drag (OCC 30-50% / CME FCM 40-50% initial margin)",
+   "status": "ABSENT",
+   "evidence": "no OCC/CME margin schedules and no cross-margining data exist on the machine"
+  },
+  {
+   "item": "Execution: American early-exercise treatment for IBIT options",
+   "status": "ABSENT",
+   "evidence": "no American-style option surface exists to treat"
+  },
+  {
+   "item": "Execution: leg-execution latency across CME Globex and CBOE/MIAX/BOX/Nasdaq Phlx",
+   "status": "ABSENT",
+   "evidence": "no order-book or venue-latency surface exists locally; the raw has OHLCV bars only (its own SCHEMA documents that quote volume is not present)"
+  },
+  {
+   "item": "Execution: dual-venue fees and commissions (CME exchange/clearing, FCM, OCC, broker)",
+   "status": "ABSENT_AS_REGISTERED",
+   "evidence": "the only local cost constants are the four Binance USD-M perpetual maker/taker fees (0.0002/0.0005) - not the record's fee schedule"
+  },
+  {
+   "item": "Falsification 1: net spread compression below 0.50% annualised on >80% of days",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "needs the net executable wedge series; nothing was computed"
+  },
+  {
+   "item": "Falsification 2: cross-margining implementation compressing the mean wedge below 0.30%",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "needs the wedge series"
+  },
+  {
+   "item": "Falsification 3: execution legging risk above 0.75% annualised from order-book replay",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "needs high-frequency order-book quotes, which exist nowhere locally"
+  },
+  {
+   "item": "Falsification 4: subperiod inversion over a rolling 90-day window",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "needs the wedge series"
+  },
+  {
+   "item": "Crypto portability reading: execute the wedge on crypto-native venues",
+   "status": "PRESENT_AS_PROSE_CONSTRAINT",
+   "evidence": "the record itself registers the port as adapted/unproven and states it cannot be executed purely via crypto-native venues; the card forbids substituting such a proxy"
+  },
+  {
+   "item": "Local analogue: Binance USD-M perpetual funding (four contracts, 2022-01-01..2026-09-17)",
+   "status": "PRESENT_UNRELATED_LOCAL_ANALOGUE",
+   "evidence": "present but is not the record's object: funding on perpetual swaps is not a dated-futures basis, has no IBIT leg, no BRRNY reference and no expiry settlement; the store's own rows carry truth_status modeled_funding for the backfilled history and official only at the tail"
+  }
+ ],
+ "requirement_vs_available_counts": {
+  "ABSENT": 13,
+  "ABSENT_AS_REGISTERED": 1,
+  "ABSENT_FROM_CANONICAL_RAW": 4,
+  "BLOCKED_BY_ABSENCE": 4,
+  "NOT_CONSTRUCTIBLE": 6,
+  "PRESENT_AS_PROSE_CONSTRAINT": 1,
+  "PRESENT_UNRELATED_LOCAL_ANALOGUE": 1
+ },
+ "decisive_matrix_item_count": 24,
+ "artifact_hashes": {
+  "round_spec": "sha256:f9623971e047769f730ff8257a95fb897854e0c9f822edd5ac90c638bffe65aa",
+  "round_spec_bytes": 104759,
+  "verdict": "sha256:33ed8478cb40f81544bc41433368563818a0aded84cc101904700ff9938c7c8e",
+  "verdict_bytes": 7121,
+  "checker": "sha256:6768676ccafd6a3f98fa4776c6297e601f87d616626ec9b0a98bbe87b4f4bb0f",
+  "checker_path": "runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py",
+  "authoring_script_path": ".kanban-scratch/t_6e26cfa9/author_spec.py",
+  "evidence_self_hash": null,
+  "evidence_self_hash_note": "not embedded: a manifest cannot truthfully carry the sha256 of its own final bytes; the hash is recorded in the commit message and in the evidence index row instead"
+ },
+ "executable_verification": {
+  "live_check": {
+   "command": "python3 runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py --host-scan --json",
+   "rc": 0,
+   "checks_total": 26,
+   "checks_passed": 26,
+   "failed": [],
+   "raw_summary": {
+    "entries": 1613,
+    "kline_files": 1596,
+    "probe_files": 17
+   },
+   "stores_summary": {
+    "files_scanned": 4613,
+    "token_files": 3155,
+    "bytes": 192440779
+   }
+  },
+  "verify_verbatim": {
+   "board_db": {
+    "ok": true,
+    "checked": 46,
+    "leaves": 46,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 16564,
+     "record": 14472,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "board_db"
+   },
+   "pool_body": {
+    "ok": true,
+    "checked": 46,
+    "leaves": 46,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 16564,
+     "record": 14472,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   }
+  },
+  "self_test": {
+   "command": "python3 runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py --self-test",
+   "ok": true,
+   "variants": 26,
+   "flipped": 25,
+   "benign_not_flipped": true
+  },
+  "raw_fixture_control": {
+   "command": "python3 runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py --raw-fixture-control",
+   "ok": true,
+   "flipped": [
+    "C1",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "not_flipped": []
+  },
+  "preflight": {
+   "command": "python3 runtime/preflight.py --json",
+   "overall": "PASS",
+   "checks": [
+    [
+     "P1",
+     "PASS"
+    ],
+    [
+     "P2",
+     "PASS"
+    ],
+    [
+     "P3",
+     "PASS"
+    ],
+    [
+     "P4",
+     "PASS"
+    ],
+    [
+     "P5",
+     "PASS"
+    ],
+    [
+     "P6",
+     "PASS"
+    ],
+    [
+     "P7",
+     "PASS"
+    ],
+    [
+     "P8",
+     "PASS"
+    ],
+    [
+     "P9",
+     "NA"
+    ],
+    [
+     "P10",
+     "NA"
+    ]
+   ]
+  },
+  "repo_suite": {
+   "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+   "ran": "Ran 404 tests in 4.272s",
+   "verdict": "OK",
+   "tail": "Ran 404 tests in 4.272s; OK",
+   "lines": 25
+  }
+ },
+ "host_paths_redacted": true,
+ "redaction_placeholders": {
+  "<EXPANSION>": "<EXPANSION>",
+  "<HOME>": "<HOME>",
+  "<REPO>": "<REPO>"
+ },
+ "disclosures": [
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, and its own definition covers 'instrument 缺失'. Unlike the earlier cards in this series the calendar windows here DO overlap (raw 2022-01-01..2026-09-16 vs the record's 2024-2026 sample), so the terminal is an instrument/market absence and is stated as such in both artifacts rather than dressed up as a window mismatch",
+  "the record registers a dual-venue TradFi construction (OCC-cleared IBIT listed options vs CME cash-settled futures, priced off BRRNY at 16:00 ET, margined on OCC/CME parameters) and its own Crypto-portability paragraph states the trade cannot be executed purely via crypto-native venues; neither reading is executable locally and both are registered, neither was shrunk to manufacture executability",
+  "the inherited USER_FIXED execution envelope (linear USD-M perp, 10x, 12-tranche geometric DCA ladder) is written for a perpetual book while this record's object is a wedge-threshold carry trade with an expiry settlement; the tension is recorded in `execution_invariants_disclosure` and not resolved by inventing a mapping",
+  "the card's required-data excerpt lists the record's seven Required-data bullets; the record's Execution assumptions, Evidence, Falsification plan (four items), Crypto portability, Limitations and Adoption boundary paragraphs are carried in full verbatim in the round-spec and expanded into the 30-row required-data matrix - nothing dropped",
+  "the raw is updated daily by the store's own updater: the card quotes klines to 2026-09-11 and funding to 2026-09-12T08:00Z while the measured values are daily bars to 2026-09-16 and funding to 2026-09-17T00:00Z (updater last_run 2026-09-17T02:15:05Z); both readings are recorded and neither is rewritten",
+  "the store's funding rows carry `truth_status`: the backfilled history is `modeled_funding` and only the tail is `official`; recorded because it would matter to any future funding-based accounting, though nothing was computed here",
+  "the host scan is not reproducible across measurement points: a scanned root is the repo this card writes to, so the totals drift (round-spec at authoring: 4145 files / 2821 token files; live re-check: 4613 files). The invariant is the hit structure - 6 data-shaped hits, all classified, 0 unclassified, no decisive requirement group carried by a series-shaped row - not the raw file count",
+  "cross-artifact note, recorded rather than rewritten: verdict.json's `definitive_absences` carries a host-scan sentence naming 3,629 files / 2 data-shaped hits (the pre-rebuild scan vocabulary, which counted only the two decisive-group files lifecycle_events.csv and coverage_manifest.csv), while round-spec.json registers the final vocabulary's 6 hits (the two above plus the a1-* PIT membership/snapshot stores that match on the word 'perpetual'), all classified as non-market data. Both readings agree on the terminal conclusion, on 0 unclassified and on no decisive series; the round artifacts are immutable once published (contract 10) and the round computed nothing, so the sentence is left verbatim and the drift is disclosed here instead",
+  "no network fetch was attempted in this round: the missing prerequisite is itself the terminal condition and the card forbids substituting a proxy market"
+ ]
+}
