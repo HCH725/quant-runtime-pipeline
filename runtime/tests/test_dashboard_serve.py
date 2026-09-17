@@ -11,6 +11,7 @@ results tree.
 Run: python3 runtime/tests/test_dashboard_serve.py     (stdlib unittest, no dependencies)
 """
 import http.client
+import json
 import shutil
 import sys
 import tempfile
@@ -91,14 +92,41 @@ class ServerChecks(unittest.TestCase):
         status, body, ctype = self.request("/detail")
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
-        # the section id is the payload's own key, which is what services.yaml links to
-        self.assertIn('<section id="health">', body)
-        self.assertIn("ok", body)  # health.status, verbatim from the payload file
-        self.assertIn('<section id="schema_version">', body)
-        self.assertNotIn("<a ", body)  # a read-only page: nothing to click through to
-        # the JSON route is untouched by the page route
+        self.assertIn('<section id="health"', body)
+        self.assertIn('<span class="badge ok">ok</span>', body)
+        self.assertIn('<footer id="metadata"', body)
+        self.assertIn("schema version", body)
+        self.assertNotIn('<section id="schema_version"', body)
+        self.assertNotIn("<a ", body)
         self.assertEqual(self.request("/dashboard.json"),
                          (200, PAYLOAD, "application/json; charset=utf-8"))
+
+    def test_detail_prioritizes_human_sections_and_keeps_internal_fields_secondary(self):
+        payload = {
+            "schema_version": 1,
+            "generated_at_utc": "2026-09-17T13:20:03Z",
+            "monitoring_only": True,
+            "scope_note": "read-only",
+            "sources": {"results_root": "/Volumes/ExpansionDrive/qlib-results"},
+            "agent": {"profile_status": "running"},
+            "funnel": {"wiki_brain": {"summary": "296 / 516 reviewed", "reviewed": 516}},
+            "leaderboard": {"entries": [{"summary": "Sharpe 4.40", "rank": 1, "sharpe": 4.4}]},
+            "current": {"family_id": "family-x", "stage": "not launched", "progress_text": None},
+            "health": {"status": "ok", "state_path": "/Users/hong/.hermes/state/quant_runtime_watchdog.json"},
+        }
+        (self.dir / "dashboard.json").write_text(json.dumps(payload))
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        order = [body.index('id="%s"' % key)
+                 for key in ("health", "current", "leaderboard", "funnel", "agent", "sources", "metadata")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn('class="summary">Sharpe 4.40</p>', body)
+        self.assertIn('class="summary">296 / 516 reviewed</p>', body)
+        self.assertIn('>quant_runtime_watchdog.json</span>', body)
+        self.assertIn('>qlib-results</span>', body)
+        self.assertIn('@media (min-width: 700px)', body)
+        self.assertIn('section:target', body)
+        self.assertIn('class="empty">unavailable</span>', body)
 
     def test_detail_escapes_the_payload_and_never_invents_a_value(self):
         # the payload is written by another process: markup in it must not become markup here

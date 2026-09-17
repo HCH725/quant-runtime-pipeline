@@ -43,57 +43,120 @@ DETAIL_PAGE = """<!doctype html>
 <meta name="robots" content="noindex">
 <title>Quant Runtime - snapshot detail</title>
 <style>
-:root { color-scheme: dark; --accent: #f0b90b; --line: rgba(255,255,255,.08); }
-body { margin: 0; padding: 16px; background: #121214; color: #d6d6dc;
+:root { color-scheme: dark; --accent: #f0b90b; --bg: #111214; --panel: #1d1e22;
+  --line: rgba(255,255,255,.08); --text: #f5f5f7; --muted: #9b9ba3;
+  --ok: #30d158; --running: #ffd60a; }
+* { box-sizing: border-box; }
+body { margin: 0 auto; max-width: 1180px; padding: 20px; background: var(--bg); color: var(--text);
   font: 15px/1.45 -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-h1 { font-size: 19px; letter-spacing: -.01em; margin: 0 0 2px; }
-.meta { color: #a8a8b0; font-size: 12px; margin: 0 0 14px; }
-section { background: #202023; border: 1px solid var(--line); border-radius: 18px;
-  padding: 12px 14px; margin-bottom: 14px; }
-h2 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent);
-  margin: 0 0 8px; padding-left: 8px; border-left: 3px solid var(--accent); border-radius: 2px; }
-dl { margin: 0; } dt { color: #a8a8b0; font-size: 12px; } dd { margin: 0 0 6px; word-break: break-word; }
-.item { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+header { margin: 4px 0 18px; }
+h1 { font-size: 22px; letter-spacing: -.02em; margin: 0 0 3px; }
+.meta { color: var(--muted); font-size: 12px; margin: 0; }
+.cards { display: grid; gap: 14px; }
+section { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  padding: 15px 16px; scroll-margin-top: 18px; }
+section:target { border-color: rgba(240,185,11,.72); box-shadow: 0 0 0 1px rgba(240,185,11,.28); }
+h2 { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--accent);
+  margin: 0 0 10px; padding-left: 8px; border-left: 3px solid var(--accent); border-radius: 2px; }
+.summary { margin: 0 0 12px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+dl.fields { margin: 0; display: grid; gap: 7px; }
+dt { color: var(--muted); font-size: 12px; }
+dd { min-width: 0; margin: 0 0 5px; word-break: break-word; }
+.secondary { opacity: .72; }
+.item { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
+.item:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line);
+  font-size: 12px; font-weight: 650; line-height: 1.45; }
+.badge.ok { color: var(--ok); background: rgba(48,209,88,.08); border-color: rgba(48,209,88,.22); }
+.badge.running { color: var(--running); background: rgba(255,214,10,.08); border-color: rgba(255,214,10,.22); }
+.badge.muted, .empty { color: var(--muted); }
+.path { color: #c7c7cc; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.metadata-footer { margin-top: 18px; padding: 12px 2px 2px; border-top: 1px solid var(--line); color: var(--muted); }
+.metadata-footer h2 { border-left: 0; padding-left: 0; color: var(--muted); margin-bottom: 8px; }
+.metadata-footer .fields { font-size: 12px; }
+@media (min-width: 700px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  section.wide { grid-column: 1 / -1; }
+  dl.fields { grid-template-columns: minmax(120px, 170px) minmax(0, 1fr); column-gap: 16px; align-items: start; }
+  dl.fields > dt, dl.fields > dd { margin: 0; }
+}
 </style>
 </head>
 <body>
-<h1>Snapshot detail</h1>
-<p class="meta">%s</p>
+<header><h1>Snapshot detail</h1><p class="meta">%s</p></header>
+<main class="cards">%s</main>
 %s
 </body>
 </html>
 """
 
+MAIN_SECTION_ORDER = ("health", "current", "leaderboard", "funnel", "agent", "sources")
+METADATA_KEYS = ("schema_version", "monitoring_only", "scope_note", "generated_at_utc")
+WIDE_SECTIONS = {"current", "leaderboard"}
+SUMMARY_KEYS = ("summary", "board_summary")
+FIELD_PRIORITY = ("status", "stage", "family_id", "symbol", "timeframe", "progress_text",
+                  "profile", "profile_status", "card_status")
+SECONDARY_KEYS = {"state_path", "results_root", "card_readback", "kanban_task_id", "source"}
+PATH_KEYS = {"state_path", "results_root"}
+STATUS_KEYS = {"status", "stage", "profile_status", "card_status", "evidence_state"}
+
 
 def render_detail(payload):
-    """The payload as one read-only page; presentation only, never a second calculation.
+    """Render one human-readable view of dashboard.json without creating a second truth."""
+    generated = _text(payload.get("generated_at_utc"))
+    meta = "generated %s &middot; read-only research snapshot" % generated
+    seen = set()
+    sections = []
+    for key in MAIN_SECTION_ORDER:
+        if key in payload:
+            sections.append(_section(key, payload[key], key in WIDE_SECTIONS))
+            seen.add(key)
+    for key, value in payload.items():
+        if key not in seen and key not in METADATA_KEYS:
+            sections.append(_section(key, value, False))
+    return DETAIL_PAGE % (meta, "".join(sections), _metadata_footer(payload))
 
-    Every section, field and value comes from dashboard.json verbatim - nothing here recomputes a
-    Sharpe, a drawdown, a progress figure or a health verdict. A null renders as `unavailable` (the
-    same convention the Homepage cards use) and a key that is absent stays absent.
-    """
-    meta = "generated %s &middot; read-only &middot; same payload as the dashboard cards" % _text(
-        payload.get("generated_at_utc"))
-    return DETAIL_PAGE % (meta, "".join(_section(key, value) for key, value in payload.items()))
+
+def _metadata_footer(payload):
+    rows = "".join(_row(key, payload[key], force_secondary=True)
+                   for key in METADATA_KEYS if key in payload)
+    if not rows:
+        return ""
+    return '<footer id="metadata" class="metadata-footer"><h2>Snapshot metadata</h2>' \
+           '<dl class="fields">%s</dl></footer>' % rows
 
 
-def _section(key, value):
-    return '<section id="%s"><h2>%s</h2>%s</section>' % (_anchor(key), _label(key), _block(value))
+def _section(key, value, wide=False):
+    class_attr = ' class="wide"' if wide else ""
+    return '<section id="%s"%s><h2>%s</h2>%s</section>' % (
+        _anchor(key), class_attr, _label(key), _block(value))
 
 
 def _block(value):
     if isinstance(value, dict):
-        return "<dl>%s</dl>" % "".join(_row(key, value) for key, value in value.items())
+        summary_key = next((key for key in SUMMARY_KEYS
+                            if key in value and not isinstance(value[key], (dict, list))
+                            and value[key] not in (None, "")), None)
+        summary = ('<p class="summary">%s</p>' % _value_html(summary_key, value[summary_key])
+                   if summary_key else "")
+        keys = [key for key in value if key != summary_key]
+        priority = {key: index for index, key in enumerate(FIELD_PRIORITY)}
+        keys.sort(key=lambda key: (priority.get(key, len(FIELD_PRIORITY)), list(value).index(key)))
+        rows = "".join(_row(key, value[key]) for key in keys)
+        return summary + ("<dl class=\"fields\">%s</dl>" % rows if rows else "")
     if isinstance(value, list):
-        items = "".join('<div class="item">%s</div>' % (_block(item) if isinstance(item, dict)
-                                                        else _text(item)) for item in value)
-        return items or "<p>(empty)</p>"
-    return "<p>%s</p>" % _text(value)
+        if not value:
+            return '<p class="empty">(empty)</p>'
+        return "".join('<div class="item">%s</div>' % (_block(item) if isinstance(item, (dict, list))
+                                                        else _value_html(None, item)) for item in value)
+    return '<p class="summary">%s</p>' % _value_html(None, value)
 
 
-def _row(key, value):
-    body = _block(value) if isinstance(value, (dict, list)) else _text(value)
-    return "<dt>%s</dt><dd>%s</dd>" % (_label(key), body)
+def _row(key, value, force_secondary=False):
+    secondary = force_secondary or key in SECONDARY_KEYS
+    css = ' class="secondary"' if secondary else ""
+    body = _block(value) if isinstance(value, (dict, list)) else _value_html(key, value)
+    return "<dt%s>%s</dt><dd%s>%s</dd>" % (css, _label(key), css, body)
 
 
 def _label(key):
@@ -106,8 +169,38 @@ def _anchor(key):
     return "".join(c if c.isalnum() or c in "-_" else "-" for c in str(key).lower())
 
 
+def _value_html(key, value):
+    """Presentation-only scalar formatting; the underlying value is never recomputed."""
+    if value is None:
+        return '<span class="empty">unavailable</span>'
+    if value is True:
+        return "yes"
+    if value is False:
+        return "no"
+    raw = str(value)
+    text = html.escape(raw)
+    if key in PATH_KEYS and raw.startswith("/"):
+        return '<span class="path" title="%s">%s</span>' % (
+            html.escape(raw, quote=True), html.escape(Path(raw).name or raw))
+    if key in STATUS_KEYS:
+        lowered = raw.strip().lower()
+        if lowered in {"ok", "healthy", "pass", "passed"}:
+            badge = "ok"
+        elif "running" in lowered:
+            badge = "running"
+        elif lowered in {"unavailable", "unknown", "not launched", "none", "empty"}:
+            badge = "muted"
+        else:
+            badge = ""
+        if badge:
+            return '<span class="badge %s">%s</span>' % (badge, text)
+    if raw.strip().lower().startswith("unavailable"):
+        return '<span class="empty">%s</span>' % text
+    return text
+
+
 def _text(value):
-    """A scalar as text. The payload is written by another process, so every value is escaped."""
+    """Header-safe scalar text; every payload value is escaped."""
     if value is None:
         return "unavailable"
     if value is True:
