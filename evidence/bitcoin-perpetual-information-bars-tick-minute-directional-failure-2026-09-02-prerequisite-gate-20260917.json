@@ -1,0 +1,1569 @@
+{
+ "schema_version": 1,
+ "kind": "prerequisite-gate-evidence",
+ "family_id": "bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02",
+ "round_id": "bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-r1",
+ "kanban_task_id": "t_09afa5cb",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-17T13:33:14Z",
+ "outcome": "PREREQUISITE_ABSENT",
+ "terminal": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "last_run_id": null,
+  "attempts": {
+   "launched": 0,
+   "run_specs": 0,
+   "terminal_sentinels": 0,
+   "run_spec": null,
+   "terminal_sentinel": null,
+   "attempt_dir": null
+  },
+  "cohorts": {
+   "registered_slots": 0,
+   "realized": 0
+  },
+  "survivors": [],
+  "survivor_bundle": null,
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "final_verdict_written_by": "Hermes default (card t_09afa5cb), contract 10.7"
+ },
+ "artifact_hashes": {
+  "round_spec": {
+   "path": "rounds/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-r1/round-spec.json",
+   "bytes": 249876,
+   "sha256": "96202df22316702934d818767b32c697a6f6b33def3c6f86412c24cf72b17fd5"
+  },
+  "verdict": {
+   "path": "rounds/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-r1/verdict.json",
+   "bytes": 6164,
+   "sha256": "c5dc0225b5ddc1a80288cf05e8c57ea6d7744135c59c1d5321c318d265bb04a5"
+  },
+  "checker": {
+   "path": "runtime/bitcoin_perpetual_information_bars_tick_minute_prerequisite_check.py",
+   "bytes": 104764,
+   "sha256": "c933ffff6448612d7e6cecdd740a8f643ee4468d4a9c95f64433226684803c9d"
+  },
+  "sources": {
+   "card_body_sha256_footer_stripped": "sha256:20ff457774b63be63e50fd73e0be31a84f3d20cba1530e5884ba8918ccd8dca3",
+   "record": {
+    "path": "wiki quant/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02.md",
+    "sha256": "sha256:1a512947d9317abba12234a00004fc25f6c5a2a82638901de9f8fb66f93b974d"
+   },
+   "contract": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18"
+  },
+  "authoring_script": {
+   "path": ".kanban-scratch/t_09afa5cb/author_spec.py",
+   "sha256": "d20d3e92a2222347cd32c7829e34b757178731ab15c48209fdfe14ddb1344ba8"
+  },
+  "evidence_builder": {
+   "path": ".kanban-scratch/t_09afa5cb/make_evidence.py",
+   "sha256": "3ad969bcbc9790ca0374a6673342da77a06b4f0a0646c29e569c48a910548f0d"
+  }
+ },
+ "measured_absence": [
+  "tick_stream_absent: the record's Tick Data Source (Binance public data archive `aggTrade` records) has ZERO data-shaped occurrences in the raw tree - 22 decisive tokens (aggTrade / tick / bookTicker / trade-id / buyer-maker / aggressor / tardis) over 1613 entries and 17 payload files; the only hits are the store's own Phase-1 sweep prose (which records that it searched for aggTrade/bookTicker and found none), the updater source code (which declares a `trade` dataset capability) and the instrument export's null-valued `tick_scheme` field",
+  "one_minute_stream_absent: the record's Minute Data Source (Binance official 1-minute OHLCV perpetual k-lines) is not configured (CONFIG.json intervals = ['15m', '1d', '1h', '1w', '30m', '4h', '5m']), not materialised (0 files, 0 directories carry a 1m token), and not constructible from the finest resolved dataset (5m). SCHEMA.md's interval alphabet line names `1m` as a path pattern only",
+  "sampling_clock_is_the_independent_variable: the study controls bar FREQUENCY by information arrival; with no tick stream and no 1-minute bars, none of the twelve registered bar series (6 families x 2 pipelines) can be sampled, and resampling the local 5m bars would change the estimand rather than approximate it",
+  "row_shape_proof: no raw row shape carries any decisive requirement group (series-shaped hits per group: {\"tick_trade_stream\": [], \"minute_bar_stream\": [], \"orderflow_feature_surface\": [], \"depth_l2_surface\": [], \"trade_count_surface\": []}); the k-line rows are exactly open_time_ms/close_time_ms/open/high/low/close/volume and the funding rows are exactly the nine funding fields",
+  "documented_coverage_limit: the store's own SCHEMA.md records that quote_volume, trade count and taker-buy splits are NOT present, so even the calendar bars cannot supply trade counts",
+  "host_store_scan: %d files over %d roots; every hit resolves to a declared class (0 unclassified); no tick history and no 1-minute history exists anywhere measured",
+  "non_canonical_single_instant_capture_disclosed: the host DOES carry a real public aggTrade sample for BTCUSDT - 20 rows with keys ['T', 'a', 'f', 'l', 'm', 'nq', 'p', 'q'] spanning 1166 ms at the single instant 2026-08-28T14:22:43Z - plus a 20-level book snapshot at the same instant (phase12-l2-l3-execution-tca). It is measured, disclosed, and used=false: twenty trades covering seconds cannot express the record's 2,191-day tick stream",
+  "falsification_battery_blocked: the record's four falsification items each need the tick stream, the information-bar series or both; nothing was lowered and nothing was trimmed",
+  "universe_kept_whole: the registered instrument and the two registered sampling clocks were NOT shrunk to the four local contracts / seven local intervals, no proxy market and no rewritten hypothesis were used, and no attempt was launched"
+ ],
+ "required_data_matrix_item_count": 0,
+ "required_data_matrix_status_counts": {
+  "PRESENT": 1,
+  "PARTIAL_WINDOW_OVERLAP": 2,
+  "ABSENT": 7,
+  "BLOCKED_BY_ABSENCE": 5,
+  "NOT_CONSTRUCTIBLE": 4,
+  "NOT_EXECUTED_BLOCKED": 6,
+  "REGISTERED_NOT_APPLIED": 2,
+  "PRESENT_AS_METADATA_NOT_APPLIED": 1,
+  "PRESENT_WITH_TRUTH_STATUS_SPLIT": 1,
+  "POLICY_INPUT_PRESENT_NOT_APPLIED": 1,
+  "DISCLOSURE_ONLY": 3,
+  "REGISTERED_NOT_EXECUTED": 1,
+  "REGISTERED_NOT_EVALUATED": 1
+ },
+ "decisive_matrix_item_count": 22,
+ "required_data_matrix_claimed_measurement": {
+  "dataset_families": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "kline_dataset_count": 28,
+  "kline_file_count": 1596,
+  "kline_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "kline_symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "finest_resolved_interval": "5m",
+  "config_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "config_has_1m": false,
+  "instrument_count": 4,
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "funding_field_sets": [
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ]
+  ],
+  "funding_truth_status": {
+   "modeled_funding": 8095,
+   "official": 12624
+  },
+  "schema_dataset_names": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "btcusdt_5m_window": [
+   "2022-01-01",
+   "2026-09-16"
+  ],
+  "decisive_offending_hits": [],
+  "decisive_group_series_hits": {
+   "tick_trade_stream": [],
+   "minute_bar_stream": [],
+   "orderflow_feature_surface": [],
+   "depth_l2_surface": [],
+   "trade_count_surface": []
+  },
+  "probe_tokens_tested": 26,
+  "schema_coverage_limit_present": true
+ },
+ "non_canonical_tick_material": {
+  "root": "<HOME>/workspace/phase12-l2-l3-execution-tca",
+  "exists": true,
+  "files": {
+   "raw/binance_futures_aggtrades_btcusdt_limit20.json": {
+    "exists": true,
+    "why": "real_public_trade_sample: GET /fapi/v1/aggTrades?symbol=BTCUSDT&limit=20 captured at ONE instant - the record's tick stream SHAPE (aggTrade id, price, quantity, first/last trade id, timestamp ms, buyer-maker flag) at 20 rows, i.e. seconds of one day out of the record's 2,191-day sample",
+    "bytes": 2292,
+    "sha256": "b5a1f7162c37c1516c5791cf594fe844d2849464b46e42fa715b9ce96af94261"
+   },
+   "raw/binance_futures_depth_btcusdt_limit20.json": {
+    "exists": true,
+    "why": "real_public_l2_snapshot: GET /fapi/v1/depth?symbol=BTCUSDT&limit=20 at the same instant - a 20-level book snapshot, not an L2 event history",
+    "bytes": 925,
+    "sha256": "359dae23b525f39feb34d57bacddf3878adb9e11ec5f03b7212b16ce49f5e581"
+   },
+   "raw/binance_futures_exchange_info_present.json": {
+    "exists": true,
+    "why": "real_public_current_metadata: present-state exchange/symbol metadata, explicitly labelled 'not historical truth' by its own manifest",
+    "bytes": 1090684,
+    "sha256": "a09ed7a3a2dd97934705144a1e333801af8aa94e79f779e8d922cbe4f83e1513"
+   }
+  },
+  "file_classes": {
+   "raw/binance_futures_aggtrades_btcusdt_limit20.json": "real_public_trade_sample: GET /fapi/v1/aggTrades?symbol=BTCUSDT&limit=20 captured at ONE instant - the record's tick stream SHAPE (aggTrade id, price, quantity, first/last trade id, timestamp ms, buyer-maker flag) at 20 rows, i.e. seconds of one day out of the record's 2,191-day sample",
+   "raw/binance_futures_depth_btcusdt_limit20.json": "real_public_l2_snapshot: GET /fapi/v1/depth?symbol=BTCUSDT&limit=20 at the same instant - a 20-level book snapshot, not an L2 event history",
+   "raw/binance_futures_exchange_info_present.json": "real_public_current_metadata: present-state exchange/symbol metadata, explicitly labelled 'not historical truth' by its own manifest"
+  },
+  "capture_type": "bounded_public_readonly_source_capture",
+  "capture_instants": [
+   "2026-08-28T14:22:43Z",
+   "2026-08-28T14:22:44Z",
+   "2026-08-28T14:22:45Z"
+  ],
+  "capture_policy": {
+   "authenticated_requests": false,
+   "private_user_stream": false,
+   "real_orders": false,
+   "retries_after_response": false,
+   "write_requests": false
+  },
+  "aggtrade_rows": 20,
+  "aggtrade_row_keys": [
+   "T",
+   "a",
+   "f",
+   "l",
+   "m",
+   "nq",
+   "p",
+   "q"
+  ],
+  "aggtrade_span_ms": 1166,
+  "aggtrade_first_instant": "2026-08-28T14:22:43Z",
+  "aggtrade_last_instant": "2026-08-28T14:22:44Z",
+  "depth_keys": [
+   "E",
+   "T",
+   "asks",
+   "bids",
+   "lastUpdateId"
+  ],
+  "depth_levels": {
+   "bids": 20,
+   "asks": 20
+  },
+  "single_instant": true,
+  "used": false,
+  "cannot_satisfy_record_because": [
+   "twenty trades spanning 1166 ms at one instant cannot express a tick stream over the record's 2,191-day sample; the source's tick pipeline alone processed up to 71,619 bars per series",
+   "not the canonical raw: the card permits reads only through /data/raw (read-only); this material lives in an unrelated Phase-12 execution/TCA harness and would be a substitute store, i.e. a different estimand",
+   "no 1-minute bars at all in that harness - it captured a book snapshot and a trade sample, not a minute history",
+   "its own manifest labels the exchange-info capture 'present-state ... not historical truth', i.e. the harness itself refuses the historical reading"
+  ]
+ },
+ "other_local_stores": {
+  "scan_roots_count": 22,
+  "files_scanned": 5194,
+  "token_files": 3343,
+  "class_counts": {
+   "wiki_quant_corpus": 1613,
+   "research_corpus_prose": 3526,
+   "repo_scratch_prior_measurements_and_authoring_scripts": 1297,
+   "repo_worktree_copies": 2506,
+   "repo_evidence_snapshots": 258,
+   "repo_runtime_source_and_templates": 360,
+   "handoff_candidate_body_corpus": 1973,
+   "non_canonical_execution_tca_harness": 58,
+   "vendor_documentation": 237,
+   "phase13_production_ops_harness": 33,
+   "phase11_options_harness": 9,
+   "phase9_cross_sectional_harness": 8,
+   "btc_relative_entry_score_project": 11,
+   "kanban_signal_transition_fixture_project": 5,
+   "binance_usdm_perpetual_lifecycle_notice_store": 1553,
+   "phase10_pit_bitemporal_store": 25,
+   "phase4_microstructure_competency_harness": 14,
+   "qlib_container_deployment_tree": 109,
+   "repo_docs_and_config": 67,
+   "binance_usdm_pit_membership_store_not_market_data": 53,
+   "documentation_or_prose_not_a_market_store": 8,
+   "source_file_not_a_market_store": 15,
+   "structured_document_not_a_market_series": 14,
+   "quant_backtest_design_project": 20,
+   "daily_crypto_brief_project": 15,
+   "phase3_portfolio_risk_harness": 1,
+   "binance_usdm_pit_snapshot_store_not_market_data": 25,
+   "non_canonical_single_instant_capture": 2
+  },
+  "generic_class_counts": {
+   "documentation_or_prose_not_a_market_store": 8,
+   "source_file_not_a_market_store": 15,
+   "structured_document_not_a_market_series": 14
+  },
+  "series_shaped_decisive": [
+   "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+   "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+   "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+   "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv",
+   "<HOME>/workspace/qlib-apple-container|evidence/image-qlib.json"
+  ],
+  "unclassified_data_hits": [],
+  "decisive_groups": {
+   "tick_trade_stream": {
+    "tokens_hit": [
+     "aggressor",
+     "aggtrade",
+     "bookticker",
+     "buyer_maker",
+     "tardis",
+     "tick",
+     "tick_data",
+     "trade_id"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "minute_bar_stream": {
+    "tokens_hit": [
+     "minute",
+     "one_min"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+     "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "orderflow_feature_surface": {
+    "tokens_hit": [
+     "bid_ask",
+     "cancel_to_trade",
+     "entropy",
+     "imbalance",
+     "order_flow",
+     "trade_size",
+     "volume_delta"
+    ],
+    "data_shape_hits": []
+   },
+   "depth_l2_surface": {
+    "tokens_hit": [
+     "depth",
+     "orderbook"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+     "<HOME>/workspace/qlib-apple-container|evidence/image-qlib.json"
+    ]
+   },
+   "trade_count_surface": {
+    "tokens_hit": [
+     "num_trades",
+     "taker_buy",
+     "trade_count"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv"
+    ]
+   }
+  },
+  "note": "the house-wide scan is a read-only walk of the declared roots with a single unified token list; prose and source hits fall back to declared generic classes and every SERIES-shaped decisive hit is named by hand (C15). Totals drift between reads because this repo itself is inside a scanned root; the invariant is the hit structure"
+ },
+ "verification": {
+  "checker_default_all_pass": {
+   "rc": 0,
+   "ok": true,
+   "checks": 27,
+   "failed": []
+  },
+  "checker_host_scan_all_pass": {
+   "rc": 0,
+   "ok": true,
+   "checks": 30,
+   "failed": [],
+   "per_check": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS",
+    "C4b": "PASS",
+    "C5": "PASS",
+    "C6": "PASS",
+    "C7": "PASS",
+    "C8": "PASS",
+    "C9": "PASS",
+    "C10": "PASS",
+    "C11": "PASS",
+    "C12": "PASS",
+    "C13": "PASS",
+    "C14": "PASS",
+    "C15": "PASS",
+    "C16": "PASS",
+    "C17": "PASS",
+    "C18": "PASS",
+    "C18b": "PASS",
+    "C18c": "PASS",
+    "C19": "PASS",
+    "C20": "PASS",
+    "C21": "PASS",
+    "C22": "PASS",
+    "C23": "PASS",
+    "C24": "PASS",
+    "C25": "PASS",
+    "C26": "PASS",
+    "C27": "PASS"
+   },
+   "raw_summary": {
+    "entries": 1613,
+    "kline_files": 1596,
+    "kline_datasets": 28,
+    "intervals": [
+     "15m",
+     "1d",
+     "1h",
+     "1w",
+     "30m",
+     "4h",
+     "5m"
+    ],
+    "finest_resolved_interval": "5m",
+    "config_intervals": [
+     "15m",
+     "1d",
+     "1h",
+     "1w",
+     "30m",
+     "4h",
+     "5m"
+    ],
+    "config_has_1m": false,
+    "probe_payload_files": 17,
+    "decisive_tokens": 22,
+    "decisive_offending_hits": []
+   },
+   "stores_summary": {
+    "files_scanned": 5194,
+    "token_files": 3343,
+    "token_files_total": 3343,
+    "class_counts": {
+     "wiki_quant_corpus": 1613,
+     "research_corpus_prose": 3526,
+     "repo_scratch_prior_measurements_and_authoring_scripts": 1297,
+     "repo_worktree_copies": 2506,
+     "repo_evidence_snapshots": 258,
+     "repo_runtime_source_and_templates": 360,
+     "handoff_candidate_body_corpus": 1973,
+     "non_canonical_execution_tca_harness": 58,
+     "vendor_documentation": 237,
+     "phase13_production_ops_harness": 33,
+     "phase11_options_harness": 9,
+     "phase9_cross_sectional_harness": 8,
+     "btc_relative_entry_score_project": 11,
+     "kanban_signal_transition_fixture_project": 5,
+     "binance_usdm_perpetual_lifecycle_notice_store": 1553,
+     "phase10_pit_bitemporal_store": 25,
+     "phase4_microstructure_competency_harness": 14,
+     "qlib_container_deployment_tree": 109,
+     "repo_docs_and_config": 67,
+     "binance_usdm_pit_membership_store_not_market_data": 53,
+     "documentation_or_prose_not_a_market_store": 8,
+     "source_file_not_a_market_store": 15,
+     "structured_document_not_a_market_series": 14,
+     "quant_backtest_design_project": 20,
+     "daily_crypto_brief_project": 15,
+     "phase3_portfolio_risk_harness": 1,
+     "binance_usdm_pit_snapshot_store_not_market_data": 25,
+     "non_canonical_single_instant_capture": 2
+    },
+    "generic_class_counts": {
+     "documentation_or_prose_not_a_market_store": 8,
+     "source_file_not_a_market_store": 15,
+     "structured_document_not_a_market_series": 14
+    },
+    "series_shaped_hit_count": 11,
+    "series_shaped_decisive": [
+     "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+     "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+     "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv",
+     "<HOME>/workspace/qlib-apple-container|evidence/image-qlib.json"
+    ],
+    "unclassified_host_hits": [],
+    "decisive_groups": {
+     "tick_trade_stream": {
+      "tokens_hit": [
+       "aggressor",
+       "aggtrade",
+       "bookticker",
+       "buyer_maker",
+       "tardis",
+       "tick",
+       "tick_data",
+       "trade_id"
+      ],
+      "data_shape_hits": [
+       "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+      ]
+     },
+     "minute_bar_stream": {
+      "tokens_hit": [
+       "minute",
+       "one_min"
+      ],
+      "data_shape_hits": [
+       "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+       "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+       "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+      ]
+     },
+     "orderflow_feature_surface": {
+      "tokens_hit": [
+       "bid_ask",
+       "cancel_to_trade",
+       "entropy",
+       "imbalance",
+       "order_flow",
+       "trade_size",
+       "volume_delta"
+      ],
+      "data_shape_hits": []
+     },
+     "depth_l2_surface": {
+      "tokens_hit": [
+       "depth",
+       "orderbook"
+      ],
+      "data_shape_hits": [
+       "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+       "<HOME>/workspace/qlib-apple-container|evidence/image-qlib.json"
+      ]
+     },
+     "trade_count_surface": {
+      "tokens_hit": [
+       "num_trades",
+       "taker_buy",
+       "trade_count"
+      ],
+      "data_shape_hits": [
+       "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv"
+      ]
+     }
+    },
+    "row_shapes": {
+     "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_cells.jsonl": {
+      "keys": [
+       "available_at",
+       "cell_id",
+       "decision_date",
+       "decision_time",
+       "evidence_tier",
+       "known_from",
+       "known_to",
+       "membership_status",
+       "source_ids",
+       "stable_instrument_id",
+       "supported",
+       "unknown_reason",
+       "valid_at",
+       "venue_symbol"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_observations.csv": {
+      "keys": [
+       "archive_capture_at",
+       "availability_proven",
+       "available_at",
+       "contract_type",
+       "evidence_role",
+       "evidence_tier",
+       "identity_resolution",
+       "known_from",
+       "known_to",
+       "membership_status",
+       "observation_id",
+       "parser_lineage",
+       "product_family",
+       "snapshot_state_timestamp",
+       "source_hash",
+       "source_id",
+       "source_published_at",
+       "source_retrieved_at",
+       "stable_instrument_id",
+       "status_timestamp",
+       "supported_for_daily_cell",
+       "unknown_conflict_reason",
+       "valid_from",
+       "valid_interval_explicit",
+       "valid_to",
+       "venue_symbol"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv": {
+      "keys": [
+       "available_at",
+       "body_match",
+       "confidence",
+       "contract_type",
+       "event_id",
+       "event_point_supported",
+       "event_time",
+       "event_type",
+       "evidence_role",
+       "evidence_tier",
+       "identity_relation",
+       "instrument_id",
+       "known_from",
+       "known_to",
+       "lineage_status",
+       "margin_asset",
+       "market",
+       "new_symbol",
+       "old_symbol",
+       "parse_method",
+       "product_family",
+       "related_instrument_id",
+       "revision_history_status",
+       "revision_lineage",
+       "source_id",
+       "source_last_update_ms",
+       "source_last_updated_at",
+       "source_publish_date_ms",
+       "source_published_at",
+       "source_raw_path",
+       "source_revision_id",
+       "source_sha256",
+       "source_url",
+       "source_version",
+       "status_after",
+       "support_scope",
+       "unknown_reason",
+       "venue",
+       "venue_symbol",
+       "window_role"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl": {
+      "keys": [
+       "available_at_utc",
+       "baseAsset",
+       "capture_completed_at_utc",
+       "capture_id",
+       "capture_sequence",
+       "capture_started_at_utc",
+       "clock_skew_diagnostics",
+       "contractType",
+       "deliveryDate",
+       "filters",
+       "historical_membership",
+       "http_status",
+       "identity_missing_required_fields",
+       "identity_resolution",
+       "identity_review_state",
+       "marginAsset",
+       "missing_fields",
+       "observed_instance_fingerprint",
+       "observed_instance_identity_fields",
+       "observed_state",
+       "onboardDate",
+       "pair",
+       "quoteAsset",
+       "raw_byte_size",
+       "raw_sha256",
+       "schema_version",
+       "source_metadata",
+       "source_server_time_ms",
+       "source_server_time_utc",
+       "source_url",
+       "status",
+       "symbol",
+       "target_presence"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl": {
+      "keys": [
+       "available_at_utc",
+       "baseAsset",
+       "capture_completed_at_utc",
+       "capture_id",
+       "capture_sequence",
+       "capture_started_at_utc",
+       "clock_skew_diagnostics",
+       "cohort_decision_eligible_at_utc",
+       "contractType",
+       "decision_eligibility_reason_codes",
+       "deliveryDate",
+       "filters",
+       "historical_membership",
+       "http_status",
+       "identity_missing_required_fields",
+       "identity_resolution",
+       "identity_review_state",
+       "marginAsset",
+       "missing_fields",
+       "observed_instance_fingerprint",
+       "observed_instance_identity_fields",
+       "observed_state",
+       "onboardDate",
+       "pair",
+       "quoteAsset",
+       "raw_byte_size",
+       "raw_sha256",
+       "scheduled_capture_time_utc",
+       "schema_version",
+       "source_metadata",
+       "source_server_time_ms",
+       "source_server_time_utc",
+       "source_url",
+       "status",
+       "symbol",
+       "symbol_decision_eligibility",
+       "target_presence"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv": {
+      "keys": [
+       "close",
+       "close_time_ms",
+       "date",
+       "high",
+       "low",
+       "num_trades",
+       "open",
+       "open_time_ms",
+       "quote_volume",
+       "symbol",
+       "taker_buy_base_volume",
+       "taker_buy_quote_volume",
+       "volume"
+      ],
+      "rows": null
+     },
+     "<HOME>/workspace/phase5-crypto-derivatives|data/basis_btc_perp_5m.json": {
+      "keys": [
+       "annualizedBasisRate",
+       "basis",
+       "basisRate",
+       "contractType",
+       "futuresPrice",
+       "indexPrice",
+       "pair",
+       "timestamp"
+      ],
+      "rows": 5140
+     },
+     "<HOME>/workspace/phase5-crypto-derivatives|data/funding_info.json": {
+      "keys": [
+       "adjustedFundingRateCap",
+       "adjustedFundingRateFloor",
+       "disclaimer",
+       "fundingIntervalHours",
+       "symbol",
+       "updateTime"
+      ],
+      "rows": 762
+     },
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv": {
+      "keys": [
+       "disposition",
+       "family",
+       "file_path",
+       "normalized_candidate_path",
+       "reason"
+      ],
+      "rows": null
+     },
+     "<REPO>|.kanban-scratch/t_6e26cfa9/draft_removals.json": {
+      "keys": [
+       "artifact",
+       "bytes",
+       "path",
+       "reason",
+       "removed_at_utc",
+       "sha256"
+      ],
+      "rows": 2
+     },
+     "<HOME>/workspace/qlib-apple-container|evidence/image-qlib.json": {
+      "keys": [
+       "configuration",
+       "id",
+       "variants"
+      ],
+      "rows": 1
+     }
+    }
+   }
+  },
+  "self_test": {
+   "ok": true,
+   "variants": 33,
+   "flipped": [
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28",
+    "V29",
+    "V30",
+    "V31",
+    "V32"
+   ],
+   "not_flipped": [],
+   "benign_control_failed": [],
+   "per_variant": {
+    "V1": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V2": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V3": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V4": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V5": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V6": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V7": {
+     "target": "C18",
+     "failed_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    "V8": {
+     "target": "C21",
+     "failed_checks": [
+      "C21"
+     ],
+     "ok": true
+    },
+    "V9": {
+     "target": "C21",
+     "failed_checks": [
+      "C21"
+     ],
+     "ok": true
+    },
+    "V10": {
+     "target": "C18b",
+     "failed_checks": [
+      "C18b"
+     ],
+     "ok": true
+    },
+    "V11": {
+     "target": "C18b",
+     "failed_checks": [
+      "C18b"
+     ],
+     "ok": true
+    },
+    "V12": {
+     "target": "C18b",
+     "failed_checks": [
+      "C18b"
+     ],
+     "ok": true
+    },
+    "V13": {
+     "target": "C18b",
+     "failed_checks": [
+      "C18b"
+     ],
+     "ok": true
+    },
+    "V14": {
+     "target": "C18b",
+     "failed_checks": [
+      "C18b",
+      "C23"
+     ],
+     "ok": true
+    },
+    "V15": {
+     "target": "C24",
+     "failed_checks": [
+      "C24"
+     ],
+     "ok": true
+    },
+    "V16": {
+     "target": "C24",
+     "failed_checks": [
+      "C24"
+     ],
+     "ok": true
+    },
+    "V17": {
+     "target": "C24",
+     "failed_checks": [
+      "C24"
+     ],
+     "ok": true
+    },
+    "V18": {
+     "target": "C24",
+     "failed_checks": [
+      "C24"
+     ],
+     "ok": true
+    },
+    "V19": {
+     "target": "C23",
+     "failed_checks": [
+      "C23"
+     ],
+     "ok": true
+    },
+    "V20": {
+     "target": "C23",
+     "failed_checks": [
+      "C23"
+     ],
+     "ok": true
+    },
+    "V21": {
+     "target": "C20",
+     "failed_checks": [
+      "C20"
+     ],
+     "ok": true
+    },
+    "V22": {
+     "target": "C20",
+     "failed_checks": [
+      "C20"
+     ],
+     "ok": true
+    },
+    "V23": {
+     "target": "C20",
+     "failed_checks": [
+      "C20"
+     ],
+     "ok": true
+    },
+    "V24": {
+     "target": "C19",
+     "failed_checks": [
+      "C19"
+     ],
+     "ok": true
+    },
+    "V25": {
+     "target": "C19",
+     "failed_checks": [
+      "C19"
+     ],
+     "ok": true
+    },
+    "V26": {
+     "target": "C18c",
+     "failed_checks": [
+      "C18c"
+     ],
+     "ok": true
+    },
+    "V27": {
+     "target": "C18c",
+     "failed_checks": [
+      "C18c"
+     ],
+     "ok": true
+    },
+    "V28": {
+     "target": "C18c",
+     "failed_checks": [
+      "C18c"
+     ],
+     "ok": true
+    },
+    "V29": {
+     "target": "C18c",
+     "failed_checks": [
+      "C18c"
+     ],
+     "ok": true
+    },
+    "V30": {
+     "target": "C22",
+     "failed_checks": [
+      "C22"
+     ],
+     "ok": true
+    },
+    "V31": {
+     "target": "C22",
+     "failed_checks": [
+      "C22"
+     ],
+     "ok": true
+    },
+    "V32": {
+     "target": "C27",
+     "failed_checks": [
+      "C27"
+     ],
+     "ok": true
+    },
+    "B1": {
+     "target": null,
+     "failed_checks": [],
+     "ok": true
+    }
+   }
+  },
+  "raw_fixture_control": {
+   "ok": true,
+   "flipped": [
+    "C1",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C2",
+    "C3",
+    "C4",
+    "C4b",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "expected_subset": [
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C3",
+    "C4",
+    "C4b",
+    "C5",
+    "C6",
+    "C9"
+   ],
+   "not_flipped": [],
+   "artifact_side_unaffected": []
+  },
+  "verify_verbatim_board_db": {
+   "ok": true,
+   "checked": 65,
+   "leaves": 65,
+   "problems": [],
+   "misses": [],
+   "card_source": "board_db"
+  },
+  "verify_verbatim_pool_body": {
+   "ok": true,
+   "checked": 65,
+   "leaves": 65,
+   "problems": [],
+   "misses": [],
+   "card_source": "card_body_file"
+  },
+  "excluded_token_pass": {
+   "raw_token_hit_counts": {
+    "min": 6,
+    "price": 7,
+    "size": 3,
+    "trade": 4,
+    "volume": 8
+   },
+   "raw_series_hits": [
+    {
+     "entry": "binance/usdm/funding/BNBUSDT/BNBUSDT-funding.jsonl.gz",
+     "token": "price",
+     "keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "binance/usdm/funding/BTCUSDT/BTCUSDT-funding.jsonl.gz",
+     "token": "price",
+     "keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "binance/usdm/funding/ETHUSDT/ETHUSDT-funding.jsonl.gz",
+     "token": "price",
+     "keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "binance/usdm/funding/SOLUSDT/SOLUSDT-funding.jsonl.gz",
+     "token": "price",
+     "keys": [
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "mark_price",
+      "market_type",
+      "rate_type",
+      "symbol",
+      "truth_status",
+      "venue"
+     ],
+     "rows": null
+    }
+   ],
+   "host_token_hit_counts": {
+    "m1": 58,
+    "min": 1891,
+    "price": 3023,
+    "size": 2508,
+    "trade": 2528,
+    "volume": 2334
+   },
+   "host_series_hits_sample": [
+    {
+     "entry": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv",
+     "token": "trade",
+     "keys": [
+      "available_at",
+      "body_match",
+      "confidence",
+      "contract_type",
+      "event_id",
+      "event_point_supported",
+      "event_time",
+      "event_type",
+      "evidence_role",
+      "evidence_tier",
+      "identity_relation",
+      "instrument_id",
+      "known_from",
+      "known_to",
+      "lineage_status",
+      "margin_asset",
+      "market",
+      "new_symbol",
+      "old_symbol",
+      "parse_method",
+      "product_family",
+      "related_instrument_id",
+      "revision_history_status",
+      "revision_lineage",
+      "source_id",
+      "source_last_update_ms",
+      "source_last_updated_at",
+      "source_publish_date_ms",
+      "source_published_at",
+      "source_raw_path",
+      "source_revision_id",
+      "source_sha256",
+      "source_url",
+      "source_version",
+      "status_after",
+      "support_scope",
+      "unknown_reason",
+      "venue",
+      "venue_symbol",
+      "window_role"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|capture_manifest.jsonl",
+     "token": "size",
+     "keys": [
+      "capture_id",
+      "capture_sequence",
+      "http_status",
+      "metadata_path",
+      "metadata_sha256",
+      "raw_byte_size",
+      "raw_path",
+      "raw_sha256",
+      "source_url"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+     "token": "min",
+     "keys": [
+      "available_at_utc",
+      "baseAsset",
+      "capture_completed_at_utc",
+      "capture_id",
+      "capture_sequence",
+      "capture_started_at_utc",
+      "clock_skew_diagnostics",
+      "contractType",
+      "deliveryDate",
+      "filters",
+      "historical_membership",
+      "http_status",
+      "identity_missing_required_fields",
+      "identity_resolution",
+      "identity_review_state",
+      "marginAsset",
+      "missing_fields",
+      "observed_instance_fingerprint",
+      "observed_instance_identity_fields",
+      "observed_state",
+      "onboardDate",
+      "pair",
+      "quoteAsset",
+      "raw_byte_size",
+      "raw_sha256",
+      "schema_version",
+      "source_metadata",
+      "source_server_time_ms",
+      "source_server_time_utc",
+      "source_url",
+      "status",
+      "symbol",
+      "target_presence"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|cohort_events.jsonl",
+     "token": "size",
+     "keys": [
+      "available_at_utc",
+      "capture_completed_at_utc",
+      "capture_id",
+      "capture_outcome",
+      "capture_sequence",
+      "capture_started_at_utc",
+      "clock_skew_diagnostics",
+      "cohort_decision_eligible_at_utc",
+      "decision_eligibility",
+      "event_id",
+      "event_recorded_at_utc",
+      "event_sequence",
+      "event_type",
+      "identity_review_state",
+      "integrity_validation",
+      "parse_validation",
+      "raw_byte_size",
+      "raw_preserved",
+      "raw_sha256",
+      "reason_codes",
+      "result",
+      "scheduled_capture_time_utc",
+      "schema_version",
+      "source_server_time_utc",
+      "timeliness"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|cohort_manifest.jsonl",
+     "token": "size",
+     "keys": [
+      "available_at_utc",
+      "capture_completed_at_utc",
+      "capture_id",
+      "capture_sequence",
+      "capture_started_at_utc",
+      "clock_skew_diagnostics",
+      "cohort_decision_eligible_at_utc",
+      "decision_eligibility",
+      "http_status",
+      "identity_review_state",
+      "identity_status",
+      "metadata_path",
+      "metadata_sha256",
+      "parse_status",
+      "raw_byte_size",
+      "raw_path",
+      "raw_preserved",
+      "raw_sha256",
+      "reason_codes",
+      "response_bytes_received_at_utc",
+      "scheduled_capture_time_utc",
+      "schema_version",
+      "source_server_time_utc",
+      "source_url",
+      "timeliness"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+     "token": "min",
+     "keys": [
+      "available_at_utc",
+      "baseAsset",
+      "capture_completed_at_utc",
+      "capture_id",
+      "capture_sequence",
+      "capture_started_at_utc",
+      "clock_skew_diagnostics",
+      "cohort_decision_eligible_at_utc",
+      "contractType",
+      "decision_eligibility_reason_codes",
+      "deliveryDate",
+      "filters",
+      "historical_membership",
+      "http_status",
+      "identity_missing_required_fields",
+      "identity_resolution",
+      "identity_review_state",
+      "marginAsset",
+      "missing_fields",
+      "observed_instance_fingerprint",
+      "observed_instance_identity_fields",
+      "observed_state",
+      "onboardDate",
+      "pair",
+      "quoteAsset",
+      "raw_byte_size",
+      "raw_sha256",
+      "scheduled_capture_time_utc",
+      "schema_version",
+      "source_metadata",
+      "source_server_time_ms",
+      "source_server_time_utc",
+      "source_url",
+      "status",
+      "symbol",
+      "symbol_decision_eligibility",
+      "target_presence"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/phase7-alpha-research|data/derived/real_daily.csv",
+     "token": "trade",
+     "keys": [
+      "close",
+      "close_time_ms",
+      "date",
+      "high",
+      "low",
+      "num_trades",
+      "open",
+      "open_time_ms",
+      "quote_volume",
+      "symbol",
+      "taker_buy_base_volume",
+      "taker_buy_quote_volume",
+      "volume"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/phase4-market-microstructure|data/merged_daily_ohlcv.csv",
+     "token": "volume",
+     "keys": [
+      "btc_close",
+      "btc_high",
+      "btc_low",
+      "btc_qvol",
+      "btc_volume",
+      "date",
+      "eth_close",
+      "eth_high",
+      "eth_low",
+      "eth_qvol",
+      "eth_volume"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+     "token": "trade",
+     "keys": [
+      "disposition",
+      "family",
+      "file_path",
+      "normalized_candidate_path",
+      "reason"
+     ],
+     "rows": null
+    },
+    {
+     "entry": "<REPO>|.kanban-scratch/t_05ef4352/draft_removals.json",
+     "token": "volume",
+     "keys": [
+      "artifacts",
+      "reason",
+      "removed_at_utc"
+     ],
+     "rows": 1
+    },
+    {
+     "entry": "<REPO>|.kanban-scratch/t_6e26cfa9/draft_removals.json",
+     "token": "volume",
+     "keys": [
+      "artifact",
+      "bytes",
+      "path",
+      "reason",
+      "removed_at_utc",
+      "sha256"
+     ],
+     "rows": 2
+    },
+    {
+     "entry": "<REPO>|.worktrees/homepage-detail-polish-final/evidence/container-qlib-run.json",
+     "token": "size",
+     "keys": [
+      "configuration",
+      "id",
+      "status"
+     ],
+     "rows": 1
+    }
+   ],
+   "host_series_hit_count": 27,
+   "note": "generic tokens (trade/trades/min/m1/size/volume/price) are NOT decisive vocabulary; this second pass re-probes them over the raw tree and the host roots so an exclusion cannot hide a hit. Every series-shaped hit above is a document/index/project artifact, and none of them carries an aggTrade or 1-minute row shape: the only series in the tree with a trade row shape is the declared single-instant capture, and no file in the raw tree carries a 1-minute interval token in its name."
+  },
+  "repo_suite": {
+   "tail": [
+    "----------------------------------------------------------------------",
+    "Ran 435 tests in 10.787s",
+    "OK"
+   ],
+   "ran_line": "Ran 435 tests in 10.787s",
+   "ok": true
+  },
+  "author_rerun_refused": {
+   "rc": 1,
+   "stdout": "empty of any WROTE line",
+   "error": "FileExistsError: [Errno 17] File exists: '<EXPANSION>/qlib-results/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02/rounds/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-r1/round-spec.json'",
+   "note": "re-running the authoring script against the published pair is refused by O_CREAT|O_EXCL; the published bytes are untouched"
+  }
+ },
+ "draft_removals": [],
+ "disclosures": [
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class (its definition covers 'instrument 缺失' and '區間內無 bar') with the contract 6.4 prerequisite-missing alignment bullet as the terminal basis. Adding a dedicated class is an operator/contract decision.",
+  "the record's sample period (2020-01-01 -> 2025-12-31) overlaps the raw window only from 2022-01-01 onwards, so 24 of the record's 72 months have no local coverage in principle; the card's fallback split (in-sample 2022-01-01→2025-09-30 / OOS 2025-10-01→2026-09-11) is written into the round-spec as research-defined and was NOT applied (zero computation). The decisive absence is the SAMPLING CLOCK (tick stream + 1-minute bars), not the calendar window - disclosed rather than dressed up as a window mismatch.",
+  "the store's own SCHEMA.md documents the interval alphabet '(1m 5m 15m 30m 1h 4h 1d 1w)' as a PATH PATTERN while CONFIG.json and the materialised directories list only 5m/15m/30m/1h/4h/1d/1w; the two positive-surface booleans (`schema_documents_minute_dataset`, `schema_documents_tick_or_trade_dataset`) are computed from the declared DATASET-NAME list, never from prose that could document the absence of the surface.",
+  "a REAL public aggTrade sample does exist on this host, in the unrelated Phase-12 execution/TCA harness: 20 rows with keys ['T','a','f','l','m','nq','p','q'] spanning 1166 ms at the single instant 2026-08-28T14:22:43Z, plus a 20-level depth snapshot at the same instant whose own manifest labels the exchange-info capture 'present-state ... not historical truth'. It is measured, disclosed in the round-spec's `non_canonical_tick_material` block, and used=false; twenty trades covering seconds cannot express a 2,191-day tick stream, there are no 1-minute bars in that harness, and the card permits reads only through the canonical raw (/data/raw, read-only).",
+  "the host also carries a derived DAILY panel (phase7 `data/derived/real_daily.csv`: 14,760 rows / 12 fixed perp symbols / 2022-01-01 -> 2025-05-14) whose columns include quote_volume, num_trades and taker-buy volumes - the closest object on the machine to a trade-count surface. It is DAILY, it is a derived bar product (not a trade stream), and its own data_provenance.md states it is 'not a point-in-time universe' with an explicit survivorship limitation; measured, disclosed, never used.",
+  "the raw store is updated nightly by ai.marketdata.raw-sync (last run 2026-09-17T02:15:05.539000+00:00); measured values are recorded next to the card's quoted values, and the claimed-measurement check (C18c) compares against the LIVE tree, so a post-sync re-run would legitimately show drift in totals while the hit STRUCTURE is the invariant.",
+  "this repo root is itself inside the scanned roots (including `.worktrees/**` and every prior card's `.kanban-scratch/**`), so host-scan totals drift between reads; the invariant is the hit structure (0 unclassified, and every series-shaped decisive hit named by hand in HOST_ALLOWED_SERIES_HITS). The generic-token second pass (`--excluded-token-pass`) is what carries the proof that no exclusion hides a hit.",
+  "nothing was launched, so no run-spec/script deployment to /scripts occurred and the card's sha256-equality rule for a production script was never applicable (preflight P9/P10 N/A). Environment-only preflight P1-P8: PASS.",
+  "no network fetch was attempted: the missing prerequisite is itself the terminal condition, and fetching a substitute tick/minute history would be a different candidate (and a different estimand).",
+  "host-specific absolute paths in this snapshot are redacted to <HOME> / <EXPANSION> / <REPO>; the on-disk artifacts are unredacted and re-hashable."
+ ],
+ "no_fabrication": {
+  "attempts_launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "performance_fields": "none exist and none were invented (no CAGR, Sharpe, Max DD, net PnL, fee, funding, turnover or DCA histogram value is present anywhere in the round; the C21 check asserts it recursively over both artifacts)",
+  "falsification_battery": "registered in FULL (4 items restored from the canonical record where the card excerpt carries 3), status NOT_EXECUTED, none lowered, none removed, none simulated"
+ },
+ "readback": {
+  "round_dir": "rounds/bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-r1/",
+  "round_dir_contents": [
+   "round-spec.json",
+   "verdict.json"
+  ],
+  "attempt_dir_exists": false,
+  "survivor_bundle_exists": false,
+  "evidence_file": "bitcoin-perpetual-information-bars-tick-minute-directional-failure-2026-09-02-prerequisite-gate-20260917.json",
+  "raw_last_sync_utc": "2026-09-17T02:15:05.539000+00:00"
+ }
+}
