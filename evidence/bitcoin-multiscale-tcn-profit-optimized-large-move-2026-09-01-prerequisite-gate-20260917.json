@@ -1,0 +1,890 @@
+{
+ "snapshot_kind": "prerequisite-gate evidence snapshot (contract 13 card-local technical terminal; no launch, no performance claim)",
+ "snapshot_taken_at_utc": "2026-09-17T11:36:54Z",
+ "snapshot_boundary": "read-only snapshot: the canonical raw and the results tree were only read; the round's two artifacts were published exactly once (O_EXCL) and are re-read here by hash",
+ "card": {
+  "kanban_task_id": "t_79e9c694",
+  "board": "quant-strategy-research",
+  "family_id": "bitcoin-multiscale-tcn-profit-optimized-large-move-2026-09-01",
+  "round_id": "bitcoin-multiscale-tcn-profit-optimized-large-move-2026-09-01-r1",
+  "assignee": "default",
+  "chain_parent": "t_6e26cfa9",
+  "origin": "contract 14.4 automatic production handoff from the research-intake PASS-WITH-CAVEAT on wiki record quant/bitcoin-multiscale-tcn-profit-optimized-large-move-2026-09-01.md (candidateised exactly once by card t_86d04b09)"
+ },
+ "contract_basis": {
+  "prerequisite_clause_verbatim": "- prerequisite 條款：若本 record 的 required data/market 不在上述 raw（見 ELIGIBLE UNIVERSE 節錄），本卡執行時依 §13 technical failure semantics 終結（`TECHNICAL_INCOMPLETE`／`DEFERRED`）；**不得**以近似資料、替代市場或改寫 hypothesis 硬跑。缺 prerequisite **不是**拒絕本 candidate 的理由，也不是新的 eligibility gate。",
+  "universe_prohibition_verbatim": [
+   "the four local perpetuals were NOT registered as a substitute universe; the record's instruments and its three feature modalities are registered as-is and the missing ones are reported as the terminal condition"
+  ],
+  "exit_semantics": "card LIFECYCLE FOOTER: an honest prerequisite-missing TECHNICAL_INCOMPLETE terminal with the required immutable artifacts SATISFIES THIS CARD GOAL; block is reserved for shared-layer failure or an undecided contract needing a human decision",
+  "frozen_card_body": {
+   "sha256": "sha256:c4cb0b0871aef03862b4814b69ff7deb961543f8ecc75af3a4cbd20e20f97597",
+   "bytes": 19685,
+   "path_note": "read back from the board DB at authoring time with the system-owned lifecycle footer stripped; the pool-body copy is asserted byte-equal"
+  },
+  "reviewed_source": {
+   "record": "wiki brain quant/bitcoin-multiscale-tcn-profit-optimized-large-move-2026-09-01.md",
+   "sha256": "sha256:4c3ee92b2f9d6cff0d6cb925f4189bb775e232eb9d0d7ad041eea2aca012f010",
+   "intake_decision": "PASS-WITH-CAVEAT (accepted as source-faithful, research-only knowledge; source-reported results not independently reproduced)"
+  },
+  "contract": {
+   "file": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+   "sha256": "sha256:14f8c0c81159901f913a713ae38c9636865f378bd0367799961fcf0699422c18",
+   "version": "v1.9.0"
+  },
+  "primary_sources": [
+   "Yousefnezhad, P., Mansourfar, G., & Derakhshi, M. F. (2026). Forecasting Economically Significant Bitcoin Moves: A Multi-Scale TCN with Profit-Optimized Thresholds. arXiv:2608.26174v1 [q-fin.ST], 25 Jul 2026. https://arxiv.org/abs/2608.26174"
+  ]
+ },
+ "determination": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "taxonomy_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, and its own definition covers 'instrument 缺失'; the §6.4 prerequisite-missing alignment bullet (card t_2acfd339) explicitly makes this honest TECHNICAL_INCOMPLETE the terminal",
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "rounds_used": 1,
+  "no_progress_rounds": 1,
+  "attempts_launched": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "no_scientific_claim": "no scientific verdict was produced: the falsification battery is registered NOT_EXECUTED and the round carries no performance number of any kind",
+  "why_not_DEFERRED": "the record's own decision variable cannot be constructed on this machine (2 of 3 feature modalities absent, and the record leaves their construction unspecified) and the card forbids substituting a proxy; DEFERRED is for an intentional resource/priority stop, which this is not"
+ },
+ "measured_canonical_raw": {
+  "raw_root": "<EXPANSION>/market-data-raw",
+  "store_top_level": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "dataset_families": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "symbols": [
+   "BNBUSDT",
+   "BTCUSDT",
+   "ETHUSDT",
+   "SOLUSDT"
+  ],
+  "intervals": [
+   "1d",
+   "1w",
+   "15m",
+   "30m",
+   "4h",
+   "5m",
+   "1h"
+  ],
+  "venue_dirs": [
+   "_meta",
+   "_tools",
+   "binance"
+  ],
+  "second_venue_present": false,
+  "spot_market_present": false,
+  "instrument_count": 4,
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "instrument_fields_requirement_shaped": [],
+  "kline_datasets": 28,
+  "kline_files": 1596,
+  "kline_key_violations": [],
+  "kline_sampled_files": 1596,
+  "klines_daily_window_utc": {
+   "BNBUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "BTCUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "ETHUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   },
+   "SOLUSDT": {
+    "first": "2022-01-01",
+    "last": "2026-09-16",
+    "monthly_files": 57
+   }
+  },
+  "funding_rows": {
+   "BNBUSDT": 5161,
+   "BTCUSDT": 5161,
+   "ETHUSDT": 5161,
+   "SOLUSDT": 5236
+  },
+  "funding_window_utc": {
+   "BNBUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "BTCUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "ETHUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ],
+   "SOLUSDT": [
+    "2022-01-01",
+    "2026-09-17"
+   ]
+  },
+  "funding_row_keys": [
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ],
+   [
+    "funding_price_source",
+    "funding_rate",
+    "funding_time_ms",
+    "mark_price",
+    "market_type",
+    "rate_type",
+    "symbol",
+    "truth_status",
+    "venue"
+   ]
+  ],
+  "funding_truth_status": [
+   "modeled_funding",
+   "official"
+  ],
+  "schema_dataset_names": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "raw_entry_count": 1613,
+  "raw_byte_total": 79039607,
+  "payload_scan_files": 17,
+  "probe_tokens_tested": 57,
+  "payload_hit_counts": {
+   "funding": 12,
+   "klines": 8,
+   "perpetual": 13
+  },
+  "probe_hits_unexplained_name": [],
+  "probe_hits_unexplained_payload": [],
+  "probe_payload_data_ext_hits": [
+   "_meta/CONFIG.json",
+   "_meta/FUNDING_EXPORT.json",
+   "_meta/INSTRUMENTS_EXPORT.json",
+   "_meta/STATE.json",
+   "_meta/TRANSCODE_MANIFEST.json",
+   "binance/usdm/funding/BNBUSDT/BNBUSDT-funding.jsonl.gz",
+   "binance/usdm/funding/BTCUSDT/BTCUSDT-funding.jsonl.gz",
+   "binance/usdm/funding/ETHUSDT/ETHUSDT-funding.jsonl.gz",
+   "binance/usdm/funding/SOLUSDT/SOLUSDT-funding.jsonl.gz",
+   "binance/usdm/instruments/usdm-perp-instruments.json"
+  ],
+  "decisive_zero_tokens_tested": 54,
+  "decisive_name_hits": [],
+  "decisive_payload_hits": [],
+  "decisive_group_series_hits": {
+   "onchain_activity": [],
+   "onchain_vendor": [],
+   "sentiment_feed": [],
+   "model_architecture": []
+  },
+  "decisive_group_prose_hits": {
+   "onchain_activity": [],
+   "onchain_vendor": [],
+   "sentiment_feed": [],
+   "model_architecture": []
+  },
+  "decisive_group_data_shape_hits": {
+   "onchain_activity": [],
+   "onchain_vendor": [],
+   "sentiment_feed": [],
+   "model_architecture": []
+  },
+  "btcusdt_daily_present": true,
+  "btcusdt_daily_span_days": 1720,
+  "required_sample_window": [
+   "2018-02-01",
+   "2025-12-31"
+  ],
+  "required_sample_days": 2891,
+  "available_daily_window": [
+   "2022-01-01",
+   "2026-09-16"
+  ],
+  "available_funding_window": [
+   "2022-01-01",
+   "2026-09-17"
+  ],
+  "window_overlap_days": 1461,
+  "window_overlap_exists": true,
+  "overlap_note": "unlike the sibling cards whose windows did not overlap at all, this round's absence is NOT primarily a window problem: the record's 2018-2025 sample overlaps the raw for 1461 of 2891 days, and the terminalising absence is the two missing feature modalities (on-chain, sentiment) plus the record's own unspecified feature construction. The pre-2022 segment is additionally unavailable and is disclosed rather than hidden.",
+  "required_data_available": false
+ },
+ "measured_host_side": {
+  "roots": 18,
+  "files_scanned": 4681,
+  "token_files": 3047,
+  "bytes": 193985984,
+  "payload_hit_counts": {
+   "active_addresses": 47,
+   "alternative_me": 23,
+   "arkham": 29,
+   "attention": 250,
+   "bitinfocharts": 11,
+   "block_reward": 32,
+   "blockchain_api": 7,
+   "channel_attention": 17,
+   "coinmetrics": 66,
+   "confirmed_tx": 2,
+   "crowd": 87,
+   "cryptoquant": 47,
+   "difficulty": 49,
+   "dilated": 16,
+   "dune": 38,
+   "exchange_flow": 48,
+   "fear_greed": 60,
+   "forum": 37,
+   "funding": 2381,
+   "genesis": 38,
+   "glassnode": 88,
+   "google_trends": 15,
+   "halving": 40,
+   "hash_rate": 38,
+   "headline": 195,
+   "hodl": 71,
+   "inception": 48,
+   "klines": 826,
+   "large_move": 29,
+   "lunar_crush": 13,
+   "mempool": 72,
+   "miner": 97,
+   "mining": 161,
+   "mvrv": 75,
+   "nansen": 29,
+   "news": 476,
+   "nvt": 46,
+   "on_chain": 450,
+   "pairwise": 162,
+   "perpetual": 2497,
+   "positioning": 172,
+   "profit_optimized": 20,
+   "ranking_loss": 20,
+   "realized_cap": 39,
+   "reddit": 29,
+   "santiment": 24,
+   "sentiment": 321,
+   "social": 108,
+   "sopr": 67,
+   "tcn": 34,
+   "telegram": 807,
+   "temporal_convolution": 13,
+   "tweet": 26,
+   "twitter": 756,
+   "unspent": 28,
+   "utxo": 48,
+   "whale": 31
+  },
+  "data_extension_hits": [
+   {
+    "entry": "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_cells.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": [
+     "binance_usdm_pit_membership_cells_not_market_data: point-in-time membership cells (cell_id 'BTCUSDT|2022-01-01', membership_status 'unknown', supported=false, evidence_tier null); the only token hit is 'perpetual' inside the instrument id - no price, quote, rate, metric or sentiment field"
+    ]
+   },
+   {
+    "entry": "<HOME>/workspace/a1-1-phase9-pit-membership-20260830|membership_observations.csv",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": [
+     "binance_usdm_pit_membership_observations_not_market_data: same store's observation rows for USD-M perpetual membership; only token 'perpetual' in the instrument id"
+    ]
+   },
+   {
+    "entry": "<HOME>/workspace/a1-usdm-pit-lifecycle-20260830|lifecycle_events.csv",
+    "tokens": [
+     "funding",
+     "perpetual"
+    ],
+    "class": [
+     "binance_usdm_perpetual_lifecycle_notice_store: listing/delisting event rows for Binance USD-M perpetuals; the token hits are vendor prose inside the stored notice text ('Binance Futures will conduct an automatic settlement on the USDT-Margined ... Contract', '-0.75 * Maintenance Margin Ratio') plus the venue column value 'USD-M Futures' and the symbol/venue metadata - not an on-chain, sentiment or feature surface",
+     "binance_usdm_perpetual_lifecycle_notice_store: listing/delisting event rows for Binance USD-M perpetuals; the token hits are vendor prose inside the stored notice text ('Binance Futures will conduct an automatic settlement on the USDT-Margined ... Contract', '-0.75 * Maintenance Margin Ratio') plus the venue column value 'USD-M Futures' and the symbol/venue metadata - not an on-chain, sentiment or feature surface"
+    ]
+   },
+   {
+    "entry": "<HOME>/workspace/a1-2-prospective-pit-foundation-20260830|snapshot_observations.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": [
+     "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT snapshot observations for USD-M perpetuals; only token 'perpetual'"
+    ]
+   },
+   {
+    "entry": "<HOME>/workspace/a1-3-prospective-pit-cohort-20260830|snapshot_observations.jsonl",
+    "tokens": [
+     "perpetual"
+    ],
+    "class": [
+     "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT cohort snapshot observations for USD-M perpetuals; only token 'perpetual'"
+    ]
+   },
+   {
+    "entry": "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv",
+    "tokens": [
+     "funding",
+     "mining",
+     "positioning",
+     "sentiment",
+     "telegram"
+    ],
+    "class": [
+     "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+     "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+     "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+     "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+     "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series"
+    ]
+   }
+  ],
+  "data_hit_classes": [
+   [
+    "binance_usdm_pit_membership_cells_not_market_data: point-in-time membership cells (cell_id 'BTCUSDT|2022-01-01', membership_status 'unknown', supported=false, evidence_tier null); the only token hit is 'perpetual' inside the instrument id - no price, quote, rate, metric or sentiment field"
+   ],
+   [
+    "binance_usdm_pit_membership_observations_not_market_data: same store's observation rows for USD-M perpetual membership; only token 'perpetual' in the instrument id"
+   ],
+   [
+    "binance_usdm_perpetual_lifecycle_notice_store: listing/delisting event rows for Binance USD-M perpetuals; the token hits are vendor prose inside the stored notice text ('Binance Futures will conduct an automatic settlement on the USDT-Margined ... Contract', '-0.75 * Maintenance Margin Ratio') plus the venue column value 'USD-M Futures' and the symbol/venue metadata - not an on-chain, sentiment or feature surface",
+    "binance_usdm_perpetual_lifecycle_notice_store: listing/delisting event rows for Binance USD-M perpetuals; the token hits are vendor prose inside the stored notice text ('Binance Futures will conduct an automatic settlement on the USDT-Margined ... Contract', '-0.75 * Maintenance Margin Ratio') plus the venue column value 'USD-M Futures' and the symbol/venue metadata - not an on-chain, sentiment or feature surface"
+   ],
+   [
+    "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT snapshot observations for USD-M perpetuals; only token 'perpetual'"
+   ],
+   [
+    "binance_usdm_pit_snapshot_observations_not_market_data: prospective PIT cohort snapshot observations for USD-M perpetuals; only token 'perpetual'"
+   ],
+   [
+    "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+    "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+    "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+    "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series",
+    "research_corpus_index_filenames_and_reasons_only: rows are markdown file names of unrelated strategy documents plus a review disposition/reason column; the token hits ('sentiment', 'positioning', 'telegram', 'mining', 'funding') are substrings of those file names and of reason prose (e.g. 'Sentiment-Based-XBT-Futures-Trading-Strategy.md', '...Oscillation-Positioning-Breakthrough-Strategy...', 'Telegram-发信接口-V200-Python.md', '...The-Triple-Moving-Average-Channel-Strategy...', \"Lexical collision risk with 'funding'\") - an index of documents, not a data series"
+   ]
+  ],
+  "unclassified_data_hits": [],
+  "measurement_note": "read-only scan of 18 roots with a 57-token regex vocabulary; prose mentions are classified by root, store-shaped hits (csv/jsonl/parquet/db) are row-shape probed",
+  "series_shaped_decisive": [],
+  "decisive_host_groups": {
+   "onchain_activity": {
+    "tokens_hit": [
+     "active_addresses",
+     "block_reward",
+     "confirmed_tx",
+     "difficulty",
+     "exchange_flow",
+     "genesis",
+     "halving",
+     "hash_rate",
+     "hodl",
+     "mempool",
+     "miner",
+     "mining",
+     "mvrv",
+     "nvt",
+     "on_chain",
+     "realized_cap",
+     "sopr",
+     "unspent",
+     "utxo",
+     "whale"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "onchain_vendor": {
+    "tokens_hit": [
+     "arkham",
+     "bitinfocharts",
+     "blockchain_api",
+     "coinmetrics",
+     "cryptoquant",
+     "dune",
+     "glassnode",
+     "nansen",
+     "santiment"
+    ],
+    "data_shape_hits": []
+   },
+   "sentiment_feed": {
+    "tokens_hit": [
+     "alternative_me",
+     "attention",
+     "crowd",
+     "fear_greed",
+     "forum",
+     "google_trends",
+     "headline",
+     "lunar_crush",
+     "news",
+     "positioning",
+     "reddit",
+     "sentiment",
+     "social",
+     "telegram",
+     "tweet",
+     "twitter"
+    ],
+    "data_shape_hits": [
+     "<HOME>/workspace/alpha-strategy-research|coverage_manifest.csv"
+    ]
+   },
+   "model_architecture": {
+    "tokens_hit": [
+     "channel_attention",
+     "dilated",
+     "inception",
+     "large_move",
+     "pairwise",
+     "profit_optimized",
+     "ranking_loss",
+     "tcn",
+     "temporal_convolution"
+    ],
+    "data_shape_hits": []
+   }
+  },
+  "live_recheck_totals": {
+   "files_scanned": 4696,
+   "token_files": 3052,
+   "bytes": 194643197
+  },
+  "settled_non_migrated_stores_absent": [
+   "<HOME>/workspace/lean-system",
+   "<HOME>/workspace/microsoft-quant-stack",
+   "<HOME>/workspace/nautilus-system"
+  ]
+ },
+ "requirement_vs_available": [
+  {
+   "item": "record data: instrument BTC/USD (Bitcoin)",
+   "status": "PRESENT_AS_LOCAL_ANALOGUE",
+   "evidence": "registered as BTC/USD; the only local BTC market is BTCUSDT-PERP.BINANCE (USDT-quoted USD-M perpetual), measured as one of the four instrument definitions in the raw"
+  },
+  {
+   "item": "record data: venue (not specified; 'likely major exchange OHLCV + on-chain data')",
+   "status": "ABSENT_AS_REGISTERED",
+   "evidence": "the record's own expectation pairs an exchange OHLCV source with on-chain data; only one venue (BINANCE) exists locally and its on-chain half is absent (0 on-chain token hits in the whole raw tree, 57 tokens tested)"
+  },
+  {
+   "item": "record data: market type spot or perpetual (not specified)",
+   "status": "PRESENT_AS_LOCAL_ANALOGUE",
+   "evidence": "the registered latitude admits a perpetual; the local store is USD-M perpetuals only (dataset families ['funding', 'instruments', 'klines']), and no spot market exists"
+  },
+  {
+   "item": "record data: timeframe daily bars",
+   "status": "PRESENT",
+   "evidence": "1d klines for all four symbols; measured BTCUSDT daily window 2022-01-01 -> 2026-09-16 (57 monthly files)"
+  },
+  {
+   "item": "record field modality 1: on-chain metrics (exchange flows, active addresses, miner behaviour; exact features unspecified)",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "0 occurrences of any of the 20 on-chain tokens (on-chain, exchange flow/netflow, active addresses, miner/mining, hash rate, difficulty, UTXO, realized cap, SOPR, MVRV, NVT, mempool, whale, block reward, HODL, unspent, genesis, halving) in any raw entry name or payload file"
+  },
+  {
+   "item": "record field modality 2: market OHLCV",
+   "status": "PRESENT_AS_LOCAL_ANALOGUE",
+   "evidence": "six OHLCV key sets per kline file (open/close/high/low/volume/open_time_ms) - the only modality the raw carries, at 7 intervals over 4 symbols"
+  },
+  {
+   "item": "record field modality 3: sentiment data (source unidentified)",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "0 occurrences of any of the 16 sentiment tokens (sentiment, fear & greed, social, Twitter, Reddit, Google trends, news, headlines, LunarCrush, alternative.me, attention, crowd, positioning, tweets, forums, Telegram) in any raw entry name or payload file"
+  },
+  {
+   "item": "record data: on-chain data vendor / provider feed",
+   "status": "ABSENT_FROM_CANONICAL_RAW",
+   "evidence": "0 occurrences of Glassnode / Coin Metrics / CryptoQuant / Santiment / Dune / BitInfoCharts / blockchain.com / Nansen / Arkham anywhere in the raw tree"
+  },
+  {
+   "item": "record point-in-time: sample Feb 2018 -> Dec 2025",
+   "status": "PARTIAL_WINDOW_OVERLAP",
+   "evidence": "the raw begins 2022-01-01, so the record's 2018-2021 segment (the first 49% of its 2891-day sample) has no local bars; overlap 2022-01-01 -> 2025-12-31 (1461 days)"
+  },
+  {
+   "item": "record point-in-time protections ('not detailed')",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "the record registers no point-in-time convention (the local store is UTC bar data with no publication-lag field); nothing can be aligned to an unregistered convention"
+  },
+  {
+   "item": "record missing-data policy ('not specified')",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "no gap/forward-fill policy is registered; a multi-modal daily panel cannot be assembled from data that does not exist, let alone repaired"
+  },
+  {
+   "item": "record funding/fee/spread ('not included in the reported results')",
+   "status": "PRESENT_UNRELATED_LOCAL_ANALOGUE",
+   "evidence": "local perp funding exists (BTCUSDT 5161 rows, 2022-01-01 -> 2026-09-17, truth_status ['modeled_funding', 'official']) but the record's own cost model is unregistered and its reported profit excludes costs"
+  },
+  {
+   "item": "record falsification item 1: out-of-sample walk-forward (AUC < 0.55 or negative profit after costs)",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "needs the trained model over all three modalities and an AUC surface; neither the on-chain nor the sentiment channel exists, so no walk-forward can be run"
+  },
+  {
+   "item": "record falsification item 2: transaction cost sensitivity (10-20 bps round trip)",
+   "status": "PARTIALLY_DERIVABLE",
+   "evidence": "local instrument metadata carries maker/taker fees for the four perps, i.e. a cost grid for an instrument the record does not register; the record's own profit series does not exist"
+  },
+  {
+   "item": "record falsification item 3: parameter perturbation of the profit-optimized threshold (+-20%)",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "the profit-optimized threshold is fitted on the validation set of a model that cannot be trained; there is no threshold to perturb"
+  },
+  {
+   "item": "record falsification item 4: regime decomposition (bull / bear / sideways, AUC >= 0.50)",
+   "status": "PARTIALLY_DERIVABLE",
+   "evidence": "price regimes are computable from the local daily bars, but the AUC component requires the absent model output; the item as registered cannot be executed"
+  },
+  {
+   "item": "record falsification item 5: baseline comparison (20-day momentum / funding < 0)",
+   "status": "PARTIALLY_DERIVABLE",
+   "evidence": "both baseline rules are computable locally (daily bars and funding are present) but the comparison partner (the TCN) does not exist, so the item as registered cannot be executed"
+  },
+  {
+   "item": "record falsification item 6: feature ablation across on-chain / market / sentiment",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "two of the three feature groups do not exist locally and their construction is not specified by the record; an ablation over absent channels is undefined"
+  },
+  {
+   "item": "record model input: exact feature set",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "the record states it is underspecified ('The exact feature set ... not fully detailed in the abstract'); inventing it would rewrite the hypothesis, which the card forbids"
+  },
+  {
+   "item": "record model input: specific on-chain metrics",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "the record's own Crypto-portability paragraph: 'The exact on-chain metrics are unspecified, making independent reconstruction difficult'"
+  },
+  {
+   "item": "record model input: sentiment data source",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "the record's own Crypto-portability paragraph: 'The sentiment data source is not identified'; no local store can be claimed to be it"
+  },
+  {
+   "item": "record model input: precise profit-optimization procedure",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "the record states the procedure is not detailed; the threshold cannot be reconstructed from the abstract"
+  },
+  {
+   "item": "record architecture: InceptionTCN blocks, CNN channel attention, adaptive average pooling",
+   "status": "NOT_CONSTRUCTIBLE",
+   "evidence": "named at abstract level only (no block/layer/channel specification); 0 occurrences of the model vocabulary in the raw tree, i.e. no local implementation to adopt either"
+  },
+  {
+   "item": "record loss: pairwise ranking loss",
+   "status": "PARTIALLY_DERIVABLE",
+   "evidence": "the objective is named but its pairing/ranking construction is unspecified; it is a training component of the absent model, not a data prerequisite"
+  },
+  {
+   "item": "record signal: prediction target ('>5%% BTC increase within 7 days')",
+   "status": "DEFINED_NOT_EVALUATED",
+   "evidence": "fully specified and computable from the local daily bars; carried as the round's target and left unevaluated (no model, no features)"
+  },
+  {
+   "item": "record signal: holding period (7 days maximum) and long-only direction on signal",
+   "status": "DEFINED_NOT_EVALUATED",
+   "evidence": "registered as-is; no direction leg was added and the inherited DCA envelope is not mapped onto it (see execution_invariants_disclosure)"
+  },
+  {
+   "item": "record sample universe: single asset BTC (no cross-sectional panel registered)",
+   "status": "NOT_REGISTERED",
+   "evidence": "the record registers one instrument; the cohort set therefore has no cross-sectional expansion to register and the round registers 0 cohorts"
+  },
+  {
+   "item": "record execution envelope vs inherited USER_FIXED DCA registration",
+   "status": "REGISTERED_NOT_EXECUTABLE",
+   "evidence": "the inherited envelope (linear USD-M perp, 10x, 12 tranches) is written for a perpetual book; the record's long-only daily signal has no locals to trade because two of its three input modalities are absent - recorded, not resolved by inventing a mapping"
+  },
+  {
+   "item": "record DCA / ladder semantics for this family (tranche #1 on signal, adverse-price scale-ins)",
+   "status": "REGISTERED_NOT_APPLIED",
+   "evidence": "registered from the card; zero cohorts and zero cells were realised because nothing was launched"
+  },
+  {
+   "item": "record falsification battery as a whole (6 items)",
+   "status": "BLOCKED_BY_ABSENCE",
+   "evidence": "carried verbatim and NOT_EXECUTED, none lowered and none removed; items 1, 3 and 6 are blocked outright, items 2, 4 and 5 can only be partially built for the wrong object"
+  }
+ ],
+ "requirement_vs_available_counts": {
+  "PRESENT_AS_LOCAL_ANALOGUE": 3,
+  "ABSENT_AS_REGISTERED": 1,
+  "PRESENT": 1,
+  "ABSENT_FROM_CANONICAL_RAW": 3,
+  "PARTIAL_WINDOW_OVERLAP": 1,
+  "NOT_CONSTRUCTIBLE": 8,
+  "PRESENT_UNRELATED_LOCAL_ANALOGUE": 1,
+  "BLOCKED_BY_ABSENCE": 3,
+  "PARTIALLY_DERIVABLE": 4,
+  "DEFINED_NOT_EVALUATED": 2,
+  "NOT_REGISTERED": 1,
+  "REGISTERED_NOT_EXECUTABLE": 1,
+  "REGISTERED_NOT_APPLIED": 1
+ },
+ "decisive_matrix_item_count": 17,
+ "draft_removals": [
+  {
+   "reason": "the first (and only) draft pair was removed and rebuilt once in the same run: the round-spec lacked the top-level `coverage` block (and the `non_goals` list) that the sibling prerequisite-gate rounds carry, so the round's own checker refused it at C23. The round provably computed nothing (no attempt directory, no terminal sentinel, run_id null, card still running), so no consumer existed.",
+   "drafts": [
+    {
+     "name": "round-spec.json",
+     "bytes": 111764,
+     "sha256": "sha256:bc6cce9ae111438b9ada2968d7f6c462af95959f064c3073545693f30a59141f"
+    },
+    {
+     "name": "verdict.json",
+     "bytes": 6265,
+     "sha256": "sha256:227c46f8904f507ca948e5087bc97493fc5830936d63aa124fe7ebb6c8a89a19"
+    }
+   ]
+  },
+  {
+   "reason": "re-authored from the strengthened boundary-aware probe measurement: the published pair recorded the word-boundary probe's payload/data-shape totals, while the checker now detects separator-joined compound identifiers (e.g. `target_large_move_7d`). The round has computed nothing (no attempt directory, no terminal sentinel, run_id null, card still running), so no consumer existed.",
+   "drafts": [
+    {
+     "name": "round-spec.json",
+     "bytes": 112806,
+     "sha256": "sha256:ed0c26218ac3fef0eb1962a103b5e82e02fc4dd97fbb981bf51d04ca5ed7a44b"
+    },
+    {
+     "name": "verdict.json",
+     "bytes": 6265,
+     "sha256": "sha256:4657c75436699c67780b3c5972a6e880e3309a6ed27fabdd6d340ad9f2d1428e"
+    }
+   ]
+  }
+ ],
+ "artifact_hashes": {
+  "round_spec": "sha256:9bd4840f595f007c8451584a00fff0ff38ce88eb9a3751368fe1b2f625daeb31",
+  "round_spec_bytes": 113069,
+  "verdict": "sha256:1dde4634a1d9a8e5401e85fcd8363fb417caeeddb01d331a34f6cdf7037d46bd",
+  "verdict_bytes": 6265,
+  "checker": "sha256:7468b2c7add60894e0a608f86197a5f3c78d66a987340ae485c57001a99e2f12",
+  "checker_path": "runtime/bitcoin_multiscale_tcn_profit_optimized_large_move_prerequisite_check.py",
+  "authoring_script_path": ".kanban-scratch/t_79e9c694/author_spec.py",
+  "authoring_script": "sha256:53e1eb3fd786de1f56510e332fc2a42aac630b2d96ebf426b5274f961e64d6ff",
+  "evidence_self_hash": null,
+  "evidence_self_hash_note": "not embedded: a manifest cannot truthfully carry the sha256 of its own final bytes; the hash is recorded in the commit message and in the evidence index row instead"
+ },
+ "executable_verification": {
+  "live_check": {
+   "command": "python3 runtime/bitcoin_multiscale_tcn_profit_optimized_large_move_prerequisite_check.py --host-scan --json",
+   "rc": 0,
+   "checks_total": 26,
+   "checks_passed": 26,
+   "failed": [],
+   "raw_summary": {
+    "entries": 1613,
+    "kline_files": 1596,
+    "probe_files": 17
+   },
+   "stores_summary": {
+    "files_scanned": 4696,
+    "token_files": 3052,
+    "bytes": 194643197
+   }
+  },
+  "verify_verbatim": {
+   "board_db": {
+    "ok": true,
+    "checked": 51,
+    "leaves": 51,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 15709,
+     "record": 10385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "board_db"
+   },
+   "pool_body": {
+    "ok": true,
+    "checked": 51,
+    "leaves": 51,
+    "problems": [],
+    "misses": [],
+    "orphans": [],
+    "sources": {
+     "card": 15709,
+     "record": 10385,
+     "contract": 256921,
+     "footer": 610
+    },
+    "card_source": "pool_body_file"
+   }
+  },
+  "self_test": {
+   "command": "python3 runtime/bitcoin_multiscale_tcn_profit_optimized_large_move_prerequisite_check.py --self-test",
+   "ok": true,
+   "variants": 26,
+   "flipped": 25,
+   "benign_not_flipped": true
+  },
+  "raw_fixture_control": {
+   "command": "python3 runtime/bitcoin_multiscale_tcn_profit_optimized_large_move_prerequisite_check.py --raw-fixture-control",
+   "ok": true,
+   "flipped": [
+    "C1",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "not_flipped": [],
+   "expected_subset": [
+    "C10",
+    "C11",
+    "C13",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9"
+   ]
+  },
+  "preflight": {
+   "command": "python3 runtime/preflight.py --json",
+   "overall": "PASS",
+   "checks": [
+    [
+     "P1",
+     "PASS"
+    ],
+    [
+     "P2",
+     "PASS"
+    ],
+    [
+     "P3",
+     "PASS"
+    ],
+    [
+     "P4",
+     "PASS"
+    ],
+    [
+     "P5",
+     "PASS"
+    ],
+    [
+     "P6",
+     "PASS"
+    ],
+    [
+     "P7",
+     "PASS"
+    ],
+    [
+     "P8",
+     "PASS"
+    ],
+    [
+     "P9",
+     "NA"
+    ],
+    [
+     "P10",
+     "NA"
+    ]
+   ]
+  },
+  "repo_suite": {
+   "command": "python3 -m unittest discover -s runtime/tests -t runtime/tests",
+   "ran": "Ran 432 tests in 9.755s",
+   "verdict": "OK",
+   "tail": "Ran 432 tests in 9.755s; OK",
+   "lines": 41
+  }
+ },
+ "host_paths_redacted": true,
+ "redaction_placeholders": {
+  "<EXPANSION>": "<EXPANSION>",
+  "<HOME>": "<HOME>",
+  "<REPO>": "<REPO>"
+ },
+ "disclosures": [
+  "two draft pairs were removed and rebuilt inside this same run, both recorded with sha256 and backed up under `.kanban-scratch/t_79e9c694/drafts/`: (1) the first round-spec lacked the top-level `coverage` block (and the `non_goals` list) carried by the sibling prerequisite-gate rounds, which the round's own checker refused at C23; (2) the second pair still recorded the word-boundary probe's measurement while the probe was then strengthened to a boundary-aware form. The round provably computed nothing (no attempt directory, no terminal sentinel, run_id null, card still running), so no consumer existed",
+  "the first measurement pass compiled the requirement vocabulary with Python `\\b` boundaries, which treat `_` as a word character and therefore CANNOT see separator-joined compound identifiers such as `target_large_move_7d`, `profit_optimized_threshold` or `exchange_netflow_btc` - the exact shapes a real feature panel or on-chain column set uses. That pass was withdrawn rather than quietly reported, and every number in this snapshot comes from the boundary-aware re-measurement (`_boundary_aware`: lookarounds that treat `_`, `-` and `.` as separators while still refusing ordinary English, e.g. `determining` does not match `mining`). Under the stronger probe the raw-side result is unchanged - 0 decisive tokens by name or payload, 0 decisive group carried by any row shape - and the host-side hit structure is unchanged (same store-shaped hits, 0 unclassified, no decisive series-shaped row); the superseded measurement is preserved at `.kanban-scratch/t_79e9c694/measure_all_wordboundary_v1.json` and the probe change is regression-checked by the round's own `--raw-fixture-control`",
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class, and the §6.4 prerequisite-missing alignment bullet (card t_2acfd339) explicitly makes this honest TECHNICAL_INCOMPLETE the terminal. Unlike the sibling carry-wedge card, the calendar windows here DO partially overlap (1461 of 2891 registered sample days), so the terminal is primarily a modality absence - two of the record's three feature channels (on-chain, sentiment) have 0 occurrences tree-wide - plus the record's own unspecified feature construction, and it is stated that way in both artifacts",
+  "the record is a multi-modal deep-learning signal (Multi-Scale TCN over on-chain + market + sentiment) whose own Limitations and Crypto-portability paragraphs register the exact feature set, the specific on-chain metrics, the sentiment source and the profit-optimization procedure as underspecified; both readings (data absent / specification absent) are registered and neither was resolved by inventing features",
+  "the market modality IS present locally, as a single-venue USDT-quoted USD-M perpetual at daily bars (BTCUSDT 2022-01-01 -> 2026-09-16), which the record's own 'venue not specified' / 'spot or perpetual (not specified)' latitude admits; the round registers it as a local analogue rather than claiming it satisfies the record's on-chain-coupled data expectation",
+  "the inherited USER_FIXED execution envelope (linear USD-M perp, 10x, 12-tranche geometric DCA ladder) is written for a perpetual book while this record's signal is a daily long-only model output with no locally constructible feature set; the tension is recorded in `execution_invariants_disclosure` and not resolved by inventing a mapping",
+  "the card's falsification excerpt carries the record's items 1-5 behind an explicit '_（節錄；完整內容見 canonical record）_' marker while the record registers 6 items (item 6 = feature ablation); the full battery is carried verbatim in the round-spec, none lowered and none removed, and the card-vs-record difference is disclosed rather than papered over",
+  "the raw is updated daily by the store's own updater: the card quotes klines to 2026-09-11 and funding to 2026-09-12T08:00Z while the measured values are daily bars to 2026-09-16 and funding to 2026-09-17; both readings are recorded and neither is rewritten",
+  "the store's funding rows carry `truth_status`: the backfilled history is `modeled_funding` and only the tail is `official`; recorded because it would matter to any future funding-based accounting, though nothing was computed here",
+  "the host scan is not reproducible across measurement points: a scanned root is the repo this card writes to, so the totals drift (round-spec at authoring: 4681 files / 3047 token files; live re-check: 4696 files). The invariant is the hit structure - 6 store-shaped hits, all classified, [] unclassified, no decisive requirement group carried by a series-shaped row - not the raw file count",
+  "the seventh store-shaped hit is a `.codegraph/codegraph.db` SQLite code-graph index of an unrelated dashboard repo: the token vocabulary matches the word 'sentiment' inside its indexed source/text, not a per-date sentiment series; it is classified by class in the checker's HOST_DATA_CLASSES and asserted to carry no decisive requirement group",
+  "the record's sentiment-source absence is a two-sided problem and is registered as such: no on-chain/sentiment store exists on this machine AND the record does not identify the source or the on-chain metric list, so no substitute store could honestly be claimed to be 'the record's' construction",
+  "no network fetch was attempted in this round: the missing prerequisite is itself the terminal condition and the card forbids substituting a proxy market"
+ ]
+}
