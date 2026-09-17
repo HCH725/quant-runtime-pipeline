@@ -216,6 +216,29 @@ class Harness(unittest.TestCase):
         self.assertIn("Progress: unavailable", out)
         self.assertIn("expected total unavailable", out)
 
+    def test_string_expected_round_spec_without_an_attempt_is_unavailable(self):
+        # A prerequisite-gated round is a legal terminal TECHNICAL_INCOMPLETE: its round-spec registers
+        # `expected` as a scalar ("not_computable") and launches no attempt.  That family has no
+        # denominator, so the line reads unavailable - never a fabricated 0/total, and never a crash.
+        self.write("fam-a/family.json", {"family_id": "fam-a", "kanban_task_id": TASK,
+                                         "kanban_board": BOARD, "created_at_utc": "2026-09-13T00:00:00Z"})
+        self.write("fam-a/rounds/fam-a-r1/round-spec.json", {"expected": "not_computable"})
+        self.write("fam-a/rounds/fam-a-r1/verdict.json", {"verdict": "TECHNICAL_INCOMPLETE"})
+        out = self.snapshot()
+        self.assertIn("Progress: unavailable", out)
+        self.assertIn("no round/attempt directory yet", out)
+        self.assertNotIn("Progress: 0.0%", out)
+
+    def test_string_expected_round_spec_behind_an_attempt_is_unavailable(self):
+        # Same scalar `expected`, but the round does carry an authoritative attempt: the denominator is
+        # still absent, and the note has to say so instead of taking `.get` off a string.
+        round_id = self.family()
+        self.write("fam-a/rounds/%s/round-spec.json" % round_id, {"expected": "not_computable"})
+        self.attempt(round_id, "fam-a-r1-u1", rows=7)
+        out = self.snapshot()
+        self.assertIn("Progress: unavailable", out)
+        self.assertIn("expected total unavailable", out)
+
     # --- cohort (latest observable grid row) ------------------------------
     def test_cohort_is_the_last_row_of_the_newest_streamed_grid(self):
         round_id = self.family()

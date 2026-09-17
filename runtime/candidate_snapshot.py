@@ -108,20 +108,30 @@ def latest_observable_cohort(attempt):
     return None, None
 
 
+def spec_expected_total(doc):
+    """`expected.expected_case_evaluations` of one round-spec doc; None when it carries no denominator.
+
+    A prerequisite-gated round registers `expected` as a scalar (e.g. `"not_computable"`) or leaves it
+    out: anything that is not a dict has no case denominator, which is a normal registered outcome and
+    never an error.
+    """
+    expected = doc.get("expected") if isinstance(doc, dict) else None
+    total = expected.get("expected_case_evaluations") if isinstance(expected, dict) else None
+    return total if isinstance(total, int) and total > 0 else None
+
+
 def expected_total(results_root, family_id, round_id):
     """The immutable round-spec denominator; None when it is missing."""
-    doc = load_json(Path(results_root) / family_id / "rounds" / round_id / "round-spec.json")
-    expected = (doc or {}).get("expected") or {}
-    total = expected.get("expected_case_evaluations")
-    return total if isinstance(total, int) and total > 0 else None
+    return spec_expected_total(load_json(Path(results_root) / family_id / "rounds" / round_id /
+                                         "round-spec.json"))
 
 
 def round_spec_total(results_root, family_id):
     """The family's newest round-spec denominator; None when there is none (not-launched family)."""
     pattern = (Path(results_root) / family_id / "rounds").glob("*/round-spec.json")
     for spec in sorted(pattern, reverse=True):
-        total = ((load_json(spec) or {}).get("expected") or {}).get("expected_case_evaluations")
-        if isinstance(total, int) and total > 0:
+        total = spec_expected_total(load_json(spec))
+        if total is not None:
             return total
     return None
 
