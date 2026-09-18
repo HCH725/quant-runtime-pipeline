@@ -166,18 +166,19 @@ class TestAppend(Base):
     def test_created_body_keeps_candidate_bytes_and_carries_the_lifecycle_footer(self):
         """The appended `--body` = candidate body verbatim + the fixed system-owned lifecycle footer.
 
-        Contract 6.4: an honest prerequisite-missing `TECHNICAL_INCOMPLETE` terminal (with its immutable
-        round-spec/verdict artifacts) satisfies the card's full-backtest goal, so a goal-mode judge must
-        see that rule on the card instead of blocking for outputs that cannot exist.
+        Contract 6.4: source-market identity / source-universe breadth is not a second suitability gate.
+        If the core signal is computable on canonical local data, the card must use that local eligible
+        universe; only genuinely missing signal-required data may terminate as `TECHNICAL_INCOMPLETE`.
         """
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
         create = [c for c in self.fake.calls if c[4] == "create"][0]
         body = create[create.index("--body") + 1]
         self.assertTrue(body.startswith(V13_BODY), "candidate body must be preserved verbatim")
-        self.assertIn("SATISFIES THIS CARD GOAL", body)
+        self.assertIn("canonical local raw", body)
+        self.assertIn("source-market exact-match", body)
+        self.assertIn("symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness", body)
         self.assertIn("TECHNICAL_INCOMPLETE", body)
-        self.assertIn("kanban_complete", body)
         self.assertIn("kanban_block", body)
         # The footer is system-owned chrome, never part of the candidate spec or its fingerprint.
         self.assertEqual(json.loads((Path(self.root) / FAMILY_B / "family.json").read_text())

@@ -50,18 +50,24 @@ _STRATEGY_CARD_FIELDS = ("id", "status", "created_at", "title")
 CANDIDATE_BODY_MARKERS = ("DCA PARAMETER DOMAIN", "COHORT SURVIVOR")
 # System-owned lifecycle footer appended to every card body this automation creates (contract 6.4).
 # Fixed text, never derived from the candidate: the candidate bytes stay verbatim and its fingerprint
-# input is untouched. It exists because a card that can only terminate as an honest prerequisite-missing
-# TECHNICAL_INCOMPLETE otherwise reads to a goal-mode completion judge as "full backtest not delivered".
+# input is untouched. It also prevents source-market identity or source-universe breadth from
+# becoming a second suitability gate when the registered core signal is computable on canonical local data.
 LIFECYCLE_FOOTER = (
     "\n\n---\n"
     "LIFECYCLE FOOTER（system-owned；append 時由 production_handoff 注入，非 candidate 規格的一部分；"
     "contract §6.4／§14.4）\n"
-    "- full backtest 是本卡的目標，前提是 required prerequisites（資料／市場／universe）存在。\n"
-    "- 若必要 prerequisite 客觀不存在、其缺席已由 measured evidence 證實，且已依 contract 寫出該 round"
-    "必要的 immutable terminal artifacts（`round-spec.json` ＋ `verdict.json`=TECHNICAL_INCOMPLETE，"
-    "§6.4／§10.7，含 failure 層級、last run_id、terminal evidence 路徑、未完成原因），"
-    "則該誠實 terminal 結果即 SATISFIES THIS CARD GOAL：應以 `kanban_complete` 終結，"
-    "不得僅因 full-backtest outputs 不可能存在而 block。\n"
+    "- full backtest 是本卡的目標。任何計算前，eligible universe 固定為 canonical local raw 中"
+    "能讓本策略核心 signal/mechanism 合法計算的完整可用集合；原研究的 market／symbol 清單只作"
+    "provenance 與外部效度參考，不要求與本機逐字一致。\n"
+    "- 不得僅因原研究市場不同、named symbols 缺少或本機 universe 較小就判 TECHNICAL_INCOMPLETE。"
+    "只要核心 signal 可在本機資料上計算，就必須用該 local eligible universe 完整跑"
+    "symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness，"
+    "並把結論範圍明確限制在該 local universe；不得事後挑幣或依結果縮減 universe。\n"
+    "- 只有核心 signal 所必需的 data type／field 在本機完全不存在，導致任何合法 local universe"
+    "都無法計算時，才可走 prerequisite-missing TECHNICAL_INCOMPLETE；其缺席須由 measured evidence"
+    "證實，並依 contract 寫出 immutable `round-spec.json` ＋ `verdict.json`。\n"
+    "- 若 candidate 文字中的 source-market exact-match／不得縮減 universe 條款與上述 local-universe"
+    "規則衝突，以本 system-owned lifecycle rule 為執行準則；candidate bytes 與 fingerprint 仍不改寫。\n"
     "- `kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、"
     "確實需要 human decision 的情況（§12.6）。\n"
 )
