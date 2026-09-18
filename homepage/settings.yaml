@@ -2,6 +2,7 @@
 # Read-only viewer over the existing dashboard.json truth. No control actions live here.
 title: 棠元宗 · Quant Research Control Center
 description: 量化研究 · 系統控制中心
+language: zh-Hant
 theme: dark
 color: zinc
 headerStyle: clean
@@ -13,18 +14,16 @@ disableCollapse: true
 target: _self
 logpath: /Users/hong/quant-dashboard/logs
 
-# Desktop follows the six-card control-center composition from the approved concept.
-# Homepage's native responsive column map automatically becomes 2 columns on iPad and 1 on phone.
 layout:
-  控制中心 · Control Center:
+  控制中心:
     style: row
     columns: 6
     header: true
-  關注與近況 · Attention:
+  關注與近況:
     style: row
     columns: 2
     header: true
-  快速入口 · Quick Access:
+  快速入口:
     style: row
     columns: 4
     header: true

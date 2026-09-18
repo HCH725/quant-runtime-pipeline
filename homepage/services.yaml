@@ -1,13 +1,11 @@
 # Quant Research Control Center — read-only operational overview.
-# Every live value comes from the single dashboard.json payload produced by candidate_snapshot.py.
-# The browser links only to the existing Access-protected /detail view; the server-side widget URL
-# remains loopback so Homepage never traverses Cloudflare Access to fetch its own data.
+# All live values come from the existing dashboard.json payload.
 
-- 控制中心 · Control Center:
+- 控制中心:
     - 系統健康:
         icon: mdi-heart-pulse
         href: https://quant.vicchong1983.trade/detail#health
-        description: Watchdog 單一健康真值
+        description: 系統健康檢查單一真值
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -20,7 +18,7 @@
                 - value: ok
                   to: 正常
             - field: health.active_count
-              label: 警示
+              label: 警示數
               format: number
             - field: health.last_check_at_utc
               label: 最後檢查
@@ -29,7 +27,7 @@
     - 目前研究:
         icon: mdi-flask-outline
         href: https://quant.vicchong1983.trade/detail#current
-        description: 當前策略研究進度
+        description: 目前策略研究進度
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -37,11 +35,21 @@
           display: list
           mappings:
             - field: current.stage
-              label: Stage
+              label: 階段
+              remap:
+                - value: not launched
+                  to: 尚未啟動
+                - value: running
+                  to: 執行中
+                - value: running_qlib
+                  to: 回測執行中
             - field: current.progress_text
-              label: Progress
+              label: 進度
+              remap:
+                - value: unavailable (no round/attempt directory yet)
+                  to: 尚無回測進度
             - field: current.card_status
-              label: Kanban
+              label: 任務狀態
               remap:
                 - value: running
                   to: 執行中
@@ -50,13 +58,13 @@
                 - value: done
                   to: 完成
             - field: current.last_activity_utc
-              label: Activity
+              label: 最近活動
               format: relativeDate
 
-    - Kanban:
+    - 任務看板:
         icon: mdi-view-kanban-outline
         href: https://quant.vicchong1983.trade/detail#agent
-        description: Quant Strategy Research board
+        description: 量化策略研究任務
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -70,43 +78,67 @@
               label: 已阻塞
               format: number
             - field: agent.board
-              label: Board
+              label: 看板
+              remap:
+                - value: quant-strategy-research
+                  to: 量化策略研究
 
     - 研究漏斗:
         icon: mdi-filter-variant
         href: https://quant.vicchong1983.trade/detail#funnel
-        description: Review → Intake → Backtest
+        description: 研究審閱 → 納入 → 回測
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
           display: list
           mappings:
-            - field: funnel.wiki_brain.summary
-              label: Research Pool
-            - field: funnel.backtested.summary
-              label: Backtested
+            - field: funnel.wiki_brain.ingested
+              label: 已納入策略
+              format: number
+            - field: funnel.wiki_brain.reviewed
+              label: 已審閱策略
+              format: number
+            - field: funnel.backtested.families
+              label: 已回測家族
+              format: number
+            - field: funnel.backtested.registered
+              label: 登錄家族
+              format: number
 
-    - Leaderboard:
+    - 策略排行榜:
         icon: mdi-trophy-outline
         href: https://quant.vicchong1983.trade/detail#leaderboard
-        description: Frozen survivor ranking
+        description: 已凍結存活策略排名
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
-          display: dynamic-list
+          display: list
           mappings:
-            items: leaderboard.entries
-            name: cohort
-            label: summary
-            limit: 2
-            target: https://quant.vicchong1983.trade/detail#leaderboard
+            - field: leaderboard.entries.0.cohort
+              label: 第一名
+              additionalField:
+                field: leaderboard.entries.0.sharpe
+                format: float
+                prefix: 夏普
+            - field: leaderboard.entries.0.max_dd_pct
+              label: 第一名最大回撤
+              format: float
+            - field: leaderboard.entries.1.cohort
+              label: 第二名
+              additionalField:
+                field: leaderboard.entries.1.sharpe
+                format: float
+                prefix: 夏普
+            - field: leaderboard.entries.1.max_dd_pct
+              label: 第二名最大回撤
+              format: float
 
-    - Runtime Evidence:
+    - 資料新鮮度:
         icon: mdi-database-check-outline
         href: https://quant.vicchong1983.trade/detail#sources
-        description: Authoritative evidence freshness
+        description: 主要研究資料更新狀態
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -114,22 +146,22 @@
           display: block
           mappings:
             - field: sources.results_root_readable
-              label: Results
+              label: 結果資料
               remap:
                 - value: true
-                  to: Ready
+                  to: 可讀
             - field: sources.leaderboard_as_of_utc
-              label: Leaderboard
+              label: 排行榜資料
               format: relativeDate
             - field: generated_at_utc
-              label: Snapshot
+              label: 系統快照
               format: relativeDate
 
-- 關注與近況 · Attention:
+- 關注與近況:
     - 需要關注:
         icon: mdi-alert-circle-outline
         href: https://quant.vicchong1983.trade/detail#current
-        description: 只呈現現有卡片狀態，不自動修復
+        description: 只呈現目前異常，不自動修復
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -137,7 +169,7 @@
           display: list
           mappings:
             - field: current.card_status
-              label: Card status
+              label: 卡片狀態
               remap:
                 - value: running
                   to: 執行中
@@ -146,17 +178,20 @@
                 - value: done
                   to: 完成
             - field: current.note
-              label: Note
+              label: 說明
+              remap:
+                - value: no round/attempt directory yet
+                  to: 尚未建立回合／嘗試目錄
             - field: current.family_id
-              label: Family
+              label: 策略家族
             - field: current.last_activity_utc
-              label: Last activity
+              label: 最近活動
               format: relativeDate
 
     - 系統近況:
         icon: mdi-clock-outline
         href: https://quant.vicchong1983.trade/detail#metadata
-        description: Snapshot / watchdog / board read-back
+        description: 系統快照與資料更新狀態
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -164,13 +199,14 @@
           display: list
           mappings:
             - field: generated_at_utc
-              label: Snapshot
+              label: 系統快照
               format: relativeDate
             - field: health.last_check_at_utc
-              label: Watchdog
+              label: 健康檢查
               format: relativeDate
-            - field: agent.board_summary
-              label: Kanban
+            - field: agent.blocked
+              label: 已阻塞任務
+              format: number
             - field: leaderboard.as_of_utc
-              label: Leaderboard
+              label: 排行榜資料
               format: relativeDate
