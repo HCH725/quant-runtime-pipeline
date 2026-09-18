@@ -1,0 +1,1177 @@
+{
+ "schema_version": 1,
+ "kind": "prerequisite-gate-evidence",
+ "family_id": "continuous-macro-timing-growth-defensive-style-allocation-2026-09-02",
+ "round_id": "continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1",
+ "kanban_task_id": "t_20bec925",
+ "kanban_board": "quant-strategy-research",
+ "created_at_utc": "2026-09-18T07:45:00Z",
+ "outcome": "PREREQUISITE_ABSENT",
+ "terminal": {
+  "verdict": "TECHNICAL_INCOMPLETE",
+  "performance_claimable": false,
+  "failure_layer": "card-local",
+  "failure_class": "data_window_invalid",
+  "failure_class_note": "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is the closest registered card-local class and its definition explicitly covers 'instrument 缺失'. The decisive absence is a missing core-signal data family, not the window - disclosed rather than hidden",
+  "last_run_id": null,
+  "attempts": {
+   "launched": 0,
+   "run_specs": 0,
+   "terminal_sentinels": 0,
+   "run_spec": null,
+   "terminal_sentinel": null,
+   "attempt_dir": null
+  },
+  "cohorts": {
+   "registered_slots": 0,
+   "realized": 0
+  },
+  "survivors": [],
+  "survivor_bundle": null,
+  "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+  "final_verdict_written_by": "Hermes default (Xiaoqian), card t_20bec925"
+ },
+ "artifact_hashes": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/rounds/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1/round-spec.json",
+   "sha256": "sha256:f3e5cde4b0f3180ed893860dfc54e27432734593630bc7eb9aec6f29f83c5725",
+   "bytes": 122689
+  },
+  "verdict": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/rounds/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1/verdict.json",
+   "sha256": "sha256:86dc3e6b690735091cc0e6861ef28d1eafa743cbfe6af9694e244d09d40bdf74",
+   "bytes": 16414
+  },
+  "checker": {
+   "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/continuous_macro_timing_growth_defensive_style_allocation_prerequisite_check.py",
+   "sha256": "sha256:8d4b506af6d2dd42cf0c79f8093913319e324c04b54d34a0d6cd492316df8948"
+  },
+  "authoring_script": {
+   "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/_author_cmt_gate.py",
+   "sha256": "sha256:808b6c55cbde2edd0282f341abacb059cdfbb7b6843a18ab0cde256980a99054"
+  },
+  "sources": {
+   "card_body": {
+    "sha256": "sha256:b993a90d65f700edce5748e01831861783aa56c0c1f2990dfff1b7b79ea53c69",
+    "chars": 18048,
+    "source": "/Users/hong/.hermes/kanban/boards/quant-strategy-research/kanban.db"
+   },
+   "canonical_record": {
+    "sha256": "sha256:b55e3218e4b5b18f6cdb7924dff92abd4db7043a5e8ec3385bd733a8eaba4e5b",
+    "path": "/Users/hong/.hermes/wiki/quant/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02.md"
+   },
+   "family_json": {
+    "sha256": "sha256:c55a94dbaed09199f462e53b9dbdf1e3637abebc93430988c1cd8ef2e6c87f29",
+    "path": "/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/family.json",
+    "semantic_fingerprint": "sha256:e8706955d63b0b8119920379a4a825e06aa8c982081231b69970e680dd15386d"
+   },
+   "contract": {
+    "sha256": "sha256:d3d99a2ebb7e44b084981a05c1d6c70e41754cfe3ed8a920ccfd36c3454339a3"
+   }
+  },
+  "verdict_source_map_entries": 56
+ },
+ "measured_absence": [
+  "no implied-volatility series anywhere in the raw tree: 1 unexplained hits for vix / dvol / implied vol / volatility index / deribit / iv surface over 44 probe tokens x 1613 payload files (0 declared occurrences in this group)",
+  "no options-market-data surface anywhere in the raw tree: 1 unexplained hits for option / strike / expiry / open interest / greeks / put-call; the 3 declared occurrences are audited single-line prose (see declared_allowances)",
+  "no US-equity venue anywhere: 1 unexplained hits for nyse / nasdaq / cboe / us equity",
+  "no record instrument or macro series anywhere: 2 unexplained hits for qqq / xlk / vgt / spyg / vug / schd / vym / vtv / fdvv / cowz / spy / tnx / treasury / 10-year yield / baa / moody / credit spread",
+  "no portability alternate or basket token anywhere: 3 unexplained hits for aave / lending rate / lending apy / supply apy / avax / near protocol / sui / stablecoin / usdc",
+  "every raw row shape measured: 1596 k-line files share ONE 7-key row shape (close|close_time_ms|high|low|open|open_time_ms|volume); funding rows carry 9 keys; the instrument definitions carry 27 fields with NO option / implied-volatility / maturity field",
+  "the four local instruments are all CryptoPerpetual (is_inverse=false, USDT-settled): no maturity, no strike, no implied volatility, no second venue",
+  "one venue and three dataset families only: ['funding', 'instruments', 'klines']",
+  "finest resolved interval = 5m (300s): the store carries bars, not options or index series",
+  "the store's own schema documents its coverage limit: 'the initial\\nimport came from a bar store that kept only OHLCV'",
+  "host scan: 4056 files over 12 declared roots; 9 series-shaped decisive-token hits and 2189 prose hits, every one classified by a declared rule ({\"alpha_research_harness\": 737, \"crypto_derivatives_harness\": 38, \"daily_brief_artifacts\": 22, \"options_volatility_harness\": 20, \"pit_bitemporal_store\": 22, \"pit_lifecycle_harness\": 392, \"pit_membership_harness\": 16, \"qlib_container_harness_source\": 9, \"qlib_container_host_tree\": 11, \"quant_pipeline_container_source\": 10, \"quant_pipeline_dashboard_source\": 1, \"quant_pipeline_evidence\": 51, \"quant_pipeline_repo_docs\": 2, \"quant_pipeline_runtime_source\": 56, \"results_handoff_bodies\": 310, \"results_round_artifacts\": 120, \"vendor_documentation\": 17, \"wiki_brain_quant_record\": 364}); 9 measured substitutes enumerated with used=false. The two positive disclosures are measured and dispositive: (a) the ONLY options/implied-volatility material on this host is a single-instant Deribit BTC snapshot (1,012 instruments, 1,012 book summaries with mark_iv, 13 expiries, 94 strikes, instant 2026-08-28T12:19:42Z) - no history and not inside the canonical raw, so it cannot express a 756-day percentile or a 21-day change; (b) a 12-symbol DERIVED daily crypto panel exists (phase7, includes AVAXUSDT) but carries no implied-volatility series and is not the registered price series",
+  "decisive requirement rows with a non-positive status: 32 of 35 registered matrix rows ({\"ABSENT\": 10, \"ABSENT_AS_REGISTERED\": 3, \"NOT_CONSTRUCTIBLE\": 12, \"BLOCKED_BY_ABSENCE\": 1, \"NOT_EXECUTED_BLOCKED\": 6, \"PRESENT_VIA_PORTABILITY_PROXY\": 2, \"PRESENT\": 1})",
+  "the decisive row is the implied-volatility series: the record's own crypto mapping names Deribit DVOL, and the measured raw contains no Deribit, no DVOL, no options surface and no volatility index at all"
+ ],
+ "measured_available": {
+  "venue": "BINANCE",
+  "market_type": "usdm_perp",
+  "dataset_families": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "kline_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "kline_files_probed": 1596,
+  "finest_resolved_interval": "5m",
+  "kline_1d_bars": {
+   "BNBUSDT": 1721,
+   "BTCUSDT": 1721,
+   "ETHUSDT": 1721,
+   "SOLUSDT": 1721
+  },
+  "funding_observations": {
+   "BNBUSDT": 5164,
+   "BTCUSDT": 5164,
+   "ETHUSDT": 5164,
+   "SOLUSDT": 5239
+  },
+  "decisive_group_unexplained": {
+   "volatility_index_series": 0,
+   "options_market_data": 0,
+   "us_equity_venue": 0,
+   "record_instrument_set": 0,
+   "record_macro_series": 0,
+   "portability_alternate_provider": 0,
+   "portability_growth_basket_tokens": 0,
+   "portability_defensive_store": 0
+  },
+  "decisive_probe_hits_unexplained_total": 0,
+  "present_token_positive_control": {
+   "perpetual": {
+    "name_hits": 1,
+    "payload_hits": 23211
+   },
+   "funding": {
+    "name_hits": 5,
+    "payload_hits": 82997
+   },
+   "klines": {
+    "name_hits": 1596,
+    "payload_hits": 1659
+   },
+   "binance": {
+    "name_hits": 1602,
+    "payload_hits": 37472
+   },
+   "usdt": {
+    "name_hits": 0,
+    "payload_hits": 12
+   }
+  }
+ },
+ "raw_measurement": {
+  "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+  "files_walked": 1613,
+  "payload_files_probed": 1613,
+  "payload_bytes_probed": 207994525,
+  "kline_files_probed": 1596,
+  "probe_read_cap_bytes": 262144,
+  "probe_max_depth": 8,
+  "token_count": 44,
+  "decisive_token_count": 39,
+  "dataset_families": [
+   "funding",
+   "instruments",
+   "klines"
+  ],
+  "market_dirs": [
+   "usdm"
+  ],
+  "instrument_ids": [
+   "BNBUSDT-PERP.BINANCE",
+   "BTCUSDT-PERP.BINANCE",
+   "ETHUSDT-PERP.BINANCE",
+   "SOLUSDT-PERP.BINANCE"
+  ],
+  "instrument_field_count": 27,
+  "instrument_has_maturity_field": false,
+  "instrument_has_options_or_iv_field": false,
+  "kline_row_key_sets": {
+   "close|close_time_ms|high|low|open|open_time_ms|volume": 1596
+  },
+  "kline_intervals": [
+   "15m",
+   "1d",
+   "1h",
+   "1w",
+   "30m",
+   "4h",
+   "5m"
+  ],
+  "finest_resolved_interval": "5m",
+  "kline_1d_windows": {
+   "BNBUSDT": {
+    "bars": 1721,
+    "first": "2022-01-01T00:00:00Z",
+    "last": "2026-09-17T00:00:00Z",
+    "contiguous": true
+   },
+   "BTCUSDT": {
+    "bars": 1721,
+    "first": "2022-01-01T00:00:00Z",
+    "last": "2026-09-17T00:00:00Z",
+    "contiguous": true
+   },
+   "ETHUSDT": {
+    "bars": 1721,
+    "first": "2022-01-01T00:00:00Z",
+    "last": "2026-09-17T00:00:00Z",
+    "contiguous": true
+   },
+   "SOLUSDT": {
+    "bars": 1721,
+    "first": "2022-01-01T00:00:00Z",
+    "last": "2026-09-17T00:00:00Z",
+    "contiguous": true
+   }
+  },
+  "funding_observations": {
+   "BNBUSDT": 5164,
+   "BTCUSDT": 5164,
+   "ETHUSDT": 5164,
+   "SOLUSDT": 5239
+  },
+  "funding_truth_status": {
+   "BNBUSDT": {
+    "modeled_funding": 2005,
+    "official": 3159
+   },
+   "BTCUSDT": {
+    "modeled_funding": 2005,
+    "official": 3159
+   },
+   "ETHUSDT": {
+    "modeled_funding": 2005,
+    "official": 3159
+   },
+   "SOLUSDT": {
+    "modeled_funding": 2080,
+    "official": 3159
+   }
+  },
+  "decisive_group_unexplained": {
+   "volatility_index_series": 0,
+   "options_market_data": 0,
+   "us_equity_venue": 0,
+   "record_instrument_set": 0,
+   "record_macro_series": 0,
+   "portability_alternate_provider": 0,
+   "portability_growth_basket_tokens": 0,
+   "portability_defensive_store": 0
+  },
+  "decisive_group_declared_hits": {
+   "volatility_index_series": 0,
+   "options_market_data": 3,
+   "us_equity_venue": 0,
+   "record_instrument_set": 0,
+   "record_macro_series": 0,
+   "portability_alternate_provider": 0,
+   "portability_growth_basket_tokens": 0,
+   "portability_defensive_store": 0
+  },
+  "decisive_probe_hits_unexplained_total": 0,
+  "decisive_carried_by_row_shape": [],
+  "present_token_positive_control": {
+   "perpetual": {
+    "name_hits": 1,
+    "payload_hits": 23211
+   },
+   "funding": {
+    "name_hits": 5,
+    "payload_hits": 82997
+   },
+   "klines": {
+    "name_hits": 1596,
+    "payload_hits": 1659
+   },
+   "binance": {
+    "name_hits": 1602,
+    "payload_hits": 37472
+   },
+   "usdt": {
+    "name_hits": 0,
+    "payload_hits": 12
+   }
+  },
+  "schema_documents_coverage_limit": true,
+  "schema_dataset_headers": [
+   "klines (Binance USD-M perpetual futures, UTC)",
+   "funding",
+   "instruments"
+  ],
+  "state_last_run_utc": "2026-09-18T02:15:05.508000+00:00"
+ },
+ "required_data_matrix_status_counts": {
+  "ABSENT": 10,
+  "ABSENT_AS_REGISTERED": 3,
+  "BLOCKED_BY_ABSENCE": 1,
+  "NOT_CONSTRUCTIBLE": 12,
+  "NOT_EXECUTED_BLOCKED": 6,
+  "PRESENT": 1,
+  "PRESENT_VIA_PORTABILITY_PROXY": 2
+ },
+ "required_data_matrix_rows": 35,
+ "decisive_matrix_item_count": 32,
+ "decisive_status_map": {
+  "execution: point-in-time score formation at day t close, next-bar execution": "NOT_EXECUTED_BLOCKED",
+  "extension: incremental Baa credit overlay (lambda_credit, lambda_r x cs)": "NOT_EXECUTED_BLOCKED",
+  "falsification 1: Stationary Random Placebo Test on TNX / VIX / SPYDrawdown": "NOT_EXECUTED_BLOCKED",
+  "falsification 2: Cost Stress Boundary Test (10 -> 25 / 40 bps)": "NOT_EXECUTED_BLOCKED",
+  "falsification 3: Parameter Perturbation Grid (alpha, lambda_s, tau_w, eta)": "NOT_EXECUTED_BLOCKED",
+  "falsification 4: Subperiod Breakdown (2022 rate-hike regime, max DD < -25%)": "NOT_EXECUTED_BLOCKED",
+  "field: adjusted ETF closing prices and daily returns of the registered instruments": "ABSENT_AS_REGISTERED",
+  "instrument: benchmark SPY": "ABSENT",
+  "instrument: defensive income/value ETFs SCHD, VYM, VTV, FDVV, COWZ (US equities)": "ABSENT",
+  "instrument: growth/technology ETFs QQQ, XLK, VGT, SPYG, VUG (US equities)": "ABSENT",
+  "interaction term: i1_t = r_t * vh_t": "NOT_CONSTRUCTIBLE",
+  "interaction term: i2_t = HighVIX_t * VIXRelief_t": "NOT_CONSTRUCTIBLE",
+  "interaction term: i3_t = GrowthExt_t * LowVIX_t": "NOT_CONSTRUCTIBLE",
+  "interaction term: i4_t = GrowthExt_t * LowVIX_t * RateQuiet_t": "NOT_CONSTRUCTIBLE",
+  "portability basket: defensive basket Bitcoin + USD stablecoins as tradable instruments": "NOT_CONSTRUCTIBLE",
+  "portability basket: growth basket tokens SOL, AVAX, NEAR, SUI": "ABSENT_AS_REGISTERED",
+  "score: CrowdedScore_t = 0.5 z(i3) + 0.5 z(i4)": "NOT_CONSTRUCTIBLE",
+  "score: RawScore_t and its expanding Z-score": "BLOCKED_BY_ABSENCE",
+  "score: StressScore_t = 0.5 z(i1) + 0.5 z(i2)": "NOT_CONSTRUCTIBLE",
+  "series: 10-year US Treasury yield (TNX) - the rate-relief input r_t": "ABSENT",
+  "series: CBOE VIX index - the volatility-stress input vh_t = z(VIXPercentile_756)": "ABSENT",
+  "series: Deribit Bitcoin Implied Volatility Index (DVOL) - the record's OWN crypto replacement for VIX": "ABSENT",
+  "series: Moody's Seasoned Baa corporate bond yield (FRED: BAA10Y) - the optional credit overlay": "ABSENT",
+  "signal input: vh_t = z(VIXPercentile_756) - high-VIX percentile": "NOT_CONSTRUCTIBLE",
+  "signal input: vr_t = -z(dVIX_21) - VIX relief": "NOT_CONSTRUCTIBLE",
+  "smooth component: HighVIX_t = softplus(vh_t)": "NOT_CONSTRUCTIBLE",
+  "smooth component: LowVIX_t = softplus(-vh_t)": "NOT_CONSTRUCTIBLE",
+  "smooth component: VIXRelief_t = softplus(vr_t)": "NOT_CONSTRUCTIBLE",
+  "timeframe: daily close-to-close bars for the registered instruments": "ABSENT_AS_REGISTERED",
+  "venue: US equity and index markets (CBOE)": "ABSENT",
+  "venue: US equity and index markets (NASDAQ)": "ABSENT",
+  "venue: US equity and index markets (NYSE)": "ABSENT"
+ },
+ "declared_prose_allowances": {
+  "option": {
+   "_meta/INVENTORY.md": 1,
+   "_tools/README.md": 1
+  },
+  "open_interest": {
+   "_meta/INVENTORY.md": 1
+  }
+ },
+ "other_local_stores": {
+  "scan_roots": [
+   {
+    "root": "/Users/hong/workspace/phase11-options-volatility",
+    "exists": true,
+    "files": 39
+   },
+   {
+    "root": "/Users/hong/workspace/phase5-crypto-derivatives",
+    "exists": true,
+    "files": 74
+   },
+   {
+    "root": "/Users/hong/workspace/phase2-market-data",
+    "exists": false
+   },
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "exists": true,
+    "files": 31
+   },
+   {
+    "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+    "exists": true,
+    "files": 59
+   },
+   {
+    "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+    "exists": true,
+    "files": 49
+   },
+   {
+    "root": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830",
+    "exists": true,
+    "files": 671
+   },
+   {
+    "root": "/Users/hong/workspace/alpha-strategy-research",
+    "exists": true,
+    "files": 729
+   },
+   {
+    "root": "/Users/hong/workspace/quant-runtime-pipeline",
+    "exists": true,
+    "files": 252
+   },
+   {
+    "root": "/Users/hong/workspace/qlib-apple-container",
+    "exists": true,
+    "files": 92
+   },
+   {
+    "root": "/Users/hong/workspace/microsoft-quant-stack",
+    "exists": false
+   },
+   {
+    "root": "/Volumes/ExpansionDrive/daily-crypto-brief",
+    "exists": true,
+    "files": 53
+   },
+   {
+    "root": "/Volumes/ExpansionDrive/qlib-results",
+    "exists": true,
+    "files": 1593
+   },
+   {
+    "root": "/Users/hong/.hermes/wiki/quant",
+    "exists": true,
+    "files": 416
+   }
+  ],
+  "files_scanned": 4058,
+  "series_hit_classes": {
+   "alpha_research_harness": 737,
+   "crypto_derivatives_harness": 38,
+   "daily_brief_artifacts": 22,
+   "options_volatility_harness": 20,
+   "pit_bitemporal_store": 22,
+   "pit_lifecycle_harness": 392,
+   "pit_membership_harness": 16,
+   "qlib_container_harness_source": 9,
+   "qlib_container_host_tree": 11,
+   "quant_pipeline_container_source": 10,
+   "quant_pipeline_dashboard_source": 1,
+   "quant_pipeline_evidence": 51,
+   "quant_pipeline_repo_docs": 2,
+   "quant_pipeline_runtime_source": 56,
+   "results_handoff_bodies": 310,
+   "results_round_artifacts": 122,
+   "vendor_documentation": 17,
+   "wiki_brain_quant_record": 364
+  },
+  "series_hits": [
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "rel": "data/derived/close_wide.csv",
+    "tokens": [
+     "avax"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65536,
+    "class": "alpha_research_harness"
+   },
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "rel": "data/derived/quote_volume_wide.csv",
+    "tokens": [
+     "avax"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65536,
+    "class": "alpha_research_harness"
+   },
+   {
+    "root": "/Users/hong/workspace/phase7-alpha-research",
+    "rel": "data/derived/real_daily.csv",
+    "tokens": [
+     "avax"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65536,
+    "class": "alpha_research_harness"
+   },
+   {
+    "root": "/Users/hong/workspace/phase10-pit-bitemporal",
+    "rel": "data/pit_events.sqlite",
+    "tokens": [
+     "baa"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65536,
+    "class": "pit_bitemporal_store"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830",
+    "rel": "membership_observations.csv",
+    "tokens": [
+     "avax"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 45827,
+    "class": "pit_membership_harness"
+   },
+   {
+    "root": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830",
+    "rel": "lifecycle_events.csv",
+    "tokens": [
+     "aave"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65528,
+    "class": "pit_lifecycle_harness"
+   },
+   {
+    "root": "/Users/hong/workspace/alpha-strategy-research",
+    "rel": "coverage_manifest.csv",
+    "tokens": [
+     "option"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 57163,
+    "class": "alpha_research_harness"
+   },
+   {
+    "root": "/Volumes/ExpansionDrive/qlib-results",
+    "rel": "_handoff/handoff_log.jsonl",
+    "tokens": [
+     "implied_vol",
+     "option"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 65536,
+    "class": "results_handoff_bodies"
+   },
+   {
+    "root": "/Volumes/ExpansionDrive/qlib-results",
+    "rel": "_validation/strategy-a-v2-runtime-e2e-v1.6-20260913/_survivors/leaderboard.csv",
+    "tokens": [
+     "baa"
+    ],
+    "series_shaped": true,
+    "evidence": "payload",
+    "bytes_read": 2365,
+    "class": "results_round_artifacts"
+   }
+  ],
+  "prose_hits_count": 2191,
+  "unclassified": [],
+  "measured_substitutes": [
+   {
+    "path": "/Users/hong/workspace/phase7-alpha-research/data/derived/close_wide.csv",
+    "tokens": [
+     "avax"
+    ],
+    "class": "alpha_research_harness",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/phase7-alpha-research/data/derived/quote_volume_wide.csv",
+    "tokens": [
+     "avax"
+    ],
+    "class": "alpha_research_harness",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/phase7-alpha-research/data/derived/real_daily.csv",
+    "tokens": [
+     "avax"
+    ],
+    "class": "alpha_research_harness",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/phase10-pit-bitemporal/data/pit_events.sqlite",
+    "tokens": [
+     "baa"
+    ],
+    "class": "pit_bitemporal_store",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_observations.csv",
+    "tokens": [
+     "avax"
+    ],
+    "class": "pit_membership_harness",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv",
+    "tokens": [
+     "aave"
+    ],
+    "class": "pit_lifecycle_harness",
+    "used": false
+   },
+   {
+    "path": "/Users/hong/workspace/alpha-strategy-research/coverage_manifest.csv",
+    "tokens": [
+     "option"
+    ],
+    "class": "alpha_research_harness",
+    "used": false
+   },
+   {
+    "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/handoff_log.jsonl",
+    "tokens": [
+     "implied_vol",
+     "option"
+    ],
+    "class": "results_handoff_bodies",
+    "used": false
+   },
+   {
+    "path": "/Volumes/ExpansionDrive/qlib-results/_validation/strategy-a-v2-runtime-e2e-v1.6-20260913/_survivors/leaderboard.csv",
+    "tokens": [
+     "baa"
+    ],
+    "class": "results_round_artifacts",
+    "used": false
+   }
+  ],
+  "note": "the host scan enumerates every decisive-token hit by its own rule; the round used none of them, and no hit is an implied-volatility series, an options chain or a US-equity price panel"
+ },
+ "verification": {
+  "checker_default_all_pass": {
+   "checks": 28,
+   "failed": [],
+   "ok": true
+  },
+  "checker_host_scan_all_pass": {
+   "cmd": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hong/workspace/quant-runtime-pipeline/runtime/continuous_macro_timing_growth_defensive_style_allocation_prerequisite_check.py --host-scan",
+   "rc": 0,
+   "ran_line": null,
+   "has_ok_line": false,
+   "stdout_tail": "\": 17,\n  \"wiki_brain_quant_record\": 364\n },\n \"measured_substitutes\": [\n  {\n   \"path\": \"/Users/hong/workspace/phase7-alpha-research/data/derived/close_wide.csv\",\n   \"tokens\": [\n    \"avax\"\n   ],\n   \"class\": \"alpha_research_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/phase7-alpha-research/data/derived/quote_volume_wide.csv\",\n   \"tokens\": [\n    \"avax\"\n   ],\n   \"class\": \"alpha_research_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/phase7-alpha-research/data/derived/real_daily.csv\",\n   \"tokens\": [\n    \"avax\"\n   ],\n   \"class\": \"alpha_research_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/phase10-pit-bitemporal/data/pit_events.sqlite\",\n   \"tokens\": [\n    \"baa\"\n   ],\n   \"class\": \"pit_bitemporal_store\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/a1-1-phase9-pit-membership-20260830/membership_observations.csv\",\n   \"tokens\": [\n    \"avax\"\n   ],\n   \"class\": \"pit_membership_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/a1-usdm-pit-lifecycle-20260830/lifecycle_events.csv\",\n   \"tokens\": [\n    \"aave\"\n   ],\n   \"class\": \"pit_lifecycle_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Users/hong/workspace/alpha-strategy-research/coverage_manifest.csv\",\n   \"tokens\": [\n    \"option\"\n   ],\n   \"class\": \"alpha_research_harness\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Volumes/ExpansionDrive/qlib-results/_handoff/handoff_log.jsonl\",\n   \"tokens\": [\n    \"implied_vol\",\n    \"option\"\n   ],\n   \"class\": \"results_handoff_bodies\",\n   \"used\": false\n  },\n  {\n   \"path\": \"/Volumes/ExpansionDrive/qlib-results/_validation/strategy-a-v2-runtime-e2e-v1.6-20260913/_survivors/leaderboard.csv\",\n   \"tokens\": [\n    \"baa\"\n   ],\n   \"class\": \"results_round_artifacts\",\n   \"used\": false\n  }\n ],\n \"unclassified\": [],\n \"note\": \"the host scan enumerates every decisive-token hit by its own rule; the round used none of them, and no hit is an implied-volatility series, an options chain or a US-equity price panel\"\n}\n",
+   "stderr_tail": "scanned /Users/hong/workspace/phase11-options-volatility: 39 files\nscanned /Users/hong/workspace/phase5-crypto-derivatives: 74 files\nscanned /Users/hong/workspace/phase7-alpha-research: 31 files\nscanned /Users/hong/workspace/phase10-pit-bitemporal: 59 files\nscanned /Users/hong/workspace/a1-1-phase9-pit-membership-20260830: 49 files\nscanned /Users/hong/workspace/a1-usdm-pit-lifecycle-20260830: 671 files\nscanned /Users/hong/workspace/alpha-strategy-research: 729 files\nscanned /Users/hong/workspace/quant-runtime-pipeline: 252 files\nscanned /Users/hong/workspace/qlib-apple-container: 92 files\nscanned /Volumes/ExpansionDrive/daily-crypto-brief: 53 files\nscanned /Volumes/ExpansionDrive/qlib-results: 1593 files\nscanned /Users/hong/.hermes/wiki/quant: 416 files\n"
+  },
+  "self_test": {
+   "variants": [
+    {
+     "variant": "verdict_not_technical_incomplete",
+     "expected_fail": [
+      "C15"
+     ],
+     "failing_checks": [
+      "C15"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_performance_claimable_true",
+     "expected_fail": [
+      "C15"
+     ],
+     "failing_checks": [
+      "C15"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_failure_layer_shared",
+     "expected_fail": [
+      "C15"
+     ],
+     "failing_checks": [
+      "C15"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_run_id_set",
+     "expected_fail": [
+      "C15"
+     ],
+     "failing_checks": [
+      "C15"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_yield_continue",
+     "expected_fail": [
+      "C15"
+     ],
+     "failing_checks": [
+      "C15"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_missing_conditions_emptied",
+     "expected_fail": [
+      "C25"
+     ],
+     "failing_checks": [
+      "C25"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_decisive_map_flipped",
+     "expected_fail": [
+      "C16"
+     ],
+     "failing_checks": [
+      "C16"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "verdict_cohorts_realized",
+     "expected_fail": [
+      "C23"
+     ],
+     "failing_checks": [
+      "C23"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_gate_universe_shrunk",
+     "expected_fail": [
+      "C17"
+     ],
+     "failing_checks": [
+      "C17"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_gate_substitute_market",
+     "expected_fail": [
+      "C17"
+     ],
+     "failing_checks": [
+      "C17"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_matrix_decisive_count_off",
+     "expected_fail": [
+      "C16",
+      "C17"
+     ],
+     "failing_checks": [
+      "C16",
+      "C17"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_status_map_flipped",
+     "expected_fail": [
+      "C16",
+      "C17"
+     ],
+     "failing_checks": [
+      "C16",
+      "C17"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_claimed_measurement_flipped",
+     "expected_fail": [
+      "C17"
+     ],
+     "failing_checks": [
+      "C17"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_required_data_available_true",
+     "expected_fail": [
+      "C18"
+     ],
+     "failing_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_matrix_status_count_off",
+     "expected_fail": [
+      "C18"
+     ],
+     "failing_checks": [
+      "C18"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_dca_product_broken",
+     "expected_fail": [
+      "C19"
+     ],
+     "failing_checks": [
+      "C19"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_dca_axis_marked_user_fixed",
+     "expected_fail": [
+      "C19"
+     ],
+     "failing_checks": [
+      "C19"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_falsification_item_dropped",
+     "expected_fail": [
+      "C20"
+     ],
+     "failing_checks": [
+      "C20"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_launch_claims_an_attempt",
+     "expected_fail": [
+      "C21"
+     ],
+     "failing_checks": [
+      "C21"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_fabricated_performance_number",
+     "expected_fail": [
+      "C22"
+     ],
+     "failing_checks": [
+      "C22"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_coverage_cells_nonzero",
+     "expected_fail": [
+      "C24"
+     ],
+     "failing_checks": [
+      "C24"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_verbatim_leaf_undeclared",
+     "expected_fail": [
+      "C26",
+      "C27"
+     ],
+     "failing_checks": [
+      "C26",
+      "C27"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_option_snapshot_marked_used",
+     "expected_fail": [
+      "C28"
+     ],
+     "failing_checks": [
+      "C28"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "spec_option_snapshot_count_flipped",
+     "expected_fail": [
+      "C28"
+     ],
+     "failing_checks": [
+      "C28"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "attempt_dir_present",
+     "expected_fail": [
+      "C14"
+     ],
+     "failing_checks": [
+      "C14"
+     ],
+     "ok": true
+    },
+    {
+     "variant": "benign_non_goals_edit",
+     "expected_fail": null,
+     "failing_checks": [],
+     "ok": true
+    }
+   ],
+   "ok": true
+  },
+  "raw_fixture_control": {
+   "fixture_root": "/var/folders/1p/pnkpmtl17vgfzw3t4yqgw28w0000gn/T/cmt-rawfixture-iogj7sc9",
+   "failing_checks": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C9",
+    "C10",
+    "C11",
+    "C12",
+    "C17",
+    "C18"
+   ],
+   "expected_failing": [
+    "C1",
+    "C10",
+    "C11",
+    "C12",
+    "C2",
+    "C3",
+    "C7",
+    "C8",
+    "C9"
+   ],
+   "ok": true,
+   "decisive_hits_unexplained": {
+    "baa": [
+     "fred/BAA10Y-1d.csv"
+    ],
+    "deribit": [
+     "_meta/CONFIG.json",
+     "_meta/SCHEMA.md",
+     "_tools/multi_venue_sync.py",
+     "deribit/dvol/BTC-1d.jsonl",
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "dvol": [
+     "_meta/SCHEMA.md",
+     "_tools/multi_venue_sync.py",
+     "deribit/dvol/BTC-1d.jsonl"
+    ],
+    "expiry": [
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "implied_vol": [
+     "_meta/SCHEMA.md",
+     "deribit/dvol/BTC-1d.jsonl",
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "moody": [
+     "fred/BAA10Y-1d.csv"
+    ],
+    "nasdaq": [
+     "_tools/multi_venue_sync.py",
+     "us_equity/etf/QQQ-1d.jsonl",
+     "us_equity/etf/SPY-1d.jsonl"
+    ],
+    "nyse": [
+     "_meta/CONFIG.json",
+     "_tools/multi_venue_sync.py"
+    ],
+    "open_interest": [
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "option": [
+     "_meta/CONFIG.json",
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "qqq": [
+     "_meta/CONFIG.json",
+     "us_equity/etf/QQQ-1d.jsonl",
+     "us_equity/etf/SPY-1d.jsonl"
+    ],
+    "schd": [
+     "_meta/CONFIG.json"
+    ],
+    "spy": [
+     "_meta/CONFIG.json",
+     "us_equity/etf/SPY-1d.jsonl"
+    ],
+    "stablecoin": [
+     "binance/usdm/instruments/usdm-perp-instruments.json"
+    ],
+    "strike": [
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "ten_year_yield": [
+     "fred/TNX-1d.csv"
+    ],
+    "tnx": [
+     "fred/TNX-1d.csv"
+    ],
+    "us_equity": [
+     "us_equity/etf/QQQ-1d.jsonl",
+     "us_equity/etf/SPY-1d.jsonl"
+    ]
+   },
+   "decisive_probe_hits_unexplained_total": 34,
+   "decisive_group_unexplained": {
+    "volatility_index_series": 11,
+    "options_market_data": 5,
+    "us_equity_venue": 7,
+    "record_instrument_set": 6,
+    "record_macro_series": 4,
+    "portability_alternate_provider": 0,
+    "portability_growth_basket_tokens": 0,
+    "portability_defensive_store": 1
+   },
+   "decisive_carried_by_row_shape": [],
+   "decisive_name_hits": {
+    "deribit": [
+     "deribit/dvol/BTC-1d.jsonl",
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "dvol": [
+     "deribit/dvol/BTC-1d.jsonl"
+    ],
+    "option": [
+     "deribit/options/BTC-2026-12.jsonl"
+    ],
+    "qqq": [
+     "us_equity/etf/QQQ-1d.jsonl"
+    ],
+    "spy": [
+     "us_equity/etf/SPY-1d.jsonl"
+    ],
+    "tnx": [
+     "fred/TNX-1d.csv"
+    ],
+    "us_equity": [
+     "us_equity/etf/QQQ-1d.jsonl",
+     "us_equity/etf/SPY-1d.jsonl"
+    ]
+   },
+   "instrument_has_options_or_iv_field": false,
+   "instrument_ids": [
+    "USDCUSDT-PERP.BINANCE"
+   ]
+  },
+  "verify_verbatim_board_db": {
+   "spec": "/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/rounds/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1/round-spec.json",
+   "verbatim_leaves_checked": 56,
+   "source_map_entries": 56,
+   "findings": [],
+   "ok": true
+  },
+  "verify_verbatim_pool_body": null,
+  "excluded_token_pass": {
+   "tokens": {
+    "vol": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 1338269
+    },
+    "iv": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 32
+    },
+    "call": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 5
+    },
+    "put": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 2
+    },
+    "delta": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 0
+    },
+    "vega": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 0
+    },
+    "gamma": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 0
+    },
+    "index": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 4
+    },
+    "rate": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 9372
+    },
+    "macro": {
+     "raw_entry_name_hit_count": 0,
+     "raw_payload_hits": 0
+    }
+   },
+   "host_series_name_hits": {
+    "iv": [
+     "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v1/rounds/ema-crossover-walkforward-momentum-long-short-v1-r1/attempts/ema-crossover-walkforward-momentum-long-short-v1-r1-u1/artifacts/representatives.csv",
+     "/Volumes/ExpansionDrive/qlib-results/ema-crossover-walkforward-momentum-long-short-v1/rounds/ema-crossover-walkforward-momentum-long-short-v1-r1/attempts/ema-crossover-walkforward-momentum-long-short-v1-r1-u2/artifacts/representatives.csv"
+    ],
+    "vol": [
+     "/Users/hong/workspace/phase7-alpha-research/data/derived/quote_volume_wide.csv"
+    ]
+   }
+  },
+  "preflight": {
+   "cmd": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hong/workspace/quant-runtime-pipeline/runtime/preflight.py --json",
+   "rc": 0,
+   "ran_line": null,
+   "has_ok_line": false,
+   "stdout_tail": "{\n  \"schema_version\": 1,\n  \"kind\": \"preflight\",\n  \"contract_section\": \"16\",\n  \"checked_at_utc\": \"2026-09-18T08:02:12Z\",\n  \"host_boot_id\": \"boot-1789570820\",\n  \"attempt_dir\": null,\n  \"launch_gate\": \"not_evaluated\",\n  \"recovery\": {\n    \"attempted\": false,\n    \"ok\": true,\n    \"fail_reason\": null,\n    \"actions\": []\n  },\n  \"overall\": \"PASS\",\n  \"checks\": [\n    {\n      \"id\": \"P1\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)\"\n    },\n    {\n      \"id\": \"P2\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)\"\n    },\n    {\n      \"id\": \"P3\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-32980.tmp\"\n    },\n    {\n      \"id\": \"P4\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"container system status=running (rc=0)\"\n    },\n    {\n      \"id\": \"P5\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"qlib-run state=running\"\n    },\n    {\n      \"id\": \"P6\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False\"\n    },\n    {\n      \"id\": \"P7\",\n      \"status\": \"PASS\",\n      \"layer\": \"card-local\",\n      \"detail\": \"/qlib/work writable: work_ok\"\n    },\n    {\n      \"id\": \"P8\",\n      \"status\": \"PASS\",\n      \"layer\": \"shared-layer\",\n      \"detail\": \"/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)\"\n    },\n    {\n      \"id\": \"P9\",\n      \"status\": \"NA\",\n      \"layer\": \"-\",\n      \"detail\": \"no --attempt-dir; launch gate NOT evaluated\"\n    },\n    {\n      \"id\": \"P10\",\n      \"status\": \"NA\",\n      \"layer\": \"-\",\n      \"detail\": \"no --attempt-dir; launch gate NOT evaluated\"\n    }\n  ]\n}\n",
+   "stderr_tail": ""
+  },
+  "repo_suite": {
+   "cmd": "/opt/homebrew/opt/python@3.14/bin/python3.14 -m unittest discover -s runtime/tests -t runtime/tests",
+   "rc": 0,
+   "ran_line": null,
+   "has_ok_line": false,
+   "stdout_tail": "",
+   "stderr_tail": "ec_path\"], \"rb\").read()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\n/Users/hong/workspace/quant-runtime-pipeline/runtime/tests/test_strategy_d_v1_templates.py:227: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/1p/pnkpmtl17vgfzw3t4yqgw28w0000gn/T/sd-instantiate-9z1g7til/utc-clock-hour-seasonality-perp-panel-v1/rounds/utc-clock-hour-seasonality-perp-panel-v1-r1/round-spec.json'>\n  self.assertEqual(open(first[\"round_spec_path\"], \"rb\").read(), before)\nResourceWarning: Enable tracemalloc to get the object allocation traceback\n.....................................................................................................................\n----------------------------------------------------------------------\nRan 437 tests in 11.302s\n\nOK\n"
+  },
+  "author_rerun_refused": {
+   "cmd": "/opt/homebrew/opt/python@3.14/bin/python3.14 /Users/hong/workspace/quant-runtime-pipeline/runtime/_author_cmt_gate.py",
+   "rc": 1,
+   "ran_line": null,
+   "has_ok_line": false,
+   "stdout_tail": "card falsification items (3):\n    1. **Stationary Random Placebo Test:** Replace actual $TNX$, $VIX$, and \n    2. **Cost Stress Boundary Test:** Increase assumed transaction fees from\n    3. **Parameter Perturbation Grid:** Perturb parameters $\\alpha \\in [0.3,\nrecord falsification items (4):\n    1. **Stationary Random Placebo Test:** Replace actual $TNX$, $VIX$, and \n    2. **Cost Stress Boundary Test:** Increase assumed transaction fees from\n    3. **Parameter Perturbation Grid:** Perturb parameters $\\alpha \\in [0.3,\n    4. **Subperiod Breakdown:** Evaluate across the 2022 rate hike regime ex\ncard required-data (5): ['- **Instruments:**', '- **Venue:** US Equity and Index Markets', '- **Timeframe:** Daily close-to-close ba', '- **Fields:** Adjusted closing prices, d', '- **Point-in-Time Hygiene:** Scores are ']\ncard portability (4): ['- **Classification:** `adapted` / `unpro', '- **Portability Thesis:** The economic i', '- **Macro Proxy Replacements:**', '- **Crypto-Specific Obstacles:**']\nrecord required-data (5): ['- **Instruments:**', '- **Venue:** US Equity and Index Markets', '- **Timeframe:** Daily close-to-close ba', '- **Fields:** Adjusted closing prices, d', '- **Point-in-Time Hygiene:** Scores are ']\ncard signal sections (4): ['### 1. Asset Basket Construction', '### 2. Direction-Normalized Input Features', '### 3. Smooth Component Transformations', '### 4. Non-Linear Interaction Terms']\nrecord signal sections (8):\nsurvivor requirements (5): ['a) 存在 historical winner；', 'b) OOS：同一組參數 `net_pnl > 0` 且', 'c) full window：同一組參數 `net_pn', 'd) robustness：同一組參數在 `fee_2x', 'e) parameter-neighbourhood：w']\nverbatim leaves: 51\nall 51 excerpts are substrings of their declared source\nmatrix rows: 35 (decisive 32)\nstatus counts: {\"ABSENT\": 10, \"ABSENT_AS_REGISTERED\": 3, \"NOT_CONSTRUCTIBLE\": 12, \"BLOCKED_BY_ABSENCE\": 1, \"NOT_EXECUTED_BLOCKED\": 6, \"PRESENT_VIA_PORTABILITY_PROXY\": 2, \"PRESENT\": 1}\nexcerpt_source_map entries: 56\n",
+   "stderr_tail": "Traceback (most recent call last):\n  File \"/Users/hong/workspace/quant-runtime-pipeline/runtime/_author_cmt_gate.py\", line 1035, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/hong/workspace/quant-runtime-pipeline/runtime/_author_cmt_gate.py\", line 904, in main\n    with open(spec_path, \"x\", encoding=\"utf-8\") as fh:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileExistsError: [Errno 17] File exists: '/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/rounds/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1/round-spec.json'\n"
+  }
+ },
+ "no_fabrication": {
+  "attempts_launched": 0,
+  "run_specs": 0,
+  "terminal_sentinels": 0,
+  "run_id": null,
+  "evidence_run_ids": [],
+  "performance_fields": [],
+  "falsification_battery_executed": false
+ },
+ "readback": {
+  "round_dir": "/Volumes/ExpansionDrive/qlib-results/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02/rounds/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-r1",
+  "round_dir_contents": [
+   "round-spec.json",
+   "verdict.json"
+  ],
+  "attempt_dir_exists": false,
+  "survivor_bundle_exists": false,
+  "evidence_file": "/Users/hong/workspace/quant-runtime-pipeline/evidence/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-prerequisite-gate-20260918.json"
+ },
+ "disclosures": [
+  "contract 13 has no dedicated prerequisite-missing class; `data_window_invalid` is used as the closest registered card-local class (its definition covers 'instrument 缺失') with the contract 6.4 prerequisite-missing alignment as the terminal basis; whether a class should be added is the operator's call",
+  "the decisive absence is a core-signal DATA FAMILY (an implied-volatility series: the record's VIX slot, whose crypto replacement the record itself names as Deribit DVOL), not the window and not the traded universe - so the local universe rule of the lifecycle footer cannot rescue it",
+  "the card's falsification excerpt is truncated relative to the canonical record: the card quotes items 1-3 and the record carries 4; item 4 (Subperiod Breakdown) was restored verbatim from the record and the difference is disclosed in the round-spec instead of rewriting the frozen card bytes",
+  "the card's required-data and portability excerpts carry truncation markers; the full record sections were registered verbatim alongside them",
+  "the store is a live daily-updated store: every number in the artifacts is the value measured at pre-registration; the mean/present token counts and the window endpoints move as the updater runs, while the decisive structure (0 unexplained decisive hits, uniform 7-key k-line rows, 3 dataset families) does not",
+  "the two declared prose allowances are audited single-line occurrences in the store's own documents (INVENTORY.md's LEAN dataset-directory name that was explicitly NOT migrated and whose tree no longer exists on this host; INVENTORY.md's Phase-1 mdfind query token list; the updater README's CLI 'Options:' table header); any new occurrence is offending and flips the check",
+  "networking was not used: the missing prerequisite IS the terminal condition"
+ ],
+ "draft_removals": [
+  {
+   "removed_at_utc": "2026-09-18T08:00:00Z",
+   "artifact": "evidence/continuous-macro-timing-growth-defensive-style-allocation-2026-09-02-prerequisite-gate-20260918.json",
+   "sha256": "sha256:31e227a69fe1abbe58f46814f483d5e9eccb6246d785b05af60dbcb50b070627",
+   "bytes": 43291,
+   "reason": "first evidence build shipped before the self-test expectations and the suite-tail extraction were corrected; rebuilt once. The round computed nothing (0 attempts, run_id=null, no consumer), so no scientific artifact was affected."
+  }
+ ]
+}
