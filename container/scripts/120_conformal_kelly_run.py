@@ -277,6 +277,46 @@ def counters_delta(before):
     return out
 
 
+# ---------------------------------------------------------------------------
+# optional inert trace hook (contract v1.6.0 section 28.2, unchanged in v1.8.0)
+#
+# `TRACE` is the module-level sink used by the survivor-evidence replay driver
+# (container/scripts/130_family_survivor_replay.py).  It is None on every
+# production path, and every emit point sits behind an explicit
+# `if TRACE is not None` guard, so with tracing off the engine executes the very
+# same arithmetic in the very same order and returns the very same aggregate
+# (enforced by the trace off/on equality check the replay driver runs on every
+# replayed cell, and by container/scripts/tests/test_survivor_trace_jkl.py).
+# A traced value is only ever observed: nothing recorded here is read back by
+# any decision, accounting or return value of the engine.
+# ---------------------------------------------------------------------------
+TRACE = None
+
+
+def _trace(event, **fields):
+    """Emit one trace record to the optional sink; a no-op when TRACE is None."""
+    if TRACE is None:
+        return
+    TRACE(event, fields)
+
+
+def _trace_equity(kind, cohort, i0, day_local, series_flat, day_equity):
+    """Trace-only equity ledger of one evaluated slice (contract section 28.2).
+
+    `day_local` is the slice's own day index (`np.unique(..., return_inverse=True)`
+    inside `simulate`), so the emitted marks are the very series `_flat_series`
+    feeds to `_metrics`; `day_start_ms` carries the first bar's open time of each
+    day so a replay can label the rows without re-deriving the mapping.
+    """
+    starts = np.searchsorted(day_local, np.arange(len(series_flat)), side="left")
+    _trace("equity_marks", window_kind=kind,
+           cohort="%s/%s" % (cohort.symbol, cohort.timeframe),
+           day_index=list(range(len(series_flat))),
+           day_start_ms=[int(cohort.open_time_ms[i0 + int(s)]) for s in starts],
+           equity=[float(v) for v in series_flat],
+           in_window=[v is not None for v in day_equity])
+
+
 def log(msg):
     line = "[%s] %s" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), msg)
     print(line, flush=True)
@@ -1289,6 +1329,11 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
     util_sum = 0.0
     by_year = {}
     ep_stats = {"episodes": 0, "wins": 0, "net_pnl": 0.0, "hold_bars": 0}
+    # Trace-only per-episode bookkeeping (contract 28.2): computed alongside the engine's
+    # own ledgers and never read back by the engine.  `ep_reason` / `ep_trigger` / `ep_ref`
+    # are set at the exit that closes the episode and read only at the one emit point below.
+    ep_mae = ep_mfe = 0.0
+    ep_reason = ep_trigger = ep_ref = None
 
     def charge_fee(amount):
         """A fee is paid at the instant of the fill and must reduce the realised equity there."""
@@ -1299,6 +1344,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
 
     if not episodes:
         series_flat = _flat_series(day_equity)
+        if TRACE is not None:
+            _trace_equity(kind, cohort, i0, day_local, series_flat, day_equity)
         return _metrics(realized, fees_total, funding_paid, gross_pnl, 0, tp_hits, stop_hits,
                         open_at_end, margin_calls, time_exits, False, START_EQUITY,
                         series_flat, cohort, i0, i1, layers, max_lev, util_sum, bars_in_market,
@@ -1350,6 +1397,13 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         fills += 1
         turnover += qty * px
         ep_fees += qty * px * taf
+        if TRACE is not None:
+            ep_mae = 0.0
+            ep_mfe = 0.0
+            _trace("fill", episode=windows_entered - 1, event_type="ENTRY",
+                   bar_index=i0 + eb, open_time_ms=entry_ms, price=px, qty=qty, dca_level=0,
+                   trigger_price=None, ref_price=O[eb], fee=qty * px * taf,
+                   slip_ticks=slip_ticks, sign=sign)
         levels = [p0 * (1.0 - sign * d0 * kk) for kk in range(12)]
         layers[0] += 1
         # funding: every settlement inside the CLOSED exposure interval [entry, exit] with the
@@ -1398,6 +1452,12 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                     cost += q * fpx
                     charge_fee(q * fpx * taf)
                     ep_fees += q * fpx * taf
+                    if TRACE is not None:
+                        _trace("fill", episode=windows_entered - 1, event_type="DCA_ADD",
+                               bar_index=i0 + t, open_time_ms=int(cohort.open_time_ms[i0 + t]),
+                               price=fpx, qty=q, dca_level=kk, trigger_price=trig,
+                               ref_price=trig, fee=q * fpx * taf, slip_ticks=slip_ticks,
+                               sign=sign)
                     fills += 1
                     turnover += q * fpx
                     layers[kk] += 1
@@ -1429,6 +1489,12 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                     cost += q * fpx
                     charge_fee(q * fpx * taf)
                     ep_fees += q * fpx * taf
+                    if TRACE is not None:
+                        _trace("fill", episode=windows_entered - 1, event_type="DCA_ADD",
+                               bar_index=i0 + t, open_time_ms=int(cohort.open_time_ms[i0 + t]),
+                               price=fpx, qty=q, dca_level=kk, trigger_price=trig,
+                               ref_price=trig, fee=q * fpx * taf, slip_ticks=slip_ticks,
+                               sign=sign)
                     fills += 1
                     turnover += q * fpx
                     layers[kk] += 1
@@ -1437,6 +1503,10 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                     kk += 1
             eq = START_EQUITY + realized
             ueq = eq + sign * (qty * C[t] - cost)
+            if TRACE is not None:
+                excursion = ueq - eq
+                ep_mae = min(ep_mae, excursion)
+                ep_mfe = max(ep_mfe, excursion)
             if killed_at is None and ueq <= cohort.margin_maint * qty * C[t]:
                 xpx = C[t] - sign * slip_ticks * tick  # capital-exhaustion exit, adverse
                 ep_gross = exit_price_pnl(sign * qty * xpx, sign * cost)
@@ -1449,6 +1519,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                 margin_calls += 1
                 exit_bar = t
                 broke = True
+                if TRACE is not None:
+                    ep_reason, ep_trigger, ep_ref = "MARGIN_CALL", C[t], C[t]
                 break
             if ueq > 0:
                 lv = (qty * C[t]) / ueq
@@ -1470,6 +1542,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                 stop_hits += 1
                 exit_bar = t
                 broke = True
+                if TRACE is not None:
+                    ep_reason, ep_trigger, ep_ref = "STOP", killed_at, L[t]
                 break
             tpx = (cost / qty) * (1.0 + sign * tp_pct)  # reduce-only breakeven-anchored TP
             if (h >= tpx) if sign > 0 else (l <= tpx):
@@ -1484,6 +1558,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                 tp_hits += 1
                 exit_bar = t
                 broke = True
+                if TRACE is not None:
+                    ep_reason, ep_trigger, ep_ref = "TP", tpx, H[t]
                 break
             # registered exit (3): the record's own exit condition, evaluated at this bar's
             # close.  The filtered target position is no longer the episode's direction (0 in
@@ -1507,6 +1583,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                     exit_bar = t
                     exit_at_open = True
                     broke = True
+                    if TRACE is not None:
+                        ep_reason, ep_trigger, ep_ref = "TIME_EXIT", None, O[t + 1]
                     break
                 # an exit condition on the last bar has no next open to execute at: it is
                 # deferred to the slice-end flatten
@@ -1525,6 +1603,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
             turnover += qty * xpx
             open_at_end += 1
             counter(kind, "slice_end_flatten")
+            if TRACE is not None:
+                ep_reason, ep_trigger, ep_ref = "EOD_FLATTEN", C[-1], C[-1]
         # settlements at the exit instant itself (the hold's closing boundary) are charged on
         # the exit notional, which is the price at risk when the settlement lands
         if exit_at_open:
@@ -1538,6 +1618,20 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
                 counter(kind, "funding_bar_out_of_hold")
             ep_fund += sign * qty * C[exit_bar] * fund_rates[kptr]
             kptr += 1
+        if TRACE is not None:
+            exit_bar_index = i0 + exit_bar + (1 if exit_at_open else 0)
+            _trace("fill", episode=windows_entered - 1,
+                   event_type="FLATTEN" if ep_reason == "EOD_FLATTEN" else "EXIT",
+                   bar_index=exit_bar_index, open_time_ms=exit_ms, price=xpx, qty=qty,
+                   dca_level=kk, trigger_price=ep_trigger, ref_price=ep_ref,
+                   fee=qty * xpx * taf, slip_ticks=slip_ticks, sign=sign)
+            _trace("episode", episode=windows_entered - 1, exit_reason=ep_reason,
+                   entry_bar_index=i0 + eb, entry_time_ms=entry_ms, entry_price=p0,
+                   exit_bar_index=exit_bar_index, exit_time_ms=exit_ms, exit_price=xpx,
+                   gross_pnl=ep_gross, fees=ep_fees, funding=ep_fund,
+                   net_pnl=ep_gross - ep_fees - ep_fund,
+                   holding_bars=exit_bar_index - (i0 + eb), layers_used=kk,
+                   mae_usdt=ep_mae, mfe_usdt=ep_mfe, sign=sign)
         funding_paid += ep_fund
         realized -= ep_fund
         last_exit_bar = exit_bar
@@ -1566,6 +1660,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
             acc[kk] += layers[kk]
 
     series_flat = _flat_series(day_equity)
+    if TRACE is not None:
+        _trace_equity(kind, cohort, i0, day_local, series_flat, day_equity)
     diag_out = {}
     if diag:
         diag_out = {"pnl_by_year": {k: _round_dict(v) for k, v in sorted(by_year.items())},
