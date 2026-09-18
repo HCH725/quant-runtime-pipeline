@@ -86,24 +86,24 @@
     - 研究漏斗:
         icon: mdi-filter-variant
         href: https://quant.vicchong1983.trade/detail#funnel
-        description: 研究審閱 → 納入 → 回測
+        description: 研究審閱 → 納入 → 家族登錄 → 完成回測
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
           refreshInterval: 60000
           display: list
           mappings:
-            - field: funnel.wiki_brain.ingested
-              label: 已納入策略
-              format: number
             - field: funnel.wiki_brain.reviewed
               label: 已審閱策略
               format: number
-            - field: funnel.backtested.families
-              label: 已回測家族
+            - field: funnel.wiki_brain.ingested
+              label: 已納入策略
               format: number
             - field: funnel.backtested.registered
-              label: 登錄家族
+              label: 已登錄家族
+              format: number
+            - field: funnel.backtested.families
+              label: 已完成回測家族
               format: number
 
     - 策略排行榜:

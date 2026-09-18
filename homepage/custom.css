@@ -369,3 +369,16 @@ body {
     opacity: 0.72;
   }
 }
+
+/* Research funnel: ordinal stage narrowing only; widths do not encode cross-unit conversion rates. */
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(2) {
+  margin-inline: 12px;
+}
+
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(3) {
+  margin-inline: 20px;
+}
+
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(4) {
+  margin-inline: 28px;
+}
