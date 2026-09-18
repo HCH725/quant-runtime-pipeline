@@ -99,17 +99,18 @@ def write_json(path, doc):
 def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end="2026-09-10",
                 oos_start="2025-10-01", created="2026-09-13T00:44:48Z", challenger_of=None,
                 task_id="t_test", mutate=None, name_mismatch=False,
-                parameter_contract=None):
+                parameter_contract=None, cutoff_key="data_end"):
     """One family + one round + one frozen survivor bundle, in throwaway-results-root shape."""
     round_id = round_id or family_id + "-r1"
     run_id = run_id or round_id + "-u1"
     fam_dir = os.path.join(root, family_id)
     round_dir = os.path.join(fam_dir, "rounds", round_id)
+    data = {"data_start": "2022-01-01", cutoff_key: data_end,
+            "historical_end": "2025-09-30", "oos_start": oos_start, "oos_end": data_end}
     spec = {
         "schema_version": 1, "family_id": family_id, "round_id": round_id,
         "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.3.2",
-        "data": {"data_start": "2022-01-01", "data_end": data_end,
-                 "historical_end": "2025-09-30", "oos_start": oos_start, "oos_end": data_end},
+        "data": data,
     }
     # Include a parameter_contract in the round-spec.  Non-A families without one fail closed
     # under v1.8+, so test helpers must always provide one.
@@ -332,6 +333,15 @@ class TestSurvivorIndex(Base):
         self.assertEqual(len({e["survivor_id"] for e in index["survivors"]}), 2)
         self.assertEqual({e["research_data_cutoff"] for e in index["survivors"]}, {"2026-09-10"})
         self.assertEqual(index["skipped_bundles"], [])
+
+    def test_current_round_spec_end_key_is_accepted_as_research_cutoff(self):
+        make_family(self.root, "fam-current", [survivor("ETHUSDT/1d")],
+                    data_end="2026-09-11", cutoff_key="end")
+        index, problems = si.build(self.root)
+        self.assertEqual(problems, [])
+        self.assertIsNotNone(index)
+        self.assertEqual(index["survivor_count"], 1)
+        self.assertEqual(index["survivors"][0]["research_data_cutoff"], "2026-09-11")
 
     def test_duplicate_survivor_id_is_refused(self):
         path = make_family(self.root, "fam-a", a_v2_like_bundle())

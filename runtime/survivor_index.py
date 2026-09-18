@@ -364,9 +364,18 @@ def research_cutoff(bundle, round_dir, label, problems):
                         "from an inconsistent source" % (label, declared, actual))
         return None
     data = load_json(spec_path).get("data")
-    cutoff = data.get("data_end") if isinstance(data, dict) else None
+    cutoff = None
+    if isinstance(data, dict):
+        legacy_cutoff = data.get("data_end")
+        current_cutoff = data.get("end")
+        if legacy_cutoff and current_cutoff and legacy_cutoff != current_cutoff:
+            problems.append("%s: round-spec.json data.data_end %r disagrees with data.end %r"
+                            % (label, legacy_cutoff, current_cutoff))
+            return None
+        cutoff = legacy_cutoff or current_cutoff
     if not isinstance(cutoff, str) or not cutoff:
-        problems.append("%s: round-spec.json has no data.data_end (research data cutoff)" % label)
+        problems.append("%s: round-spec.json has no data.data_end or data.end (research data cutoff)"
+                        % label)
         return None
     return cutoff
 
