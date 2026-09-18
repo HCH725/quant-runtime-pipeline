@@ -1,0 +1,2362 @@
+{
+  "schema_version": 1,
+  "kind": "strategy_full_backtest_evidence",
+  "family_id": "conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02",
+  "round_id": "conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02-r1",
+  "run_id": "conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02-r1-u1",
+  "kanban_task_id": "t_14a1a080",
+  "kanban_board": "quant-strategy-research",
+  "created_at_utc": "2026-09-18T06:50:52Z",
+  "card": {
+    "body_sha256": "sha256:a51235274b5346dbdbc38137e020254de9c867a717c6a2f6ded6c6f9a45d626c",
+    "record_path": "/Users/hong/.hermes/wiki/quant/conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02.md",
+    "record_sha256": "sha256:37e4965d20b92c5f4980769f5c9f36d4b1701878cee1d92b63f70449f71d7c1a",
+    "intake_decision": "PASS-WITH-CAVEAT (research-only knowledge; source-reported results are not independently reproduced)",
+    "semantic_fingerprint": "sha256:97a79529405e34bbd2b2c249a0edd9083fd27933df028f79a8f4003c57efdb69",
+    "lifecycle_footer": "---\nLIFECYCLE FOOTER（system-owned；append 時由 production_handoff 注入，非 candidate 規格的一部分；contract §6.4／§14.4）\n- full backtest 是本卡的目標。任何計算前，eligible universe 固定為 canonical local raw 中能讓本策略核心 signal/mechanism 合法計算的完整可用集合；原研究的 market／symbol 清單只作provenance 與外部效度參考，不要求與本機逐字一致。\n- 不得僅因原研究市場不同、named symbols 缺少或本機 universe 較小就判 TECHNICAL_INCOMPLETE。只要核心 signal 可在本機資料上計算，就必須用該 local eligible universe 完整跑symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness，並把結論範圍明確限制在該 local universe；不得事後挑幣或依結果縮減 universe。\n- 只有核心 signal 所必需的 data type／field 在本機完全不存在，導致任何合法 local universe都無法計算時，才可走 prerequisite-missing TECHNICAL_INCOMPLETE；其缺席須由 measured evidence證實，並依 contract 寫出 immutable `round-spec.json` ＋ `verdict.json`。\n- 若 candidate 文字中的 source-market exact-match／不得縮減 universe 條款與上述 local-universe規則衝突，以本 system-owned lifecycle rule 為執行準則；candidate bytes 與 fingerprint 仍不改寫。\n- `kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、確實需要 human decision 的情況（§12.6）。"
+  },
+  "registration": {
+    "round_spec_path": "/Volumes/ExpansionDrive/qlib-results/conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02/rounds/conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02-r1/round-spec.json",
+    "round_spec_sha256": "sha256:648e20ff31c2c0f4405f167569ec26cc03e73c55398b02ea03fe6c6dd81da626",
+    "round_spec_bytes": 128727,
+    "run_spec_sha256": "sha256:da6947452c148a05b49554480b40d0e1aa737c3ed9472181aac832dc502f0ee3",
+    "engine": {
+      "path": "container/scripts/120_conformal_kelly_run.py",
+      "sha256": "sha256:74c5582881e01f4995a6b433bbef5355e3666c363e17eb0c91b1699256e47e15",
+      "deployed_sha256_host": "sha256:74c5582881e01f4995a6b433bbef5355e3666c363e17eb0c91b1699256e47e15"
+    },
+    "engine_selfcheck": {
+      "path": "container/scripts/tests/test_strategy_l_engine.py",
+      "sha256": "sha256:5de34b8109fee1306285db4a16899ea474b8e378e9815b3fb32a066548ebb0e9",
+      "result": "21/21 tests OK on the host numpy interpreter AND inside the qlib-run container (/scripts/tests)"
+    },
+    "domains": {
+      "cohorts": 4,
+      "strategy_cases": 10,
+      "dca_configs": 48,
+      "phase_grids": 10,
+      "cells_per_grid": 1920,
+      "expected_case_evaluations": 19200,
+      "strategy_axes": {
+        "scale_arms": [
+          "conformal",
+          "mad",
+          "resid_std",
+          "frozen_train",
+          "realized_vol_20"
+        ],
+        "sizing_configs": [
+          "cap_only",
+          "drawdown_dial"
+        ]
+      }
+    },
+    "signal_constants": {
+      "ridge_lambda": 10.0,
+      "refit_every": 21,
+      "first_prediction_bar": 750,
+      "horizons": [
+        12,
+        16,
+        21,
+        27,
+        34
+      ],
+      "target_h": 21,
+      "momentum_windows": [
+        21,
+        63,
+        252
+      ],
+      "ewma_span": 20,
+      "conformal_window": 500,
+      "shrink_lambda": 0.3,
+      "z_alpha": 1.2816,
+      "nominal_alpha": 0.25,
+      "kappa": 0.15,
+      "winsor": 0.75,
+      "gross_cap": 2.0,
+      "dial_window": 21,
+      "dial_beta": 1.0,
+      "dial_floor": 0.25,
+      "dial_gate": 0.5,
+      "materiality_tilt": 0.5,
+      "frozen_train_scores": 250,
+      "quantile_rule": "linear interpolation (numpy default) of the 0.75 empirical quantile",
+      "signal_warmup_bars": 771,
+      "panel_size": 4,
+      "source_specified": {
+        "ridge_lambda": "the record's lambda_ridge = 10",
+        "refit_every": "the record's 'refitted every 21 trading days'",
+        "first_prediction_bar": "the record's 'first prediction after 750 trading days'",
+        "horizons": "the record's five horizons",
+        "target_h": "the record's common 21-day reference",
+        "momentum_windows": "the record's three momentum features",
+        "ewma_span": "the record's EWMA(20) volatility feature",
+        "conformal_window": "the record's trailing window W = 500 landed scores",
+        "shrink_lambda": "the record's geometric shrinkage lambda = 0.3",
+        "z_alpha": "the record's z_{1-alpha/2} = 1.2816",
+        "nominal_alpha": "the record's nominal coverage 1 - alpha = 0.75",
+        "kappa": "the record's kappa = 0.15",
+        "winsor": "the record's +-0.75 winsorisation",
+        "gross_cap": "the record's 2.0 gross leverage cap",
+        "dial_window": "the record's dial window M = 21 days",
+        "dial_beta": "the record's beta = 1.0",
+        "dial_floor": "the record's dial floor 0.25"
+      },
+      "research_defined": {
+        "quantile_rule": "the 0.75 empirical quantile with linear interpolation (the record names the rank-based quantile but not the interpolation rule)",
+        "materiality_tilt": "the registered target state: LONG/SHORT an asset exactly while its fitted allocation is at least an equal share of the capped gross book (|w_i| >= 2.0 / n); the alternative readings (any strictly non-zero weight -> invested; the equal share of the CURRENT book; the pure sign of the allocation) are disclosed and NOT evaluated",
+        "dial_gate": "the registered exposure gate of the record's continuous leverage multiplier inside a one-instrument rail (m_t < 0.5 -> no fresh entry, open exposure flattened at the next bar's open); the continuous multiplier and the portfolio-level (as opposed to per-instrument) dial are disclosed and NOT evaluated",
+        "frozen_train_scores": "the frozen_train arm's TRAIN leg: its quantile is computed once from the first 250 landed scores and then held constant (the record reports the arm but not its leg length)",
+        "signal_warmup_bars": "750 bars of first-prediction warm-up plus the 21-bar landing delay of the calibration scores",
+        "ewma_recursion": "RiskMetrics EWMA of squared daily returns (the record names EWMA(20) without the recursion convention)",
+        "realized_vol_20": "the record's own horserace comparator, carried onto the registered 21-bar reference as std_20(daily returns) * sqrt(21)",
+        "target_h_alignment": "the record's arithmetic return sum R^(H)_t = sum_{s=1..H} r_{t+s}"
+      }
+    },
+    "pre_run_feasibility_probe": {
+      "measured_before_the_freeze": true,
+      "note": "per-arm event supply / coverage / gross-cap structure, measured with the engine kernel before the round-spec was written",
+      "bars": 1715,
+      "arms": {
+        "conformal": {
+          "defined_bars": 944,
+          "gross_cap_binding_rate": 0.006997,
+          "gross_pre_cap_max": 2.062959,
+          "events_full": {
+            "BTCUSDT": 21,
+            "ETHUSDT": 8,
+            "BNBUSDT": 13,
+            "SOLUSDT": 1
+          }
+        },
+        "frozen_train": {
+          "defined_bars": 944,
+          "gross_cap_binding_rate": 0.0,
+          "gross_pre_cap_max": 1.780356,
+          "events_full": {
+            "BTCUSDT": 14,
+            "ETHUSDT": 9,
+            "BNBUSDT": 0,
+            "SOLUSDT": 0
+          }
+        },
+        "mad": {
+          "defined_bars": 944,
+          "gross_cap_binding_rate": 0.092128,
+          "gross_pre_cap_max": 2.329481,
+          "events_full": {
+            "BTCUSDT": 16,
+            "ETHUSDT": 8,
+            "BNBUSDT": 16,
+            "SOLUSDT": 2
+          }
+        },
+        "realized_vol_20": {
+          "defined_bars": 944,
+          "gross_cap_binding_rate": 0.153936,
+          "gross_pre_cap_max": 3.0,
+          "events_full": {
+            "BTCUSDT": 30,
+            "ETHUSDT": 24,
+            "BNBUSDT": 23,
+            "SOLUSDT": 31
+          }
+        },
+        "resid_std": {
+          "defined_bars": 944,
+          "gross_cap_binding_rate": 0.023907,
+          "gross_pre_cap_max": 3.0,
+          "events_full": {
+            "BTCUSDT": 7,
+            "ETHUSDT": 7,
+            "BNBUSDT": 5,
+            "SOLUSDT": 1
+          }
+        }
+      }
+    }
+  },
+  "coverage": {
+    "per_grid": {
+      "historical": 1920,
+      "oos": 1920,
+      "full": 1920,
+      "fee_2x": 1920,
+      "funding_2x": 1920,
+      "entry_delay_1_bar": 1920,
+      "slippage_2ticks": 1920,
+      "no_funding": 1920,
+      "no_funding_full": 1920,
+      "cost_attrition_40bps": 1920
+    },
+    "case_evaluations_total": 19200,
+    "expected_case_evaluations": 19200,
+    "coverage_complete": true,
+    "all_assertions_true": true,
+    "assertion_count": 34,
+    "grid_rows_per_grid": {
+      "cost_attrition_40bps": 1920,
+      "entry_delay_1_bar": 1920,
+      "fee_2x": 1920,
+      "full": 1920,
+      "funding_2x": 1920,
+      "historical": 1920,
+      "no_funding": 1920,
+      "no_funding_full": 1920,
+      "oos": 1920,
+      "slippage_2ticks": 1920
+    }
+  },
+  "result": {
+    "disposition": "MULTIPLE_SURVIVORS",
+    "verdict": "DEFERRED",
+    "performance_claimable": false,
+    "survivors": [
+      "BTCUSDT/1d",
+      "SOLUSDT/1d"
+    ],
+    "cohort_outcome_counts": {
+      "SURVIVOR": 2,
+      "CULLED": 2
+    },
+    "culled_cohorts": {
+      "BNBUSDT/1d": [
+        "parameter_neighbourhood"
+      ],
+      "ETHUSDT/1d": [
+        "parameter_neighbourhood"
+      ]
+    },
+    "winner_cells": {
+      "BNBUSDT/1d": {
+        "case_name": "rvol20__A",
+        "outcome": "CULLED",
+        "strategy_params": {
+          "arm_conf": 0,
+          "arm_mad": 0,
+          "arm_rstd": 0,
+          "arm_frozen": 0,
+          "arm_rvol20": 1,
+          "cfg_A": 1,
+          "cfg_B": 0
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.1
+        },
+        "historical": {
+          "net_pnl": 4394.548604,
+          "sharpe": 1.509187,
+          "episodes": 13,
+          "ending_equity": 34394.548604,
+          "fees": 491.448623,
+          "funding": 5.505645,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 3.589612,
+          "capital_utilization": 0.11964,
+          "annualized_return": 0.0390822711881733,
+          "cagr": 0.03714508356877744
+        },
+        "oos": {
+          "net_pnl": 1334.649782,
+          "sharpe": 2.876193,
+          "episodes": 10,
+          "ending_equity": 31334.649782,
+          "fees": 150.749011,
+          "funding": 12.622927,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 1.000505,
+          "capital_utilization": 0.04908,
+          "annualized_return": 0.04696347138223046,
+          "cagr": 0.04702079529871961
+        },
+        "full": {
+          "net_pnl": 5729.198386,
+          "sharpe": 1.654149,
+          "episodes": 23,
+          "ending_equity": 35729.198386,
+          "fees": 642.197634,
+          "funding": 18.128572,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 3.589612,
+          "capital_utilization": 0.086279,
+          "annualized_return": 0.04067229758300932,
+          "cagr": 0.037923005580323244
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 5087.000752,
+            "sharpe": 1.657333,
+            "episodes": 23,
+            "ending_equity": 35087.000752,
+            "fees": 1284.395269,
+            "funding": 18.128572,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 3.595962,
+            "capital_utilization": 0.087099,
+            "annualized_return": 0.036113256068628974,
+            "cagr": 0.03392143300851469
+          },
+          "funding_2x": {
+            "net_pnl": 5711.069814,
+            "sharpe": 1.650379,
+            "episodes": 23,
+            "ending_equity": 35711.069814,
+            "fees": 642.197634,
+            "funding": 36.257145,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 3.589612,
+            "capital_utilization": 0.086285,
+            "annualized_return": 0.04054360057587031,
+            "cagr": 0.037810824840891044
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 4481.825233,
+            "sharpe": 1.801607,
+            "episodes": 22,
+            "ending_equity": 34481.825233,
+            "fees": 532.114931,
+            "funding": 13.693635,
+            "max_dd_usdt": -84.636543,
+            "max_dd_pct": -0.002778,
+            "max_effective_leverage": 1.660632,
+            "capital_utilization": 0.071186,
+            "annualized_return": 0.03181703918866849,
+            "cagr": 0.03009744167013717
+          },
+          "slippage_2ticks": {
+            "net_pnl": 5718.725389,
+            "sharpe": 1.654691,
+            "episodes": 23,
+            "ending_equity": 35718.725389,
+            "fees": 642.195269,
+            "funding": 18.12856,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 3.590528,
+            "capital_utilization": 0.086298,
+            "annualized_return": 0.04059794845779562,
+            "cagr": 0.03785820347974589
+          }
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 3,
+          "same_sign_fraction": 0.5,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        }
+      },
+      "BTCUSDT/1d": {
+        "case_name": "rvol20__A",
+        "outcome": "SURVIVOR",
+        "strategy_params": {
+          "arm_conf": 0,
+          "arm_mad": 0,
+          "arm_rstd": 0,
+          "arm_frozen": 0,
+          "arm_rvol20": 1,
+          "cfg_A": 1,
+          "cfg_B": 0
+        },
+        "dca_params": {
+          "spacing_pct": 0.01,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.01,
+          "invalidation_pct": 0.05
+        },
+        "historical": {
+          "net_pnl": 4356.218127,
+          "sharpe": 1.893903,
+          "episodes": 18,
+          "ending_equity": 34356.218127,
+          "fees": 492.449657,
+          "funding": 50.64621,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 2.283788,
+          "capital_utilization": 0.08501,
+          "annualized_return": 0.038741384729870064,
+          "cagr": 0.036836581264309665
+        },
+        "oos": {
+          "net_pnl": 2869.808961,
+          "sharpe": 3.211027,
+          "episodes": 12,
+          "ending_equity": 32869.808961,
+          "fees": 321.599811,
+          "funding": 8.212701,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 1.666112,
+          "capital_utilization": 0.085083,
+          "annualized_return": 0.10098243960056119,
+          "cagr": 0.10124342537920183
+        },
+        "full": {
+          "net_pnl": 7226.027088,
+          "sharpe": 2.210297,
+          "episodes": 30,
+          "ending_equity": 37226.027088,
+          "fees": 814.049468,
+          "funding": 58.858911,
+          "max_dd_usdt": 0.0,
+          "max_dd_pct": 0.0,
+          "max_effective_leverage": 2.283788,
+          "capital_utilization": 0.080883,
+          "annualized_return": 0.05129847218483165,
+          "cagr": 0.047034659682683166
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 6411.97762,
+            "sharpe": 2.212367,
+            "episodes": 30,
+            "ending_equity": 36411.97762,
+            "fees": 1628.098935,
+            "funding": 58.858911,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 2.296347,
+            "capital_utilization": 0.081813,
+            "annualized_return": 0.04551943296054494,
+            "cagr": 0.042115833229239286
+          },
+          "funding_2x": {
+            "net_pnl": 7167.168177,
+            "sharpe": 2.20619,
+            "episodes": 30,
+            "ending_equity": 37167.168177,
+            "fees": 814.049468,
+            "funding": 117.717821,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 2.285205,
+            "capital_utilization": 0.080965,
+            "annualized_return": 0.0508806253996005,
+            "cagr": 0.04668186415219955
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 1928.560907,
+            "sharpe": 0.225881,
+            "episodes": 29,
+            "ending_equity": 31928.560907,
+            "fees": 851.418071,
+            "funding": 56.163114,
+            "max_dd_usdt": -4590.136796,
+            "max_dd_pct": -0.144427,
+            "max_effective_leverage": 3.017993,
+            "capital_utilization": 0.098415,
+            "annualized_return": 0.01369109565249138,
+            "cagr": 0.013357446315799715
+          },
+          "slippage_2ticks": {
+            "net_pnl": 7224.963169,
+            "sharpe": 2.210306,
+            "episodes": 30,
+            "ending_equity": 37224.963169,
+            "fees": 814.048935,
+            "funding": 58.858834,
+            "max_dd_usdt": 0.0,
+            "max_dd_pct": 0.0,
+            "max_effective_leverage": 2.283813,
+            "capital_utilization": 0.080884,
+            "annualized_return": 0.05129091928734025,
+            "cagr": 0.04702828653329205
+          }
+        },
+        "neighbourhood": {
+          "neighbours": 6,
+          "agreeing": 6,
+          "same_sign_fraction": 1.0,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": true
+        }
+      },
+      "ETHUSDT/1d": {
+        "case_name": "rvol20__A",
+        "outcome": "CULLED",
+        "strategy_params": {
+          "arm_conf": 0,
+          "arm_mad": 0,
+          "arm_rstd": 0,
+          "arm_frozen": 0,
+          "arm_rvol20": 1,
+          "cfg_A": 1,
+          "cfg_B": 0
+        },
+        "dca_params": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.0,
+          "breakeven_tp_pct": 0.02,
+          "invalidation_pct": 0.05
+        },
+        "historical": {
+          "net_pnl": 2661.953967,
+          "sharpe": 0.579697,
+          "episodes": 16,
+          "ending_equity": 32661.953967,
+          "fees": 291.499484,
+          "funding": 45.51421,
+          "max_dd_usdt": -2038.235533,
+          "max_dd_pct": -0.062099,
+          "max_effective_leverage": 1.320909,
+          "capital_utilization": 0.054337,
+          "annualized_return": 0.023673695801793664,
+          "cagr": 0.022940844636201385
+        },
+        "oos": {
+          "net_pnl": 2121.845601,
+          "sharpe": 2.364932,
+          "episodes": 8,
+          "ending_equity": 32121.845601,
+          "fees": 121.124203,
+          "funding": 5.435663,
+          "max_dd_usdt": -54.130529,
+          "max_dd_pct": -0.001693,
+          "max_effective_leverage": 0.994104,
+          "capital_utilization": 0.04219,
+          "annualized_return": 0.0746632086564977,
+          "cagr": 0.07480694665530252
+        },
+        "full": {
+          "net_pnl": 4783.799569,
+          "sharpe": 0.839698,
+          "episodes": 24,
+          "ending_equity": 34783.799569,
+          "fees": 412.623687,
+          "funding": 50.949873,
+          "max_dd_usdt": -2038.235533,
+          "max_dd_pct": -0.062099,
+          "max_effective_leverage": 1.320909,
+          "capital_utilization": 0.048045,
+          "annualized_return": 0.03396079285586223,
+          "cagr": 0.03201210640709218
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 4371.175882,
+            "sharpe": 0.777858,
+            "episodes": 24,
+            "ending_equity": 34371.175882,
+            "fees": 825.247373,
+            "funding": 50.949873,
+            "max_dd_usdt": -2077.235456,
+            "max_dd_pct": -0.06358,
+            "max_effective_leverage": 1.323167,
+            "capital_utilization": 0.048366,
+            "annualized_return": 0.031031525576611582,
+            "cagr": 0.029392566615149773
+          },
+          "funding_2x": {
+            "net_pnl": 4732.849696,
+            "sharpe": 0.832954,
+            "episodes": 24,
+            "ending_equity": 34732.849696,
+            "fees": 412.623687,
+            "funding": 101.899745,
+            "max_dd_usdt": -2037.317628,
+            "max_dd_pct": -0.062119,
+            "max_effective_leverage": 1.321216,
+            "capital_utilization": 0.048088,
+            "annualized_return": 0.03359909332360256,
+            "cagr": 0.031689979169417404
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 6375.488117,
+            "sharpe": 1.71825,
+            "episodes": 24,
+            "ending_equity": 36375.488117,
+            "fees": 403.41616,
+            "funding": 53.415417,
+            "max_dd_usdt": -319.337129,
+            "max_dd_pct": -0.00876,
+            "max_effective_leverage": 1.308248,
+            "capital_utilization": 0.044595,
+            "annualized_return": 0.04526038940324122,
+            "cagr": 0.04189332959429559
+          },
+          "slippage_2ticks": {
+            "net_pnl": 4782.13571,
+            "sharpe": 0.839445,
+            "episodes": 24,
+            "ending_equity": 34782.13571,
+            "fees": 412.622854,
+            "funding": 50.949678,
+            "max_dd_usdt": -2038.388973,
+            "max_dd_pct": -0.062104,
+            "max_effective_leverage": 1.320916,
+            "capital_utilization": 0.048047,
+            "annualized_return": 0.0339489809134461,
+            "cagr": 0.03200159263586233
+          }
+        },
+        "neighbourhood": {
+          "neighbours": 8,
+          "agreeing": 3,
+          "same_sign_fraction": 0.375,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": false
+        }
+      },
+      "SOLUSDT/1d": {
+        "case_name": "rvol20__A",
+        "outcome": "SURVIVOR",
+        "strategy_params": {
+          "arm_conf": 0,
+          "arm_mad": 0,
+          "arm_rstd": 0,
+          "arm_frozen": 0,
+          "arm_rvol20": 1,
+          "cfg_A": 1,
+          "cfg_B": 0
+        },
+        "dca_params": {
+          "spacing_pct": 0.02,
+          "size_multiplier": 1.1,
+          "breakeven_tp_pct": 0.02,
+          "invalidation_pct": 0.1
+        },
+        "historical": {
+          "net_pnl": 14444.644597,
+          "sharpe": 1.791357,
+          "episodes": 25,
+          "ending_equity": 44444.644597,
+          "fees": 791.883803,
+          "funding": 66.386477,
+          "max_dd_usdt": -128.154886,
+          "max_dd_pct": -0.003188,
+          "max_effective_leverage": 5.524516,
+          "capital_utilization": 0.087324,
+          "annualized_return": 0.12846132064791635,
+          "cagr": 0.11056088966449318
+        },
+        "oos": {
+          "net_pnl": 4999.402131,
+          "sharpe": 1.748047,
+          "episodes": 6,
+          "ending_equity": 34999.402131,
+          "fees": 280.676411,
+          "funding": 17.123612,
+          "max_dd_usdt": -621.03826,
+          "max_dd_pct": -0.01953,
+          "max_effective_leverage": 3.574382,
+          "capital_utilization": 0.114637,
+          "annualized_return": 0.17591826862988114,
+          "cagr": 0.17669416254746384
+        },
+        "full": {
+          "net_pnl": 19444.046728,
+          "sharpe": 1.781537,
+          "episodes": 31,
+          "ending_equity": 49444.046728,
+          "fees": 1072.560215,
+          "funding": 83.510089,
+          "max_dd_usdt": -621.03826,
+          "max_dd_pct": -0.01343,
+          "max_effective_leverage": 5.524516,
+          "capital_utilization": 0.084287,
+          "annualized_return": 0.13803572531366548,
+          "cagr": 0.11227906415639399
+        },
+        "robustness": {
+          "fee_2x": {
+            "net_pnl": 18371.486513,
+            "sharpe": 1.768959,
+            "episodes": 31,
+            "ending_equity": 48371.486513,
+            "fees": 2145.120429,
+            "funding": 83.510089,
+            "max_dd_usdt": -637.03826,
+            "max_dd_pct": -0.014045,
+            "max_effective_leverage": 5.608245,
+            "capital_utilization": 0.085467,
+            "annualized_return": 0.13042148588984684,
+            "cagr": 0.10709599176935525
+          },
+          "funding_2x": {
+            "net_pnl": 19360.536639,
+            "sharpe": 1.775359,
+            "episodes": 31,
+            "ending_equity": 49360.536639,
+            "fees": 1072.560215,
+            "funding": 167.020177,
+            "max_dd_usdt": -621.03826,
+            "max_dd_pct": -0.013448,
+            "max_effective_leverage": 5.535298,
+            "capital_utilization": 0.084408,
+            "annualized_return": 0.13744287672499386,
+            "cagr": 0.11187870142610867
+          },
+          "entry_delay_1_bar": {
+            "net_pnl": 15294.283522,
+            "sharpe": 1.804233,
+            "episodes": 31,
+            "ending_equity": 45294.283522,
+            "fees": 874.536305,
+            "funding": 60.607542,
+            "max_dd_usdt": -484.030497,
+            "max_dd_pct": -0.011535,
+            "max_effective_leverage": 3.419082,
+            "capital_utilization": 0.068668,
+            "annualized_return": 0.10857603608001076,
+            "cagr": 0.09170605978095558
+          },
+          "slippage_2ticks": {
+            "net_pnl": 19366.28004,
+            "sharpe": 1.779944,
+            "episodes": 31,
+            "ending_equity": 49366.28004,
+            "fees": 1072.521308,
+            "funding": 83.503117,
+            "max_dd_usdt": -625.357523,
+            "max_dd_pct": -0.013539,
+            "max_effective_leverage": 5.532049,
+            "capital_utilization": 0.084378,
+            "annualized_return": 0.1374836498492763,
+            "cagr": 0.11190625341152294
+          }
+        },
+        "neighbourhood": {
+          "neighbours": 8,
+          "agreeing": 6,
+          "same_sign_fraction": 0.75,
+          "winner_net_pnl_positive": true,
+          "threshold": 0.6,
+          "case_axis_note": "window_case is categorical; its +-1 registered step is the registered reading of the contract single-axis rule",
+          "passed": true
+        }
+      }
+    },
+    "dca_layer_histogram": {
+      "level_00": 154054,
+      "level_01": 105847,
+      "level_02": 48157,
+      "level_03": 24997,
+      "level_04": 14832,
+      "level_05": 8801,
+      "level_06": 5730,
+      "level_07": 4471,
+      "level_08": 3041,
+      "level_09": 1921,
+      "level_10": 1324,
+      "level_11": 0
+    },
+    "stress_summary": {
+      "fee_2x": {
+        "median_net_pnl": 806.84795,
+        "median_sharpe": 0.461467,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "funding_2x": {
+        "median_net_pnl": 962.743137,
+        "median_sharpe": 0.461467,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "entry_delay_1_bar": {
+        "median_net_pnl": 577.726435,
+        "median_sharpe": 0.281094,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "slippage_2ticks": {
+        "median_net_pnl": 956.429857,
+        "median_sharpe": 0.461467,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "cost_attrition_40bps": {
+        "median_net_pnl": 102.08158,
+        "median_sharpe": 0.1675855,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "no_funding": {
+        "median_net_pnl": 776.064789,
+        "median_sharpe": 0.528044,
+        "cases": 1920,
+        "non_gating": true
+      },
+      "no_funding_full": {
+        "median_net_pnl": 956.837429,
+        "median_sharpe": 0.461467,
+        "cases": 1920,
+        "non_gating": true
+      }
+    },
+    "descriptive_diagnostics": {
+      "non_gating": true,
+      "note": "every cohort is judged independently (contract 7.3); the cross-cohort numbers below are descriptive diagnostics and are never a gate (contract 7.2)",
+      "cohort_count": 4,
+      "median_full_net_pnl": 957.271513,
+      "median_oos_net_pnl": 74.017251,
+      "median_historical_net_pnl": 768.311379,
+      "positive_case_share_historical": 0.6536458333333334,
+      "positive_case_share_full": 0.6567708333333333,
+      "cross_instrument_direction_consistency": [
+        {
+          "cohort": "BNBUSDT/1d",
+          "winner_case": "rvol20__A",
+          "outcome": "CULLED"
+        },
+        {
+          "cohort": "BTCUSDT/1d",
+          "winner_case": "rvol20__A",
+          "outcome": "SURVIVOR"
+        },
+        {
+          "cohort": "ETHUSDT/1d",
+          "winner_case": "rvol20__A",
+          "outcome": "CULLED"
+        },
+        {
+          "cohort": "SOLUSDT/1d",
+          "winner_case": "rvol20__A",
+          "outcome": "SURVIVOR"
+        }
+      ]
+    },
+    "descriptive_medians_all_base_cases": {
+      "net_pnl": 957.271513,
+      "fees": 176.1262705,
+      "funding": 29.631002,
+      "gross_pnl": 1107.58667,
+      "ending_equity": 30957.271513,
+      "sharpe": 0.461467,
+      "max_dd_pct": -0.008826500000000001,
+      "max_dd_usdt": -275.9320915,
+      "max_effective_leverage": 1.325615,
+      "capital_utilization": 0.058383,
+      "cagr": 0.006712044989307664,
+      "total_return_pct": 0.031909,
+      "episodes": 8.0,
+      "fills": 28.0,
+      "turnover_usdt": 352252.54124149994
+    },
+    "signal_layer": {
+      "BNBUSDT/1d": {
+        "conf__A": {
+          "case_name": "conf__A",
+          "arm": "conformal",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 277,
+            "short": 0,
+            "events": 13
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.8425720620842572,
+            "fits": 230
+          }
+        },
+        "mad__A": {
+          "case_name": "mad__A",
+          "arm": "mad",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 358,
+            "short": 0,
+            "events": 16
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__A": {
+          "case_name": "rstd__A",
+          "arm": "resid_std",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 121,
+            "short": 20,
+            "events": 5
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__A": {
+          "case_name": "frozen__A",
+          "arm": "frozen_train",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 0,
+            "short": 0,
+            "events": 0
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8805513016845329,
+            "fits": 230
+          }
+        },
+        "rvol20__A": {
+          "case_name": "rvol20__A",
+          "arm": "realized_vol_20",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 317,
+            "short": 20,
+            "events": 23
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "conf__B": {
+          "case_name": "conf__B",
+          "arm": "conformal",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 233,
+            "short": 0,
+            "events": 13
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.8425720620842572,
+            "fits": 230
+          }
+        },
+        "mad__B": {
+          "case_name": "mad__B",
+          "arm": "mad",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 358,
+            "short": 0,
+            "events": 16
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__B": {
+          "case_name": "rstd__B",
+          "arm": "resid_std",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 121,
+            "short": 20,
+            "events": 5
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__B": {
+          "case_name": "frozen__B",
+          "arm": "frozen_train",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 0,
+            "short": 0,
+            "events": 0
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8805513016845329,
+            "fits": 230
+          }
+        },
+        "rvol20__B": {
+          "case_name": "rvol20__B",
+          "arm": "realized_vol_20",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 317,
+            "short": 20,
+            "events": 23
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        }
+      },
+      "BTCUSDT/1d": {
+        "conf__A": {
+          "case_name": "conf__A",
+          "arm": "conformal",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 523,
+            "short": 0,
+            "events": 21
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.7971175166297118,
+            "fits": 230
+          }
+        },
+        "mad__A": {
+          "case_name": "mad__A",
+          "arm": "mad",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 814,
+            "short": 0,
+            "events": 16
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__A": {
+          "case_name": "rstd__A",
+          "arm": "resid_std",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 301,
+            "short": 0,
+            "events": 7
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__A": {
+          "case_name": "frozen__A",
+          "arm": "frozen_train",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 302,
+            "short": 0,
+            "events": 14
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8177641653905053,
+            "fits": 230
+          }
+        },
+        "rvol20__A": {
+          "case_name": "rvol20__A",
+          "arm": "realized_vol_20",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 614,
+            "short": 0,
+            "events": 30
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "conf__B": {
+          "case_name": "conf__B",
+          "arm": "conformal",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 392,
+            "short": 0,
+            "events": 19
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.7971175166297118,
+            "fits": 230
+          }
+        },
+        "mad__B": {
+          "case_name": "mad__B",
+          "arm": "mad",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 814,
+            "short": 0,
+            "events": 16
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__B": {
+          "case_name": "rstd__B",
+          "arm": "resid_std",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 301,
+            "short": 0,
+            "events": 7
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__B": {
+          "case_name": "frozen__B",
+          "arm": "frozen_train",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 247,
+            "short": 0,
+            "events": 13
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8177641653905053,
+            "fits": 230
+          }
+        },
+        "rvol20__B": {
+          "case_name": "rvol20__B",
+          "arm": "realized_vol_20",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 614,
+            "short": 0,
+            "events": 30
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        }
+      },
+      "ETHUSDT/1d": {
+        "conf__A": {
+          "case_name": "conf__A",
+          "arm": "conformal",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 44,
+            "short": 0,
+            "events": 8
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.7494456762749445,
+            "fits": 230
+          }
+        },
+        "mad__A": {
+          "case_name": "mad__A",
+          "arm": "mad",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 85,
+            "short": 0,
+            "events": 8
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__A": {
+          "case_name": "rstd__A",
+          "arm": "resid_std",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 12,
+            "short": 10,
+            "events": 7
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__A": {
+          "case_name": "frozen__A",
+          "arm": "frozen_train",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 65,
+            "short": 0,
+            "events": 9
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.678407350689127,
+            "fits": 230
+          }
+        },
+        "rvol20__A": {
+          "case_name": "rvol20__A",
+          "arm": "realized_vol_20",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 154,
+            "short": 0,
+            "events": 24
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "conf__B": {
+          "case_name": "conf__B",
+          "arm": "conformal",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 12,
+            "short": 0,
+            "events": 3
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.7494456762749445,
+            "fits": 230
+          }
+        },
+        "mad__B": {
+          "case_name": "mad__B",
+          "arm": "mad",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 85,
+            "short": 0,
+            "events": 8
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__B": {
+          "case_name": "rstd__B",
+          "arm": "resid_std",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 12,
+            "short": 10,
+            "events": 7
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__B": {
+          "case_name": "frozen__B",
+          "arm": "frozen_train",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 26,
+            "short": 0,
+            "events": 6
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.678407350689127,
+            "fits": 230
+          }
+        },
+        "rvol20__B": {
+          "case_name": "rvol20__B",
+          "arm": "realized_vol_20",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 154,
+            "short": 0,
+            "events": 24
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        }
+      },
+      "SOLUSDT/1d": {
+        "conf__A": {
+          "case_name": "conf__A",
+          "arm": "conformal",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 43,
+            "short": 0,
+            "events": 1
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.8059866962305987,
+            "fits": 230
+          }
+        },
+        "mad__A": {
+          "case_name": "mad__A",
+          "arm": "mad",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 46,
+            "short": 0,
+            "events": 2
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__A": {
+          "case_name": "rstd__A",
+          "arm": "resid_std",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 41,
+            "short": 0,
+            "events": 1
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__A": {
+          "case_name": "frozen__A",
+          "arm": "frozen_train",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 0,
+            "short": 0,
+            "events": 0
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8346094946401225,
+            "fits": 230
+          }
+        },
+        "rvol20__A": {
+          "case_name": "rvol20__A",
+          "arm": "realized_vol_20",
+          "config": "cap_only",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 198,
+            "short": 0,
+            "events": 31
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "conf__B": {
+          "case_name": "conf__B",
+          "arm": "conformal",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 33,
+            "short": 0,
+            "events": 1
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 902,
+            "coverage_rate": 0.8059866962305987,
+            "fits": 230
+          }
+        },
+        "mad__B": {
+          "case_name": "mad__B",
+          "arm": "mad",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 46,
+            "short": 0,
+            "events": 2
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "rstd__B": {
+          "case_name": "rstd__B",
+          "arm": "resid_std",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 41,
+            "short": 0,
+            "events": 1
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        },
+        "frozen__B": {
+          "case_name": "frozen__B",
+          "arm": "frozen_train",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 0,
+            "short": 0,
+            "events": 0
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 653,
+            "coverage_rate": 0.8346094946401225,
+            "fits": 230
+          }
+        },
+        "rvol20__B": {
+          "case_name": "rvol20__B",
+          "arm": "realized_vol_20",
+          "config": "drawdown_dial",
+          "defined_bars": 944,
+          "market_state_bars": {
+            "long": 198,
+            "short": 0,
+            "events": 31
+          },
+          "warmup_bars": 771,
+          "signal_diagnostics": {
+            "defined_bars": 944,
+            "coverage_bars": 0,
+            "coverage_rate": null,
+            "fits": 230
+          }
+        }
+      }
+    },
+    "panel_build": {
+      "conf__A": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "conformal",
+        "config": "cap_only",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.006997,
+        "gross_pre_cap_max": 2.06296
+      },
+      "mad__A": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "mad",
+        "config": "cap_only",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.092128,
+        "gross_pre_cap_max": 2.329481
+      },
+      "rstd__A": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "resid_std",
+        "config": "cap_only",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.023907,
+        "gross_pre_cap_max": 3.0
+      },
+      "frozen__A": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "frozen_train",
+        "config": "cap_only",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.0,
+        "gross_pre_cap_max": 1.780356
+      },
+      "rvol20__A": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "realized_vol_20",
+        "config": "cap_only",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.153936,
+        "gross_pre_cap_max": 3.0
+      },
+      "conf__B": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "conformal",
+        "config": "drawdown_dial",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.006997,
+        "gross_pre_cap_max": 2.06296
+      },
+      "mad__B": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "mad",
+        "config": "drawdown_dial",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.092128,
+        "gross_pre_cap_max": 2.329481
+      },
+      "rstd__B": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "resid_std",
+        "config": "drawdown_dial",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.023907,
+        "gross_pre_cap_max": 3.0
+      },
+      "frozen__B": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "frozen_train",
+        "config": "drawdown_dial",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.0,
+        "gross_pre_cap_max": 1.780356
+      },
+      "rvol20__B": {
+        "bars": 1715,
+        "markets": [
+          "BNBUSDT",
+          "BTCUSDT",
+          "ETHUSDT",
+          "SOLUSDT"
+        ],
+        "arm": "realized_vol_20",
+        "config": "drawdown_dial",
+        "warmup_bars": 771,
+        "defined_bars": 944,
+        "gross_cap_binding_rate": 0.153936,
+        "gross_pre_cap_max": 3.0
+      }
+    }
+  },
+  "registered_family_level_falsification": {
+    "flags": {
+      "coverage_calibration_stability": true,
+      "conformal_vs_realized_volatility_horserace": true,
+      "downside_miscoverage_dial_placebo": false,
+      "leverage_cap_ablation": false
+    },
+    "hits": [
+      "coverage_calibration_stability",
+      "conformal_vs_realized_volatility_horserace"
+    ],
+    "coverage_calibration_stability": {
+      "registered_item": "coverage-calibration-stability",
+      "evaluated": true,
+      "hit": true,
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "nominal_coverage": 0.75,
+      "low": 0.7,
+      "high": 0.8,
+      "rolling_window_bars": 252,
+      "instruments": {
+        "BNBUSDT": {
+          "landed_observations": 923,
+          "marginal_coverage": 0.823402,
+          "rolling_windows": 672,
+          "rolling_min": 0.642857,
+          "rolling_max": 0.988095,
+          "rolling_extreme_outside_band": true
+        },
+        "BTCUSDT": {
+          "landed_observations": 923,
+          "marginal_coverage": 0.778982,
+          "rolling_windows": 672,
+          "rolling_min": 0.607143,
+          "rolling_max": 0.900794,
+          "rolling_extreme_outside_band": true
+        },
+        "ETHUSDT": {
+          "landed_observations": 923,
+          "marginal_coverage": 0.732394,
+          "rolling_windows": 672,
+          "rolling_min": 0.563492,
+          "rolling_max": 0.861111,
+          "rolling_extreme_outside_band": true
+        },
+        "SOLUSDT": {
+          "landed_observations": 923,
+          "marginal_coverage": 0.787649,
+          "rolling_windows": 672,
+          "rolling_min": 0.694444,
+          "rolling_max": 0.928571,
+          "rolling_extreme_outside_band": true
+        }
+      },
+      "pooled": {
+        "landed_observations": 923,
+        "marginal_coverage": 0.780607,
+        "rolling_windows": 672,
+        "rolling_min": 0.668651,
+        "rolling_max": 0.878968,
+        "rolling_extreme_outside_band": true,
+        "index_alignment": "identical landed-bar positions on all instruments"
+      },
+      "note": "the record's +-5.0 pp band on a rolling 252-day window is applied verbatim; coverage is an empirical property of overlapping 21-bar labels (the record's own non-exchangeability caveat) and is reported, never used to cull"
+    },
+    "conformal_vs_realized_volatility_horserace": {
+      "registered_item": "conformal-vs-realized-volatility-horserace",
+      "evaluated": true,
+      "hit": true,
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "min_sample_bars": 500,
+      "cohorts": {
+        "BNBUSDT/1d": {
+          "winner_case": "rvol20__A",
+          "config": "cap_only",
+          "dca": {
+            "spacing_pct": 0.01,
+            "size_multiplier": 1.0,
+            "breakeven_tp_pct": 0.01,
+            "invalidation_pct": 0.1
+          },
+          "full_days": 1715,
+          "conformal_sharpe": 1.235883,
+          "realized_vol_sharpe": 1.654149,
+          "conformal_annualized_return": 0.011834,
+          "realized_vol_annualized_return": 0.040672,
+          "conformal_net_pnl": 1667.016402,
+          "realized_vol_net_pnl": 5729.198386,
+          "conformal_exceeds_sharpe": false,
+          "conformal_exceeds_growth": false,
+          "sample_floor_met": true,
+          "hit_sharpe_leg": true,
+          "hit_growth_leg": true
+        },
+        "BTCUSDT/1d": {
+          "winner_case": "rvol20__A",
+          "config": "cap_only",
+          "dca": {
+            "spacing_pct": 0.01,
+            "size_multiplier": 1.0,
+            "breakeven_tp_pct": 0.01,
+            "invalidation_pct": 0.05
+          },
+          "full_days": 1715,
+          "conformal_sharpe": 1.580362,
+          "realized_vol_sharpe": 2.210297,
+          "conformal_annualized_return": 0.028211,
+          "realized_vol_annualized_return": 0.051298,
+          "conformal_net_pnl": 3973.813787,
+          "realized_vol_net_pnl": 7226.027088,
+          "conformal_exceeds_sharpe": false,
+          "conformal_exceeds_growth": false,
+          "sample_floor_met": true,
+          "hit_sharpe_leg": true,
+          "hit_growth_leg": true
+        },
+        "ETHUSDT/1d": {
+          "winner_case": "rvol20__A",
+          "config": "cap_only",
+          "dca": {
+            "spacing_pct": 0.02,
+            "size_multiplier": 1.0,
+            "breakeven_tp_pct": 0.02,
+            "invalidation_pct": 0.05
+          },
+          "full_days": 1715,
+          "conformal_sharpe": -0.294597,
+          "realized_vol_sharpe": 0.839698,
+          "conformal_annualized_return": -0.014239,
+          "realized_vol_annualized_return": 0.033961,
+          "conformal_net_pnl": -2005.80907,
+          "realized_vol_net_pnl": 4783.799569,
+          "conformal_exceeds_sharpe": false,
+          "conformal_exceeds_growth": false,
+          "sample_floor_met": true,
+          "hit_sharpe_leg": true,
+          "hit_growth_leg": true
+        },
+        "SOLUSDT/1d": {
+          "winner_case": "rvol20__A",
+          "config": "cap_only",
+          "dca": {
+            "spacing_pct": 0.02,
+            "size_multiplier": 1.1,
+            "breakeven_tp_pct": 0.02,
+            "invalidation_pct": 0.1
+          },
+          "full_days": 1715,
+          "conformal_sharpe": 0.461467,
+          "realized_vol_sharpe": 1.781537,
+          "conformal_annualized_return": 0.00261,
+          "realized_vol_annualized_return": 0.138036,
+          "conformal_net_pnl": 367.706369,
+          "realized_vol_net_pnl": 19444.046728,
+          "conformal_exceeds_sharpe": false,
+          "conformal_exceeds_growth": false,
+          "sample_floor_met": true,
+          "hit_sharpe_leg": true,
+          "hit_growth_leg": true
+        }
+      },
+      "growth_proxy": "the rail's annualized_return (net of fees, funding and slippage) on the evaluated slice; the record's portfolio log-growth figure has no counterpart in a one-instrument rail (disclosed)",
+      "cohorts_evaluated": 4,
+      "cohorts_conformal_exceeds_sharpe": 0,
+      "cohorts_conformal_exceeds_growth": 0,
+      "note": "matched gross leverage and transaction costs hold by construction: the two arms share the rail, the DCA configuration, the fee/slippage/funding policy and the window; only the registered scale estimator differs"
+    },
+    "downside_miscoverage_dial_placebo": {
+      "registered_item": "downside-miscoverage-dial-placebo",
+      "evaluated": false,
+      "hit": false,
+      "status": "not_executed",
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "placebo_draws": 1000,
+      "instruments": {
+        "BNBUSDT": {
+          "observations": 902,
+          "mean": 0.87046,
+          "min": 0.25,
+          "max": 1.0,
+          "fraction_at_floor": 0.151885,
+          "fraction_below_gate": 0.176275,
+          "gate_days": 159
+        },
+        "BTCUSDT": {
+          "observations": 902,
+          "mean": 0.812889,
+          "min": 0.25,
+          "max": 1.0,
+          "fraction_at_floor": 0.22949,
+          "fraction_below_gate": 0.247228,
+          "gate_days": 223
+        },
+        "ETHUSDT": {
+          "observations": 902,
+          "mean": 0.820254,
+          "min": 0.25,
+          "max": 1.0,
+          "fraction_at_floor": 0.227273,
+          "fraction_below_gate": 0.238359,
+          "gate_days": 215
+        },
+        "SOLUSDT": {
+          "observations": 902,
+          "mean": 0.798503,
+          "min": 0.25,
+          "max": 1.0,
+          "fraction_at_floor": 0.231707,
+          "fraction_below_gate": 0.279379,
+          "gate_days": 252
+        }
+      },
+      "measured_execution_footprint": {
+        "cells_compared": 960,
+        "cells_with_a_different_episode_count": 192,
+        "cohorts": {
+          "BNBUSDT/1d": {
+            "conformal": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "mad": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "resid_std": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "frozen_train": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "realized_vol_20": {
+              "cells": 48,
+              "episodes_differ": 0
+            }
+          },
+          "BTCUSDT/1d": {
+            "conformal": {
+              "cells": 48,
+              "episodes_differ": 48
+            },
+            "mad": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "resid_std": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "frozen_train": {
+              "cells": 48,
+              "episodes_differ": 48
+            },
+            "realized_vol_20": {
+              "cells": 48,
+              "episodes_differ": 0
+            }
+          },
+          "ETHUSDT/1d": {
+            "conformal": {
+              "cells": 48,
+              "episodes_differ": 48
+            },
+            "mad": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "resid_std": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "frozen_train": {
+              "cells": 48,
+              "episodes_differ": 48
+            },
+            "realized_vol_20": {
+              "cells": 48,
+              "episodes_differ": 0
+            }
+          },
+          "SOLUSDT/1d": {
+            "conformal": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "mad": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "resid_std": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "frozen_train": {
+              "cells": 48,
+              "episodes_differ": 0
+            },
+            "realized_vol_20": {
+              "cells": 48,
+              "episodes_differ": 0
+            }
+          }
+        }
+      },
+      "reason": "the registered rail cannot express the record's continuous portfolio leverage multiplier, so the 1,000-resample placebo test is not executed; the dial's own series and its measured execution footprint are reported instead of a weakened substitute"
+    },
+    "leverage_cap_ablation": {
+      "registered_item": "leverage-cap-ablation",
+      "evaluated": false,
+      "hit": false,
+      "status": "not_executed",
+      "landing": "family-level: a hit must NEVER be recorded as PASS",
+      "uncapped_dd_limit": 0.6,
+      "uncapped_leverage_limit": 5.0,
+      "instruments": {
+        "BNBUSDT": {
+          "conformal": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.012712,
+            "max_pre_cap_gross": 2.06296,
+            "mean_pre_cap_gross": 1.376015,
+            "leverage_spike_above_5x": false
+          },
+          "mad": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.167373,
+            "max_pre_cap_gross": 2.329481,
+            "mean_pre_cap_gross": 1.606465,
+            "leverage_spike_above_5x": false
+          },
+          "resid_std": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.043432,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.179102,
+            "leverage_spike_above_5x": false
+          },
+          "frozen_train": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.0,
+            "max_pre_cap_gross": 1.780356,
+            "mean_pre_cap_gross": 0.875172,
+            "leverage_spike_above_5x": false
+          },
+          "realized_vol_20": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.279661,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.604478,
+            "leverage_spike_above_5x": false
+          }
+        },
+        "BTCUSDT": {
+          "conformal": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.012712,
+            "max_pre_cap_gross": 2.06296,
+            "mean_pre_cap_gross": 1.376015,
+            "leverage_spike_above_5x": false
+          },
+          "mad": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.167373,
+            "max_pre_cap_gross": 2.329481,
+            "mean_pre_cap_gross": 1.606465,
+            "leverage_spike_above_5x": false
+          },
+          "resid_std": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.043432,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.179102,
+            "leverage_spike_above_5x": false
+          },
+          "frozen_train": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.0,
+            "max_pre_cap_gross": 1.780356,
+            "mean_pre_cap_gross": 0.875172,
+            "leverage_spike_above_5x": false
+          },
+          "realized_vol_20": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.279661,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.604478,
+            "leverage_spike_above_5x": false
+          }
+        },
+        "ETHUSDT": {
+          "conformal": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.012712,
+            "max_pre_cap_gross": 2.06296,
+            "mean_pre_cap_gross": 1.376015,
+            "leverage_spike_above_5x": false
+          },
+          "mad": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.167373,
+            "max_pre_cap_gross": 2.329481,
+            "mean_pre_cap_gross": 1.606465,
+            "leverage_spike_above_5x": false
+          },
+          "resid_std": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.043432,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.179102,
+            "leverage_spike_above_5x": false
+          },
+          "frozen_train": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.0,
+            "max_pre_cap_gross": 1.780356,
+            "mean_pre_cap_gross": 0.875172,
+            "leverage_spike_above_5x": false
+          },
+          "realized_vol_20": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.279661,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.604478,
+            "leverage_spike_above_5x": false
+          }
+        },
+        "SOLUSDT": {
+          "conformal": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.012712,
+            "max_pre_cap_gross": 2.06296,
+            "mean_pre_cap_gross": 1.376015,
+            "leverage_spike_above_5x": false
+          },
+          "mad": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.167373,
+            "max_pre_cap_gross": 2.329481,
+            "mean_pre_cap_gross": 1.606465,
+            "leverage_spike_above_5x": false
+          },
+          "resid_std": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.043432,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.179102,
+            "leverage_spike_above_5x": false
+          },
+          "frozen_train": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.0,
+            "max_pre_cap_gross": 1.780356,
+            "mean_pre_cap_gross": 0.875172,
+            "leverage_spike_above_5x": false
+          },
+          "realized_vol_20": {
+            "defined_bars": 944,
+            "cap_binding_rate": 0.279661,
+            "max_pre_cap_gross": 3.0,
+            "mean_pre_cap_gross": 1.604478,
+            "leverage_spike_above_5x": false
+          }
+        }
+      },
+      "reason": "the unconstrained portfolio drawdown cannot be measured inside a one-instrument rail; the item is not executed, and the two measured quantities the record's rule names (cap binding rate and the pre-cap leverage extreme) are disclosed instead of an approximation",
+      "record_reference": "the record reports the cap binding on 97.7% of development days; the same statistic is measured here on the local panel"
+    }
+  },
+  "independent_verification": {
+    "script": "runtime/_l_verify_r1u1.py",
+    "script_sha256": "sha256:0635ca013d6a41e3a8a674e2e1e2c415fd7c89b956f934d861c1a4f8a09d631d",
+    "evidence_path": ".kanban-scratch/l_parts/l_verification.json",
+    "evidence_sha256": "sha256:accf13e0dc34f492fc254de137c16fbb25ae7783f1c6f3e2fbe9f61f4c1e18b7",
+    "ok": true,
+    "ladder_identity": {
+      "all_levels_non_negative": true,
+      "layer_00": 154054,
+      "levels": {
+        "level_00": 154054,
+        "level_01": 105847,
+        "level_02": 48157,
+        "level_03": 24997,
+        "level_04": 14832,
+        "level_05": 8801,
+        "level_06": 5730,
+        "level_07": 4471,
+        "level_08": 3041,
+        "level_09": 1921,
+        "level_10": 1324,
+        "level_11": 0
+      },
+      "match": true,
+      "sum_all_levels": 373175,
+      "sum_episodes_full_window_grids": 154054
+    },
+    "accounting_identity_failures": {
+      "cost_attrition_40bps": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "entry_delay_1_bar": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "fee_2x": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "full": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "funding_2x": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "historical": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "no_funding": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "no_funding_full": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "oos": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      },
+      "slippage_2ticks": {
+        "episode_partition": 0,
+        "pnl_decomposition": 0
+      }
+    },
+    "coverage_reader_all_match": true,
+    "winner_rows_max_abs_diff_vs_cohort_results": {
+      "BNBUSDT/1d": {
+        "entry_delay_1_bar": 0.0,
+        "fee_2x": 0.0,
+        "full": 0.0,
+        "funding_2x": 0.0,
+        "historical": 0.0,
+        "oos": 0.0,
+        "slippage_2ticks": 0.0
+      },
+      "BTCUSDT/1d": {
+        "entry_delay_1_bar": 0.0,
+        "fee_2x": 0.0,
+        "full": 0.0,
+        "funding_2x": 0.0,
+        "historical": 0.0,
+        "oos": 0.0,
+        "slippage_2ticks": 0.0
+      },
+      "ETHUSDT/1d": {
+        "entry_delay_1_bar": 0.0,
+        "fee_2x": 0.0,
+        "full": 0.0,
+        "funding_2x": 0.0,
+        "historical": 0.0,
+        "oos": 0.0,
+        "slippage_2ticks": 0.0
+      },
+      "SOLUSDT/1d": {
+        "entry_delay_1_bar": 0.0,
+        "fee_2x": 0.0,
+        "full": 0.0,
+        "funding_2x": 0.0,
+        "historical": 0.0,
+        "oos": 0.0,
+        "slippage_2ticks": 0.0
+      }
+    },
+    "selector_recomputation_matches": true,
+    "preflight": "P1-P10 PASS (launch gate evaluated)",
+    "terminal_evidence_check": "ok=true, problems=[] (25 manifest entries)"
+  },
+  "post_survivor_lifecycle": {
+    "survivor_bundle": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02/rounds/conformal-kelly-prediction-intervals-fractional-sizing-2026-09-02-r1/survivor-bundle.json",
+      "sha256": "sha256:c27737bd51f6b9810b5d2c5b39c8bbabbd6dc34bed87f99bb3fe6f96c776040e",
+      "identity_sha256": "sha256:243f4b0411c762e8ca60e81d827e3782293ea89ba5c1341445640d435878513a",
+      "ranking": null,
+      "band": "MULTIPLE_SURVIVORS"
+    },
+    "survivor_index_entries": [
+      "sv-1e4d2489f16c2971",
+      "sv-51c28bb1fad87264"
+    ],
+    "leaderboard_entries": {
+      "sv-51c28bb1fad87264": {
+        "cohort": "BTCUSDT/1d",
+        "evidence_state": "FROZEN_ONLY",
+        "rank": null
+      },
+      "sv-1e4d2489f16c2971": {
+        "cohort": "SOLUSDT/1d",
+        "evidence_state": "FROZEN_ONLY",
+        "rank": null
+      }
+    },
+    "evidence_packages": "NOT materialized in this round: contract 28.4 requires the package's ledgers to be produced by a replay of the SAME engine, and this card's engine lineage (J/K/L) carries no inert trace hook (only 20_strategy_a_run.py has one, contract v1.6.0 section 28.2), while adding one to the frozen production engine would change the sha256 pinned by the published run-spec.  `survivor_evidence.py coverage` reports the entries as ABSENT (FROZEN_ONLY); the gap is disclosed here and handed to a follow-up card rather than patched in place."
+  },
+  "attempts": {
+    "u1": {
+      "status": "DONE",
+      "runtime_seconds": 11,
+      "sentinel_sha256": "sha256:a86ab2b34b70c267efee30a8fbd59965c311299268a615c46d6eff47f3000b68",
+      "result_sha256": "sha256:458b07ab25a5664f2cd65380a2a32a0c9ae26a77d49891e0ca017a62de936bdb",
+      "case_evaluations": 19200,
+      "assertions_all_true": true
+    }
+  },
+  "disclosures": [
+    "the conclusions hold ONLY for the local eligible universe (BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT USD-M perpetuals, 1d); the record's source market (8 liquid US-listed ETFs on a frozen Kaggle daily snapshot) and its sample period are absent from the canonical raw and are recorded as provenance / external-validity context (system-owned lifecycle footer, contract 14.4)",
+    "the record's crypto portability status is `adapted` / `unproven`; this round executes that extension and reports its own evidence",
+    "the project pre-registered constants (quantile rule, window boundaries, warm-up accounting, materiality tilt, dial exposure gate, frozen-TRAIN leg length) are frozen in the round-spec; the alternative readings of the target state and of the dial are disclosed and NOT evaluated",
+    "the rail owns the position size, so the record's continuous allocation vector and its continuous leverage multiplier enter only as the registered tilt rule and exposure gate",
+    "two of the record's four falsification items (the dial placebo test and the leverage-cap ablation) are `not_executed` with their measured local analogues reported instead of a weakened substitute",
+    "no parameter was adjusted and no gate was lowered: the DEFERRED verdict is produced by the record's own pre-registered rejection rules"
+  ]
+}
