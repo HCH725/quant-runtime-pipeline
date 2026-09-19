@@ -33,6 +33,21 @@ def now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
+def attempts_of(round_dir):
+    """(name, dir, terminal) for every attempt of the round, read off disk (no hand-entered
+    history): the attempt directory names sort in uN order and the terminal file is whichever of
+    DONE / FAILED / INCOMPLETE exists."""
+    base = os.path.join(round_dir, "attempts")
+    out = []
+    for name in sorted(os.listdir(base)):
+        d = os.path.join(base, name)
+        if not os.path.isdir(d):
+            continue
+        out.append((name, d, next((t for t in ("DONE", "FAILED", "INCOMPLETE")
+                                   if os.path.exists(os.path.join(d, t))), None)))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempt-dir", required=True)
@@ -49,11 +64,25 @@ def main():
     sent = json.load(open(os.path.join(attempt, "DONE")))
 
     complete = bool(R.get("coverage_complete"))
-    all_true = bool(R.get("all_assertions_true"))
+    # result.json carries no `all_assertions_true` roll-up (r1-u2's tool read a key the engine
+    # never writes, which would have forced TECHNICAL_INCOMPLETE on a complete attempt); the
+    # declared assertions are the `assertions` mapping.
+    assertions = R.get("assertions") or {}
+    all_true = bool(assertions) and all(bool(v) for v in assertions.values())
     disposition = R.get("disposition")
-    hits = R.get("registered_family_level_reader_hits") or []
     flags = R.get("registered_family_level_falsification_flags") or {}
+    hits = R.get("registered_family_level_reader_hits")
+    if hits is None:
+        # no roll-up in result.json: the hit list IS the set of true falsification flags
+        hits = sorted(k for k, v in flags.items() if v)
     survivors = R.get("cohort_survivors") or []
+    # result.json publishes `cohort_results` / `cohort_survivors` as LISTS of per-cohort
+    # mappings (the earlier author read them as mappings keyed by cohort); normalise once.
+    cr = R.get("cohort_results") or {}
+    if isinstance(cr, list):
+        cr = {(c.get("cohort") or ""): c for c in cr if isinstance(c, dict)}
+    if survivors and isinstance(survivors[0], dict):
+        survivors = [c.get("cohort") for c in survivors if c.get("cohort")]
 
     if not (complete and all_true):
         verdict = "TECHNICAL_INCOMPLETE"
@@ -91,7 +120,7 @@ def main():
            (R.get("data_readback") or {}).get("end", ""), len(survivors),
            R.get("cohort_count"),
            ", ".join(survivors) or "none",
-           ", ".join(sorted(k for k, v in (R.get("cohort_results") or {}).items()
+           ", ".join(sorted(k for k, v in cr.items()
                             if isinstance(v, dict) and v.get("outcome") == "CULLED")) or "none",
            ", ".join(sorted(hits)) or "none", verdict))
 
@@ -115,9 +144,13 @@ def main():
                     "note": "technically complete: full coverage, every declared assertion "
                             "true, independent host-side verification recomputed the registered "
                             "product, the row accounting and the winner/disposition from the "
-                            "raw CSVs (see independent_verification). u1 was terminalised "
-                            "FAILED as a card-local script_bug and remediated in this same "
-                            "round as u2 (contract 13/15)."},
+                            "raw CSVs (see independent_verification). u1, u2 and u3 were each "
+                            "terminalised FAILED as card-local script_bug defects of one class "
+                            "(main() parameter-domain shape; the panel-report diagnostics read; "
+                            "the registered readers' diagnostics read plus the bootstrap "
+                            "reader's pre-drawn block allowance, the last two found by an engine "
+                            "audit and a short-window diagnostic smoke) and remediated in this "
+                            "same round, u4 being the measuring run (contract 13/15)."},
         "evidence_run_ids": [RUN], "decided_at_utc": now(),
         "disposition": disposition, "disposition_kind": kind,
         "cohort_survivors": survivors, "cohort_count": R.get("cohort_count"),
@@ -165,12 +198,14 @@ def main():
                        "note": "repo bytes == host /Users/hong/workspace/qlib-apple-container"
                                "/scripts/160_end_to_end_portfolio_policy_run.py"},
         "attempt_history": {
-            "r1_u1": {"terminal": "FAILED", "class": "script_bug", "artifacts": 0,
-                      "note": "parameter_domain.grid_cases shape (one-element lists instead of "
-                              "one-key mappings); TypeError in main() before any computation; "
-                              "terminal sentinel published; remediated same round as u2"},
-            "r1_u2": {"terminal": "DONE", "note": "the registered product was measured"},
-        },
+            name.replace(ROUND + "-", ""): {
+                "terminal": term,
+                "terminal_sentinel_sha256": sha(os.path.join(d, term)) if term else None,
+                # a FAILED attempt measured nothing usable (no result.json / no assertions)
+                "note": ("the registered product was measured" if term == "DONE" else
+                         "terminalised %s (card-local script_bug); no usable measurement"
+                         % (term or "no terminal"))}
+            for name, d, term in attempts_of(round_dir)},
         "container_verdict_hint": {
             "verdict_recommendation": R.get("verdict_recommendation"),
             "verdict_recommendation_final": R.get("verdict_recommendation_final"),
@@ -179,11 +214,15 @@ def main():
                 "performance_claimable_recommendation_final"),
         },
         "attempts": {"round_spec_sha256": sha(os.path.join(round_dir, "round-spec.json")),
-                     "u1": {"terminal": "FAILED", "sentinel_sha256": None},
-                     "u2": {"terminal_sentinel_sha256": sha(os.path.join(attempt, "DONE")),
-                            "result_json_sha256": sha(os.path.join(attempt, "result.json")),
-                            "run_spec_sha256": sha(os.path.join(attempt, "run-spec.json")),
-                            "runtime_seconds": R.get("runtime_seconds")}},
+                     **{name.replace(ROUND + "-", ""): {
+                         "terminal": term,
+                         "terminal_sentinel_sha256": sha(os.path.join(d, term)) if term else None,
+                         "result_json_sha256": (sha(os.path.join(d, "result.json"))
+                                                if os.path.exists(os.path.join(d,
+                                                                               "result.json"))
+                                                else None),
+                         "run_spec_sha256": sha(os.path.join(d, "run-spec.json"))}
+                        for name, d, term in attempts_of(round_dir)}},
         "verification_evidence": {"path": a.verification, "sha256": sha(a.verification),
                                   "ok": ver.get("ok"),
                                   "checks": [c["id"] for c in ver.get("checks", [])],
@@ -212,7 +251,7 @@ def main():
              "winner_case_label": (v or {}).get("winner_case_label"),
              "metrics": (v or {}).get("metrics"), "neighbourhood": (v or {}).get("neighbourhood"),
              "cull_reasons": (v or {}).get("cull_reasons")}
-            for k, v in sorted((R.get("cohort_results") or {}).items())
+            for k, v in sorted(cr.items())
             if isinstance(v, dict) and v.get("outcome") == "SURVIVOR"
         ],
         "post_survivor_evidence": R.get("survivor_evidence"),

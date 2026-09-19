@@ -314,5 +314,134 @@ class TestReadersAndFailClosed(unittest.TestCase):
         self.assertEqual(bad, [])
 
 
+class FakeCohort:
+    """The cohort fields `simulate` / `_metrics` read, without any data file or container state."""
+
+    def __init__(self, n=N_BARS, seed=11, symbol="BTCUSDT"):
+        rng = np.random.default_rng(seed)
+        close = 100.0 * np.cumprod(1.0 + rng.normal(0.0, 0.004, size=n))
+        self.symbol = symbol
+        self.close = close
+        self.high = close * 1.01
+        self.low = close * 0.99
+        self.open = close * 0.999
+        self.open_time_ms = np.arange(n, dtype=np.int64) * BAR_MS + BASE_MS
+        self.bar_ms = BAR_MS
+        self.price_increment = 0.1
+        self.taker_fee = 0.0004
+        self.leverage = 10.0
+        self.margin_maint = 0.0
+
+
+REGISTERED_DCA = {"base_quote": 1000, "spacing_pct": 0.01, "size_multiplier": 1.0,
+                  "breakeven_tp_pct": 0.01, "invalidation_pct": 0.05}
+EMPTY_FUNDING = {"obs_times": np.array([], dtype=np.int64), "obs_rates": np.array([]),
+                 "settle_bar": np.array([], dtype=np.int64)}
+
+
+class TestSliceDiagnosticsContract(unittest.TestCase):
+    """The readers' diagnostics path: a flat slice is a flat book, not a missing measurement."""
+
+    def _layer(self, cohort, n=N_BARS, side=0.5, flip_at=None, label="reader_side"):
+        w = np.zeros((n, len(LABELS)))
+        j = LABELS.index(cohort.symbol)
+        w[:, j] = side
+        if flip_at is not None:
+            w[flip_at:, j] = -side
+        return pt.SyntheticLayer(cohort, LABELS, w, w[:, j], label,
+                                 "one reader-side weight path over the same rail")
+
+    def test_no_episode_slice_publishes_the_full_diagnostics_block(self):
+        """The kernel's no-trade exit must publish every diagnostics key the readers read.
+
+        The registered readers re-derive a policy path over a slice; when the arm never traded
+        in it the kernel returned BEFORE building its diagnostics, so the readers' own
+        `diagnostics["daily_equity"]` read raised KeyError('daily_equity') after the whole grid
+        had already been written - the r1-u3 terminal.  A flat slice must publish the same keys
+        as the traded path, and the diagnostics flag must still short-circuit to {}.
+        """
+        cohort = FakeCohort()
+        rail = pt.rail_for(REGISTERED_DCA)
+        flat = self._layer(cohort, side=0.0, label="flat__never_enters")
+        m = pt.simulate(cohort, {"arm": 0}, rail, (0, N_BARS), {}, 0, "test_no_episode",
+                        EMPTY_FUNDING, diag=True, layer=flat)
+        self.assertEqual(m["windows_seen"], 0)
+        # the readers' own read (the r1-u3 terminal raised KeyError('daily_equity') here)
+        _readers_read = m["diagnostics"]["daily_equity"]
+        for key in ("pnl_by_year", "episode_stats", "signal_diagnostics", "signal_case",
+                    "daily_equity", "daily_equity_days", "slice_first_day_utc",
+                    "slice_last_day_utc"):
+            self.assertIn(key, m["diagnostics"])
+        self.assertEqual(_readers_read, m["diagnostics"]["daily_equity"])
+        self.assertEqual(m["diagnostics"]["episode_stats"]["episodes"], 0)
+        series = np.asarray(m["diagnostics"]["daily_equity"], dtype=np.float64)
+        self.assertEqual(len(series), N_BARS)
+        self.assertEqual(m["diagnostics"]["daily_equity_days"], len(series))
+        self.assertEqual(float(series.min()), float(series.max()))       # a flat book
+        self.assertEqual(m["diagnostics"]["signal_diagnostics"], {})
+        self.assertTrue(m["diagnostics"]["slice_first_day_utc"].startswith("2025-01-01"))
+        self.assertTrue(m["diagnostics"]["slice_last_day_utc"] > m["diagnostics"][
+            "slice_first_day_utc"])
+        off = pt.simulate(cohort, {"arm": 0}, rail, (0, N_BARS), {}, 0, "test_no_episode",
+                          EMPTY_FUNDING, diag=False, layer=flat)
+        self.assertEqual(off["diagnostics"], {})
+
+    def test_reader_side_layer_without_panel_diagnostics_still_trades(self):
+        """A seeded initialization's own weight path carries no panel diag and must not crash.
+
+        `_seed_layer` hands `simulate` a reader-side layer built from one seed's weights.  The
+        traded path read `layer.diag` directly, so any seeded path with an episode raised
+        AttributeError in the reader phase - an independent instance of the same defect class.
+        """
+        cohort = FakeCohort()
+        rail = pt.rail_for(REGISTERED_DCA)
+        layer = self._layer(cohort, flip_at=N_BARS // 2, label="seed__own_path")
+        self.assertFalse(hasattr(layer, "diag"))
+        m = pt.simulate(cohort, {"arm": 0}, rail, (0, N_BARS), {"no_funding": True}, 0,
+                        "test_reader_side_layer", {}, diag=True, layer=layer)
+        self.assertGreaterEqual(m["windows_seen"], 1)
+        self.assertEqual(m["diagnostics"]["signal_diagnostics"], {})
+        self.assertEqual(m["diagnostics"]["signal_case"], "seed__own_path")
+        self.assertEqual(m["diagnostics"]["daily_equity_days"],
+                         len(m["diagnostics"]["daily_equity"]))
+        self.assertIn("episodes", m["diagnostics"]["episode_stats"])
+
+    def test_both_exits_build_the_block_through_one_helper(self):
+        """Source shape: the traded exit and the no-trade exit share the diagnostics builder."""
+        src = open(ENGINE).read()
+        self.assertEqual(src.count("def _slice_diag_block("), 1)
+        # one definition line + the two call sites (the traded exit and the no-trade exit)
+        self.assertEqual(
+            src.count("_slice_diag_block(layer, series_flat, cohort, i0, i1, diag"), 3)
+        self.assertEqual(src.count("windows_entered, kind, {})"), 0)
+        self.assertEqual(src.count('"signal_diagnostics": dict(layer.diag)'), 0)
+
+
+    def test_stationary_bootstrap_reader_completes_on_a_registered_window(self):
+        """The registered bootstrap must draw its blocks lazily enough to finish.
+
+        The reader pre-drew `resamples * (n // block + 2)` geometric lengths - exactly the MEAN
+        number of blocks one resample needs - so a resample whose blocks came out short ran past
+        the end of its own array (the r1 short-window smoke: `index 310000 is out of bounds for
+        axis 0 with size 310000`); on the registered window the allowance is even tighter
+        (1715 // 21 + 2 = 83 against a mean need of ~82).  The registered procedure is unchanged:
+        mean block 21, 10,000 resamples, one registered seed, uniform block starts.
+        """
+        rng = np.random.default_rng(5)
+        a = rng.normal(0.0, 0.01, size=120)
+        b = rng.normal(0.0, 0.01, size=120)
+        p, stat = pt._stationary_bootstrap_p(a, b, block=21, resamples=10_000,
+                                             seed=pt.BOOTSTRAP_SEED)
+        self.assertIsNotNone(p)
+        self.assertGreaterEqual(p, 0.0)
+        self.assertLessEqual(p, 1.0)
+        self.assertIsNotNone(stat)
+        p2, _s2 = pt._stationary_bootstrap_p(a, b, block=21, resamples=10_000,
+                                             seed=pt.BOOTSTRAP_SEED)
+        self.assertEqual(p, p2)                       # deterministic for the registered seed
+        src = open(ENGINE).read()
+        self.assertEqual(src.count("blocks_per_resample"), 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

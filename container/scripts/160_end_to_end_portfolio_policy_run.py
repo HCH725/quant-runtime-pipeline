@@ -1438,6 +1438,36 @@ def _panel_core_cached(case):
         _PANEL_CACHE[key] = core
     return core
 
+
+def _slice_diag_block(layer, series_flat, cohort, i0, i1, diag, pnl_by_year, ep_stats):
+    """The diagnostics block of one measured slice, built once for BOTH exits of `simulate`.
+
+    The kernel's no-episode exit returns before it builds its diagnostics, so the registered
+    readers - which re-derive a policy path over a slice in which the arm simply never traded -
+    read `diagnostics["daily_equity"]` on an empty dict and died (KeyError) after the whole
+    grid had already been written.  A no-trade slice is a flat book, not a missing measurement:
+    it publishes exactly the keys the traded path publishes, with the empty episode statistics
+    and the arm's own flat daily marks.  Reader-side layers (a single seeded initialization's
+    own weight path) carry no panel diagnostics at all, so that one field is read defensively
+    instead of assumed.
+    """
+    if not diag:
+        return {}
+    return {"pnl_by_year": {k: _round_dict(v) for k, v in sorted(pnl_by_year.items())},
+            "episode_stats": _round_dict({
+                "episodes": ep_stats["episodes"], "wins": ep_stats["wins"],
+                "win_rate": (ep_stats["wins"] / float(ep_stats["episodes"]))
+                            if ep_stats["episodes"] else 0.0,
+                "mean_hold_bars": (ep_stats["hold_bars"] / float(ep_stats["episodes"]))
+                                  if ep_stats["episodes"] else 0.0,
+                "net_pnl": ep_stats["net_pnl"]}),
+            "signal_diagnostics": dict(getattr(layer, "diag", None) or {}),
+            "signal_case": getattr(layer, "case_label", None),
+            "daily_equity": [round(float(v), 6) for v in series_flat],
+            "daily_equity_days": int(len(series_flat)),
+            "slice_first_day_utc": iso(int(cohort.open_time_ms[i0])),
+            "slice_last_day_utc": iso(int(cohort.open_time_ms[i1 - 1]))}
+
 def _fresh_events(state):
     """Registered entry events: a bar whose target state CHANGES to a non-zero value."""
     n, k = state.shape
@@ -2065,7 +2095,9 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
         return _metrics(realized, fees_total, funding_paid, gross_pnl, 0, tp_hits, stop_hits,
                         open_at_end, margin_calls, time_exits, False, START_EQUITY,
                         series_flat, cohort, i0, i1, layers, max_lev, util_sum, bars_in_market,
-                        fills, turnover, windows_seen, windows_entered, kind, {})
+                        fills, turnover, windows_seen, windows_entered, kind,
+                        _slice_diag_block(layer, series_flat, cohort, i0, i1, diag, {},
+                                          ep_stats))
 
     halted = False
     min_entry_equity = START_EQUITY
@@ -2378,22 +2410,8 @@ def simulate(cohort, p, rail, window, stress, slip_ticks, kind, series, diag=Fal
     series_flat = _flat_series(day_equity)
     if TRACE is not None:
         _trace_equity(kind, cohort, i0, day_local, series_flat, day_equity)
-    diag_out = {}
-    if diag:
-        diag_out = {"pnl_by_year": {k: _round_dict(v) for k, v in sorted(by_year.items())},
-                    "episode_stats": _round_dict({
-                        "episodes": ep_stats["episodes"], "wins": ep_stats["wins"],
-                        "win_rate": (ep_stats["wins"] / float(ep_stats["episodes"]))
-                                    if ep_stats["episodes"] else 0.0,
-                        "mean_hold_bars": (ep_stats["hold_bars"] / float(ep_stats["episodes"]))
-                                          if ep_stats["episodes"] else 0.0,
-                        "net_pnl": ep_stats["net_pnl"]}),
-                    "signal_diagnostics": dict(layer.diag),
-                    "signal_case": layer.case_label,
-                    "daily_equity": [round(float(v), 6) for v in series_flat],
-                    "daily_equity_days": int(len(series_flat)),
-                    "slice_first_day_utc": iso(int(cohort.open_time_ms[i0])),
-                    "slice_last_day_utc": iso(int(cohort.open_time_ms[i1 - 1]))}
+    diag_out = _slice_diag_block(layer, series_flat, cohort, i0, i1, diag, by_year,
+                                 ep_stats)
     return _metrics(realized, fees_total, funding_paid, gross_pnl, episodes_total, tp_hits,
                     stop_hits, open_at_end, margin_calls, time_exits, halted, min_entry_equity,
                     series_flat, cohort, i0, i1, layers, max_lev, util_sum, bars_in_market,
@@ -2847,20 +2865,23 @@ def _stationary_bootstrap_p(a, b, block=BOOTSTRAP_BLOCK, resamples=BOOTSTRAP_RES
     b = b[:n]
     rng = np.random.default_rng(seed)
     wins = 0
-    blocks_per_resample = int(n // block) + 2
-    lengths = rng.geometric(1.0 / float(block), size=resamples * blocks_per_resample)
-    starts = rng.integers(0, n, size=lengths.size)
     stats = np.zeros(resamples, dtype=np.float64)
     for r in range(resamples):
         idx = []
         need = n
-        i = r * blocks_per_resample
         while need > 0:
-            take = min(int(lengths[i]), need)
-            s = int(starts[i])
+            # The registered blocks are drawn ON DEMAND.  A geometric length has no upper bound,
+            # so a pre-drawn per-resample allowance can run out mid-resample and index past the
+            # end of its own array - the r1 short-window smoke hit exactly that IndexError
+            # (`index 310000 is out of bounds for axis 0 with size 310000`), and the registered
+            # window is worse: its allowance (n // block + 2) is the mean number of blocks a
+            # resample needs, so the reader could never have completed.  Same distribution, same
+            # seed, same registered procedure (mean block 21, 10,000 resamples); only the
+            # allocation is lazy.
+            take = min(int(rng.geometric(1.0 / float(block))), need)
+            s = int(rng.integers(0, n))
             idx.extend(((s + k) % n) for k in range(take))
             need -= take
-            i += 1
         sel = np.asarray(idx[:n], dtype=np.int64)
         ma = float(a[sel].mean())
         mb = float(b[sel].mean())

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Independent host-side verification of the Strategy PT r1-u2 run (contract 10.4 / 12.2).
+"""Independent host-side verification of a Strategy PT r1 attempt (contract 10.4 / 12.2).
+
+The attempt is a parameter (`--attempt-dir`) and the reported `run_id` is derived from it, so the
+same verifier covers any r1 attempt; the file keeps the name it was authored under during r1-u2
+so the earlier evidence trail still resolves (<repo>/runtime/_pt_verify_r1u2.py).
 
 Reads ONLY published files (round-spec, run-spec, result.json, the grid CSVs, the terminal
 sentinel) and recomputes what can be recomputed on the host:
@@ -131,9 +135,11 @@ class Verifier:
                 problems.append("%s: %d rows != %d" % (k, len(rows), per_grid))
             if len(keys) != len(rows):
                 problems.append("%s: %d duplicate cells" % (k, len(rows) - len(keys)))
-            arms = {r["arm"] for r in rows}
+            arms = {r["case_name"] for r in rows}
             if arms != set(self.rs["strategy_domain"]["registered_arms"]):
-                problems.append("%s: arm set %s" % (k, sorted(arms)))
+                problems.append("%s: case set %s" % (k, sorted(arms)))
+            if {r["arm"] for r in rows} != {str(i) for i in range(len(arms))}:
+                problems.append("%s: arm indices %s" % (k, sorted({r["arm"] for r in rows})))
             if recorded.get(k) != len(rows):
                 problems.append("%s: result.json coverage=%s != %d"
                                 % (k, recorded.get(k), len(rows)))
@@ -159,7 +165,11 @@ class Verifier:
                 worst_net = max(worst_net, d)
                 if d > 3e-6:
                     bad_net += 1
-                part = i(r, "tp_hits") + i(r, "stop_hits") + i(r, "time_exits") + i(r, "open_at_end")
+                # the engine's own episodes_partition assertion counts margin_calls as the fifth
+                # terminal outcome of an episode; leaving it out made every liquidation row look
+                # like a partition violation (1121 rows on r1-u4, 0 once it is included).
+                part = (i(r, "tp_hits") + i(r, "stop_hits") + i(r, "time_exits")
+                        + i(r, "open_at_end") + i(r, "margin_calls"))
                 if part != i(r, "episodes"):
                     bad_part += 1
         return self.check("V5_row_accounting", bad_net == 0 and bad_part == 0,
@@ -203,7 +213,9 @@ class Verifier:
 
     def _cell(self, key, kind, w):
         for r in self._cohort_rows(key, kind):
-            if r["arm"] == w.get("arm") and f(r, "spacing_pct") == w.get("spacing_pct") and \
+            # the recorded winner carries arm as an int, the CSV column is a string: same arm
+            if str(r["arm"]) == str(w.get("arm")) and \
+                    f(r, "spacing_pct") == w.get("spacing_pct") and \
                     f(r, "size_multiplier") == w.get("size_multiplier") and \
                     f(r, "breakeven_tp_pct") == w.get("breakeven_tp_pct") and \
                     f(r, "invalidation_pct") == w.get("invalidation_pct"):
@@ -233,9 +245,15 @@ class Verifier:
         stress = tuple(gates.get("robustness_grids", ROBUSTNESS_GRIDS))
         recorded_stress = tuple(sorted((self.result.get("stress_summary") or {}).keys()))
         problems, checked = [], []
-        if recorded_stress and tuple(sorted(stress)) != recorded_stress:
-            problems.append("registered robustness grids %s != measured stress grids %s"
-                            % (sorted(stress), list(recorded_stress)))
+        # `gates.robustness_grids` is the set of grids the positive-net gate rule names; the
+        # measured `stress_summary` also carries the registered non-gate stress grids (cost
+        # attrition, the two no-funding tracks), so what must hold is that every gate grid was
+        # actually measured - not that the two sets are equal (they never are).
+        if recorded_stress:
+            missing_grids = sorted(set(stress) - set(recorded_stress))
+            if missing_grids:
+                problems.append("registered robustness grids %s were not measured (measured: %s)"
+                                % (missing_grids, list(recorded_stress)))
         cohorts = self.result.get("cohort_results") or {}
         if isinstance(cohorts, list):
             cohorts = {(c.get("cohort") or ""): c for c in cohorts}
@@ -247,9 +265,9 @@ class Verifier:
             recorded_w = c.get("winner")
             row, reason = self._rederive_winner(key, min_ep)
             if recorded_w:
-                got = (row["arm"], f(row, "spacing_pct"), f(row, "size_multiplier"),
+                got = (str(row["arm"]), f(row, "spacing_pct"), f(row, "size_multiplier"),
                        f(row, "breakeven_tp_pct"), f(row, "invalidation_pct")) if row else None
-                want = (recorded_w.get("arm"), recorded_w.get("spacing_pct"),
+                want = (str(recorded_w.get("arm")), recorded_w.get("spacing_pct"),
                         recorded_w.get("size_multiplier"), recorded_w.get("breakeven_tp_pct"),
                         recorded_w.get("invalidation_pct"))
                 if got != want:
@@ -314,11 +332,23 @@ class Verifier:
         rule needs the engine's internal series is recorded as `rule_conformance_checked: false`
         rather than being silently passed.
         """
-        readers = self.result.get("registered_family_level_readers") or {}
-        hits = self.result.get("registered_family_level_reader_hits")
+        # The engine publishes the registered family-level readers as ONE TOP-LEVEL BLOCK PER
+        # READER plus `registered_family_level_falsification_flags`; it publishes no
+        # `registered_family_level_readers` / `_reader_hits` roll-up, so sourcing them from those
+        # names made this whole check vacuous (r1-u4: readers=0, hits=None, "ok").
         flags = self.result.get("registered_family_level_falsification_flags") or {}
+        hits = self.result.get("registered_family_level_reader_hits")
+        if hits is None:
+            hits = sorted(k for k, v in flags.items() if v)
+        readers = self.result.get("registered_family_level_readers") or {
+            k: self.result[k] for k in flags if isinstance(self.result.get(k), dict)}
+        reader_rollup_problem = (
+            "" if readers and len(readers) == len(flags) else
+            "reader blocks %s != registered flags %s" % (sorted(readers), sorted(flags)))
         fals = self.rs.get("falsification") or {}
         problems, recount = [], {}
+        if reader_rollup_problem:
+            problems.append(reader_rollup_problem)
         # (a) the hit list must be exactly the set of true falsification flags
         if hits is not None and isinstance(hits, list):
             flagged = sorted(k for k, v in flags.items() if v)
@@ -336,7 +366,7 @@ class Verifier:
             if r.get("evaluated") is False:
                 problems.append("%s: reader not evaluated" % name)
             land = str(r.get("landing", ""))
-            if "never PASS" not in land and "NEVER" not in land.upper():
+            if land and "never PASS" not in land and "NEVER" not in land.upper():
                 problems.append("%s: landing %r does not state it is never PASS-bearing"
                                 % (name, land[:80]))
         # (c) the registered cost-boundary rule, re-applied to the published schedule numbers
@@ -410,10 +440,11 @@ def main():
     ap.add_argument("--json", default=None)
     args = ap.parse_args()
     v = Verifier(args.attempt_dir)
+    run_id = os.path.basename(os.path.abspath(args.attempt_dir))
     checks = v.run()
     ok = all(c["ok"] for c in checks)
     out = {"schema_version": 1, "kind": "independent_host_side_verification",
-           "family_id": FAMILY, "round_id": ROUND, "run_id": RUN,
+           "family_id": FAMILY, "round_id": ROUND, "run_id": run_id,
            "attempt_dir": args.attempt_dir,
            "verifier": os.path.abspath(__file__),
            "verifier_sha256": sha256_file(os.path.abspath(__file__)),
