@@ -306,7 +306,8 @@ def metrics_evidence(rec, label, problems):
     return {
         "historical": {k: num(historical.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct")},
         "oos": {k: num(oos.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct")},
-        "full": {k: num(full.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct")},
+        "full": {k: num(full.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct",
+                                                   "annualized_return")},
         "robustness": floors,
         "robustness_stress_floor_net_pnl": floors[floor_grid]["net_pnl"],
         "robustness_stress_floor_grid": floor_grid,

@@ -128,6 +128,16 @@ class ServerChecks(unittest.TestCase):
         self.assertIn('section:target', body)
         self.assertIn('class="empty">unavailable</span>', body)
 
+    def test_detail_renders_all_ten_leaderboard_entries_from_payload(self):
+        payload = {"leaderboard": {"entries": [
+            {"rank": i, "cohort": "SYM%d/1h" % i, "annualized_return": i / 100.0}
+            for i in range(1, 11)]}}
+        (self.dir / "dashboard.json").write_text(json.dumps(payload))
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        for i in range(1, 11):
+            self.assertIn("SYM%d/1h" % i, body)
+
     def test_detail_escapes_the_payload_and_never_invents_a_value(self):
         # the payload is written by another process: markup in it must not become markup here
         (self.dir / "dashboard.json").write_text('{"health": {"status": "<script>x</script>"}}')

@@ -39,6 +39,7 @@ os.environ.pop("HERMES_DELEGATED_CHILD_CONTEXT", None)
 
 DEFAULT_BOARD = "quant-strategy-research"
 TOP_N = 5
+DASHBOARD_TOP_N = 10
 BAR_CELLS = 10
 HEADER = "\U0001F4CA Quant Candidate Hourly"
 TROPHY = "\U0001F3C6 Leaderboard"
@@ -465,16 +466,20 @@ def dashboard_payload(results_root, now=None):
     leaderboard_path = Path(results_root) / "_survivors" / "leaderboard.json"
     leaderboard_as_of = mtime_utc(leaderboard_path) if root_present else None
     top = []
-    for entry in entries[:TOP_N]:
+    for entry in entries[:DASHBOARD_TOP_N]:
         full = entry.get("full") or {}
         top.append({"rank": entry.get("rank"),
                     "cohort": entry.get("cohort") or entry.get("survivor_id"),
                     "sharpe": full.get("sharpe"),
+                    "annualized_return": full.get("annualized_return"),
                     "max_dd_pct": full.get("max_dd_pct"),
                     "evidence_state": entry.get("evidence_state"),
-                    "summary": "Sharpe %s \u00b7 MaxDD %s \u00b7 %s" % (
-                        _num(full.get("sharpe")), _num(full.get("max_dd_pct"), digits=6),
-                        entry.get("evidence_state") or "unknown")})
+                    "summary": "夏普 %s · 年化 %s · 最大回撤 %s" % (
+                        _num(full.get("sharpe")),
+                        _num(full.get("annualized_return") * 100.0, digits=2, suffix="%")
+                        if isinstance(full.get("annualized_return"), (int, float)) else "—",
+                        _num(full.get("max_dd_pct") * 100.0, digits=2, suffix="%")
+                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—")})
 
     reviewed, ingested, delta = research_counts(now=local_now)
     wiki = bool(reviewed) and ingested is not None
@@ -540,7 +545,7 @@ def dashboard_payload(results_root, now=None):
                     "card_status": card, "card_readback": card_why},
         "leaderboard": {"available": bool(entries), "count": len(entries), "shown": len(top),
                         "as_of_utc": leaderboard_as_of,
-                        "entries": top, "top_n": TOP_N},
+                        "entries": top, "top_n": DASHBOARD_TOP_N},
         "funnel": funnel,
         "agent": {"board": board, "running": running, "blocked": blocked,
                   "board_summary": ("Running %d \u00b7 Blocked %d" % (running, blocked)

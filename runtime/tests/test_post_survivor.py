@@ -756,6 +756,13 @@ class TestLeaderboard(Base):
             self.assertFalse(row["champion_candidate"])
         self.assertEqual({row["evidence_state"] for row in rows}, {"FROZEN_ONLY"})
 
+    def test_full_annualized_return_is_preserved_as_frozen_evidence(self):
+        rec = survivor(A)
+        rec["metrics"]["full"]["annualized_return"] = 0.1234
+        make_family(self.root, "fam-a", [rec])
+        _, rows = self.board()
+        self.assertEqual(rows[0]["full"]["annualized_return"], 0.1234)
+
     def test_frozen_fallback_ranking_comes_from_evidence_not_from_names(self):
         make_family(self.root, "fam-a", a_v2_like_bundle())
         _, rows = self.board()

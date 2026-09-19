@@ -346,7 +346,7 @@ class Harness(unittest.TestCase):
         self.intake_report(5, "- Ingested records: 31 total (+5 this run)")
         self.write("_survivors/leaderboard.json", {"entries": [
             {"rank": 1, "cohort": "SYM/5m", "evidence_state": "FROZEN_ONLY",
-             "full": {"sharpe": 1.0, "max_dd_pct": -0.01}}]})
+             "full": {"sharpe": 1.0, "annualized_return": 0.1234, "max_dd_pct": -0.01}}]})
         text = self.snapshot()
         doc = self.dashboard()
         self.assertEqual(doc["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
@@ -373,8 +373,9 @@ class Harness(unittest.TestCase):
         self.assertIn(str(doc["funnel"]["wiki_brain"]["ingested"]), text)
         self.assertEqual(doc["funnel"]["wiki_brain"]["delta_24h"], 5)
         self.assertEqual(doc["funnel"]["wiki_brain"]["share_pct"], 100.0)
+        self.assertEqual(doc["leaderboard"]["entries"][0]["annualized_return"], 0.1234)
         self.assertEqual(doc["leaderboard"]["entries"][0]["summary"],
-                         "Sharpe 1.00 \u00b7 MaxDD -0.010000 \u00b7 FROZEN_ONLY")
+                         "夏普 1.00 · 年化 12.34% · 最大回撤 -1.00%")
         self.assertIn("Sharpe 1.00", text)
         self.assertEqual(doc["agent"]["blocked"], 0)
         self.assertEqual(doc["agent"]["running"], 1)
@@ -382,15 +383,19 @@ class Harness(unittest.TestCase):
         self.assertEqual(doc["health"]["active"], [])
         self.assertEqual(doc["health"]["active_count"], 0)
 
-    def test_payload_top_five_is_capped_like_the_text(self):
+    def test_dashboard_top_ten_is_independent_from_discord_top_five(self):
         entries = [{"rank": i + 1, "cohort": "SYM%dm" % i, "evidence_state": "FROZEN_ONLY",
-                    "full": {"sharpe": 1.0 + i}} for i in range(6)]
+                    "full": {"sharpe": 1.0 + i}} for i in range(11)]
         self.write("_survivors/leaderboard.json", {"entries": entries})
         doc = self.dashboard()
-        self.assertEqual(doc["leaderboard"]["count"], 6)
-        self.assertEqual(doc["leaderboard"]["shown"], 5)
+        text = self.snapshot()
+        self.assertEqual(doc["leaderboard"]["count"], 11)
+        self.assertEqual(doc["leaderboard"]["shown"], 10)
+        self.assertEqual(doc["leaderboard"]["top_n"], 10)
         self.assertEqual([e["cohort"] for e in doc["leaderboard"]["entries"]],
-                         ["SYM0m", "SYM1m", "SYM2m", "SYM3m", "SYM4m"])
+                         ["SYM%dm" % i for i in range(10)])
+        self.assertIn("5. SYM4m", text)
+        self.assertNotIn("6. SYM5m", text)
 
     def test_unknown_values_are_null_never_zero(self):
         # An empty results root measures nothing: every unavailable field has to read null (the text

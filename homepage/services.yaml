@@ -109,7 +109,7 @@
     - 策略排行榜:
         icon: mdi-trophy-outline
         href: https://quant.vicchong1983.trade/detail#leaderboard
-        description: 已凍結存活策略排名
+        description: 前三名策略；點入查看完整前十名
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -119,21 +119,15 @@
             - field: leaderboard.entries.0.cohort
               label: 第一名
               additionalField:
-                field: leaderboard.entries.0.sharpe
-                format: float
-                prefix: 夏普
-            - field: leaderboard.entries.0.max_dd_pct
-              label: 第一名最大回撤
-              format: float
+                field: leaderboard.entries.0.summary
             - field: leaderboard.entries.1.cohort
               label: 第二名
               additionalField:
-                field: leaderboard.entries.1.sharpe
-                format: float
-                prefix: 夏普
-            - field: leaderboard.entries.1.max_dd_pct
-              label: 第二名最大回撤
-              format: float
+                field: leaderboard.entries.1.summary
+            - field: leaderboard.entries.2.cohort
+              label: 第三名
+              additionalField:
+                field: leaderboard.entries.2.summary
 
     - 資料新鮮度:
         icon: mdi-database-check-outline
