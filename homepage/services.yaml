@@ -43,6 +43,8 @@
                   to: 執行中
                 - value: running_qlib
                   to: 回測執行中
+                - value: unknown
+                  to: 未知
             - field: current.progress_text
               label: 進度
               remap:
