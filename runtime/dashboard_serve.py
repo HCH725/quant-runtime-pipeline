@@ -36,12 +36,12 @@ ROUTES = {"/": "dashboard.json", "/dashboard.json": "dashboard.json"}
 DETAIL_PATH = "/detail"
 
 DETAIL_PAGE = """<!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Quant Runtime - snapshot detail</title>
+<title>棠元宗 · 量化研究詳細資訊</title>
 <style>
 :root { color-scheme: dark; --accent: #f0b90b; --bg: #111214; --panel: #1d1e22;
   --line: rgba(255,255,255,.08); --text: #f5f5f7; --muted: #9b9ba3;
@@ -74,6 +74,21 @@ dd { min-width: 0; margin: 0 0 5px; word-break: break-word; }
 .metadata-footer { margin-top: 18px; padding: 12px 2px 2px; border-top: 1px solid var(--line); color: var(--muted); }
 .metadata-footer h2 { border-left: 0; padding-left: 0; color: var(--muted); margin-bottom: 8px; }
 .metadata-footer .fields { font-size: 12px; }
+.leaderboard-list { display: grid; gap: 8px; }
+.lb-row { display: grid; grid-template-columns: 48px minmax(130px, 1.1fr) minmax(0, 3fr); gap: 12px;
+  align-items: center; border-top: 1px solid var(--line); padding: 10px 0; }
+.lb-row:first-child { border-top: 0; padding-top: 2px; }
+.lb-rank { color: var(--accent); font-weight: 750; }
+.lb-name { font-weight: 700; letter-spacing: .01em; }
+.lb-metrics { display: grid; grid-template-columns: repeat(4, minmax(90px, 1fr)); gap: 8px; }
+.lb-metrics div { min-width: 0; }
+.lb-metrics span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+.lb-metrics strong { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.lb-metrics .evidence { color: #c7c7cc; font-size: 12px; }
+@media (max-width: 699px) {
+  .lb-row { grid-template-columns: 42px minmax(0, 1fr); align-items: start; }
+  .lb-metrics { grid-column: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (min-width: 700px) {
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   section.wide { grid-column: 1 / -1; }
@@ -83,7 +98,7 @@ dd { min-width: 0; margin: 0 0 5px; word-break: break-word; }
 </style>
 </head>
 <body>
-<header><h1>Snapshot detail</h1><p class="meta">%s</p></header>
+<header><h1>量化研究詳細資訊</h1><p class="meta">%s</p></header>
 <main class="cards">%s</main>
 %s
 </body>
@@ -100,11 +115,51 @@ SECONDARY_KEYS = {"state_path", "results_root", "card_readback", "kanban_task_id
 PATH_KEYS = {"state_path", "results_root"}
 STATUS_KEYS = {"status", "stage", "profile_status", "card_status", "evidence_state"}
 
+SECTION_LABELS = {
+    "health": "系統健康",
+    "current": "目前研究",
+    "leaderboard": "策略排行榜",
+    "funnel": "研究漏斗",
+    "agent": "任務看板",
+    "sources": "資料來源",
+    "metadata": "系統資訊",
+}
+FIELD_LABELS = {
+    "status": "狀態", "available": "可用", "source": "來源", "state_path": "狀態檔",
+    "active": "目前警示", "active_count": "警示數", "last_check_at_utc": "最後檢查 UTC",
+    "last_healthy_at_utc": "最後健康 UTC", "stage": "階段", "family_id": "策略家族",
+    "progress_text": "進度", "card_status": "任務狀態", "round_id": "回合", "attempt": "嘗試",
+    "note": "說明", "progress_available": "進度可用", "progress_pct": "完成比例",
+    "progress_done": "已完成", "progress_total": "總數", "cohort": "幣別／週期",
+    "last_activity_utc": "最近活動 UTC", "kanban_task_id": "Kanban 任務", "board": "看板",
+    "card_readback": "看板回讀", "count": "總數", "shown": "目前顯示", "as_of_utc": "資料時間 UTC",
+    "entries": "策略", "rank": "排名", "sharpe": "Sharpe", "annualized_return": "年化報酬率",
+    "max_dd_pct": "最大回撤", "evidence_state": "證據狀態", "top_n": "最多顯示",
+    "wiki_brain": "研究池", "reviewed": "已審閱策略", "ingested": "已納入策略",
+    "share_pct": "比例", "delta_24h": "24 小時變化", "delta_available": "變化資料可用",
+    "backtested": "回測進度", "families": "已完成回測家族", "registered": "已登錄家族",
+    "running": "執行中", "blocked": "已阻塞", "results_root": "結果資料",
+    "results_root_readable": "結果資料可讀", "leaderboard_as_of_utc": "排行榜時間 UTC",
+    "family_created_at_utc": "策略家族建立 UTC", "schema_version": "Schema 版本",
+    "monitoring_only": "唯讀監控", "scope_note": "範圍說明", "generated_at_utc": "產生時間 UTC",
+}
+VALUE_LABELS = {
+    "ok": "正常", "healthy": "正常", "pass": "通過", "passed": "通過",
+    "yes": "是", "no": "否", "true": "是", "false": "否",
+    "not launched": "尚未啟動", "blocked": "需關注", "running": "執行中",
+    "unavailable": "尚無資料", "unknown": "未知", "none": "無", "empty": "無",
+    "frozen_only": "已凍結證據", "quant-strategy-research": "量化策略研究",
+    "no round/attempt directory yet": "尚未建立回合／嘗試目錄",
+    "(empty)": "無",
+    "research progress snapshot, read-only. not live pnl and not a control plane: this file can start, stop or retry nothing.":
+        "研究進度唯讀快照；不是即時損益，也不是控制平面，無法啟動、停止或重試任何任務。",
+}
+
 
 def render_detail(payload):
     """Render one human-readable view of dashboard.json without creating a second truth."""
     generated = _text(payload.get("generated_at_utc"))
-    meta = "generated %s &middot; read-only research snapshot" % generated
+    meta = "產生時間 %s &middot; 唯讀研究快照" % generated
     seen = set()
     sections = []
     for key in MAIN_SECTION_ORDER:
@@ -122,14 +177,64 @@ def _metadata_footer(payload):
                    for key in METADATA_KEYS if key in payload)
     if not rows:
         return ""
-    return '<footer id="metadata" class="metadata-footer"><h2>Snapshot metadata</h2>' \
+    return '<footer id="metadata" class="metadata-footer"><h2>系統資訊</h2>' \
            '<dl class="fields">%s</dl></footer>' % rows
 
 
 def _section(key, value, wide=False):
     class_attr = ' class="wide"' if wide else ""
+    body = _leaderboard_block(value) if key == "leaderboard" and isinstance(value, dict) else _block(value)
     return '<section id="%s"%s><h2>%s</h2>%s</section>' % (
-        _anchor(key), class_attr, _label(key), _block(value))
+        _anchor(key), class_attr, _label(key), body)
+
+
+def _leaderboard_block(value):
+    entries = value.get("entries") or []
+    count = value.get("count")
+    top_n = value.get("top_n")
+    headline = "目前 %s 個存活策略" % _display_scalar(count if count is not None else len(entries))
+    if top_n is not None:
+        headline += " · 詳細頁最多顯示前 %s 名" % _display_scalar(top_n)
+    rows = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        rank = html.escape(_display_scalar(entry.get("rank"), "—"))
+        cohort = html.escape(str(entry.get("cohort") or "—"))
+        sharpe = _format_decimal(entry.get("sharpe"))
+        annualized = _format_percent(entry.get("annualized_return"))
+        max_dd = _format_percent(entry.get("max_dd_pct"))
+        evidence = _translated_value(entry.get("evidence_state") or "unknown")
+        rows.append(
+            '<article class="lb-row">'
+            '<div class="lb-rank">#%s</div><div class="lb-name">%s</div>'
+            '<div class="lb-metrics">'
+            '<div><span>夏普</span><strong>%s</strong></div>'
+            '<div><span>年化報酬率</span><strong>%s</strong></div>'
+            '<div><span>最大回撤</span><strong>%s</strong></div>'
+            '<div><span>證據狀態</span><strong class="evidence">%s</strong></div>'
+            '</div></article>' % (rank, cohort, sharpe, annualized, max_dd, html.escape(evidence))
+        )
+    if not rows:
+        return '<p class="empty">尚無排行榜資料</p>'
+    return '<p class="summary">%s</p><div class="leaderboard-list">%s</div>' % (
+        html.escape(headline), "".join(rows))
+
+
+def _display_scalar(value, empty="尚無資料"):
+    return empty if value is None else str(value)
+
+
+def _format_decimal(value):
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return "%.2f" % value
+    return "—"
+
+
+def _format_percent(value):
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return "%.2f%%" % (value * 100.0)
+    return "—"
 
 
 def _block(value):
@@ -137,8 +242,8 @@ def _block(value):
         summary_key = next((key for key in SUMMARY_KEYS
                             if key in value and not isinstance(value[key], (dict, list))
                             and value[key] not in (None, "")), None)
-        summary = ('<p class="summary">%s</p>' % _value_html(summary_key, value[summary_key])
-                   if summary_key else "")
+        # summary/board_summary are redundant derived strings; structured child fields below are the truth.
+        summary = ""
         keys = [key for key in value if key != summary_key]
         priority = {key: index for index, key in enumerate(FIELD_PRIORITY)}
         keys.sort(key=lambda key: (priority.get(key, len(FIELD_PRIORITY)), list(value).index(key)))
@@ -146,7 +251,7 @@ def _block(value):
         return summary + ("<dl class=\"fields\">%s</dl>" % rows if rows else "")
     if isinstance(value, list):
         if not value:
-            return '<p class="empty">(empty)</p>'
+            return '<p class="empty">無</p>'
         return "".join('<div class="item">%s</div>' % (_block(item) if isinstance(item, (dict, list))
                                                         else _value_html(None, item)) for item in value)
     return '<p class="summary">%s</p>' % _value_html(None, value)
@@ -160,8 +265,11 @@ def _row(key, value, force_secondary=False):
 
 
 def _label(key):
-    """Field name as a heading: the payload's own key, only de-underscored."""
-    return html.escape(str(key).replace("_utc", " UTC").replace("_", " "))
+    """Human-facing label for a payload key; raw keys remain unchanged in dashboard.json."""
+    label = SECTION_LABELS.get(key) or FIELD_LABELS.get(key)
+    if label is None:
+        label = str(key).replace("_utc", " UTC").replace("_", " ")
+    return html.escape(label)
 
 
 def _anchor(key):
@@ -169,16 +277,32 @@ def _anchor(key):
     return "".join(c if c.isalnum() or c in "-_" else "-" for c in str(key).lower())
 
 
-def _value_html(key, value):
-    """Presentation-only scalar formatting; the underlying value is never recomputed."""
-    if value is None:
-        return '<span class="empty">unavailable</span>'
-    if value is True:
-        return "yes"
-    if value is False:
-        return "no"
+def _translated_value(value):
     raw = str(value)
-    text = html.escape(raw)
+    lowered = raw.strip().lower()
+    if lowered.startswith("kanban show ok (status=") and lowered.endswith(")"):
+        status = lowered[len("kanban show ok (status="):-1]
+        return "Kanban 回讀正常（狀態：%s）" % VALUE_LABELS.get(status, status)
+    return VALUE_LABELS.get(lowered, raw)
+
+
+def _value_html(key, value):
+    """Presentation-only scalar formatting; dashboard.json remains the sole truth."""
+    if value is None:
+        return '<span class="empty">尚無資料</span>'
+    if value is True:
+        return "是"
+    if value is False:
+        return "否"
+    if key in {"annualized_return", "max_dd_pct"}:
+        return html.escape(_format_percent(value))
+    if key in {"share_pct", "progress_pct"} and isinstance(value, (int, float)) and not isinstance(value, bool):
+        return html.escape("%.1f%%" % value)
+    if key == "sharpe":
+        return html.escape(_format_decimal(value))
+    raw = str(value)
+    translated = _translated_value(value)
+    text = html.escape(translated)
     if key in PATH_KEYS and raw.startswith("/"):
         return '<span class="path" title="%s">%s</span>' % (
             html.escape(raw, quote=True), html.escape(Path(raw).name or raw))
@@ -195,7 +319,7 @@ def _value_html(key, value):
         if badge:
             return '<span class="badge %s">%s</span>' % (badge, text)
     if raw.strip().lower().startswith("unavailable"):
-        return '<span class="empty">%s</span>' % text
+        return '<span class="empty">尚無資料</span>'
     return text
 
 

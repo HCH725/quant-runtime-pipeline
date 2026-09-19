@@ -93,9 +93,9 @@ class ServerChecks(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
         self.assertIn('<section id="health"', body)
-        self.assertIn('<span class="badge ok">ok</span>', body)
+        self.assertIn('<span class="badge ok">正常</span>', body)
         self.assertIn('<footer id="metadata"', body)
-        self.assertIn("schema version", body)
+        self.assertIn("Schema 版本", body)
         self.assertNotIn('<section id="schema_version"', body)
         self.assertNotIn("<a ", body)
         self.assertEqual(self.request("/dashboard.json"),
@@ -120,23 +120,62 @@ class ServerChecks(unittest.TestCase):
         order = [body.index('id="%s"' % key)
                  for key in ("health", "current", "leaderboard", "funnel", "agent", "sources", "metadata")]
         self.assertEqual(order, sorted(order))
-        self.assertIn('class="summary">Sharpe 4.40</p>', body)
-        self.assertIn('class="summary">296 / 516 reviewed</p>', body)
+        self.assertIn('class="lb-rank">#1</div>', body)
+        self.assertIn('<strong>4.40</strong>', body)
+        self.assertNotIn('296 / 516 reviewed', body)
+        self.assertIn('>516</dd>', body)
         self.assertIn('>quant_runtime_watchdog.json</span>', body)
         self.assertIn('>qlib-results</span>', body)
         self.assertIn('@media (min-width: 700px)', body)
         self.assertIn('section:target', body)
-        self.assertIn('class="empty">unavailable</span>', body)
+        self.assertIn('class="empty">尚無資料</span>', body)
 
     def test_detail_renders_all_ten_leaderboard_entries_from_payload(self):
-        payload = {"leaderboard": {"entries": [
-            {"rank": i, "cohort": "SYM%d/1h" % i, "annualized_return": i / 100.0}
+        payload = {"leaderboard": {"count": 10, "shown": 10, "top_n": 10, "entries": [
+            {"rank": i, "cohort": "SYM%d/1h" % i, "sharpe": i / 10.0,
+             "annualized_return": i / 100.0, "max_dd_pct": -i / 1000.0,
+             "evidence_state": "FROZEN_ONLY"}
             for i in range(1, 11)]}}
         (self.dir / "dashboard.json").write_text(json.dumps(payload))
         status, body, _ = self.request("/detail")
         self.assertEqual(status, 200)
+        self.assertIn("目前 10 個存活策略 · 詳細頁最多顯示前 10 名", body)
         for i in range(1, 11):
             self.assertIn("SYM%d/1h" % i, body)
+        self.assertIn("10.00%", body)
+        self.assertIn("-1.00%", body)
+        self.assertIn("已凍結證據", body)
+        self.assertNotIn("0.1</strong>", body)
+
+    def test_detail_translates_operator_status_without_changing_payload(self):
+        payload = {"current": {"stage": "not launched", "card_status": "blocked",
+                               "progress_text": "unavailable (no round/attempt directory yet)",
+                               "card_readback": "kanban show ok (status=blocked)"},
+                   "funnel": {"wiki_brain": {"share_pct": 58.3}},
+                   "scope_note": "Research progress snapshot, read-only. Not live PnL and not a control plane: this file can start, stop or retry nothing.",
+                   "health": {"status": "ok"}}
+        raw = json.dumps(payload)
+        (self.dir / "dashboard.json").write_text(raw)
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        self.assertIn("尚未啟動", body)
+        self.assertIn("需關注", body)
+        self.assertIn("尚無資料", body)
+        self.assertIn("Kanban 回讀正常（狀態：需關注）", body)
+        self.assertIn("58.3%", body)
+        self.assertIn("研究進度唯讀快照", body)
+        self.assertEqual(self.request("/dashboard.json")[1], raw)
+
+    def test_detail_escapes_leaderboard_rank(self):
+        payload = {"leaderboard": {"entries": [{
+            "rank": "<script>alert(1)</script>", "cohort": "BTCUSDT/1d",
+            "sharpe": 1.0, "annualized_return": 0.1, "max_dd_pct": -0.01,
+            "evidence_state": "FROZEN_ONLY"}]}}
+        (self.dir / "dashboard.json").write_text(json.dumps(payload))
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        self.assertIn("#&lt;script&gt;alert(1)&lt;/script&gt;", body)
+        self.assertNotIn("<script>alert(1)</script>", body)
 
     def test_detail_escapes_the_payload_and_never_invents_a_value(self):
         # the payload is written by another process: markup in it must not become markup here
