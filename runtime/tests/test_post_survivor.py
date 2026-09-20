@@ -363,6 +363,15 @@ class TestSurvivorIndex(Base):
         self.assertIsNone(index)
         self.assertTrue(any("missing checksum" in p for p in problems), problems)
 
+    def test_malformed_source_artifacts_refuses_without_crashing(self):
+        def malformed(bundle):
+            return resign(dict(bundle, source_artifacts=["legacy-artifact.json"]))
+
+        make_family(self.root, "fam-a", a_v2_like_bundle(), mutate=malformed)
+        index, problems = si.build(self.root)
+        self.assertIsNone(index)
+        self.assertTrue(any("no source_artifacts checksum map" in p for p in problems), problems)
+
     def test_invalid_bundle_identity_refuses_to_index(self):
         make_family(self.root, "fam-a", a_v2_like_bundle(),
                     mutate=lambda b: dict(b, verdict="REJECT"))  # stale published identity

@@ -350,7 +350,8 @@ def research_cutoff(bundle, round_dir, label, problems):
     still hashes to the checksum the frozen bundle recorded for it.
     """
     spec_path = os.path.join(round_dir, "round-spec.json")
-    declared = (bundle.get("source_artifacts") or {}).get("round-spec.json")
+    sources = bundle.get("source_artifacts")
+    declared = sources.get("round-spec.json") if isinstance(sources, dict) else None
     if not declared:
         problems.append("%s: the bundle recorded no round-spec.json checksum, so the research "
                         "data cutoff cannot be trusted" % label)
