@@ -113,6 +113,26 @@ EVIDENCE_STATE_RULE = {
 EVIDENCE_STATE_NOTE = ("the state is descriptive only: it never rewrites a PASS/REJECT and "
                        "never gates anything")
 
+
+def _maybe_export_private_mirror(args, results_root):
+    """Best-effort mirror hook for the one canonical production results root only."""
+    if getattr(args, "check", False):
+        return
+    if (os.path.realpath(os.path.abspath(results_root)) !=
+            os.path.realpath(os.path.abspath(si.DEFAULT_RESULTS_ROOT))):
+        return
+    try:
+        import survivor_private_export as private_export
+        result = private_export.export(results_root)
+        for warning in (result.get("warnings", []) if isinstance(result, dict) else []):
+            sys.stderr.write("%s\n" % warning)
+        if not isinstance(result, dict) or not result.get("ok"):
+            if not isinstance(result, dict) or not result.get("warnings"):
+                sys.stderr.write("WARNING: private survivor export did not complete\n")
+    except Exception as exc:
+        # Downstream Git/GitHub mirroring must never change leaderboard success semantics.
+        sys.stderr.write("WARNING: private survivor export failed: %s\n" % exc)
+
 CSV_COLUMNS = [
     "rank", "in_top10", "champion_candidate", "evidence_state", "survivor_id", "family_id",
     "cohort", "symbol", "timeframe", "strategy_window", "strategy_discount",
@@ -724,6 +744,7 @@ def cmd_leaderboard(args, results_root):
         write_atomic(json_path, doc_text)
         write_atomic(csv_path, csv_body)
         result = "written"
+        _maybe_export_private_mirror(args, results_root)
 
     payload = {"ok": True, "result": result, "leaderboard_json": json_path,
                "leaderboard_csv": csv_path, "survivor_count": doc["survivor_count"],
