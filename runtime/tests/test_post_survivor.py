@@ -30,6 +30,7 @@ The checks pin the properties that make the layer honest:
     FROZEN_ONLY survivor reports no forward metrics at all (no invented evidence),
   * the frozen bundle and the index are never rewritten by ranking.
 """
+import datetime
 import copy
 import json
 import os
@@ -791,6 +792,14 @@ class TestLeaderboard(Base):
             self.assertIsNone(row["last_evidence_end"])
             self.assertFalse(row["champion_candidate"])
         self.assertEqual({row["evidence_state"] for row in rows}, {"FROZEN_ONLY"})
+
+    def test_avg_trades_per_year_uses_registered_inclusive_window(self):
+        rec = survivor(A)
+        rec["metrics"]["full"]["episodes"] = 140
+        make_family(self.root, "fam-a", [rec], data_end="2026-09-10")
+        _, rows = self.board()
+        years = ((datetime.date(2026, 9, 10) - datetime.date(2022, 1, 1)).days + 1) / 365.25
+        self.assertAlmostEqual(rows[0]["full"]["avg_trades_per_year"], 140 / years, places=10)
 
     def test_full_annualized_return_is_preserved_as_frozen_evidence(self):
         rec = survivor(A)

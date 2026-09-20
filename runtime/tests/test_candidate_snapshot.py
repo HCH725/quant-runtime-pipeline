@@ -358,7 +358,7 @@ class Harness(unittest.TestCase):
         self.intake_report(5, "- Ingested records: 31 total (+5 this run)")
         self.write("_survivors/leaderboard.json", {"entries": [
             {"rank": 1, "cohort": "SYM/5m", "evidence_state": "FROZEN_ONLY",
-             "full": {"sharpe": 1.0, "annualized_return": 0.1234, "max_dd_pct": -0.01}}]})
+             "full": {"sharpe": 1.0, "annualized_return": 0.1234, "avg_trades_per_year": 21.25, "max_dd_pct": -0.01}}]})
         text = self.snapshot()
         doc = self.dashboard()
         self.assertEqual(doc["schema_version"], snap.DASHBOARD_SCHEMA_VERSION)
@@ -386,8 +386,9 @@ class Harness(unittest.TestCase):
         self.assertEqual(doc["funnel"]["wiki_brain"]["delta_24h"], 5)
         self.assertEqual(doc["funnel"]["wiki_brain"]["share_pct"], 100.0)
         self.assertEqual(doc["leaderboard"]["entries"][0]["annualized_return"], 0.1234)
+        self.assertEqual(doc["leaderboard"]["entries"][0]["avg_trades_per_year"], 21.25)
         self.assertEqual(doc["leaderboard"]["entries"][0]["summary"],
-                         "夏普 1.00 · 年化 12.34% · 最大回撤 -1.00%")
+                         "夏普 1.00 · 年化 12.34% · 最大回撤 -1.00% · 年均交易 21.2 次/年")
         self.assertIn("Sharpe 1.00", text)
         self.assertEqual(doc["agent"]["blocked"], 0)
         self.assertEqual(doc["agent"]["running"], 1)

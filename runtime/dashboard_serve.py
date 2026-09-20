@@ -80,7 +80,7 @@ dd { min-width: 0; margin: 0 0 5px; word-break: break-word; }
 .lb-row:first-child { border-top: 0; padding-top: 2px; }
 .lb-rank { color: var(--accent); font-weight: 750; }
 .lb-name { font-weight: 700; letter-spacing: .01em; }
-.lb-metrics { display: grid; grid-template-columns: repeat(4, minmax(90px, 1fr)); gap: 8px; }
+.lb-metrics { display: grid; grid-template-columns: repeat(5, minmax(90px, 1fr)); gap: 8px; }
 .lb-metrics div { min-width: 0; }
 .lb-metrics span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 2px; }
 .lb-metrics strong { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
@@ -134,7 +134,8 @@ FIELD_LABELS = {
     "last_activity_utc": "最近活動 UTC", "kanban_task_id": "Kanban 任務", "board": "看板",
     "card_readback": "看板回讀", "count": "總數", "shown": "目前顯示", "as_of_utc": "資料時間 UTC",
     "entries": "策略", "rank": "排名", "sharpe": "Sharpe", "annualized_return": "年化報酬率",
-    "max_dd_pct": "最大回撤", "evidence_state": "證據狀態", "top_n": "最多顯示",
+    "max_dd_pct": "最大回撤", "avg_trades_per_year": "年均交易次數",
+    "evidence_state": "證據狀態", "top_n": "最多顯示",
     "wiki_brain": "研究池", "reviewed": "已審閱策略", "ingested": "已納入策略",
     "share_pct": "比例", "delta_24h": "24 小時變化", "delta_available": "變化資料可用",
     "backtested": "回測進度", "families": "已完成回測家族", "registered": "已登錄家族",
@@ -204,6 +205,7 @@ def _leaderboard_block(value):
         sharpe = _format_decimal(entry.get("sharpe"))
         annualized = _format_percent(entry.get("annualized_return"))
         max_dd = _format_percent(entry.get("max_dd_pct"))
+        trade_frequency = _format_decimal(entry.get("avg_trades_per_year"))
         evidence = _translated_value(entry.get("evidence_state") or "unknown")
         rows.append(
             '<article class="lb-row">'
@@ -212,8 +214,9 @@ def _leaderboard_block(value):
             '<div><span>夏普</span><strong>%s</strong></div>'
             '<div><span>年化報酬率</span><strong>%s</strong></div>'
             '<div><span>最大回撤</span><strong>%s</strong></div>'
+            '<div><span>年均交易次數</span><strong>%s 次/年</strong></div>'
             '<div><span>證據狀態</span><strong class="evidence">%s</strong></div>'
-            '</div></article>' % (rank, cohort, sharpe, annualized, max_dd, html.escape(evidence))
+            '</div></article>' % (rank, cohort, sharpe, annualized, max_dd, trade_frequency, html.escape(evidence))
         )
     if not rows:
         return '<p class="empty">尚無排行榜資料</p>'

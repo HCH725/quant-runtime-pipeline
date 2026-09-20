@@ -134,7 +134,7 @@ class ServerChecks(unittest.TestCase):
         payload = {"leaderboard": {"count": 10, "shown": 10, "top_n": 10, "entries": [
             {"rank": i, "cohort": "SYM%d/1h" % i, "sharpe": i / 10.0,
              "annualized_return": i / 100.0, "max_dd_pct": -i / 1000.0,
-             "evidence_state": "FROZEN_ONLY"}
+             "avg_trades_per_year": i * 2.5, "evidence_state": "FROZEN_ONLY"}
             for i in range(1, 11)]}}
         (self.dir / "dashboard.json").write_text(json.dumps(payload))
         status, body, _ = self.request("/detail")
@@ -144,6 +144,8 @@ class ServerChecks(unittest.TestCase):
             self.assertIn("SYM%d/1h" % i, body)
         self.assertIn("10.00%", body)
         self.assertIn("-1.00%", body)
+        self.assertIn("年均交易次數", body)
+        self.assertIn("25.00 次/年", body)
         self.assertIn("已凍結證據", body)
         self.assertNotIn("0.1</strong>", body)
 
@@ -170,7 +172,7 @@ class ServerChecks(unittest.TestCase):
         payload = {"leaderboard": {"entries": [{
             "rank": "<script>alert(1)</script>", "cohort": "BTCUSDT/1d",
             "sharpe": 1.0, "annualized_return": 0.1, "max_dd_pct": -0.01,
-            "evidence_state": "FROZEN_ONLY"}]}}
+            "avg_trades_per_year": 12.5, "evidence_state": "FROZEN_ONLY"}]}}
         (self.dir / "dashboard.json").write_text(json.dumps(payload))
         status, body, _ = self.request("/detail")
         self.assertEqual(status, 200)

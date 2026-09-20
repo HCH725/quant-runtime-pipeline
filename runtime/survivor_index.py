@@ -41,6 +41,7 @@ usage:
 exit: 0 = ok (written / check clean), 1 = refused or mismatch, 2 = usage error
 """
 import argparse
+import datetime
 import hashlib
 import json
 import math
@@ -382,6 +383,28 @@ def research_cutoff(bundle, round_dir, label, problems):
     return cutoff
 
 
+def avg_trades_per_year(episodes, spec, cutoff):
+    """Non-ranking trade frequency from frozen episodes and registered inclusive data window."""
+    if not is_number(num(episodes)) or not isinstance(spec, dict) or not isinstance(cutoff, str):
+        return None
+    data = spec.get("data")
+    if not isinstance(data, dict):
+        return None
+    start = data.get("data_start") or data.get("start")
+    if not isinstance(start, str):
+        return None
+    try:
+        start_date = datetime.date.fromisoformat(start[:10])
+        end_date = datetime.date.fromisoformat(cutoff[:10])
+    except ValueError:
+        return None
+    inclusive_days = (end_date - start_date).days + 1
+    if inclusive_days <= 0:
+        return None
+    years = inclusive_days / 365.25
+    return float(episodes) / years
+
+
 def challenger_problems(family, cutoff_spec, label, problems):
     """Contract 27.4: a challenger's new OOS window starts after its preregistration cutoff."""
     challenger_of = family.get("challenger_of")
@@ -510,6 +533,8 @@ def entries_for_bundle(bundle_path, problems):
         evidence = metrics_evidence(rec, cell_label, problems)
         if strategy is None or evidence is None:
             continue
+        evidence["full"]["avg_trades_per_year"] = avg_trades_per_year(
+            evidence["full"].get("episodes"), spec, cutoff)
         identity = identity_payload(bundle.get("family_id"), bundle.get("round_id"),
                                    bundle.get("run_id"), bundle.get("bundle_identity_sha256"),
                                    cohort, strategy, dca)

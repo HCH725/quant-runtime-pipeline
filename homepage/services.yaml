@@ -111,7 +111,7 @@
     - 策略排行榜:
         icon: mdi-trophy-outline
         href: https://quant.vicchong1983.trade/detail#leaderboard
-        description: 前三名策略；點入查看完整前十名
+        description: 前五名策略；點入查看完整前十名
         widget:
           type: customapi
           url: http://127.0.0.1:8787/dashboard.json
@@ -130,6 +130,14 @@
               label: 第三名
               additionalField:
                 field: leaderboard.entries.2.summary
+            - field: leaderboard.entries.3.cohort
+              label: 第四名
+              additionalField:
+                field: leaderboard.entries.3.summary
+            - field: leaderboard.entries.4.cohort
+              label: 第五名
+              additionalField:
+                field: leaderboard.entries.4.summary
 
     - 資料新鮮度:
         icon: mdi-database-check-outline

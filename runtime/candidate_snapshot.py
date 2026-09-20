@@ -477,14 +477,17 @@ def dashboard_payload(results_root, now=None):
                     "cohort": entry.get("cohort") or entry.get("survivor_id"),
                     "sharpe": full.get("sharpe"),
                     "annualized_return": full.get("annualized_return"),
+                    "avg_trades_per_year": full.get("avg_trades_per_year"),
                     "max_dd_pct": full.get("max_dd_pct"),
                     "evidence_state": entry.get("evidence_state"),
-                    "summary": "夏普 %s · 年化 %s · 最大回撤 %s" % (
+                    "summary": "夏普 %s · 年化 %s · 最大回撤 %s · 年均交易 %s" % (
                         _num(full.get("sharpe")),
                         _num(full.get("annualized_return") * 100.0, digits=2, suffix="%")
                         if isinstance(full.get("annualized_return"), (int, float)) else "—",
                         _num(full.get("max_dd_pct") * 100.0, digits=2, suffix="%")
-                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—")})
+                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—",
+                        _num(full.get("avg_trades_per_year"), digits=1, suffix=" 次/年")
+                        if isinstance(full.get("avg_trades_per_year"), (int, float)) else "—")})
 
     reviewed, ingested, delta = research_counts(now=local_now)
     wiki = bool(reviewed) and ingested is not None
