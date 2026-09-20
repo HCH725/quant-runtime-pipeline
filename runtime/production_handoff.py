@@ -153,6 +153,52 @@ def read_families(results_root):
     return families
 
 
+def _safe_identity_component(value):
+    return (isinstance(value, str) and bool(value) and value not in (".", "..")
+            and "/" not in value and "\\" not in value and "\x00" not in value)
+
+
+def _read_artifact_owner(path, owner_field, expected_identity):
+    try:
+        if not path.is_file():
+            return None
+        doc = json.loads(path.read_text())
+    except (OSError, UnicodeError, ValueError):
+        return None
+    if not isinstance(doc, dict):
+        return None
+    for key, value in expected_identity.items():
+        if doc.get(key) != value:
+            return None
+    owner = doc.get(owner_field)
+    if not isinstance(owner, str) or not owner.strip():
+        return None
+    return owner
+
+
+def _recover_legacy_task_id(results_root, rec):
+    """Recover ownership only from the row's three immutable execution artifacts."""
+    identity = {key: rec.get(key) for key in ("family_id", "round_id", "run_id")}
+    if not all(_safe_identity_component(value) for value in identity.values()):
+        return None
+
+    # ponytail: use existing immutable artifacts instead of adding a resolution registry.
+    root = Path(results_root)
+    round_root = root / identity["family_id"] / "rounds" / identity["round_id"]
+    owners = (
+        _read_artifact_owner(root / identity["family_id"] / "family.json", "kanban_task_id",
+                             {"family_id": identity["family_id"]}),
+        _read_artifact_owner(round_root / "round-spec.json", "task_id",
+                             {"family_id": identity["family_id"], "round_id": identity["round_id"]}),
+        _read_artifact_owner(round_root / "attempts" / identity["run_id"] / "run-spec.json", "task_id",
+                             {"family_id": identity["family_id"], "round_id": identity["round_id"],
+                              "run_id": identity["run_id"]}),
+    )
+    if any(owner is None for owner in owners) or len(set(owners)) != 1:
+        return None
+    return owners[0]
+
+
 def unresolved_incidents(results_root, tasks):
     """Incident lines whose card is still on the board and not terminal (contract 12.6 gate)."""
     path = Path(results_root) / INCIDENT_DIRNAME / INCIDENT_FILENAME
@@ -169,6 +215,8 @@ def unresolved_incidents(results_root, tasks):
             open_incidents.append({"kind": "unparsable_incident_line", "line": line[:120]})
             continue
         tid = rec.get("kanban_task_id") or rec.get("task_id")
+        if not tid:
+            tid = _recover_legacy_task_id(results_root, rec)
         status = (tasks.get(tid) or {}).get("status") if tid else None
         if status is None or status not in TERMINAL_STATUSES:
             open_incidents.append({"incident_id": rec.get("incident_id"), "kind": rec.get("kind"),

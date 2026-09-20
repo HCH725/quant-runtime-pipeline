@@ -27,6 +27,10 @@ TAIL = "t_TAIL"
 NEW = "t_NEW"
 FAMILY_A = "fam-a-v1"
 FAMILY_B = "fam-b-v1"
+LEGACY_FAMILY = "legacy-family"
+LEGACY_ROUND = "legacy-round"
+LEGACY_RUN = "legacy-run"
+LEGACY_OWNER = "t_LEGACY"
 
 
 def candidate(family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short", body=None):
@@ -114,12 +118,38 @@ class Base(unittest.TestCase):
         d.mkdir(parents=True, exist_ok=True)
         (d / h.POOL_FILENAME).write_text(json.dumps({"schema_version": 1, "candidates": cands}))
 
-    def _write_incident(self, task_id, kind="mapping_mismatch"):
+    def _write_incident(self, task_id, kind="mapping_mismatch", field="kanban_task_id"):
+        d = Path(self.root) / h.INCIDENT_DIRNAME
+        d.mkdir(parents=True, exist_ok=True)
+        rec = {"schema_version": 1, "incident_id": "inc-1", "kind": kind,
+               "detected_at_utc": "2026-09-13T00:00:00Z"}
+        rec[field] = task_id
+        (d / h.INCIDENT_FILENAME).write_text(json.dumps(rec) + "\n")
+
+    def _write_legacy_artifacts(self, owners=(LEGACY_OWNER, LEGACY_OWNER, LEGACY_OWNER),
+                                family_id=LEGACY_FAMILY, round_id=LEGACY_ROUND, run_id=LEGACY_RUN):
+        family_root = Path(self.root) / family_id
+        round_root = family_root / "rounds" / round_id
+        docs = (
+            (family_root / "family.json", {"family_id": family_id, "kanban_task_id": owners[0]}),
+            (round_root / "round-spec.json", {"family_id": family_id, "round_id": round_id,
+                                                "task_id": owners[1]}),
+            (round_root / "attempts" / run_id / "run-spec.json",
+             {"family_id": family_id, "round_id": round_id, "run_id": run_id,
+              "task_id": owners[2]}),
+        )
+        for path, doc in docs:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(doc))
+
+    def _write_legacy_incident(self, family_id=LEGACY_FAMILY, round_id=LEGACY_ROUND,
+                               run_id=LEGACY_RUN):
         d = Path(self.root) / h.INCIDENT_DIRNAME
         d.mkdir(parents=True, exist_ok=True)
         (d / h.INCIDENT_FILENAME).write_text(json.dumps(
-            {"schema_version": 1, "incident_id": "inc-1", "kind": kind,
-             "kanban_task_id": task_id, "detected_at_utc": "2026-09-13T00:00:00Z"}) + "\n")
+            {"schema_version": 1, "incident_id": "legacy-inc-1", "kind": "sentinel_ambiguous",
+             "family_id": family_id, "round_id": round_id, "run_id": run_id,
+             "detected_at_utc": "2026-09-13T00:00:00Z"}) + "\n")
 
     def args(self, **over):
         base = dict(results_root=str(self.root), board=BOARD, pool=None, detector="handoff",
@@ -219,6 +249,56 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "unresolved_incident"))
         self.assertNotIn("create", self.fake.actions())
+
+    def test_legacy_null_task_done_owner_is_moot(self):
+        self.tasks[LEGACY_OWNER] = {"status": "done", "created_at": 3, "title": "legacy"}
+        self._write_legacy_artifacts()
+        self._write_legacy_incident()
+        self.assertEqual(h.unresolved_incidents(str(self.root), self.tasks), [])
+
+    def test_legacy_null_task_running_owner_blocks(self):
+        self.tasks[LEGACY_OWNER] = {"status": "running", "created_at": 3, "title": "legacy"}
+        self._write_legacy_artifacts()
+        self._write_legacy_incident()
+        incidents = h.unresolved_incidents(str(self.root), self.tasks)
+        self.assertEqual(len(incidents), 1)
+        self.assertEqual(incidents[0]["kanban_task_id"], LEGACY_OWNER)
+
+    def test_legacy_null_task_owner_mismatch_blocks(self):
+        self._write_legacy_artifacts(owners=(LEGACY_OWNER, "t_OTHER", LEGACY_OWNER))
+        self._write_legacy_incident()
+        self.assertEqual(len(h.unresolved_incidents(str(self.root), self.tasks)), 1)
+
+    def test_legacy_null_task_missing_or_unparsable_artifact_blocks(self):
+        self._write_legacy_artifacts()
+        run_spec = (Path(self.root) / LEGACY_FAMILY / "rounds" / LEGACY_ROUND /
+                    "attempts" / LEGACY_RUN / "run-spec.json")
+        run_spec.write_text("{")
+        self._write_legacy_incident()
+        self.assertEqual(len(h.unresolved_incidents(str(self.root), self.tasks)), 1)
+
+    def test_legacy_null_task_missing_identity_key_blocks(self):
+        artifacts = {
+            "family_id": Path(self.root) / LEGACY_FAMILY / "family.json",
+            "round_id": Path(self.root) / LEGACY_FAMILY / "rounds" / LEGACY_ROUND / "round-spec.json",
+            "run_id": (Path(self.root) / LEGACY_FAMILY / "rounds" / LEGACY_ROUND /
+                       "attempts" / LEGACY_RUN / "run-spec.json"),
+        }
+        for key, path in artifacts.items():
+            with self.subTest(key=key):
+                self._write_legacy_artifacts()
+                doc = json.loads(path.read_text())
+                del doc[key]
+                path.write_text(json.dumps(doc))
+                self._write_legacy_incident()
+                self.assertEqual(len(h.unresolved_incidents(str(self.root), self.tasks)), 1)
+
+    def test_explicit_task_id_keeps_existing_status_semantics(self):
+        self.tasks["t_EXPLICIT"] = {"status": "running", "created_at": 3, "title": "explicit"}
+        self._write_incident("t_EXPLICIT", field="task_id")
+        incidents = h.unresolved_incidents(str(self.root), self.tasks)
+        self.assertEqual(len(incidents), 1)
+        self.assertEqual(incidents[0]["kanban_task_id"], "t_EXPLICIT")
 
     def test_resolved_incident_does_not_block(self):
         self._write_incident(TAIL)   # card terminal -> incident is moot
