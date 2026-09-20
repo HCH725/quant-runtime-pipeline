@@ -595,11 +595,23 @@ def measured(index):
 
 
 def write_index(index, out_path):
+    """Idempotent atomic write: an unchanged measurement is a no-op, never a rewrite.
+
+    `unchanged` means "the file on disk already carries the content a rebuild must reproduce":
+    the comparison is on `measured()` (the index minus its generation timestamp), not on the raw
+    bytes.  The generation timestamp is the writer's clock, so a rebuild landing in a later
+    wall-clock second is still `unchanged` - the same rule `--check` uses (contract 27.2), and the
+    same measurement-vs-bytes split as `survivor_bundle.write_bundle`.  An unreadable or foreign
+    file is not "the same index" and is rewritten.
+    """
     text = json.dumps(index, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
     if os.path.exists(out_path):
-        with open(out_path) as fh:
-            if fh.read() == text:
-                return "unchanged"
+        try:
+            existing = load_json(out_path)
+        except ValueError:
+            existing = None
+        if isinstance(existing, dict) and measured(existing) == measured(index):
+            return "unchanged"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     tmp = out_path + ".tmp"
     with open(tmp, "w") as fh:

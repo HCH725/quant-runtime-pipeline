@@ -507,6 +507,33 @@ class TestSurvivorIndex(Base):
         self.assertEqual(drifted.returncode, 1)
         self.assertIn("derived artifact", drifted.stderr)
 
+    def test_rebuild_in_a_later_second_is_still_unchanged(self):
+        """`unchanged` may only mean: the measured content on disk IS the rebuild.
+
+        The generation timestamp is the writer's clock, not content a rebuild must reproduce, so
+        pinning it to a later second must not turn a no-op rebuild into a rewrite - the property
+        test_index_cli_writes_checks_and_detects_drift relies on, and the rule `--check` already
+        uses (`measured()`).
+        """
+        make_family(self.root, "fam-a", a_v2_like_bundle())
+        out = si.index_path(self.root)
+        real_now_utc = si.now_utc
+        try:
+            si.now_utc = lambda: "2026-09-13T00:00:00Z"
+            first, problems = si.build(self.root)
+            self.assertEqual(problems, [])
+            self.assertEqual(si.write_index(first, out), "written")
+            written_sha = si.sha256_file(out)
+            si.now_utc = lambda: "2026-09-13T00:00:07Z"  # the same bundles, seven seconds later
+            second, _ = si.build(self.root)
+            self.assertNotEqual(first[si.GENERATED_KEY], second[si.GENERATED_KEY])
+            self.assertEqual(si.measured(first), si.measured(second))
+            self.assertEqual(si.write_index(second, out), "unchanged")
+            self.assertEqual(si.sha256_file(out), written_sha,
+                             "a no-op rebuild must not rewrite the file or move its timestamp")
+        finally:
+            si.now_utc = real_now_utc
+
     def test_challenger_oos_start_must_follow_its_preregistration(self):
         make_family(self.root, "fam-challenger", [survivor(A)], challenger_of="sv-incumbent",
                     created="2026-09-20T00:00:00Z", oos_start="2025-10-01")
