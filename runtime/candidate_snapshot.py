@@ -200,9 +200,14 @@ def progress(results_root, family_id):
         authoritative, _superseded, problem = select_authoritative(records)
         if problem or authoritative is None:
             return 0.0, 0, None, "unknown", "attempt selection ambiguous: %s" % (problem or "?"), None, None
-        if best is None or authoritative.created_at > best[0].created_at:
-            best = (authoritative, round_id)
-    attempt, round_id = best
+        # ponytail: legacy attempts without timestamps use stable round/run identity, not wall-clock guesses.
+        order_key = (authoritative.created_at is not None,
+                     authoritative.created_at or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc),
+                     round_id, authoritative.run_id)
+        if best is None or order_key > best[0]:
+            best = (order_key, authoritative, round_id)
+    assert best is not None
+    _order_key, attempt, round_id = best
     stage = (load_json(attempt.path / "state.json") or {}).get("stage") or "unknown"
     total = expected_total(results_root, family_id, round_id)
     terminals = [t for t in TERMINALS if (attempt.path / t).exists()]

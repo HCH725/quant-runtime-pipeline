@@ -158,6 +158,18 @@ class Harness(unittest.TestCase):
         self.assertIn("Cohort: BBBUSDT / 5m", out)  # cohort follows the same selection
         self.assertNotIn("AAAUSDT", out)
 
+    def test_missing_attempt_timestamps_use_round_order_for_progress(self):
+        # Legacy attempts can lack a parseable created_at_utc.  Across rounds, the newest round
+        # remains the current snapshot; comparing the raw None values used to crash with TypeError.
+        first_round = self.family(round_id="fam-a-r1")
+        self.attempt(first_round, "fam-a-r1-u1", rows=900, created="", symbol="OLDUSDT")
+        second_round = self.family(round_id="fam-a-r2")
+        self.attempt(second_round, "fam-a-r2-u1", rows=100, created="", symbol="NEWUSDT")
+        out = self.snapshot()
+        self.assertIn("10.0% (100 / 1,000)", out)
+        self.assertIn("Cohort: NEWUSDT / 5m", out)
+        self.assertNotIn("OLDUSDT", out)
+
     def test_no_attempt_yet_is_zero_percent(self):
         self.family()
         out = self.snapshot()
