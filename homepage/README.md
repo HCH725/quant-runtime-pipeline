@@ -1,74 +1,110 @@
-# Quant runtime dashboard (Homepage, localhost stage)
+# Quant Runtime Observability / Display Plane
 
-Read-only observability for the quant research loop, built on
-[gethomepage/homepage](https://github.com/gethomepage/homepage). It is a **viewer**: it renders one
-JSON payload and can start, stop, retry, unblock or backtest nothing. The quant runtime does not
-depend on it - if both processes are down, every scheduled job keeps running unchanged.
+Production read-only observability/display for the quant research loop, built on gethomepage/homepage v2.4.0. It is a viewer, not a monitoring authority and not a control plane. If this layer is down, Qlib, reconciler, handoff, survivor lifecycle and authoritative `/results` evidence continue unchanged.
 
-## Pieces
+## Production topology
 
-| Piece | Where | Role |
-|---|---|---|
-| `homepage/{settings,services,widgets}.yaml`, `homepage/custom.css` | this repo | the dashboard config (this directory *is* `HOMEPAGE_CONFIG_DIR`) |
-| `runtime/candidate_snapshot.py --dashboard-json <path>` | this repo | the single producer of the payload (same helpers as the Discord `#candidate` line) |
-| `runtime/dashboard_serve.py` | this repo | stdlib server, 127.0.0.1 only, allowlist = `dashboard.json` (nothing else is reachable) |
-| Homepage app (v2.4.0 build) | `~/workspace/quant-homepage-app` | the viewer itself (`pnpm install && pnpm build` once; started as `.next/standalone/server.js`, see below) |
-| payload + logs + pids | `~/quant-dashboard/` | `data/dashboard.json`, `run/*.log`, `run/*.pid` |
-
-## Run
-
-```sh
-sh homepage/run_local.sh          # starts the JSON server (:8787) and Homepage (:3000)
-sh homepage/run_local.sh stop     # stops both
+```text
+Runtime truth/read-back
+  ├─ /Volumes/ExpansionDrive/qlib-results
+  ├─ quant_runtime_watchdog.json
+  └─ Kanban read-back
+             │
+             ▼
+runtime/candidate_snapshot.py --dashboard-json
+             │  every 300s
+             ▼
+~/quant-dashboard/data/dashboard.json
+             │
+             ├─ runtime/dashboard_serve.py 127.0.0.1:8787
+             │      └─ /dashboard.json + /detail
+             └─ Homepage v2.4.0 127.0.0.1:3000
+                    │ widgets poll every 60s
+                    ▼
+        Cloudflare Tunnel + Access
+                    ▼
+        https://quant.vicchong1983.trade
 ```
 
-Then open http://localhost:3000/ . To refresh the payload by hand (the hourly snapshot job does it
-automatically once the reviewed `candidate_snapshot.py` is deployed to the main tree):
+`/detail` routes to port 8787; the remaining `quant.vicchong1983.trade` paths route to Homepage on port 3000. Both services bind loopback only. Cloudflare Access is the remote authentication boundary.
+
+## Components
+
+| Component | Role |
+|---|---|
+| `homepage/{settings,services,bookmarks}.yaml`, `custom.css` | presentation/configuration |
+| `runtime/candidate_snapshot.py --dashboard-json ...` | single read-only payload producer |
+| `runtime/dashboard_serve.py` | loopback JSON/detail server |
+| `ai.quant.dashboard-refresh` | launchd one-shot refresh, `StartInterval=300`; no Discord post |
+| `ai.quant.dashboard-payload` | launchd keepalive for port 8787 |
+| `ai.quant.dashboard-homepage` | launchd keepalive for Homepage on port 3000 |
+| Cloudflare Tunnel + Access | authenticated delivery only; no runtime/control-plane role |
+
+## Presentation contract
+
+- **System Health** passes through `quant_runtime_watchdog.py`; the dashboard has no independent health algorithm.
+- **Current Research** presents the current family/card/stage/progress/read-back. `unknown` or attention text can be truthful upstream runtime state rather than a display failure.
+- **Research Funnel** presents reviewed → ingested strategies → registered families → completed-backtest families.
+- **Leaderboard** shows Top 3 on Homepage and up to Top 10 on `/detail#leaderboard`. Sharpe, annualized return and MaxDD come from existing frozen survivor evidence/leaderboard fields. Missing historical annualized return renders as `—`; it is never guessed.
+- **Freshness** keeps results readability, leaderboard evidence time and dashboard snapshot time separate.
+- **Quick Access** contains Detail, Runtime GitHub and Strategy Research. CatDesk is intentionally not linked: port 3200 is an MCP/API service and its root path is not a browsable UI.
+
+## Hard boundaries
+
+- **No second monitor**: watchdog remains the health truth.
+- **No second computation**: the display layer does not re-rank strategies or create performance truth.
+- **No control path**: no display action may mutate Kanban or `/results`, or start/stop/retry a backtest.
+- **No evidence writes**: `dashboard.json` lives under `~/quant-dashboard/data`, never `/results`.
+- **Loopback only**: Homepage = `127.0.0.1:3000`; payload/detail = `127.0.0.1:8787`.
+- **Non-blocking**: display failure is never a runtime gate.
+
+## Refresh and deployment
+
+`ai.quant.dashboard-refresh` runs the checked-out repo script every 300 seconds:
+
+```sh
+/opt/homebrew/bin/python3 /Users/hong/workspace/quant-runtime-pipeline/runtime/candidate_snapshot.py \
+  --dashboard-json /Users/hong/quant-dashboard/data/dashboard.json
+```
+
+Homepage widgets poll every 60 seconds. The refresh job is independent of Discord notification cron retirement.
+
+The refresh job executes the working-tree path directly. Therefore an uncommitted edit to `runtime/candidate_snapshot.py` can affect display output before it is committed. This cannot rewrite authoritative research evidence, but intentional display-producer changes should be reviewed/committed before production deployment.
+
+Homepage `/` is SSG (`getStaticProps`). Changes to `settings.yaml`, `services.yaml` or `bookmarks.yaml` require a rebuild. After `pnpm build`, this deployment must also contain:
+
+```text
+.next/standalone/.next/static
+.next/standalone/public
+```
+
+Missing either can produce a partially rendered page even when `/` returns 200. `custom.css` is dynamic; Cloudflare has a bypass rule for `quant.vicchong1983.trade/api/config/*` so config CSS/JS is not held by stale edge cache.
+
+## Production acceptance gate
+
+`localhost` is preflight only. A display change is complete only after all applicable checks pass:
+
+1. focused tests/config parse and independent audit when warranted;
+2. localhost API/service preflight;
+3. deploy/restart existing service(s);
+4. authenticated `https://quant.vicchong1983.trade` loads;
+5. authenticated `/detail` loads;
+6. displayed data matches authoritative source/read-back;
+7. root-referenced `/_next/*` assets return 200 and widget errors are zero;
+8. `/api/config/*` is not served from stale Cloudflare edge cache;
+9. mobile-width visual inspection is performed on the production domain.
+
+Do not declare completion from localhost or tests alone.
+
+## Manual preflight
 
 ```sh
 /opt/homebrew/bin/python3 runtime/candidate_snapshot.py \
-    --dashboard-json ~/quant-dashboard/data/dashboard.json
+  --dashboard-json ~/quant-dashboard/data/dashboard.json
+
+curl -f http://127.0.0.1:3000/
+curl -f http://127.0.0.1:8787/dashboard.json
+curl -f http://127.0.0.1:8787/detail
 ```
 
-Reinstalling the viewer (only needed on a Homepage version bump, no Docker involved):
-
-```sh
-git clone --depth 1 --branch v2.4.0 https://github.com/gethomepage/homepage.git ~/workspace/quant-homepage-app
-cd ~/workspace/quant-homepage-app && pnpm install && pnpm build
-```
-
-## Page layout
-
-1. **Quant Health** - the one overall status (`ok` / `attention` / `unknown`), which *is*
-   `quant_runtime_watchdog.py`'s own state passed through: `attention` exactly when the watchdog
-   holds an active signature, `unknown` when its state file cannot be read. Plus the payload age.
-2. **Current Research** - the newest family / round / attempt / stage / progress / cohort and when
-   the attempt last wrote something. Research progress only: **not live PnL**.
-3. **Leaderboard** - the Top 5 frozen survivors, verbatim from `_survivors/leaderboard.json`
-   (rows link to the raw payload).
-4. **Research Funnel** - reviewed → ingested Wiki records and registered → backtested families.
-5. **Runtime & Agent** - the watchdog's own W1-W4 state (status, active findings, last check, last
-   healthy) and the Kanban board read-back.
-
-Unknown values render as `unavailable` / blank, never as `0`.
-
-## Boundaries (do not "fix" these)
-
-- Localhost only: `dashboard_serve.py` hard-codes 127.0.0.1 and serves one allowlisted file; it never
-  exposes the results root, `kanban.db` or the repo.
-- No control plane: no card, link or widget in this config starts, stops, retries, unblocks or
-  backtests anything; the payload is written by the monitoring job, never by the viewer.
-- No second computation: every number comes from `candidate_snapshot.py`'s existing helpers, so the
-  dashboard and the Discord line are the same snapshot.
-- No second monitor: runtime health is the watchdog's own verdict passed through, never a health
-  algorithm of this dashboard's own - container / results-volume / cron re-checks are deliberately
-  absent, and the watchdog keeps owning W1-W4.
-- Loopback proven, not assumed: `run_local.sh` starts Homepage as the standalone server with
-  `HOSTNAME=127.0.0.1`, and every port is then judged by its real listening socket (`lsof`) - both
-  when the process was already running and when this script just started it - requiring each socket
-  to be exactly `127.0.0.1:<port>`. A wildcard (`*:<port>`) or IPv6 (`[::1]:<port>`) listener is a
-  refusal, not a warning, because both also answer on 127.0.0.1. `next start` would default to
-  `0.0.0.0`, and `HOMEPAGE_ALLOWED_HOSTS` is only a Host-header guard, not a bind.
-- The payload writer refuses any `--dashboard-json` target inside the results root, so "never under
-  /results" is enforced by the script rather than by caller discipline.
-- No Docker, no new service manager: two foreground-able processes bound to loopback.
+The production domain is behind Cloudflare Access; an unauthenticated HTTP client is expected to receive the Access redirect rather than the dashboard body.

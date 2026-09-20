@@ -11,7 +11,3 @@
         - icon: mdi-flask-outline
           href: https://github.com/HCH725/alpha-strategy-research
           description: Alpha 策略研究池
-    - CatDesk:
-        - icon: mdi-cat
-          href: https://catdesk.vicchong1983.trade
-          description: 本機 Agent 工作介面

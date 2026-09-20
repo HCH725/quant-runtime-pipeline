@@ -25,5 +25,5 @@ layout:
     header: true
   快速入口:
     style: row
-    columns: 4
+    columns: 3
     header: true
