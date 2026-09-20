@@ -144,6 +144,30 @@ class ExportTests(unittest.TestCase):
         with open(path) as fh:
             self.assertEqual(json.load(fh), {"human_or_conflicting": True})
 
+    def test_immutable_evidence_conflict_refuses_overwrite(self):
+        fx = self.fixture(evidence=True)
+        repo = init_repo(self.tmp)
+        self.assertTrue(spe.export(self.root, repo)["ok"])
+        path = os.path.join(repo, "survivors", fx.entry["survivor_id"],
+                            "evidence-manifest.json")
+        human_bytes = b'{"human_or_conflicting": true}\n'
+        with open(path, "wb") as fh:
+            fh.write(human_bytes)
+        head = git(repo, "rev-parse", "HEAD").stdout.strip()
+        remote = git(repo, "ls-remote", "origin", "refs/heads/main").stdout.strip()
+
+        result = spe.export(self.root, repo)
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["result"], "conflict")
+        self.assertTrue(any("evidence-manifest.json" in warning
+                            for warning in result["warnings"]))
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), human_bytes)
+        self.assertEqual(git(repo, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertEqual(git(repo, "ls-remote", "origin", "refs/heads/main").stdout.strip(),
+                         remote)
+
     def test_evidence_absent_and_present_layout(self):
         fx = self.fixture(evidence=False)
         repo = init_repo(self.tmp)

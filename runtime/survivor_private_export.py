@@ -143,7 +143,9 @@ def _desired_files(results_root, entries, index_by_id, board_bytes, warnings):
         baseline = "survivors/%s/baseline.json" % survivor_id
         files[baseline] = _json_bytes(index_by_id[survivor_id])
         immutable.add(baseline)
-        files.update(_evidence_files(results_root, board_entry, index_by_id[survivor_id], warnings))
+        evidence = _evidence_files(results_root, board_entry, index_by_id[survivor_id], warnings)
+        files.update(evidence)
+        immutable.update(evidence)
     return files, immutable
 
 
