@@ -45,7 +45,7 @@ runtime/candidate_snapshot.py --dashboard-json
 - **System Health** passes through `quant_runtime_watchdog.py`; the dashboard has no independent health algorithm.
 - **Current Research** presents the current family/card/stage/progress/read-back. `unknown` or attention text can be truthful upstream runtime state rather than a display failure.
 - **Research Funnel** presents reviewed → ingested strategies → registered families → completed-backtest families.
-- **Leaderboard** shows Top 3 on Homepage and up to Top 10 on `/detail#leaderboard`. Sharpe, annualized return and MaxDD come from existing frozen survivor evidence/leaderboard fields. Missing historical annualized return renders as `—`; it is never guessed.
+- **Leaderboard** shows **Top 5** on Homepage and up to **Top 10** on `/detail#leaderboard`. Sharpe, annualized return and MaxDD come from existing frozen survivor evidence/leaderboard fields. **Average trades per year (`avg_trades_per_year`)** is a non-ranking derived evidence field: frozen `full.episodes` divided by the inclusive registered research window (`data_start` through the checksum-verified `data_end` / `end` in that survivor round's `round-spec.json`, normalized by 365.25 days/year). It does not participate in leaderboard ordering. If the registered window or episodes are unavailable/invalid, the value remains null and presentation renders `—`; the display layer never guesses or reverse-engineers it.
 - **Freshness** keeps results readability, leaderboard evidence time and dashboard snapshot time separate.
 - **Quick Access** contains Detail, Runtime GitHub and Strategy Research. CatDesk is intentionally not linked: port 3200 is an MCP/API service and its root path is not a browsable UI.
 
