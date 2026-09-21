@@ -25,7 +25,7 @@
         }
       },
       "id": "f68608d5-ed85-4e26-99c5-8ea21c243b96",
-      "name": "Schedule — 60s observation",
+      "name": "Schedule — 15m observation",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -163,7 +163,7 @@
         ]
       ]
     },
-    "Schedule — 60s observation": {
+    "Schedule — 15m observation": {
       "main": [
         [
           {
@@ -241,7 +241,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "saveDataSuccessExecution": "all",

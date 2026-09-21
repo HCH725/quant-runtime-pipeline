@@ -96,6 +96,10 @@ Intake 分支語意（顯示用，不重判）：`PASS` + 真正完成 ingest �
 
 不可得者一律 `null` ＋ 記入 `gaps`（目前：candidate pool file 未讀、results root 未掛載、Kanban 僅讀投影 read-back 欄位）。
 
+註：本表是 **2026-09-21T14:36Z 當次實跑**的逐項值；快照是 live 投影，來源變動即反映——
+15:45Z 拍點已見 `pool_records_total` / `pool_root_md_total` = **831 / 833**（checkout HEAD `2a34d59`），
+差異來自 pipeline 自身的 `Quant Research Scout` cron（job `f5c0648122f3`，15:22Z 新增 1 筆 root `.md`），**不是** shadow 寫入。
+
 ## 5. Future resume policy（**已文件化，未啟用**）
 
 > 若 family A 為 `WAITING_DATA`，後續 candidate 可以繼續跑。當 A 變成 `READY_TO_RESUME` 時，**不要**打斷正在跑的 family；
@@ -149,16 +153,50 @@ container run -d --name n8n -c 4 -m 1024M -u node \
   docker.io/n8nio/n8n:latest
 ```
 
-匯入／執行（檔案自 repo 複製進容器；`N8N_RUNNERS_BROKER_PORT` 只為讓 CLI 與執行中的 server 並存）：
+匯入／執行（workflow 檔經 §6 的唯讀掛載 `/host/workspace-ro` 讀入；`N8N_RUNNERS_BROKER_PORT` 只為讓 CLI 與執行中的 server 並存）：
 
 ```bash
-container copy n8n/quant-control-plane-shadow.workflow.json n8n:/tmp/shadow-wf.json
-container exec n8n n8n import:workflow --input=/tmp/shadow-wf.json     # 匯入會把 workflow 設為未啟用
-container exec n8n n8n publish:workflow --id=shadowQuantCp1            # 啟用（CLI 會提示需重啟才生效）
+container exec n8n n8n import:workflow --input=/host/workspace-ro/quant-runtime-pipeline-n8n/n8n/quant-control-plane-shadow.workflow.json   # 匯入會把 workflow 設為未啟用
+container exec n8n n8n update:workflow --id=shadowQuantCp1 --active=true   # 啟用（CLI 明示需重啟才生效 → 見 §7.1）
 container exec n8n n8n list:workflow --active=true                     # 讀回
 container exec n8n sh -c 'N8N_RUNNERS_BROKER_PORT=5699 n8n execute --id=shadowQuantCp1'   # 手動驗證執行
 python3 n8n/shadow_check.py                                            # 驗證快照（見 §9）
 ```
+
+`n8n/quant-control-plane-shadow.workflow.json` 的 `active` 欄位與**部署狀態一致**（`true`：排程開啟；控制面 mutation 仍為關閉，見 §3／§10）。
+`import:workflow` 會把 workflow 設為未啟用，所以匯入後必須重新啟用**並重啟**（§7.1），否則排程不會跑。
+
+### 7.1 安全重啟程序（2026-09-21 實測事故與修復；**必須遵守**）
+
+**事故**：以預設寬限重啟 n8n 之後，DB 層持續失敗——`SQLITE_IOERR: disk I/O error`、`SQLITE_CORRUPT: database disk image is malformed`、
+`Failed to query executions parked on a sub-execution`，以及 1 Hz 重試的 `Failed to hard-delete executions`（×388）；
+排程拍點觸發了但 execution 無法落地，快照因此停滯。實測根因鏈：
+
+1. n8n 2.39.9 的 shutdown 會卡住：`Waiting for 2 active executions to finish...` → `Shutdown timed out after 30 seconds` →
+   `Start.exitWithCrash` 結束行程，**SQLite 連線從未正常關閉**。（`container stop` 預設 `-t 5`，連 n8n 自己的 30 秒自救視窗都不到。）
+2. 因此 WAL 沒有 checkpoint、`-shm` 以死行程狀態留在 virtiofs 綁定上（停止後仍見 `database.sqlite-wal` 1,355,512 B ＋ `database.sqlite-shm` 32,768 B）。
+3. 下一個 n8n 行程對同一顆 DB 的讀寫即持續失敗（拍點寫入失敗、wait-tracker／pruning 讀取失敗）。
+4. **磁碟上的位元組沒有損壞**：host 與容器兩側對 `database.sqlite`／`-wal`／`-shm` 的 sha256 **完全相同**，`PRAGMA integrity_check` = `ok`
+   （容器內對副本讀亦然），且新行程讀「同一組 WAL＋shm 副本」正常 → 壞的是**未關閉的執行期狀態**，不是檔案本身。
+   結論：這**不是**「SQLite 在 virtiofs 上結構性不可用」（容器內另以 WAL ＋ 4 條 reader ＋ 1,500 筆寫入實測通過），
+   而是「不乾淨關機 → 髒 WAL／死 shm → 下一個行程持續 I/O 失敗」。
+
+**修復程序（本卡實測有效；只動 n8n 自身資料區）：**
+
+| # | 指令 | 判讀 |
+|---|---|---|
+| 1 | `container stop -t 60 n8n` | 給 n8n 完整 graceful 視窗（預設 5s 不夠） |
+| 2 | `tail -6 "/Users/hong/Library/Application Support/com.apple.container/containers/n8n/stdio.log"` | 出現 `Shutdown timed out`／`Waiting for N active executions` = 此次停止**不乾淨** |
+| 3 | `ls -l /Users/hong/workspace/n8n/data/database.sqlite*` | 仍見 `-wal`／`-shm` = 未 checkpoint |
+| 4 | `sqlite3 /Users/hong/workspace/n8n/data/database.sqlite "PRAGMA wal_checkpoint(TRUNCATE); PRAGMA integrity_check;"` | 必須 `ok`；回報 `0\|0\|0` = 已無待 checkpoint 的 frame |
+| 5 | `rm -f /Users/hong/workspace/n8n/data/database.sqlite-shm /Users/hong/workspace/n8n/data/database.sqlite-wal` | 丟掉死行程的 shm／空 WAL（**僅能在容器停止時做**） |
+| 6 | `container start n8n` → `curl -s http://127.0.0.1:5678/healthz` | `{"status":"ok"}`，開機 log 無 I/O error |
+
+**鐵律：**
+- 只在容器**停止**時碰 DB；`rm` 只限步驟 5 那兩個檔案，永不刪 `database.sqlite`。修復前先備份 `database.sqlite*`（本卡留於 `/Users/hong/workspace/n8n/backups/`）。
+- **容器在跑時，host 端不得直接開啟 live DB**（含 `sqlite3` 唯讀查詢）：那等於對同一顆 SQLite 引入第二個寫入端。要讀就先在容器內複製一組 `database.sqlite`／`-wal`／`-shm`，再讀**副本**——repo 內的唯讀探針即為此法：
+  `container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`（複製到容器內 `diag/probe/` 後讀副本，永不寫 live 檔）。
+- `import:workflow` 之後必須重新啟用並**重啟**：CLI 明示 `Changes will not take effect if n8n is running. Please restart n8n…`。重啟一律走本節步驟 1–6。
 
 **Rollback（任一步都可獨立回退，皆不影響 pipeline）：**
 
@@ -175,16 +213,21 @@ python3 n8n/shadow_check.py                                            # 驗證�
 |---|---|---|---|---|
 | 60s ＋ `saveDataSuccessExecution: none` | 1,252 B（但**永不 finalize**：`status` 永遠停在 `running`） | 1,440 | — | 執行列表被幽靈 running 洗版 → **不安全** |
 | 60s ＋ 全量儲存（未修剪 payload） | 458,606 B | 1,440 | ~640 MB | **不安全** |
-| **900s ＋ 全量儲存（payload 已投影修剪）** | **26,416 B** | 96 | **~2.5 MB** | **~35 MB** ✔ |
+| **900s ＋ 全量儲存（payload 已投影修剪）** | **26,815 B**（exec 12–15 實測；最早一拍 exec 11 為 26,416 B） | 96 | **~2.5 MB** | **~35 MB** ✔ |
 
 三項對策：(a) 來源節點只輸出**投影後**欄位（原本 `cat` 進 payload 的 intake state 210 KB／gate 86 KB／parking 107 KB 不再進入 execution data）；
 (b) 開啟成功執行的資料儲存（`all`），使 execution 正確 finalize；
-(c) 取樣 **15 分鐘**（`scheduleTrigger` 的 `rule.interval[0] = {field: "minutes", minutesInterval: 15}`，cron-backed），與 pipeline 既有的 15 分鐘 reconciler／watchdog 節奏一致（`candidate_snapshot.py` 本身是 hourly）。
+(c) 取樣 **15 分鐘**（`scheduleTrigger` 的 `rule.interval[0] = {field: "minutes", minutesInterval: 15}`，cron-backed），與 pipeline 既有的 15 分鐘 reconciler／watchdog 節奏一致（`dashboard.json` 投影本身由 cron `3d2e54e178ff` 每 5 分鐘重算）。
 **實測教訓**：本版 n8n（2.39.9）對 `field: "seconds", secondsInterval: 900` 實測仍**每 60 秒**觸發（DB 內已是 900 卻在 14:37:00／14:38:00 連續觸發），因此改用 minutes 單位；
 改節奏只需改這一個欄位，但需先接受上表成本或設定 execution 修剪。
-註：60s 實驗期間產生的少數 `running` 幽靈列（execution id 4–8）為驗證殘留，未以 SQL 手動改寫 n8n DB；可由 UI 刪除或隨保留策略淘汰。
+註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除；
+現存列為 exec 1（`crashed`，早期 CLI）、2（`error`，早期 CLI）、9／11（`success`，CLI 手動驗證）、12–15（`success`，排程拍點），`running = 0`。
 
 ## 9. 驗證記錄（實跑證據）
+
+> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項。
+
+### 9.A 第一輪：部署與投影
 
 - **健康**：容器重建後 `curl -s http://127.0.0.1:5678/healthz` → `{"status":"ok"}`（重建後、重啟後各一次）。
 - **匯入／清單**：`import:workflow` → `Successfully imported 1 workflow.`；`list:workflow` → `shadowQuantCp1|Quant Control Plane — SHADOW (read-only)`（單一 workflow）。
@@ -198,7 +241,59 @@ python3 n8n/shadow_check.py                                            # 驗證�
   → 三者皆 `Read-only file system`。
 - **零寫入權威狀態**：本卡未寫 `/Volumes/ExpansionDrive/qlib-results`、`market-data-raw`、Kanban DB、candidate state、leaderboard、private survivor repo、GitHub；
   未暫停／修改任何 cron；未 launch／retry／resume 任何 family；未動 `qlib-run` 容器。
-  （`dashboard.json` 自身由 hourly 既有 cron 重新產生，非本 workflow 所寫。）
+  （`dashboard.json` 自身由既有 cron `3d2e54e178ff`（`*/5`；`quant_candidate_snapshot.py` → `runtime/candidate_snapshot.py`）重新產生，非本 workflow 所寫。）
+
+### 9.B 第二輪：DB 修復、節奏復活與 review round-1 要求項（2026-09-21T15:36Z–16:31Z）
+
+**A1 — DB 修復（根因鏈見 §7.1）**
+
+- `15:36:56Z`：`container stop -t 60 n8n` 耗時 32 s；`stdio.log` 顯示該次 shutdown 卡在 `Waiting for 2 active executions to finish...` → `Shutdown timed out after 30 seconds`
+  → 行程以 crash 路徑結束，**SQLite 連線未關閉**（＝不乾淨）。
+- 停止後 `data/` 仍見 `database.sqlite-wal`（1,355,512 B）與 `database.sqlite-shm`（32,768 B）。
+- host 端 drain：`PRAGMA wal_checkpoint(TRUNCATE)` → `0|0|0`、`PRAGMA integrity_check` → `ok`；移除死亡 `-shm`／已截斷的 `-wal` 後，
+  `database.sqlite` sha256 = `7c924e8b…`（**與 drain 前逐位元相同 → 無資料遺失**）。備份：`/Users/hong/workspace/n8n/backups/pre-repair-20260921T153540Z/`。
+- `15:37:55Z` `container start n8n` → n8n 自報 `Last session crashed`（＝前次不乾淨，與上面證據一致）；其後 log（28 行）**0 筆**
+  `SQLITE_IOERR`／`SQLITE_CORRUPT`／`Failed to hard-delete executions`／`Failed to query executions parked`／`disk I/O error`／`malformed`；
+  `curl -s http://127.0.0.1:5678/healthz` → `{"status":"ok"}`。
+- `15:39:24Z` 依 §7.1 再做一次 stop(60 s 寬限)→drain→start：shutdown log 為 `Received SIGTERM. Shutting down...`、`Deregistered all crons`；
+  `list:workflow --active=true` → `shadowQuantCp1|Quant Control Plane — SHADOW (read-only)`。
+
+**A2 — 節奏復活：連續 4 拍 900 s、全 `success`、快照每拍前進**
+
+| 拍 | execution id | startedAt (UTC) | stoppedAt (UTC) | status | 快照 mtime（CST） | 與前拍間隔 |
+|---|---|---|---|---|---|---|
+| 1 | 16 | 15:45:25.047 | 15:45:25.206 | `success` | 23:45:25 | — |
+| 2 | 17 | 16:00:25.099 | 16:00:25.295 | `success` | 00:00:25 | 900.05 s |
+| 3 | 18 | 16:15:25.058 | 16:15:25.249 | `success` | 00:15:25 | 899.96 s |
+| 4 | 19 | 16:30:25.098 | 16:30:25.255 | `success` | 00:30:25 | 900.04 s |
+| 5 | 20 | 16:45:25.071 | 16:45:25.228 | `success` | 00:45:25 | 899.97 s |
+
+- 觀察窗 15:45:25Z → 16:45:25Z = **60 分 00 秒**、連續 5 拍（要求 ≥3 拍／≥45 分鐘）；每拍同時檢查 `container logs n8n` 的 I/O 錯誤計數皆為 **0**。
+- `python3 n8n/shadow_check.py --require-fresh` → **PASS**（最終檢查當下快照 age 44 s；`generated_at_utc = 2026-09-21T16:45:25.221Z`）；
+  快照 sha256 `285b397e…`、16,027 B（tick 4 當下為 `69b5fb1b…`／16,029 B），`mode = SHADOW_READ_ONLY`、`mutations_enabled = false`、topology 11 階、state vocabulary 9 token。
+- 計數對帳：15:45Z 拍點 `pool_records_total` / `pool_root_md_total` = **831 / 833** → 16:45Z 拍點 **832 / 834**（checkout HEAD `2a34d59`；來源為 pipeline 自身 scout cron，見 §4 註），
+  其餘 count 與 §4 表逐項相同；唯一 `ok = false` 仍是 leaderboard 29 vs parking 24（刻意呈現，不調和）。
+
+**C1 — 節點名稱對齊 live／repo**：`n8n export:workflow --id=shadowQuantCp1`（重啟後）與 repo 匯出在 `id`／`name`／`nodes`／`connections`／`settings`／`active`
+六個鍵上**逐鍵相同**（差異集為空）→ 節點名 `Schedule — 15m observation`，參數 `{field: minutes, minutesInterval: 15}`。
+
+**C2／C3**：§8 的 26,416 B 已改為 **26,815 B**（並註明 exec 11 為 26,416 B）；幽靈 `running` 列敘述更新為「已由 n8n 自身 pruning 清除、`running = 0`、
+現存 exec 1（`crashed`）／2（`error`）／9・11（CLI 驗證）／12–19（排程拍點）」。
+
+**A5 — 邊界不變（實測 before／after）**
+
+| 對象 | 證據 |
+|---|---|
+| `alpha-strategy-review-state.json` | sha256 `4363e3b6…`（與部署前相同）、mtime 14:55（早於本輪） |
+| parking mirror `leaderboard/leaderboard.json` | sha256 `96f5b15f…`；`survivors/` 24 dirs、repo 30 files、HEAD `30b6f8b9…`、`git status` clean |
+| `/Volumes/ExpansionDrive/qlib-results/_survivors/leaderboard.json` | sha256 `6b287c70…`、mtime 10:01（未動） |
+| `dashboard.json` | 由自身 5 分鐘 cron（`3d2e54e178ff`）更新，**非** shadow 寫入（15:48 與 16:30 兩次取樣之間僅此檔變動） |
+| Kanban／candidate／private repo／GitHub | n8n 容器沒有這些掛載（§6）＝結構上不可寫；本輪未 push、未 merge main |
+| 3 支 quant cron | `624d0be5b23c`／`f6b9aa5e9034`／`c5314d86cdfe` 皆 enabled、last run `ok`；`0090473eae7b` 自 05:43 起 paused（早於本卡，非本輪所為） |
+| `qlib-run` | 未動（started 2026-09-20T21:07:42Z） |
+| 唯讀掛載 | `touch /host/quant-dashboard-data/NOPE2`、`touch /host/workspace-ro/NOPE2` → 皆 `Read-only file system` |
+
+**唯讀探針**：本輪新增 `n8n/tick_probe.js`（read-only；在容器內複製 DB trio 後讀**副本**，host 全程不開 live DB）；上表所有 execution 計數皆由它產出。
 
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
