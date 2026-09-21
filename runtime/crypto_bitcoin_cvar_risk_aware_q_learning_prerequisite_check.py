@@ -76,6 +76,7 @@ FGI_PATTERN = re.compile(
     r"(?i)(?:\bfgi[_ .-]?daily\b|\bfgi\b|fear[_ .-]?greed|"
     r"fear[_ .-]?greed[_ .-]?index|alternative[._ -]?me|\bsentiment\b)"
 )
+FGI_SOURCE_URL = "https://api.alternative.me/fng/?limit=0"
 DATA_EXTS = {
     ".csv",
     ".feather",
@@ -449,11 +450,17 @@ def live_recheck(raw_root: str = DEFAULT_RAW) -> dict[str, Any]:
     fgi_payload_ok = bool(rows) and not malformed_rows and not timestamp_parse_error and all(
         isinstance(row, dict)
         and isinstance(row.get("date"), str)
+        and isinstance(row.get("timestamp"), int)
+        and isinstance(row.get("open_time_ms"), int)
         and isinstance(row.get("value"), int)
         and 0 <= row["value"] <= 100
         and isinstance(row.get("value_classification"), str)
         and row.get("source") == "Alternative.me"
+        and row.get("source_url") == FGI_SOURCE_URL
         and row.get("truth_status") == "official"
+        and row["open_time_ms"] == row["timestamp"] * 1000
+        and row["date"]
+        == datetime.fromtimestamp(row["timestamp"], timezone.utc).date().isoformat()
         for row in rows
     )
     fgi_payload_ok = fgi_payload_ok and len(timestamps) >= 8
@@ -465,6 +472,7 @@ def live_recheck(raw_root: str = DEFAULT_RAW) -> dict[str, Any]:
         "earliest": rows[0].get("date") if rows else None,
         "latest": rows[-1].get("date") if rows else None,
         "source": "Alternative.me" if fgi_payload_ok else None,
+        "source_url": FGI_SOURCE_URL if fgi_payload_ok else None,
         "truth_status": "official" if fgi_payload_ok else None,
         "monotonic_unique_timestamps": timestamps == sorted(set(timestamps)) if timestamps else False,
     }
