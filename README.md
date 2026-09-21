@@ -184,14 +184,22 @@ audited implementation contract 與其變化歷史。
 - Kenneth French US/developed 3F/5F/momentum daily + monthly tables（1926/1990 → 2026-07-31）。
 - Deribit BTC/ETH perpetual funding rolling public window，及每日 futures/options book-summary snapshot。
 
-每一列保留 provider provenance 與 `truth_status=official`；不將 FGI、COT、factor、IV/OI
-或 macro 觀測重算成假資料。Coin Metrics catalog-v2 在本環境回 404，故只使用已驗證的
-explicit timeseries endpoint；Deribit options 歷史沒有被假裝成完整 backfill。完整 layout、
-coverage 與 updater 行為以 raw root 的 `_meta/SCHEMA.md`、`_meta/CONFIG.json` 為準。
+Common Data Pack 的目的，是把多策略會反覆使用的**高復用回測原料**一次放進 canonical raw；
+不是建立 data-governance platform。官方 API／官方下載優先；來源透明、維護可靠、授權與原始
+資料可追溯的權威 GitHub 專案或成熟 adapter／distribution 也可作資料取得管道，但不因此成為
+production framework 或 runtime dependency。homogeneous single-source dataset 只需在
+dataset／provider 層級保留可追溯來源；重複的 row-level `source`／`truth_status` 缺漏屬
+**non-blocking hygiene**，除非來源／真值語意會逐 observation 改變，或策略科學正確性確實要求。
+
+Common Data Pack 的完成定義只有四項：高復用資料已落地、基本完整性／coverage／可讀性／時間對齊合理、
+掛入同一支 `_tools/market_data_sync.py`，並由同一個 `ai.marketdata.raw-sync` 每日統一補資料。
+達成即 DONE；不再為 metadata hygiene 新增 gate。tick／orderbook／full option-chain 等 heavy data
+維持 lazy／on-demand；v2 到此 freeze，後續只在出現明顯高復用的新共通資料時增補。
+
 RaQL 的既有 prerequisite-missing round 保持 immutable；以
 `python3 runtime/crypto_bitcoin_cvar_risk_aware_q_learning_prerequisite_check.py --live-recheck --json`
-做唯讀 current-raw recheck，2026-09-21 讀回 FGI `PRESENT`（3,151 rows，2018-02-01 → 2026-09-21），
-核心 signal inputs 全部可得，並不自動重開舊 round 或改寫其 verdict。
+做唯讀 current-raw recheck。2026-09-22 fresh read-back 為 `PASS`：FGI `PRESENT`（3,151 rows，
+2018-02-01 → 2026-09-21）、`missing_inputs=[]`、核心 signal 可得，且 frozen round artifacts 未改寫。
 
 ## 3. Architecture boundary
 
