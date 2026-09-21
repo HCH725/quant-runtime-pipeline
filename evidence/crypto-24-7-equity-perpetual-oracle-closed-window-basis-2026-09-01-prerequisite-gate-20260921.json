@@ -1,0 +1,3155 @@
+{
+  "schema_version": 1,
+  "document_kind": "prerequisite-gate evidence snapshot (contract 13 card-local technical terminal; no launch, no performance claim)",
+  "snapshot_taken_at_utc": "2026-09-21T02:51:27Z",
+  "snapshot_boundary": "Read-only re-measurement of canonical raw/results plus tamper/fixture controls. The round artifacts were published with O_EXCL and are re-read here by hash; this evidence file is written once with O_EXCL.",
+  "card": {
+    "kanban_task_id": "t_2e5ce8f3",
+    "board": "quant-strategy-research",
+    "family_id": "crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01",
+    "round_id": "crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1",
+    "title": "Production Candidate — 24/7 Equity-Perpetual Oracle Closed-Window Observational Equivalence and Cash-Reopen Basis Convergence (full backtest)",
+    "frozen_candidate_body_bytes": 19626,
+    "frozen_candidate_body_sha256": "sha256:83f122422457a4f6dc5580c9e48704fb1b09d59808fa005a72e7517663df302d",
+    "body_source": "kanban board DB read-only; lifecycle footer stripped for candidate-body hash"
+  },
+  "reviewed_source": {
+    "record_path": "/Users/hong/.hermes/wiki/quant/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01.md",
+    "record_bytes": 12591,
+    "record_sha256": "sha256:39afaf89ac97bab4d4a0fe3a0f6f6b935131131721ec5945b2a1cdcb0052eb99",
+    "contract_path": "/Users/hong/workspace/quant-runtime-pipeline/QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md",
+    "contract_bytes": 356302,
+    "contract_sha256": "sha256:2f85087ac71289500c5a1ec4ae2857935803a8ab373332809c27273c5f793500",
+    "contract_version": "v1.10.0",
+    "family_json_path": "/Volumes/ExpansionDrive/qlib-results/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/family.json",
+    "family_json_sha256": "sha256:52685cfaf17741ca50e1862fac2f2048a9e6ec64a3c140097cea9ed8ffa0010f",
+    "intake_boundary": "Research Intake PASS-WITH-CAVEAT was inherited; this card did not perform a second suitability classification."
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "run_id": null,
+    "last_run_id": null,
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "attempts_launched": 0,
+    "incomplete_reason": "Prerequisites are absent and measured before launch; zero attempts were submitted, so no backtest output is fabricated.",
+    "scientific_conclusion": "NOT_EVALUATED",
+    "no_substitute_or_universe_shrink": true
+  },
+  "measured_canonical_raw": {
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "exists": true,
+    "top_level": [
+      "_meta",
+      "_tools",
+      "binance",
+      "cboe",
+      "deribit",
+      "fred"
+    ],
+    "entry_count": 6455,
+    "file_count": 6331,
+    "path_probe_hits": {
+      "equity_symbols": [],
+      "cme_venue": [],
+      "cme_contracts": [],
+      "official_cash_close": [],
+      "orderbook_depth": []
+    },
+    "config_venue": "BINANCE",
+    "config_market_type": "usdm_perp",
+    "config_symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "config_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "config_datasets": {
+      "klines": "Binance USD-M perpetual futures klines",
+      "funding": "Binance USD-M perpetual funding rates",
+      "mark_klines": "Binance USD-M mark price klines (OHLCV, volume=0)",
+      "index_klines": "Binance USD-M index price klines (OHLCV, volume=0)",
+      "premium_klines": "Binance USD-M premium index klines (OHLCV, volume=0)",
+      "spot_klines": "Binance spot klines (BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT)",
+      "vix": "CBOE VIX daily official historical series",
+      "dvol": "Deribit DVOL volatility index (BTC+ETH, 1h+1d)",
+      "fred": "FRED macro series (DGS2, DGS10, SOFR, EFFR, DTWEXBGS)"
+    },
+    "instrument_count": 4,
+    "instrument_ids": [
+      "BNBUSDT-PERP.BINANCE",
+      "BTCUSDT-PERP.BINANCE",
+      "ETHUSDT-PERP.BINANCE",
+      "SOLUSDT-PERP.BINANCE"
+    ],
+    "instrument_types": [
+      "CryptoPerpetual"
+    ],
+    "instrument_fields": [
+      "base_currency",
+      "id",
+      "info",
+      "is_inverse",
+      "lot_size",
+      "maker_fee",
+      "margin_init",
+      "margin_maint",
+      "max_notional",
+      "max_price",
+      "max_quantity",
+      "min_notional",
+      "min_price",
+      "min_quantity",
+      "multiplier",
+      "price_increment",
+      "price_precision",
+      "quote_currency",
+      "raw_symbol",
+      "settlement_currency",
+      "size_increment",
+      "size_precision",
+      "taker_fee",
+      "tick_scheme",
+      "ts_event",
+      "ts_init",
+      "type"
+    ],
+    "instrument_equity_hits": [],
+    "instrument_cme_hits": [],
+    "usd_perp_klines": {
+      "file_count": 1596,
+      "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "intervals": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ],
+      "field_sets": [
+        [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      ],
+      "bad_files": []
+    },
+    "mark_surface": {
+      "file_count": 632,
+      "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "intervals": [
+        "1d",
+        "1h"
+      ],
+      "field_sets": [
+        [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      ],
+      "bad_files": []
+    },
+    "index_surface": {
+      "file_count": 634,
+      "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "intervals": [
+        "1d",
+        "1h"
+      ],
+      "field_sets": [
+        [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      ],
+      "bad_files": []
+    },
+    "premium_surface": {
+      "file_count": 630,
+      "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "intervals": [
+        "1d",
+        "1h"
+      ],
+      "field_sets": [
+        [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      ],
+      "bad_files": []
+    },
+    "spot_surface": {
+      "file_count": 2807,
+      "symbols": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "intervals": [
+        "15m",
+        "1d",
+        "1h",
+        "1w",
+        "30m",
+        "4h",
+        "5m"
+      ],
+      "field_sets": [
+        [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      ],
+      "bad_files": []
+    },
+    "usd_perp_kline_symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "usd_perp_kline_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "kline_field_sets": [
+      [
+        "close",
+        "close_time_ms",
+        "high",
+        "low",
+        "open",
+        "open_time_ms",
+        "volume"
+      ]
+    ],
+    "funding": {
+      "BNBUSDT": {
+        "rows": 5173,
+        "fields": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ],
+        "first_time_ms": 1640995200006,
+        "last_time_ms": 1789948800007,
+        "truth_statuses": [
+          "modeled_funding",
+          "official"
+        ]
+      },
+      "BTCUSDT": {
+        "rows": 5173,
+        "fields": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ],
+        "first_time_ms": 1640995200006,
+        "last_time_ms": 1789948800007,
+        "truth_statuses": [
+          "modeled_funding",
+          "official"
+        ]
+      },
+      "ETHUSDT": {
+        "rows": 5173,
+        "fields": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ],
+        "first_time_ms": 1640995200006,
+        "last_time_ms": 1789948800007,
+        "truth_statuses": [
+          "modeled_funding",
+          "official"
+        ]
+      },
+      "SOLUSDT": {
+        "rows": 5248,
+        "fields": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ],
+        "first_time_ms": 1640995200006,
+        "last_time_ms": 1789948800007,
+        "truth_statuses": [
+          "modeled_funding",
+          "official"
+        ]
+      }
+    },
+    "funding_field_sets": [
+      [
+        "funding_price_source",
+        "funding_rate",
+        "funding_time_ms",
+        "mark_price",
+        "market_type",
+        "rate_type",
+        "symbol",
+        "truth_status",
+        "venue"
+      ]
+    ],
+    "funding_symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "schema_dataset_sections": [
+      "CBOE VIX daily",
+      "Deribit DVOL",
+      "FRED macro series",
+      "funding",
+      "instruments",
+      "klines (Binance USD-M perpetual futures, UTC)",
+      "mark/index/premium klines (Binance USD-M derivatives)",
+      "spot klines (Binance spot, UTC)"
+    ],
+    "schema_has_orderbook_dataset": false,
+    "schema_has_equity_perp_dataset": false,
+    "schema_has_cme_dataset": false,
+    "schema_has_official_close_dataset": false,
+    "auxiliary_surfaces": [
+      {
+        "name": "binance_spot",
+        "file_count": 2807,
+        "sample": [
+          "binance/spot/klines/BNBUSDT/15m/BNBUSDT-15m-2017-11.jsonl.gz",
+          "binance/spot/klines/BNBUSDT/15m/BNBUSDT-15m-2017-12.jsonl.gz",
+          "binance/spot/klines/BNBUSDT/15m/BNBUSDT-15m-2018-01.jsonl.gz",
+          "binance/spot/klines/BNBUSDT/15m/BNBUSDT-15m-2018-02.jsonl.gz",
+          "binance/spot/klines/BNBUSDT/15m/BNBUSDT-15m-2018-03.jsonl.gz"
+        ]
+      },
+      {
+        "name": "cboe_vix",
+        "file_count": 1,
+        "sample": [
+          "cboe/vix/cboe-vix-daily.jsonl.gz"
+        ]
+      },
+      {
+        "name": "deribit_dvol",
+        "file_count": 4,
+        "sample": [
+          "deribit/dvol/BTC/deribit-BTC-dvol-1d.jsonl.gz",
+          "deribit/dvol/BTC/deribit-BTC-dvol-1h.jsonl.gz",
+          "deribit/dvol/ETH/deribit-ETH-dvol-1d.jsonl.gz",
+          "deribit/dvol/ETH/deribit-ETH-dvol-1h.jsonl.gz"
+        ]
+      },
+      {
+        "name": "fred_macro",
+        "file_count": 5,
+        "sample": [
+          "fred/macro/fred-DGS10.jsonl.gz",
+          "fred/macro/fred-DGS2.jsonl.gz",
+          "fred/macro/fred-DTWEXBGS.jsonl.gz",
+          "fred/macro/fred-EFFR.jsonl.gz",
+          "fred/macro/fred-SOFR.jsonl.gz"
+        ]
+      }
+    ],
+    "core_signal_inputs": {
+      "equity_perpetual_mark_price": false,
+      "equity_perpetual_index_price": false,
+      "cme_e_mini_es_nq_prices": false,
+      "primary_exchange_official_close": false,
+      "order_book_depth": false,
+      "crypto_perpetual_mark_price": true,
+      "crypto_perpetual_index_price": true,
+      "crypto_perpetual_funding": true,
+      "core_signal_available": false
+    },
+    "required_data_available": false,
+    "local_universe": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "structural_fingerprint": "sha256:9250483e53df1adce6409f531c60ce827af37d869eb326c8cda20f1ab75a936e",
+    "note": "The canonical raw contains Binance USD-M crypto-native perpetual klines, mark/index/premium klines and funding for BTCUSDT/ETHUSDT/BNBUSDT/SOLUSDT, plus Binance spot, CBOE VIX, Deribit DVOL and FRED macro auxiliaries. It contains no NVDA/AAPL/TSLA/SPY equity-perpetual mark/index surface, no CME Globex ES/NQ surface, no primary-exchange official equity close surface and no order-book depth surface. The local crypto fields cannot express the registered equity-oracle mechanism."
+  },
+  "host_wide_scan": {
+    "roots_scanned": [
+      "/Users/hong/workspace",
+      "/Volumes/ExpansionDrive",
+      "/Users/hong/.hermes/wiki/quant"
+    ],
+    "roots_skipped": [],
+    "files_scanned": 59116,
+    "probe_groups": {
+      "equity_symbols": [
+        "nvda",
+        "aapl",
+        "tsla",
+        "spy"
+      ],
+      "cme_venue": [
+        "cme",
+        "globex",
+        "e_mini",
+        "emini"
+      ],
+      "cme_contracts": [
+        "es",
+        "nq"
+      ],
+      "official_cash_close": [
+        "official_close",
+        "exchange_close",
+        "cash_close",
+        "primary_close"
+      ],
+      "orderbook_depth": [
+        "orderbook",
+        "order_book",
+        "order-depth",
+        "order_depth",
+        "depth",
+        "bid_ask"
+      ]
+    },
+    "hits": [
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/Sources/TokenBar/Resources/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/Sources/TokenBar/Resources/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom/dist/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/dist/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-894/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom/dist/production-894/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-894/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/dist/production-894/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-895/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom/dist/production-895/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-895/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/dist/production-895/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-896/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom/dist/production-896/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/production-896/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/dist/production-896/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/selftest/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom/dist/selftest/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/dist/selftest/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom/dist/selftest/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom/vendor/tokscale-core/src/sessions/gemini.rs",
+        "relative": "TokenBar-custom/vendor/tokscale-core/src/sessions/gemini.rs",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".rs",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom-upgrade-v1.18.0/Sources/TokenBar/Resources/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom-upgrade-v1.18.0/Sources/TokenBar/Resources/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom-upgrade-v1.18.0/dist/selftest/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-custom-upgrade-v1.18.0/dist/selftest/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-custom-upgrade-v1.18.0/dist/selftest/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/Contents/Resources/agent-icons/gemini.svg",
+        "relative": "TokenBar-custom-upgrade-v1.18.0/dist/selftest/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/Contents/Resources/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-075653-official-1.14.4-build892/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-rollbacks/20260901-075653-official-1.14.4-build892/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-075653-official-1.14.4-build892/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-rollbacks/20260901-075653-official-1.14.4-build892/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-141036-custom-1.14.4-build893/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-rollbacks/20260901-141036-custom-1.14.4-build893/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-141036-custom-1.14.4-build893/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-rollbacks/20260901-141036-custom-1.14.4-build893/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-204241-custom-1.14.4-build894/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-rollbacks/20260901-204241-custom-1.14.4-build894/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260901-204241-custom-1.14.4-build894/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-rollbacks/20260901-204241-custom-1.14.4-build894/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260902-015554-custom-1.14.4-build895/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "relative": "TokenBar-rollbacks/20260902-015554-custom-1.14.4-build895/TokenBar.app/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/es.lproj/Sparkle.strings",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".strings",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/TokenBar-rollbacks/20260902-015554-custom-1.14.4-build895/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "relative": "TokenBar-rollbacks/20260902-015554-custom-1.14.4-build895/TokenBar.app/Contents/Resources/TokenBar_TokenBar.bundle/agent-icons/gemini.svg",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".svg",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "relative": "alpha-strategy-research/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "relative": "alpha-strategy-research/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/cme-ether-futures-ofi-price-impact-decay-2026-09-14.md",
+        "relative": "alpha-strategy-research/cme-ether-futures-ofi-price-impact-decay-2026-09-14.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/cme-futures-ifvg-cisd-opening-breakout-disproof-2026-09-16.md",
+        "relative": "alpha-strategy-research/cme-futures-ifvg-cisd-opening-breakout-disproof-2026-09-16.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/crypto-sentiment-extremity-bid-ask-spread-adverse-selection-2026-09-01.md",
+        "relative": "alpha-strategy-research/crypto-sentiment-extremity-bid-ask-spread-adverse-selection-2026-09-01.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/fmz-multi-asset-risk-parity-btc-xau-spy-cl-ewma-erc-535843-2026-09-19.md",
+        "relative": "alpha-strategy-research/fmz-multi-asset-risk-parity-btc-xau-spy-cl-ewma-erc-535843-2026-09-19.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "relative": "alpha-strategy-research/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/nasdaq-l3-order-book-imbalance-leakage-falsification-2026-09-13.md",
+        "relative": "alpha-strategy-research/nasdaq-l3-order-book-imbalance-leakage-falsification-2026-09-13.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "relative": "alpha-strategy-research/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "relative": "alpha-strategy-research/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/single-name-equity-earnings-iv-crush-bid-ask-falsification-2026-09-13.md",
+        "relative": "alpha-strategy-research/single-name-equity-earnings-iv-crush-bid-ask-falsification-2026-09-13.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/spy-options-svi-surface-rv-falsification-adverse-selection-2026-09-12.md",
+        "relative": "alpha-strategy-research/spy-options-svi-surface-rv-falsification-adverse-selection-2026-09-12.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/alpha-strategy-research/tradingview-bitcoin-coinbase-cme-ibit-cross-market-premium-dispersion-2026-09-20.md",
+        "relative": "alpha-strategy-research/tradingview-bitcoin-coinbase-cme-ibit-cross-market-premium-dispersion-2026-09-20.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/CONTRIBUTING.es.md",
+        "relative": "hermes-remediation/CONTRIBUTING.es.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/README.es.md",
+        "relative": "hermes-remediation/README.es.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/SECURITY.es.md",
+        "relative": "hermes-remediation/SECURITY.es.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/agent/gemini_native_adapter.py",
+        "relative": "hermes-remediation/agent/gemini_native_adapter.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/agent/gemini_schema.py",
+        "relative": "hermes-remediation/agent/gemini_schema.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/apps/desktop/src/lib/markdown-html-depth.test.ts",
+        "relative": "hermes-remediation/apps/desktop/src/lib/markdown-html-depth.test.ts",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".ts",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/apps/desktop/src/lib/markdown-html-depth.ts",
+        "relative": "hermes-remediation/apps/desktop/src/lib/markdown-html-depth.ts",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".ts",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/evals/gemini_type_array_probe.py",
+        "relative": "hermes-remediation/evals/gemini_type_array_probe.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/locales/es.yaml",
+        "relative": "hermes-remediation/locales/es.yaml",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/plugins/model-providers/gemini/__init__.py",
+        "relative": "hermes-remediation/plugins/model-providers/gemini/__init__.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/plugins/model-providers/gemini/plugin.yaml",
+        "relative": "hermes-remediation/plugins/model-providers/gemini/plugin.yaml",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_alias_native_route.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_alias_native_route.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_fast_fallback.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_fast_fallback.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_free_tier_gate.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_free_tier_gate.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_native_adapter.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_native_adapter.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_native_reservation.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_native_reservation.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_schema.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_schema.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_standard_key_guidance.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_standard_key_guidance.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_thinking_config.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_thinking_config.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/agent/test_gemini_type_arrays.py",
+        "relative": "hermes-remediation/tests/agent/test_gemini_type_arrays.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/hermes_cli/test_gemini_free_tier_setup_block.py",
+        "relative": "hermes-remediation/tests/hermes_cli/test_gemini_free_tier_setup_block.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/hermes_cli/test_gemini_provider.py",
+        "relative": "hermes-remediation/tests/hermes_cli/test_gemini_provider.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/plugins/model_providers/test_gemini_profile.py",
+        "relative": "hermes-remediation/tests/plugins/model_providers/test_gemini_profile.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/tests/tools/test_tts_gemini.py",
+        "relative": "hermes-remediation/tests/tools/test_tts_gemini.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/web/src/i18n/es.ts",
+        "relative": "hermes-remediation/web/src/i18n/es.ts",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".ts",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/website/docs/guides/google-gemini.md",
+        "relative": "hermes-remediation/website/docs/guides/google-gemini.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/hermes-remediation/website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/guides/google-gemini.md",
+        "relative": "hermes-remediation/website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/guides/google-gemini.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json",
+        "relative": "phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-local-order-book-docs-extracted.md",
+        "relative": "phase12-l2-l3-execution-tca/source_cache/binance-local-order-book-docs-extracted.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-local-order-book-docs.html",
+        "relative": "phase12-l2-l3-execution-tca/source_cache/binance-local-order-book-docs.html",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".html",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-order-book-docs-extracted.md",
+        "relative": "phase12-l2-l3-execution-tca/source_cache/binance-order-book-docs-extracted.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/phase12-l2-l3-execution-tca/source_cache/binance-order-book-docs.html",
+        "relative": "phase12-l2-l3-execution-tca/source_cache/binance-order-book-docs.html",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".html",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/quant-homepage-app/public/locales/es/common.json",
+        "relative": "quant-homepage-app/public/locales/es/common.json",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/evidence/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-prerequisite-gate-20260917.json",
+        "relative": "quant-runtime-pipeline/evidence/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-prerequisite-gate-20260917.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/evidence/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-prerequisite-gate-20260917.json",
+        "relative": "quant-runtime-pipeline/evidence/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-prerequisite-gate-20260917.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/bitcoin_cme_cot_trader_position_sentiment_futures_risk_premium_prerequisite_check.py",
+        "relative": "quant-runtime-pipeline/runtime/bitcoin_cme_cot_trader_position_sentiment_futures_risk_premium_prerequisite_check.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py",
+        "relative": "quant-runtime-pipeline/runtime/bitcoin_ibit_options_cme_futures_implied_carry_wedge_prerequisite_check.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/README.es-ES.md",
+        "relative": "tmp/ars-0914/repo/README.es-ES.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/academic-pipeline/agents/collaboration_depth_agent.md",
+        "relative": "tmp/ars-0914/repo/academic-pipeline/agents/collaboration_depth_agent.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/prompt.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/prompt.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/content-caught.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/content-caught.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/format-caught.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/format-caught.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/honest-unverified.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/honest-unverified.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/locale-respected.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/locale-respected.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-chinese-chars.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-chinese-chars.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-false-positive.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-false-positive.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-overreach.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/no-overreach.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/orphan-named.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/orphan-named.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/skill-fired.md",
+        "relative": "tmp/ars-0914/repo/plugin-evals-citation-check/05-apa-es-locale/graders/skill-fired.md",
+        "groups": [
+          "cme_contracts"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/scripts/check_collaboration_depth_rubric.py",
+        "relative": "tmp/ars-0914/repo/scripts/check_collaboration_depth_rubric.py",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/scripts/test_check_collaboration_depth_rubric.py",
+        "relative": "tmp/ars-0914/repo/scripts/test_check_collaboration_depth_rubric.py",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/scripts/cross_model_verification/gemini_is_grounded.jq",
+        "relative": "tmp/ars-0914/repo/scripts/cross_model_verification/gemini_is_grounded.jq",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".jq",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/scripts/cross_model_verification/gemini_sources.jq",
+        "relative": "tmp/ars-0914/repo/scripts/cross_model_verification/gemini_sources.jq",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".jq",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ars-0914/repo/shared/collaboration_depth_rubric.md",
+        "relative": "tmp/ars-0914/repo/shared/collaboration_depth_rubric.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/02_financial_data_universe/04_cme_futures_eda.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/02_financial_data_universe/04_cme_futures_eda.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/02_financial_data_universe/04_cme_futures_eda.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/02_financial_data_universe/04_cme_futures_eda.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/03_market_microstructure/limit_orderbook.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/03_market_microstructure/limit_orderbook.py",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/01_feasibility_analysis.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/01_feasibility_analysis.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/01_feasibility_analysis.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/01_feasibility_analysis.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/02_labels.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/02_labels.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/02_labels.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/02_labels.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/03_financial_features.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/03_financial_features.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/03_financial_features.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/03_financial_features.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/04_model_based_features.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/04_model_based_features.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/04_model_based_features.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/04_model_based_features.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/05_evaluation.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/05_evaluation.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/05_evaluation.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/05_evaluation.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/06_linear.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/06_linear.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/06_linear.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/06_linear.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/07_gbm.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/07_gbm.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/07_gbm.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/07_gbm.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/08_tabular_dl.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/08_tabular_dl.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/08_tabular_dl.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/08_tabular_dl.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/09_dl_lstm.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/09_dl_lstm.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/09_dl_lstm.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/09_dl_lstm.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10_latent_factors.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10_latent_factors.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10_latent_factors.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10_latent_factors.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10a_pca.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10a_pca.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10a_pca.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10a_pca.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10b_stochastic_discount_factor.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10b_stochastic_discount_factor.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10b_stochastic_discount_factor.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/10b_stochastic_discount_factor.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/11_causal_dml.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/11_causal_dml.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/11_causal_dml.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/11_causal_dml.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/12_model_analysis.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/12_model_analysis.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/12_model_analysis.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/12_model_analysis.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/13_backtest.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/13_backtest.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/13_backtest.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/13_backtest.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/14_portfolio_management.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/14_portfolio_management.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/14_portfolio_management.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/14_portfolio_management.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/15_risk_management.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/15_risk_management.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/15_risk_management.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/15_risk_management.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/16_costs.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/16_costs.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/16_costs.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/16_costs.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/17_holdout_predictions.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/17_holdout_predictions.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/17_holdout_predictions.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/17_holdout_predictions.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/18_holdout_backtest.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/18_holdout_backtest.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/18_holdout_backtest.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/18_holdout_backtest.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/19_strategy_analysis.ipynb",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/19_strategy_analysis.ipynb",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".ipynb",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/19_strategy_analysis.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/19_strategy_analysis.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/README.md",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/README.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/research_workflow.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/research_workflow.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_21d.json",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_21d.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_21d.parquet",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_21d.parquet",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".parquet",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_5d.json",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_5d.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_5d.parquet",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/benchmark/fwd_ret_5d.parquet",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".parquet",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/setup.yaml",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/setup.yaml",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/backtest/base.yaml",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/backtest/base.yaml",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/training/fwd_ret_21d.yaml",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/training/fwd_ret_21d.yaml",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/training/fwd_ret_5d.yaml",
+        "relative": "tmp/ml4t-p1/ml4t-src/case_studies/cme_futures/config/training/fwd_ret_5d.yaml",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".yaml",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/data/futures/market/cme_contract_specs.md",
+        "relative": "tmp/ml4t-p1/ml4t-src/data/futures/market/cme_contract_specs.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/scripts/prove_cme_futures_interface.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/scripts/prove_cme_futures_interface.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tmp/ml4t-p1/ml4t-src/tests/test_cme_futures_research.py",
+        "relative": "tmp/ml4t-p1/ml4t-src/tests/test_cme_futures_research.py",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".py",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tokscale-core-custom/src/sessions/gemini.rs",
+        "relative": "tokscale-core-custom/src/sessions/gemini.rs",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".rs",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "path": "/Users/hong/workspace/tokscale-core-custom-upgrade-v1.18.0/src/sessions/gemini.rs",
+        "relative": "tokscale-core-custom-upgrade-v1.18.0/src/sessions/gemini.rs",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".rs",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/Hermes/Cchiiann/profile_backup_20260911/kanban/boards/hermes-brain-loop/workspaces/t_ab228d03/raw/guides/044-guides__google-gemini.html",
+        "relative": "Hermes/Cchiiann/profile_backup_20260911/kanban/boards/hermes-brain-loop/workspaces/t_ab228d03/raw/guides/044-guides__google-gemini.html",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".html",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/Hermes/Cchiiann/profile_backup_20260911/wiki/raw/articles/hermes-official-docs/2026-06-27/guides/google-gemini.md",
+        "relative": "Hermes/Cchiiann/profile_backup_20260911/wiki/raw/articles/hermes-official-docs/2026-06-27/guides/google-gemini.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "relative": "qlib-results/_handoff/bodies/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "relative": "qlib-results/_handoff/bodies/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/hyperliquid-ofi-depth-elasticity-nonlinear-v1.md",
+        "relative": "qlib-results/_handoff/bodies/hyperliquid-ofi-depth-elasticity-nonlinear-v1.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "relative": "qlib-results/_handoff/bodies/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "relative": "qlib-results/_handoff/bodies/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/_handoff/bodies/spy-options-svi-surface-rv-falsification-adverse-selection.md",
+        "relative": "qlib-results/_handoff/bodies/spy-options-svi-surface-rv-falsification-adverse-selection.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/family.json",
+        "relative": "qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/family.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/round-spec.json",
+        "relative": "qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/round-spec.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/verdict.json",
+        "relative": "qlib-results/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01/rounds/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01-r1/verdict.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/family.json",
+        "relative": "qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/family.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/rounds/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-r1/round-spec.json",
+        "relative": "qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/rounds/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-r1/round-spec.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/rounds/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-r1/verdict.json",
+        "relative": "qlib-results/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01/rounds/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01-r1/verdict.json",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".json",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "relative": "bitcoin-cme-cot-trader-position-sentiment-futures-risk-premium-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "relative": "bitcoin-ibit-options-cme-futures-implied-carry-wedge-2026-09-01.md",
+        "groups": [
+          "cme_venue"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "relative": "hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "relative": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "relative": "sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "groups": [
+          "orderbook_depth"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "path": "/Users/hong/.hermes/wiki/quant/spy-options-svi-surface-rv-falsification-adverse-selection-2026-09-12.md",
+        "relative": "spy-options-svi-surface-rv-falsification-adverse-selection-2026-09-12.md",
+        "groups": [
+          "equity_symbols"
+        ],
+        "suffix": ".md",
+        "data_shaped": false,
+        "classification": "prose_or_non_market_false_positive",
+        "row_keys": []
+      }
+    ],
+    "data_shaped_hits": [],
+    "unclassified_hits": [],
+    "complete_core_surface_hits": [],
+    "note": "Host scan is disclosure-only and cannot promote non-canonical stores into the canonical raw. Every lexical hit is classified; a complete local core surface would need the equity-perpetual and CME groups together, not merely a prose mention or an unrelated data file."
+  },
+  "required_data_matrix": [
+    {
+      "item": "equity_perpetual_mark_price",
+      "requirement": "Crypto-listed 24/7 equity perpetual mark price for the registered equity-perp universe.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "equity_perpetual_index_price",
+      "requirement": "Crypto-listed 24/7 equity perpetual index price for the registered equity-perp universe.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "cme_e_mini_es_nq_prices",
+      "requirement": "CME Globex E-mini ES/NQ after-hours futures prices.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "primary_exchange_official_close",
+      "requirement": "Primary exchange official equity close P_close.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "order_book_depth",
+      "requirement": "1-minute/5-minute order-book depth for the equity perpetuals.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "equity_perpetual_funding",
+      "requirement": "Funding-rate surface for the registered equity perpetuals.",
+      "status": "ABSENT",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "closed_window_session_calendar",
+      "requirement": "Weekend/overnight/holiday cash-market closed-window calendar aligned to the registered instruments.",
+      "status": "NOT_CONSTRUCTIBLE",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "synthetic_fundamental_proxy",
+      "requirement": "P_close plus CME index-futures/macro proxy needed to construct P_fund.",
+      "status": "NOT_CONSTRUCTIBLE",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "closed_window_basis_zscore",
+      "requirement": "P_perp versus P_fund rolling 72-hour standardized basis.",
+      "status": "NOT_CONSTRUCTIBLE",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "cash_reopen_reference",
+      "requirement": "Cash-market reopen timestamp and post-reopen reference return.",
+      "status": "NOT_CONSTRUCTIBLE",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    },
+    {
+      "item": "falsification_reopen_events",
+      "requirement": "More than 50 cash-reopen events for the registered equity-perp instruments.",
+      "status": "BLOCKED_BY_ABSENCE",
+      "measurement": {
+        "raw_path_probe_hits": {
+          "equity_symbols": [],
+          "cme_venue": [],
+          "cme_contracts": [],
+          "official_cash_close": [],
+          "orderbook_depth": []
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": false,
+          "equity_perpetual_index_price": false,
+          "cme_e_mini_es_nq_prices": false,
+          "primary_exchange_official_close": false,
+          "order_book_depth": false,
+          "crypto_perpetual_mark_price": true,
+          "crypto_perpetual_index_price": true,
+          "crypto_perpetual_funding": true,
+          "core_signal_available": false
+        },
+        "basis": "live canonical raw measurement; no alternative market or proxy substituted"
+      }
+    }
+  ],
+  "terminal_artifacts": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/round-spec.json",
+      "sha256": "sha256:f88e4a4518cdf34ca7a948aba2e7dd62c6d0f6b6ebb5212ef82c654f88d7386b",
+      "bytes": 150773,
+      "readback_sha256": "sha256:f88e4a4518cdf34ca7a948aba2e7dd62c6d0f6b6ebb5212ef82c654f88d7386b",
+      "readback_bytes": 150773
+    },
+    "verdict_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/verdict.json",
+      "sha256": "sha256:0a5912a9d32a516a8681e22b7800d793cd17d15d3a578061751aa17d7736de1e",
+      "bytes": 5585,
+      "readback_sha256": "sha256:0a5912a9d32a516a8681e22b7800d793cd17d15d3a578061751aa17d7736de1e",
+      "readback_bytes": 5585
+    },
+    "round_directory_entries": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "attempts_directory_exists": false,
+    "terminal_sentinels": []
+  },
+  "checker": {
+    "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_24_7_equity_perpetual_oracle_prerequisite_check.py",
+    "sha256": "sha256:a2955bec6fcdefa8a09be74a00bebbfb02ffbe0e9b986e1a42879c013e2066d6",
+    "run_checks": {
+      "overall": "PASS",
+      "checks": [
+        {
+          "id": "C1",
+          "status": "PASS",
+          "detail": "venue=BINANCE market_type=usdm_perp config_symbols=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] kline_symbols=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] intervals=['15m', '1d', '1h', '1w', '30m', '4h', '5m']"
+        },
+        {
+          "id": "C2",
+          "status": "PASS",
+          "detail": "instrument_count=4 ids=['BNBUSDT-PERP.BINANCE', 'BTCUSDT-PERP.BINANCE', 'ETHUSDT-PERP.BINANCE', 'SOLUSDT-PERP.BINANCE'] types=['CryptoPerpetual'] equity_hits=[] cme_hits=[]"
+        },
+        {
+          "id": "C3",
+          "status": "PASS",
+          "detail": "usd_perp_kline_files=1596 field_sets=[['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume']] bad_files=[]"
+        },
+        {
+          "id": "C4",
+          "status": "PASS",
+          "detail": "mark/index/premium=632/634/630 funding=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] orderbook_path_hits=[]"
+        },
+        {
+          "id": "C5",
+          "status": "PASS",
+          "detail": "required path probe hits={'equity_symbols': [], 'cme_venue': [], 'cme_contracts': [], 'official_cash_close': [], 'orderbook_depth': []}"
+        },
+        {
+          "id": "C6",
+          "status": "PASS",
+          "detail": "schema_sections=['CBOE VIX daily', 'Deribit DVOL', 'FRED macro series', 'funding', 'instruments', 'klines (Binance USD-M perpetual futures, UTC)', 'mark/index/premium klines (Binance USD-M derivatives)', 'spot klines (Binance spot, UTC)'] equity=False cme=False official_close=False orderbook=False"
+        },
+        {
+          "id": "C7",
+          "status": "PASS",
+          "detail": "core_signal_inputs={'equity_perpetual_mark_price': False, 'equity_perpetual_index_price': False, 'cme_e_mini_es_nq_prices': False, 'primary_exchange_official_close': False, 'order_book_depth': False, 'crypto_perpetual_mark_price': True, 'crypto_perpetual_index_price': True, 'crypto_perpetual_funding': True, 'core_signal_available': False}"
+        },
+        {
+          "id": "C8",
+          "status": "PASS",
+          "detail": "host_files=59116 data_hits=0 unclassified=[] complete_core_hits=[]"
+        },
+        {
+          "id": "C9",
+          "status": "PASS",
+          "detail": "spec ids=crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/t_2e5ce8f3 outcome=PREREQUISITE_MISSING required=False core_signal=False"
+        },
+        {
+          "id": "C10",
+          "status": "PASS",
+          "detail": "matrix_count=11 statuses={'equity_perpetual_mark_price': 'ABSENT', 'equity_perpetual_index_price': 'ABSENT', 'cme_e_mini_es_nq_prices': 'ABSENT', 'primary_exchange_official_close': 'ABSENT', 'order_book_depth': 'ABSENT', 'equity_perpetual_funding': 'ABSENT', 'closed_window_session_calendar': 'NOT_CONSTRUCTIBLE', 'synthetic_fundamental_proxy': 'NOT_CONSTRUCTIBLE', 'closed_window_basis_zscore': 'NOT_CONSTRUCTIBLE', 'cash_reopen_reference': 'NOT_CONSTRUCTIBLE', 'falsification_reopen_events': 'BLOCKED_BY_ABSENCE'}"
+        },
+        {
+          "id": "C11",
+          "status": "PASS",
+          "detail": "registered_instruments=['NVDA-PERP', 'AAPL-PERP', 'TSLA-PERP', 'SPY-PERP', 'ES', 'NQ'] local_universe=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'] shrunk=False substitute=False"
+        },
+        {
+          "id": "C12",
+          "status": "PASS",
+          "detail": "launch={'qlib_launched': False, 'launched': False, 'attempts': 0, 'attempts_launched': 0, 'run_specs': 0, 'run_spec': None, 'terminal_sentinels': 0, 'terminal_sentinel_paths': [], 'preflight': 'not evaluated: prerequisite gate terminalised before any run-spec or container launch', 'host_deploy': 'no runner deployed or pinned; launch never occurred'} attempts_dir=False sentinels=[] round_files=['round-spec.json', 'verdict.json']"
+        },
+        {
+          "id": "C13",
+          "status": "PASS",
+          "detail": "verdict=TECHNICAL_INCOMPLETE claimable=False failure={'layer': 'card-local', 'class': 'data_window_invalid', 'detail': 'The registered core signal requires 24/7 crypto-listed equity perpetual marks/indices, CME ES/NQ after-hours prices, official cash closes and order-book depth; the canonical local raw contains only Binance crypto-native USD-M perpetuals and unrelated auxiliary series.', 'taxonomy_note': 'Contract 13 has no dedicated prerequisite-missing class; data_window_invalid (instrument missing) is the closest registered card-local class. This is disclosed as a prerequisite absence, not a scientific rejection.', 'last_run_id': None, 'terminal_evidence': {'round_spec': 'rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/round-spec.json', 'verdict': 'rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/verdict.json', 'checker': 'runtime/crypto_24_7_equity_perpetual_oracle_prerequisite_check.py', 'repo_evidence': 'evidence/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-prerequisite-gate-20260921.json'}, 'incomplete_reason': 'Prerequisites are absent and measured before launch; zero attempts were submitted, so no backtest output is fabricated.'} run_id=None attempts={'launched': 0, 'run_specs': 0, 'terminal_sentinels': 0, 'run_spec': None, 'terminal_sentinel': None, 'attempt_dir': None, 'note': 'No attempts directory was created. A synthetic INCOMPLETE sentinel would misrepresent a submission that never happened.'}"
+        },
+        {
+          "id": "C14",
+          "status": "PASS",
+          "detail": "base_quote=1000/PROJECT_PRE_REGISTERED_CONSTANT configs=48 grid=48 expected=48 axes_status={'spacing_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'size_multiplier': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'breakeven_tp_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'invalidation_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN'}"
+        },
+        {
+          "id": "C15",
+          "status": "PASS",
+          "detail": "coverage={'phase_grids': ['historical', 'oos', 'full', 'fee_2x', 'funding_2x', 'entry_delay_1_bar', 'slippage_2ticks', 'no_funding', 'no_funding_full', 'cost_attrition_40bps'], 'cells_registered_total': 0, 'cells_computed': 0} selector={'selector': 'cohort-selector-v1', 'disposition': 'cohort-disposition-v1', 'unit': 'cohort', 'cohorts_registered': 'registered instrument × timeframe combinations from the record; no local proxy cohorts are realized', 'historical_selection_only': True, 'survivor_requirements_registered': ['historical winner', 'OOS net_pnl > 0 and sharpe > 0', 'full net_pnl > 0', 'four robustness grids net_pnl > 0', 'historical parameter-neighbourhood >= 60% same sign'], 'survivors': [], 'cohorts_realized': 0, 'disposition_status': 'NOT_EVALUATED_PREREQUISITE_MISSING'}"
+        },
+        {
+          "id": "C16",
+          "status": "PASS",
+          "detail": "item_count=3 status=NOT_EXECUTED_PREREQUISITE_MISSING"
+        },
+        {
+          "id": "C17",
+          "status": "PASS",
+          "detail": "family_id=crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01 task=t_2e5ce8f3 fingerprint=sha256:72f824777de2033a0c11df185fc8cdd80a77ca2d511100705dcfe67af9a6c70d"
+        },
+        {
+          "id": "C18",
+          "status": "PASS",
+          "detail": "performance_claims spec=[] verdict=[] scientific_conclusion=NOT_EVALUATED"
+        },
+        {
+          "id": "C19",
+          "status": "PASS",
+          "detail": "registered_measurement_fp=sha256:9250483e53df1adce6409f531c60ce827af37d869eb326c8cda20f1ab75a936e live_measurement_fp=sha256:9250483e53df1adce6409f531c60ce827af37d869eb326c8cda20f1ab75a936e"
+        }
+      ]
+    },
+    "self_test": {
+      "self_test": [
+        {
+          "variant": "verdict_pass",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "failure_shared_layer",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "run_id_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C13"
+          ]
+        },
+        {
+          "variant": "required_data_claimed_present",
+          "refused": true,
+          "failed_checks": [
+            "C9"
+          ]
+        },
+        {
+          "variant": "matrix_item_claimed_present",
+          "refused": true,
+          "failed_checks": [
+            "C10"
+          ]
+        },
+        {
+          "variant": "universe_shrunk",
+          "refused": true,
+          "failed_checks": [
+            "C11"
+          ]
+        },
+        {
+          "variant": "dca_grid_truncated",
+          "refused": true,
+          "failed_checks": [
+            "C14"
+          ]
+        },
+        {
+          "variant": "attempt_fabricated",
+          "refused": true,
+          "failed_checks": [
+            "C12"
+          ]
+        },
+        {
+          "variant": "falsification_item_removed",
+          "refused": true,
+          "failed_checks": [
+            "C16"
+          ]
+        }
+      ],
+      "overall": "PASS"
+    },
+    "raw_fixture_control": {
+      "raw_fixture_control": {
+        "fixture_raw": "/var/folders/1p/pnkpmtl17vgfzw3t4yqgw28w0000gn/T/xq-equity-oracle-rawfix-7fjpu9bp/raw",
+        "path_probe_hits": {
+          "equity_symbols": [
+            "binance/usdm/klines/NVDA-PERP",
+            "binance/usdm/klines/NVDA-PERP/5m",
+            "binance/usdm/klines/NVDA-PERP/5m/NVDA-PERP-5m-2026-09.jsonl.gz",
+            "hyperliquid/equity_perp/index/NVDA-PERP",
+            "hyperliquid/equity_perp/index/NVDA-PERP/5m",
+            "hyperliquid/equity_perp/index/NVDA-PERP/5m/NVDA-PERP-5m-2026-09.jsonl.gz",
+            "hyperliquid/equity_perp/mark/NVDA-PERP",
+            "hyperliquid/equity_perp/mark/NVDA-PERP/5m",
+            "hyperliquid/equity_perp/mark/NVDA-PERP/5m/NVDA-PERP-5m-2026-09.jsonl.gz",
+            "hyperliquid/orderbook/NVDA-PERP",
+            "hyperliquid/orderbook/NVDA-PERP/depth.jsonl.gz",
+            "nyse/official_close/NVDA",
+            "nyse/official_close/NVDA/1d",
+            "nyse/official_close/NVDA/1d/NVDA-official-close-2026-09.jsonl.gz"
+          ],
+          "cme_venue": [
+            "cme",
+            "cme/globex",
+            "cme/globex/ES",
+            "cme/globex/ES/5m",
+            "cme/globex/ES/5m/ES-5m-2026-09.jsonl.gz",
+            "cme/globex/NQ",
+            "cme/globex/NQ/5m",
+            "cme/globex/NQ/5m/NQ-5m-2026-09.jsonl.gz"
+          ],
+          "cme_contracts": [
+            "cme/globex/ES",
+            "cme/globex/ES/5m",
+            "cme/globex/ES/5m/ES-5m-2026-09.jsonl.gz",
+            "cme/globex/NQ",
+            "cme/globex/NQ/5m",
+            "cme/globex/NQ/5m/NQ-5m-2026-09.jsonl.gz"
+          ],
+          "official_cash_close": [
+            "nyse/official_close",
+            "nyse/official_close/NVDA",
+            "nyse/official_close/NVDA/1d",
+            "nyse/official_close/NVDA/1d/NVDA-official-close-2026-09.jsonl.gz"
+          ],
+          "orderbook_depth": [
+            "hyperliquid/orderbook",
+            "hyperliquid/orderbook/NVDA-PERP",
+            "hyperliquid/orderbook/NVDA-PERP/depth.jsonl.gz"
+          ]
+        },
+        "core_signal_inputs": {
+          "equity_perpetual_mark_price": true,
+          "equity_perpetual_index_price": true,
+          "cme_e_mini_es_nq_prices": true,
+          "primary_exchange_official_close": true,
+          "order_book_depth": true,
+          "crypto_perpetual_mark_price": false,
+          "crypto_perpetual_index_price": false,
+          "crypto_perpetual_funding": false,
+          "core_signal_available": true
+        },
+        "flipped_to_present": true
+      },
+      "overall": "PASS"
+    },
+    "verify_verbatim": {
+      "spec": "/Volumes/ExpansionDrive/qlib-results/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/round-spec.json",
+      "checked_count": 17,
+      "problems": [],
+      "source_hashes": {
+        "card": "sha256:83f122422457a4f6dc5580c9e48704fb1b09d59808fa005a72e7517663df302d",
+        "record": "sha256:39afaf89ac97bab4d4a0fe3a0f6f6b935131131721ec5945b2a1cdcb0052eb99",
+        "contract": "sha256:2f85087ac71289500c5a1ec4ae2857935803a8ab373332809c27273c5f793500",
+        "footer": "sha256:5ca63a3cf2bfe264c7ae1d033ef4562ff01d44f61e596db687c2b63aca974458"
+      },
+      "overall": "PASS"
+    },
+    "o_excl_readback": {
+      "attempted_path": "/Volumes/ExpansionDrive/qlib-results/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01/rounds/crypto-24-7-equity-perpetual-oracle-closed-window-basis-2026-09-01-r1/round-spec.json",
+      "refused": true,
+      "error_type": "FileExistsError",
+      "spec_sha256_before": "sha256:f88e4a4518cdf34ca7a948aba2e7dd62c6d0f6b6ebb5212ef82c654f88d7386b",
+      "spec_sha256_after": "sha256:f88e4a4518cdf34ca7a948aba2e7dd62c6d0f6b6ebb5212ef82c654f88d7386b",
+      "verdict_sha256_before": "sha256:0a5912a9d32a516a8681e22b7800d793cd17d15d3a578061751aa17d7736de1e",
+      "verdict_sha256_after": "sha256:0a5912a9d32a516a8681e22b7800d793cd17d15d3a578061751aa17d7736de1e",
+      "bytes_unchanged": true
+    }
+  },
+  "authoring_controls": {
+    "unpublished_drafts_removed_before_final_publication": [
+      {
+        "kind": "round-spec",
+        "sha256": "sha256:7dab1664b11b2829c45681fc97aaab9c2c052039714004b8d7547f8163fa9891",
+        "bytes": 150442,
+        "reason": "initial draft before final checker controls"
+      },
+      {
+        "kind": "round-spec",
+        "sha256": "sha256:6c56c3f24374661a1ba7c42ca4d446b3e78bdd24b7abebfa8acbe62b75eb365c",
+        "bytes": 150437,
+        "reason": "draft refused C14/C15 before axes/disposition registration repair"
+      }
+    ],
+    "final_publication_mode": "round-spec.json and verdict.json created/read with O_EXCL; no attempts, run-spec or sentinel was ever created",
+    "unpublished_evidence_drafts": [
+      {
+        "sha256": "sha256:780356113092f94cf7f5d12d95f320e404aeec68aa5f4e83977a000dcc361647",
+        "bytes": 123139,
+        "reason": "replaced after the final checker CLI exit-code fix so the evidence pins the shipped checker bytes"
+      }
+    ],
+    "final_evidence_publication_mode": "existing draft removed, then final evidence rewritten once with O_EXCL after all checker controls passed"
+  },
+  "contract_semantics": {
+    "prerequisite_missing_is_card_local": true,
+    "missing_prerequisite_is_not_scientific_rejection": true,
+    "local_universe_rule_applied": "core signal is not computable in any legal local universe because the required independent surfaces are absent; therefore no local full backtest was authorized",
+    "block_reserved_for": "shared-layer failure or unresolved contract/human decision; neither occurred"
+  }
+}
