@@ -2,7 +2,8 @@
 """Read-only verification of the n8n shadow control-plane snapshot.
 
 Usage:
-    python3 n8n/shadow_check.py [snapshot.json] [--max-age-seconds N] [--require-fresh]
+    python3 n8n/shadow_check.py [snapshot.json] [--max-age-seconds N | --max-age-seconds=N] [--require-fresh]
+    python3 n8n/shadow_check.py --selftest
 
 Checks (never writes anything, never talks to n8n):
   * schema / mode identity and the full 11-stage topology, in order
@@ -19,6 +20,7 @@ import sys
 import time
 
 DEFAULT_SNAPSHOT = "/Users/hong/workspace/n8n/files/quant-control-plane-shadow.json"
+DEFAULT_MAX_AGE = 2400
 STAGES = [
     "strategy_research", "github_strategy_pool", "intake_review", "wiki_brain",
     "candidate_queue", "data_preflight_gate", "qlib_full_backtest", "result_verdict",
@@ -41,13 +43,56 @@ VOCAB = [
 ]
 
 
+def parse_args(args):
+    """Parse the documented CLI contract: [snapshot.json] [--max-age-seconds N|=N] [--require-fresh]."""
+    path, max_age, require_fresh, i = None, DEFAULT_MAX_AGE, False, 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--require-fresh":
+            require_fresh = True
+        elif arg.startswith("--max-age-seconds="):
+            max_age = int(arg.split("=", 1)[1])
+        elif arg == "--max-age-seconds":
+            i += 1
+            if i >= len(args):
+                raise SystemExit("--max-age-seconds needs a value")
+            max_age = int(args[i])
+        elif arg.startswith("--"):
+            raise SystemExit(f"unknown option: {arg}")
+        elif path is None:
+            path = arg
+        else:
+            raise SystemExit(f"unexpected extra argument: {arg}")
+        i += 1
+    return (path if path else DEFAULT_SNAPSHOT), max_age, require_fresh
+
+
+def selftest():
+    """Executable check of the CLI contract only — no snapshot, no n8n needed."""
+    cases = [
+        ([], (DEFAULT_SNAPSHOT, DEFAULT_MAX_AGE, False)),
+        (["--require-fresh"], (DEFAULT_SNAPSHOT, DEFAULT_MAX_AGE, True)),
+        (["--max-age-seconds", "1800", "--require-fresh"], (DEFAULT_SNAPSHOT, 1800, True)),
+        (["--max-age-seconds=1800", "--require-fresh"], (DEFAULT_SNAPSHOT, 1800, True)),
+        (["/tmp/x.json", "--max-age-seconds", "60"], ("/tmp/x.json", 60, False)),
+        (["/tmp/x.json", "--max-age-seconds=60", "--require-fresh"], ("/tmp/x.json", 60, True)),
+    ]
+    for argv, want in cases:
+        got = parse_args(argv)
+        assert got == want, f"{argv} -> {got}, want {want}"
+    rejected = (["--max-age-seconds"], ["--nope"], ["a.json", "b.json"])
+    for bad in rejected:
+        try:
+            parse_args(bad)
+        except SystemExit:
+            continue
+        raise AssertionError(f"{bad} should have failed")
+    print(f"PASS parser self-test ({len(cases)} accepted forms, {len(rejected)} rejected)")
+    return 0
+
+
 def main(argv):
-    args = [a for a in argv[1:] if not a.startswith("--")]
-    path = args[0] if args else DEFAULT_SNAPSHOT
-    max_age = 2400
-    if "--max-age-seconds" in argv:
-        max_age = int(argv[argv.index("--max-age-seconds") + 1])
-    require_fresh = "--require-fresh" in argv
+    path, max_age, require_fresh = parse_args(argv[1:])
 
     failures, warnings = [], []
     if not os.path.isfile(path):
@@ -116,4 +161,6 @@ def main(argv):
 
 
 if __name__ == "__main__":
+    if "--selftest" in sys.argv[1:]:
+        sys.exit(selftest())
     sys.exit(main(sys.argv))

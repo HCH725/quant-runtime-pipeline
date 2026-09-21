@@ -220,12 +220,12 @@ python3 n8n/shadow_check.py                                            # 驗證�
 (c) 取樣 **15 分鐘**（`scheduleTrigger` 的 `rule.interval[0] = {field: "minutes", minutesInterval: 15}`，cron-backed），與 pipeline 既有的 15 分鐘 reconciler／watchdog 節奏一致（`dashboard.json` 投影本身由 cron `3d2e54e178ff` 每 5 分鐘重算）。
 **實測教訓**：本版 n8n（2.39.9）對 `field: "seconds", secondsInterval: 900` 實測仍**每 60 秒**觸發（DB 內已是 900 卻在 14:37:00／14:38:00 連續觸發），因此改用 minutes 單位；
 改節奏只需改這一個欄位，但需先接受上表成本或設定 execution 修剪。
-註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除；
-現存列為 exec 1（`crashed`，早期 CLI）、2（`error`，早期 CLI）、9／11（`success`，CLI 手動驗證）、12–15（`success`，排程拍點），`running = 0`。
+註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除。
+execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫一次**；本節先前另寫一份（12–15），與 §9.B（12–19）及 A2 表（exec 20）三方漂移，已收斂。
 
 ## 9. 驗證記錄（實跑證據）
 
-> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項。
+> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項；第三輪（§9.C）＝review round-2 要求項（CLI 契約、文件漂移）。
 
 ### 9.A 第一輪：部署與投影
 
@@ -258,7 +258,7 @@ python3 n8n/shadow_check.py                                            # 驗證�
 - `15:39:24Z` 依 §7.1 再做一次 stop(60 s 寬限)→drain→start：shutdown log 為 `Received SIGTERM. Shutting down...`、`Deregistered all crons`；
   `list:workflow --active=true` → `shadowQuantCp1|Quant Control Plane — SHADOW (read-only)`。
 
-**A2 — 節奏復活：連續 4 拍 900 s、全 `success`、快照每拍前進**
+**A2 — 節奏復活：連續 5 拍 900 s、全 `success`、快照每拍前進**
 
 | 拍 | execution id | startedAt (UTC) | stoppedAt (UTC) | status | 快照 mtime（CST） | 與前拍間隔 |
 |---|---|---|---|---|---|---|
@@ -274,11 +274,25 @@ python3 n8n/shadow_check.py                                            # 驗證�
 - 計數對帳：15:45Z 拍點 `pool_records_total` / `pool_root_md_total` = **831 / 833** → 16:45Z 拍點 **832 / 834**（checkout HEAD `2a34d59`；來源為 pipeline 自身 scout cron，見 §4 註），
   其餘 count 與 §4 表逐項相同；唯一 `ok = false` 仍是 leaderboard 29 vs parking 24（刻意呈現，不調和）。
 
+**execution 現況（本文件唯一權威敘述；point-in-time 讀值，不是常數）**
+
+截至 **2026-09-21T17:00:25Z**（第 6 拍、exec 21 落地後）以唯讀探針讀取：`total = 14`、`running = 0`、`max_id = 21`。
+
+| status | n | execution id |
+|---|---|---|
+| `crashed` | 1 | 1（早期 CLI） |
+| `error` | 1 | 2（早期 CLI） |
+| `success` | 12 | 9・11（CLI 手動驗證）、12–13（60 s 節奏）、14–15（`minutes/15` 切換後首批 900 s）、16–21（修復後 900 s 排程拍點） |
+
+此表隨每 15 分鐘拍點前進；取當下值一律用 §7.1 的唯讀探針
+（`container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`），**不在 host 端開 live DB**。
+§8 與本節 C2／C3 只指向本段，不各自複寫 id 區間（先前三方各寫一份而漂移，見 §8 註）。
+
 **C1 — 節點名稱對齊 live／repo**：`n8n export:workflow --id=shadowQuantCp1`（重啟後）與 repo 匯出在 `id`／`name`／`nodes`／`connections`／`settings`／`active`
 六個鍵上**逐鍵相同**（差異集為空）→ 節點名 `Schedule — 15m observation`，參數 `{field: minutes, minutesInterval: 15}`。
 
-**C2／C3**：§8 的 26,416 B 已改為 **26,815 B**（並註明 exec 11 為 26,416 B）；幽靈 `running` 列敘述更新為「已由 n8n 自身 pruning 清除、`running = 0`、
-現存 exec 1（`crashed`）／2（`error`）／9・11（CLI 驗證）／12–19（排程拍點）」。
+**C2／C3**：§8 的 26,416 B 已改為 **26,815 B**（並註明 exec 11 為 26,416 B）；幽靈 `running` 列敘述更新為「已由 n8n 自身 pruning 清除、`running = 0`」，
+id 區間以本節〈execution 現況〉**單一權威段落**為準（此處先前寫 12–19、§8 寫 12–15、A2 表寫到 exec 20 → review round-2 A2 指出的三方漂移）。
 
 **A5 — 邊界不變（實測 before／after）**
 
@@ -294,6 +308,35 @@ python3 n8n/shadow_check.py                                            # 驗證�
 | 唯讀掛載 | `touch /host/quant-dashboard-data/NOPE2`、`touch /host/workspace-ro/NOPE2` → 皆 `Read-only file system` |
 
 **唯讀探針**：本輪新增 `n8n/tick_probe.js`（read-only；在容器內複製 DB trio 後讀**副本**，host 全程不開 live DB）；上表所有 execution 計數皆由它產出。
+
+### 9.C 第三輪：review round-2 要求項（2026-09-22T01:05 CST）
+
+**A1 — `n8n/shadow_check.py` 值型旗標解析（已修，實跑）**
+
+- 根因：`args = [a for a in argv[1:] if not a.startswith("--")]` 把旗標值 `1800` 當成位置參數（→ `FAIL snapshot not found: 1800`）；同一行也讓等號形 `--max-age-seconds=1` 從未被解析，靜默落回預設 **2400**。
+- 修法：新增 `parse_args()`（維持手寫解析、零新依賴），同時支援 `--max-age-seconds N` 與 `--max-age-seconds=N`；未知旗標／缺值／多餘位置參數一律 `rc=1` 明示失敗，不再靜默忽略（與原缺陷同一類）。`--selftest` 為同檔內的契約檢查（無新檔、無框架）。
+- 實跑（`/opt/homebrew/bin/python3 n8n/shadow_check.py …`；exit code 逐一擷取、未經管道）：
+
+| 呼叫 | 結果 | rc |
+|---|---|---|
+| `--selftest` | `PASS parser self-test (6 accepted forms, 3 rejected)` | 0 |
+| （無參數） | PASS，threshold 2400s（行為不變） | 0 |
+| `--require-fresh` | PASS，threshold 2400s（行為不變） | 0 |
+| `--max-age-seconds 1800 --require-fresh` | PASS，threshold **1800s**（修正前 rc=1 `FAIL snapshot not found: 1800`） | 0 |
+| `--max-age-seconds=1800 --require-fresh` | PASS，threshold **1800s**（修正前靜默落回 2400s） | 0 |
+| `--max-age-seconds 1 --require-fresh` | FAIL，threshold **1s**＝負向對照，證明門檻真的被採用 | 1 |
+| `--max-age-seconds=1 --require-fresh` | FAIL，threshold **1s**＝同上 | 1 |
+| `<snapshot 路徑>`（位置參數） | PASS，無回歸 | 0 |
+| `--nope`／`--max-age-seconds`（缺值） | `unknown option: --nope`／`--max-age-seconds needs a value` | 1 |
+
+- `--selftest` **非恆真**：改寫過程中它當場抓到作者自己的 `argv` 索引錯誤（`['--require-fresh']` 被跳過）→ 修正後才轉 PASS。
+
+**A2 — 文件漂移（已收斂為單一權威段落）**
+
+- §8 與 §9.B C2／C3 不再各自複寫 exec id 區間，兩處都指向〈execution 現況〉；該段基準 = 2026-09-21T17:00:25Z 唯讀讀值（`total = 14`、`running = 0`、`max_id = 21`、`success = 12`），與 A2 表（exec 16–20）＋ exec 21 一致。
+- 同輪順帶修掉同節內另一處自相矛盾：A2 標題「連續 4 拍」→「連續 5 拍」（表有 5 列、窗 60 分、該節內文本來就寫 5 拍）。
+
+**本輪範圍**：只改 `n8n/shadow_check.py` 與 `N8N_CONTROL_PLANE.md` 兩個檔案；未重啟容器、未重新 import workflow、未觸發任何 n8n execution、未動 pipeline／cron／`qlib-run`／任何權威狀態。
 
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
