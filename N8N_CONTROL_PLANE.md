@@ -288,8 +288,9 @@ execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫�
 （`container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`），**不在 host 端開 live DB**。
 §8 與本節 C2／C3 只指向本段，不各自複寫 id 區間（先前三方各寫一份而漂移，見 §8 註）。
 
-**C1 — 節點名稱對齊 live／repo**：`n8n export:workflow --id=shadowQuantCp1`（重啟後）與 repo 匯出在 `id`／`name`／`nodes`／`connections`／`settings`／`active`
-六個鍵上**逐鍵相同**（差異集為空）→ 節點名 `Schedule — 15m observation`，參數 `{field: minutes, minutesInterval: 15}`。
+**C1 — 節點名稱對齊 live／repo**：`n8n export:workflow --id=shadowQuantCp1`（重啟後）與 repo 匯出在 `id`（`shadowQuantCp1`）／`name`／`active`（`true`）／`connections` 上**逐鍵相同**；
+`nodes` 與 `settings` **不同**（皆為 n8n import／儲存時的正規化，非部署漂移）——**語意等價**才是可重現的敘述：10 個節點的 `type` 全同，除正規化鍵外每個節點的參數逐位元相同
+（5 個來源／投影指令與 Code `jsCode` 的 sha256 兩側一致）。完整差異清單、取證指令與實跑值見 **§9.D**。節點名 `Schedule — 15m observation`，參數 `{field: minutes, minutesInterval: 15}`。
 
 **C2／C3**：§8 的 26,416 B 已改為 **26,815 B**（並註明 exec 11 為 26,416 B）；幽靈 `running` 列敘述更新為「已由 n8n 自身 pruning 清除、`running = 0`」，
 id 區間以本節〈execution 現況〉**單一權威段落**為準（此處先前寫 12–19、§8 寫 12–15、A2 表寫到 exec 20 → review round-2 A2 指出的三方漂移）。
@@ -329,6 +330,8 @@ id 區間以本節〈execution 現況〉**單一權威段落**為準（此處先
 | `<snapshot 路徑>`（位置參數） | PASS，無回歸 | 0 |
 | `--nope`／`--max-age-seconds`（缺值） | `unknown option: --nope`／`--max-age-seconds needs a value` | 1 |
 
+> 註（2026-09-22T01:29 CST）：上表 `--selftest` 那行是 round-2 當下的原文輸出；§9.D 為非整數值增列 2 個拒絕形後，現行輸出為 `PASS parser self-test (6 accepted forms, 5 rejected)`。
+
 - `--selftest` **非恆真**：改寫過程中它當場抓到作者自己的 `argv` 索引錯誤（`['--require-fresh']` 被跳過）→ 修正後才轉 PASS。
 
 **A2 — 文件漂移（已收斂為單一權威段落）**
@@ -337,6 +340,98 @@ id 區間以本節〈execution 現況〉**單一權威段落**為準（此處先
 - 同輪順帶修掉同節內另一處自相矛盾：A2 標題「連續 4 拍」→「連續 5 拍」（表有 5 列、窗 60 分、該節內文本來就寫 5 拍）。
 
 **本輪範圍**：只改 `n8n/shadow_check.py` 與 `N8N_CONTROL_PLANE.md` 兩個檔案；未重啟容器、未重新 import workflow、未觸發任何 n8n execution、未動 pipeline／cron／`qlib-run`／任何權威狀態。
+
+### 9.D 第四輪：review round-3 要求項（2026-09-21T17:26Z–17:31Z 實跑）
+
+**A1 — §9.B C1 的 live／repo 等價敘述改為可重現版本（已修）**
+
+review round-3 判決「六鍵逐鍵相同（差異集為空）」不成立；本輪以同一道指令獨立重跑，**複驗該判決成立**（並以實測修正其中兩處細節：position 差異是 **8 個**節點、live 側連節點層也沒有 `executeOnce`）。§9.B C1 已改為「相同鍵」＋「已知正規化差異」＋「語意等價（指令／`jsCode` 逐位元相同）」的版本。
+
+取證指令（唯讀；唯一寫入是容器的 `/tmp`，host 端不留檔、不開 live DB。**以下兩段可直接貼上重跑**）：
+
+```
+python3 - <<'PY'
+import hashlib, json, subprocess
+
+def container(*args):
+    return subprocess.run(["container", "exec", "n8n", *args], capture_output=True, text=True, check=True)
+
+container("n8n", "export:workflow", "--id=shadowQuantCp1", "--output=/tmp/r4-live-export.json")
+raw = container("cat", "/tmp/r4-live-export.json").stdout
+print("live export bytes:", len(raw.encode()), "sha256:", hashlib.sha256(raw.encode()).hexdigest()[:8])
+
+canon = lambda o: json.dumps(o, sort_keys=True, separators=(",", ":"))
+live = json.loads(raw)[0]                                     # n8n 匯出是單元素陣列
+repo = json.load(open("n8n/quant-control-plane-shadow.workflow.json"))
+print("diff keys:", [k for k in sorted(set(live) | set(repo))
+                     if canon(live.get(k, "<absent>")) != canon(repo.get(k, "<absent>"))])
+PY
+```
+
+```
+python3 - <<'PY'
+import hashlib, json, subprocess
+
+def container(*args):
+    return subprocess.run(["container", "exec", "n8n", *args], capture_output=True, text=True, check=True)
+
+canon = lambda o: json.dumps(o, sort_keys=True, separators=(",", ":"))
+sha = lambda s: hashlib.sha256(s.encode()).hexdigest()
+live = json.loads(container("cat", "/tmp/r4-live-export.json").stdout)[0]
+repo = json.load(open("n8n/quant-control-plane-shadow.workflow.json"))
+NORM = {"executeOnce", "mode", "language", "dataPropertyName"}   # 只有這 4 個鍵被 n8n 正規化
+for l, r in zip(live["nodes"], repo["nodes"]):
+    lp = {k: v for k, v in l.get("parameters", {}).items() if k not in NORM}
+    rp = {k: v for k, v in r.get("parameters", {}).items() if k not in NORM}
+    payload = r.get("parameters", {}).get("command") or r.get("parameters", {}).get("jsCode")
+    print(f"  {r['name'][:46]:48s} name={l['name'] == r['name']} type={l['type'] == r['type']} "
+          f"params_same={canon(lp) == canon(rp)} payload_sha256={sha(payload)[:8] if payload else '-'}")
+PY
+```
+
+實跑值（2026-09-21T17:26Z）：live 匯出 **28,914 B**、sha256 `ec619a85…`（`cat` 過容器邊界後 sha256 不變）；repo 檔 sha256 `312a46b9…`（本輪未動）。
+
+| 比較面 | 結果（實測） |
+|---|---|
+| **相同** | `id`（`shadowQuantCp1`）／`name`／`active`（`true`）／`connections`／`meta`（`{"instanceId":"shadow-1-local"}`）／`pinData`／`tags`（`[]`）。10 個節點的 `id`／`name`／`type`／`typeVersion` 全同；`settings` 的 `executionOrder`／`saveDataSuccessExecution`／`saveDataErrorExecution`／`saveManualExecutions` 逐值相同 |
+| **不同 —— `nodes`：n8n 正規化（4 類）** | ① 5 個 `executeCommand` 節點：repo 的 `parameters.executeOnce: true` 在 live **不存在**（live 側連**節點層**都沒有這個鍵——n8n 未持久化寫在 `parameters` 裡的旗標）。本拓樸是單線鏈（`Manual Trigger`／`Schedule` → `Pool` → … → `Emit`），每拍每個來源節點只收 1 個 item，故有無此旗標不改變行為。<br>② Code 節點：repo 有 `parameters.mode="runOnceForAllItems"`、`parameters.language="javaScript"`，live 沒有（型別預設值不回寫）。<br>③ `readWriteFile`：repo 有 `parameters.dataPropertyName="data"`，live 沒有（同上）。<br>④ `position`：**8 個**節點不同（5 個來源節點 `y 420→432`；`Assemble`／`Emit` `y 140→144`；sticky note `[-260,400]→[-16,64]`）＝ canvas 16px 格點吸附 |
+| **不同 —— `settings`** | live 多一個 `binaryMode="separate"`（儲存時補上的預設） |
+| **不同 —— top-level instance 鍵（live 匯出多出、repo 檔沒有）** | `activeVersionId`／`createdAt`／`description`／`isArchived`／`nodeGroups`／`shared`／`sourceWorkflowId`／`triggerCount`／`updatedAt`／`versionCounter`／`versionMetadata`；另 `staticData`（live 是排程 recurrence 記號 `{"node:Schedule — 15m observation": …}`、repo 為 `null`）與 `versionId`（live `322345a2…` vs repo `117ec9f7…`）本質為 instance／版本控管值 |
+
+**語意等價（本輪實測、可重跑）**：除上表 4 類正規化鍵外，每個節點的參數**逐位元相同**（上面第二段取證指令逐節點印 `params_same=True`）——
+
+- 5 個來源／投影指令 sha256：`329eb9b9…`／`18b5df35…`／`46959354…`／`c1275683…`／`92208ab0…`（live 與 repo 一致）；Code 節點 `jsCode` sha256 `38871aa9…`（兩側一致）。
+- 結論：repo 匯出檔是**可重現的來源**，live 部署是**同一份拓樸**多一層 n8n 自身的正規化與 instance 書籤；「六鍵逐字相同」不是驗收條件。本輪**未**為此改 workflow 檔、**未** re-import、**未**重啟容器。
+
+**C1（round-3 §C 的可選項）— `--max-age-seconds` 非整數值的失敗輸出（已做；新增同檔 `_int()` ＋ 2 個 selftest 拒絕形）**
+
+- 修正前：`--max-age-seconds=abc` 與 `--max-age-seconds abc` 皆為未捕捉的 `ValueError` traceback（`rc=1`，屬明示失敗但輸出難讀）。
+- 修法：`parse_args()` 的整數轉換統一走同檔 `_int(flag, raw)` → `SystemExit("--max-age-seconds needs an integer, got: 'abc'")`；`--selftest` 增列這 2 個拒絕形（`--nope`／缺值／多餘位置參數的行為不變）。零新依賴、零新檔案。
+
+實跑（`/opt/homebrew/bin/python3 n8n/shadow_check.py …`；exit code 逐一擷取、未經管道；同一次執行內 snapshot age 815 s、`generated_at_utc=2026-09-21T17:15:25.163Z`）：
+
+| 呼叫 | 結果 | rc |
+|---|---|---|
+| `--selftest` | `PASS parser self-test (6 accepted forms, 5 rejected)` | 0 |
+| （無參數） | PASS，threshold 2400s | 0 |
+| `--require-fresh` | PASS，threshold 2400s | 0 |
+| `--max-age-seconds 1800 --require-fresh` | PASS，threshold 1800s | 0 |
+| `--max-age-seconds=1800 --require-fresh` | PASS，threshold 1800s | 0 |
+| `--max-age-seconds 1 --require-fresh` | FAIL，threshold 1s（負向對照：門檻真被採用） | 1 |
+| `--max-age-seconds=1 --require-fresh` | FAIL，threshold 1s | 1 |
+| `<snapshot 路徑>`（位置參數） | PASS，無回歸 | 0 |
+| `--nope` | `unknown option: --nope` | 1 |
+| `--max-age-seconds`（缺值） | `--max-age-seconds needs a value` | 1 |
+| `--max-age-seconds=abc` | `--max-age-seconds needs an integer, got: 'abc'` | 1 |
+| `--max-age-seconds abc` | `--max-age-seconds needs an integer, got: 'abc'` | 1 |
+| `a.json b.json`（多餘位置參數） | `unexpected extra argument: b.json` | 1 |
+
+**活體檢查（本輪，未重啟容器、未觸發任何 execution）**
+
+- exec **23** 於 `17:30:25.041Z` → `17:30:25.166Z` **`success`**（與 exec 22 相隔 **900.00 s**，即連續第 8 拍 16–23）；快照 `generated_at_utc = 2026-09-21T17:30:25.156Z`、`--max-age-seconds 1800 --require-fresh` → **PASS**（age 36 s）。
+- 唯讀探針（`n8n/tick_probe.js`；`2026-09-21T17:31:01Z`）讀值：`integrity_check = ok`、`total = 16`、`max_id = 23`、`success = 14`、`crashed = 1`、`error = 1`；`/healthz` 與 `/healthz/readiness` 皆 `200`。
+
+**本輪範圍**：只改 `n8n/shadow_check.py`（新增 `_int()` 硬化 ＋ 2 個 selftest 拒絕形）與 `N8N_CONTROL_PLANE.md`；未重啟容器、未重新 import workflow、未觸發任何 n8n execution、未動 pipeline／cron／`qlib-run`／任何權威狀態。
 
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 

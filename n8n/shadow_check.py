@@ -43,6 +43,14 @@ VOCAB = [
 ]
 
 
+def _int(flag, raw):
+    """Value flags fail explicitly (rc=1) on non-integer input, like every other bad argument."""
+    try:
+        return int(raw)
+    except ValueError:
+        raise SystemExit(f"{flag} needs an integer, got: {raw!r}")
+
+
 def parse_args(args):
     """Parse the documented CLI contract: [snapshot.json] [--max-age-seconds N|=N] [--require-fresh]."""
     path, max_age, require_fresh, i = None, DEFAULT_MAX_AGE, False, 0
@@ -51,12 +59,12 @@ def parse_args(args):
         if arg == "--require-fresh":
             require_fresh = True
         elif arg.startswith("--max-age-seconds="):
-            max_age = int(arg.split("=", 1)[1])
+            max_age = _int("--max-age-seconds", arg.split("=", 1)[1])
         elif arg == "--max-age-seconds":
             i += 1
             if i >= len(args):
                 raise SystemExit("--max-age-seconds needs a value")
-            max_age = int(args[i])
+            max_age = _int("--max-age-seconds", args[i])
         elif arg.startswith("--"):
             raise SystemExit(f"unknown option: {arg}")
         elif path is None:
@@ -80,7 +88,8 @@ def selftest():
     for argv, want in cases:
         got = parse_args(argv)
         assert got == want, f"{argv} -> {got}, want {want}"
-    rejected = (["--max-age-seconds"], ["--nope"], ["a.json", "b.json"])
+    rejected = (["--max-age-seconds"], ["--nope"], ["a.json", "b.json"],
+                ["--max-age-seconds=abc"], ["--max-age-seconds", "abc"])
     for bad in rejected:
         try:
             parse_args(bad)
