@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "document_kind": "round_spec",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.10.0",
+  "family_id": "cross-sectional-volatility-regime-gated-residual-mixture-of-experts-2026-09-02",
+  "round_id": "{{round_id}}",
+  "task_id": "t_0fba9abc",
+  "kanban_board": "quant-strategy-research",
+  "semantic_fingerprint": "sha256:32744508debc9fd90b1bd676fd42bf384d22116ee4c42ba4f790f462f0d98beb",
+  "status": "registered",
+  "provenance": {
+    "source_record": "cross-sectional-volatility-regime-gated-residual-mixture-of-experts-2026-09-02.md",
+    "source_url": "https://arxiv.org/abs/2608.12251",
+    "source_as_of": "2026-08-12",
+    "implementation_boundary": "source equity volatility mechanism adapted to the complete local Binance USD-M symbol x timeframe eligible universe; source-reported equity results are not claimed"
+  },
+  "universe": {
+    "source_universe": "1,027 U.S. equities plus 1,552 Japanese TSE Prime equities; daily OHLCV, December 2015-November 2025",
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT"],
+    "portability": "adapted/unproven",
+    "selection": "complete local eligible universe for the registered OHLCV core mechanism; no symbol drop"
+  },
+  "data": {
+    "venue": "Binance USD-M perpetual canonical raw archive",
+    "raw_root": "/data/raw/binance/usdm",
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "timezone": "UTC",
+    "fields": ["open", "high", "low", "close", "volume"],
+    "timeframes": [{"raw_interval": "5m", "qlib_freq": "5min", "bars_per_day": 288}, {"raw_interval": "15m", "qlib_freq": "15min", "bars_per_day": 96}, {"raw_interval": "30m", "qlib_freq": "30min", "bars_per_day": 48}, {"raw_interval": "1h", "qlib_freq": "60min", "bars_per_day": 24}, {"raw_interval": "4h", "qlib_freq": "240min", "bars_per_day": 6}, {"raw_interval": "1d", "qlib_freq": "day", "bars_per_day": 1}, {"raw_interval": "1w", "qlib_freq": "week", "bars_per_day": 1}],
+    "point_in_time": "canonical raw snapshot; no future data beyond registered end",
+    "missing_data": "fail closed on non-contiguous bars at every registered frequency; no gap fill"
+  },
+  "signal_registration": {
+    "features": ["RV_5", "RV_20", "RV_60", "R_5", "R_20", "RSI_14", "r_t..r_t-9"],
+    "regime_state": ["20-day annualized equal-weight market RV", "20-day CAPM-residual idiosyncratic RV with 120-day causal beta"],
+    "target": "5-day forward annualized realized volatility",
+    "architecture": "two-hidden-layer width-16 GELU base MLP with registered dropout p=0.10, frozen before residual experts; two residual experts with soft state-dependent routing",
+    "training": "full-batch Adam; feature normalization and all rolling quantities use the training prefix only",
+    "formation": "each registered timeframe close; execution at next registered bar open",
+    "position_mapping": "long the cross-sectional high forecast-volatility tail and short the low tail; fresh sign change opens an episode",
+    "causality": "no feature, regime, normalization or model fit reads a bar after the decision timestamp"
+  },
+  "parameter_domain": {
+    "strategy_axis": "model_code",
+    "strategy_cases": [{"model_code": 0, "model": "rg_resmoe", "label": "rg_resmoe"}],
+    "legal_cases_per_cohort": 1,
+    "selection_rule": "historical-only selector: episodes floor, net_pnl > 0, Sharpe > 0, then OOS/full/stress and legal DCA neighbourhood"
+  },
+  "dca_domain": {
+    "axes": {"spacing_pct": [0.01, 0.02, 0.03, 0.04], "size_multiplier": [1.0, 1.1], "breakeven_tp_pct": [0.01, 0.02, 0.03], "invalidation_pct": [0.05, 0.1]},
+    "config_count": 48,
+    "base_quote": 1000.0,
+    "max_layers": 11,
+    "leverage": 10.0
+  },
+  "robustness_plan": {
+    "grids": ["historical", "oos", "full", "fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks", "no_funding", "no_funding_full", "cost_attrition_40bps"],
+    "required_stress_grids": ["fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks"],
+    "falsification": ["shuffled-regime placebo", "20/60-day horizon sensitivity", "execution/volatility-dispersion cost test"],
+    "baseline": "frozen base-only forecast is disclosed as an ablation surface; no post-hoc gate uses it"
+  },
+  "gates": {"min_episodes_is": 30, "min_episodes_oos": 10, "min_neighbour_same_sign_fraction": 0.6, "oos_positive_net_pnl": true, "stress_positive_net_pnl": true},
+  "split": {"historical_start": "2022-01-01", "historical_end": "2025-09-30", "oos_start": "2025-10-01", "oos_end": "2026-09-11", "rule": "chronological; frozen model fit prefix-only; OOS is read-only"},
+  "costs": {"taker_fee": 0.0005, "slippage_ticks": 1, "funding": "official/modelled raw settlements charged by containing daily bar; cost-only"},
+  "expected": {"cohorts": 28, "strategy_cases_per_cohort": 1, "dca_configs_per_cohort": 48, "base_combinations_per_cohort": 48, "case_evaluations_per_grid": 1344, "grid_count": 10, "case_evaluations_total": 13440},
+  "registered_family_level_falsification": {
+    "note": "Falsification readers are measured and disclosed; they do not shrink the local eligible universe and cannot be silently converted into a PASS gate.",
+    "items": ["shuffled regime variables", "5-day versus 20/60-day forecast horizon", "net execution cost erasing volatility-dispersion signal"]
+  },
+  "parameter_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "cross-sectional-volatility-regime-gated-residual-mixture-of-experts-2026-09-02",
+    "contract_ref": "rg-resmoe-v1 frozen round-spec parameter contract",
+    "research_axes_ordered": [
+      {"name": "model_code", "kind": "atomic", "members": ["model_code"], "registered_values": [0], "row_fields": ["model_code"]},
+      {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"], "registered_values": [0.01, 0.02, 0.03, 0.04], "row_fields": ["spacing_pct"]},
+      {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"], "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+      {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"], "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+      {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"], "registered_values": [0.05, 0.1], "row_fields": ["invalidation_pct"]}
+    ],
+    "row_fields": ["model_code", "spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct"],
+    "composite_map": {},
+    "strategy_param_fields": ["model_code"],
+    "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct"],
+    "canonical_recipe": {"sort_keys": true, "separators": [",", ":"], "ensure_ascii": false, "numeric_rule": "JSON finite number; bool excluded"},
+    "row_match_recipe": {"keys": ["symbol", "timeframe", "model_code", "spacing_pct", "size_multiplier", "breakeven_tp_pct", "invalidation_pct"], "equality": "exact, numeric == float compare; labels bytewise"},
+    "non_params": ["symbol", "timeframe", "grid", "metrics", "diagnostics", "timestamps"],
+    "domain_cardinality": {"strategy": 1, "dca": 48, "per_cohort": 48}
+  }
+}
