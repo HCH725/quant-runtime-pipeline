@@ -170,6 +170,29 @@ audited implementation contract 與其變化歷史。
 - **仍屬 `[T]`／`DEFERRED` 的非阻斷項**：fingerprint 自動化、yield 判定自動化、chain-head 專用查詢、failure drills D1–D13、`container exec` 投遞的額外腳本化包裝。正式 family 目錄與 ownership/lineage artifacts 已長期落地，不再列為缺口；上述 deferred 項也不是現行 Qlib production 的 gate。
 - **Retired secondary engines（非待辦）**：Lean／Nautilus／PyBroker 已退役且不參與現行或已規劃的 production workflow。現行 production 的唯一計算面與效能真值來源是 Qlib full-backtest；歷史文件中的 retired-engine references 只保留為 provenance，不構成 gate、validation stage 或 future integration commitment（Contract §17）。
 
+### Common Data Pack（`/Volumes/ExpansionDrive/market-data-raw`）
+
+本 repo 的 runtime 只讀 engine-neutral raw data；資料同步已由同一支
+`_tools/market_data_sync.py` 維護，不另設第二套 backtester 或資料管線。
+截至 **2026-09-21**，pack 已實際匯入並 read-back 驗證：
+
+- Binance USD-M／spot、CBOE VIX + VIX9D/VIX3M/VVIX/SKEW、Deribit DVOL。
+- Alternative.me FGI（2018-02-01 → 2026-09-21）。
+- Coin Metrics Community BTC/ETH daily asset metrics（provider-native 起始日 → 2026-09-20）。
+- FRED rates/liquidity/inflation/labour/credit/index bounded pack（series-native coverage）。
+- CFTC legacy/TFF/disaggregated selected-market COT（1986/2006/2017 → 2026-09-15）。
+- Kenneth French US/developed 3F/5F/momentum daily + monthly tables（1926/1990 → 2026-07-31）。
+- Deribit BTC/ETH perpetual funding rolling public window，及每日 futures/options book-summary snapshot。
+
+每一列保留 provider provenance 與 `truth_status=official`；不將 FGI、COT、factor、IV/OI
+或 macro 觀測重算成假資料。Coin Metrics catalog-v2 在本環境回 404，故只使用已驗證的
+explicit timeseries endpoint；Deribit options 歷史沒有被假裝成完整 backfill。完整 layout、
+coverage 與 updater 行為以 raw root 的 `_meta/SCHEMA.md`、`_meta/CONFIG.json` 為準。
+RaQL 的既有 prerequisite-missing round 保持 immutable；以
+`python3 runtime/crypto_bitcoin_cvar_risk_aware_q_learning_prerequisite_check.py --live-recheck --json`
+做唯讀 current-raw recheck，2026-09-21 讀回 FGI `PRESENT`（3,151 rows，2018-02-01 → 2026-09-21），
+核心 signal inputs 全部可得，並不自動重開舊 round 或改寫其 verdict。
+
 ## 3. Architecture boundary
 
 ```

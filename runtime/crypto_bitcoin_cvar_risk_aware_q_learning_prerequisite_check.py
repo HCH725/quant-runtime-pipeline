@@ -2,11 +2,10 @@
 """Immutable prerequisite-gate checker for the Bitcoin CVaR RaQL family.
 
 The registered core state needs BTCUSDT daily returns *and* a daily Fear &
-Greed Index (plus its seven-day momentum).  The canonical raw has readable
-BTCUSDT spot/perpetual price and funding surfaces, but no FGI_DAILY surface.
-This checker records that measured, card-local prerequisite failure as
-TECHNICAL_INCOMPLETE without substituting a proxy, shrinking the universe, or
-launching a fake backtest.
+Greed Index (plus its seven-day momentum).  The frozen round below records the
+historical prerequisite-missing decision; the canonical raw may later gain the
+official FGI surface.  ``--live-recheck`` measures that current raw state
+without substituting a proxy, shrinking the universe, or reopening artifacts.
 
 The checker is intentionally read-only against live raw/results inputs.  The
 --publish path creates immutable round-spec.json, verdict.json, and repository
@@ -412,12 +411,91 @@ def measure_raw(raw_root: str = DEFAULT_RAW) -> dict[str, Any]:
     result["required_data_available"] = bool(core["core_signal_available"])
     result["structural_fingerprint"] = _structural_fingerprint(result)
     result["note"] = (
-        "BTCUSDT spot daily bars, USD-M daily bars, and funding are readable, "
-        "but the registered 27-state core requires a daily Fear & Greed Index and "
-        "seven-day sentiment momentum. No FGI surface is present in canonical raw; "
-        "therefore no legal local cohort can compute the registered mechanism."
+        "BTCUSDT spot daily bars, USD-M daily bars, and funding are readable. "
+        "The frozen round's prerequisite gate records whether its historical "
+        "measurement had a Fear & Greed surface; use --live-recheck for a current "
+        "raw decision without rewriting that immutable round."
     )
     return result
+
+
+def live_recheck(raw_root: str = DEFAULT_RAW) -> dict[str, Any]:
+    """Re-check current raw without rewriting the frozen prerequisite round."""
+    measured = measure_raw(raw_root)
+    fgi_path = Path(raw_root) / "alternative_me" / "FGI_DAILY" / "fgi.jsonl.gz"
+    rows: list[dict[str, Any]] = []
+    malformed_rows = False
+    try:
+        with gzip.open(fgi_path, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                if not line.strip():
+                    continue
+                value = json.loads(line)
+                if not isinstance(value, dict):
+                    malformed_rows = True
+                    continue
+                rows.append(value)
+    except (OSError, EOFError, gzip.BadGzipFile, json.JSONDecodeError):
+        rows = []
+        malformed_rows = True
+
+    timestamps: list[int] = []
+    timestamp_parse_error = False
+    for row in rows:
+        try:
+            timestamps.append(int(row["timestamp"]))
+        except (KeyError, TypeError, ValueError):
+            timestamp_parse_error = True
+    fgi_payload_ok = bool(rows) and not malformed_rows and not timestamp_parse_error and all(
+        isinstance(row, dict)
+        and isinstance(row.get("date"), str)
+        and isinstance(row.get("value"), int)
+        and 0 <= row["value"] <= 100
+        and isinstance(row.get("value_classification"), str)
+        and row.get("source") == "Alternative.me"
+        and row.get("truth_status") == "official"
+        for row in rows
+    )
+    fgi_payload_ok = fgi_payload_ok and len(timestamps) >= 8
+    fgi_payload_ok = fgi_payload_ok and timestamps == sorted(set(timestamps))
+    fgi = {
+        "status": "PRESENT" if fgi_payload_ok else "ABSENT_OR_INVALID",
+        "path": str(fgi_path),
+        "rows": len(rows),
+        "earliest": rows[0].get("date") if rows else None,
+        "latest": rows[-1].get("date") if rows else None,
+        "source": "Alternative.me" if fgi_payload_ok else None,
+        "truth_status": "official" if fgi_payload_ok else None,
+        "monotonic_unique_timestamps": timestamps == sorted(set(timestamps)) if timestamps else False,
+    }
+    required_inputs = (
+        "btcusdt_spot_daily_bars",
+        "btcusdt_daily_return_derivable",
+        "recent_return_ternary_feature",
+        "negative_weight_perpetual_surface",
+        "actual_funding_surface",
+    )
+    core_inputs = dict(measured.get("core_signal_inputs") or {})
+    core_inputs["fgi_daily_values"] = fgi_payload_ok
+    core_inputs["fgi_7d_momentum_derivable"] = fgi_payload_ok
+    core_inputs["core_signal_available"] = fgi_payload_ok and all(
+        bool(core_inputs.get(key)) for key in required_inputs
+    )
+    missing = [key for key, available in core_inputs.items() if key != "core_signal_available" and not available]
+    return {
+        "check_kind": "live_prerequisite_recheck",
+        "raw_root": raw_root,
+        "overall": "PASS" if core_inputs["core_signal_available"] else "FAIL",
+        "fgi": fgi,
+        "core_signal_inputs": core_inputs,
+        "missing_inputs": missing,
+        "frozen_round_artifacts_unchanged": True,
+        "note": (
+            "This is a read-only current-data recheck. The prior prerequisite-missing "
+            "round remains immutable; newly available data requires a separate new-round "
+            "decision and does not reopen or rewrite its verdict."
+        ),
+    }
 
 
 def _host_path_has_fgi(path: str) -> bool:
@@ -1681,6 +1759,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--board-db", default=DEFAULT_BOARD_DB)
     parser.add_argument("--evidence-path", default=DEFAULT_EVIDENCE)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--live-recheck", action="store_true")
     parser.add_argument("--measure-only", action="store_true")
     parser.add_argument("--host-scan", action="store_true")
     parser.add_argument("--self-test", action="store_true")
@@ -1708,6 +1787,8 @@ def main(argv: list[str] | None = None) -> int:
             args.board_db,
             args.evidence_path,
         )
+    elif args.live_recheck:
+        output = live_recheck(args.raw_root)
     elif args.measure_only:
         output = measure_raw(args.raw_root)
     elif args.host_scan:
@@ -1727,14 +1808,23 @@ def main(argv: list[str] | None = None) -> int:
         output = run_checks(args.results_root, args.raw_root, include_host_scan=False)
 
     if args.json or any(
-        (args.publish, args.publish_evidence, args.measure_only, args.host_scan, args.self_test, args.raw_fixture_control, args.verify_verbatim)
+        (
+            args.publish,
+            args.publish_evidence,
+            args.live_recheck,
+            args.measure_only,
+            args.host_scan,
+            args.self_test,
+            args.raw_fixture_control,
+            args.verify_verbatim,
+        )
     ):
         print(json.dumps(output, indent=2, ensure_ascii=False))
     else:
         for row in output["checks"]:
             print("%-4s %-4s %s" % (row["id"], row["status"], row["detail"]))
         print("overall:", output["overall"])
-    if args.measure_only or args.host_scan:
+    if args.measure_only or args.live_recheck or args.host_scan:
         return 0
     return 0 if output.get("overall") == "PASS" else 1
 

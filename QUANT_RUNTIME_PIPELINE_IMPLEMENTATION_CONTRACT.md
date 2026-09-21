@@ -85,6 +85,32 @@
 - `[C]` reconciler 不信任 container 的任何「自述」（exit code、log line、comment）；只信任 `/results` 上的 durable terminal evidence 與自身對 Kanban DB 的讀回。
 - `[V]` `/results` 的 checksum 產生與驗證機制已以最小版落地並實測（2026-09-13）：`runtime/terminal_evidence.py` 產生 manifest checksums 與 atomic sentinel，`runtime/reconcile.py` 對 manifest 逐項重算比對。缺失或不符合的 checksum 一律 fail-closed。
 
+### 3.1 Common Data Pack contract
+
+`[V]` 2026-09-21 read-back：`/data/raw` 的 canonical raw surface 由
+`/Volumes/ExpansionDrive/market-data-raw/_tools/market_data_sync.py` 單一 updater 維護，
+不引入第二套 backtester、資料庫或 provider-specific runtime。除了既有 Binance/CBOE VIX/
+Deribit DVOL 外，common pack 現已包括：Alternative.me FGI、Coin Metrics Community
+BTC/ETH daily metrics、expanded FRED macro/index pack、CBOE VIX9D/VIX3M/VVIX/SKEW、
+CFTC legacy/TFF/disaggregated selected-market COT、Kenneth French US/developed
+3F/5F/momentum daily/monthly factors，以及 Deribit perpetual funding 與 current
+futures/options book-summary snapshots。
+
+`[C]` 每個 provider row 必須保留 source identity/provenance 與 `truth_status`；不得由
+FGI/COT/factor/IV/OI/macro 欄位在 raw layer 偷算或補造不存在的觀測。CFTC 的 long/short/
+spread 欄位保留於 `columns`；Fama-French `-99.99` 只轉成 JSON null；Coin Metrics
+catalog-v2 404 時只能使用已驗證的 explicit timeseries endpoint；Deribit options
+snapshot 不得宣稱完整歷史 backfill。
+
+`[V]` 初次匯入、第二次 up-to-date/incremental read-back、gzip deterministic write、
+duplicate-key 檢查與 provider failure 的非零 exit code 均已由 raw updater 實跑驗證；
+資料 layout/schema/coverage 以 raw root `_meta/SCHEMA.md` 與 `_meta/CONFIG.json` 為準。
+`runtime/crypto_bitcoin_cvar_risk_aware_q_learning_prerequisite_check.py --live-recheck`
+是針對既有 RaQL prerequisite-missing round 的唯讀 current-raw recheck：它驗證
+Alternative.me FGI payload 的 official provenance、值域、單調唯一 timestamp 與 coverage，
+但不重開或改寫既有 immutable round-spec/verdict；若 live core signal 可得，後續另由 operator
+決定是否建立新 round。
+
 ## 4. 術語
 
 | 術語 | 定義 |
