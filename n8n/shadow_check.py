@@ -7,6 +7,8 @@ Usage:
 
 Checks (never writes anything, never talks to n8n):
   * schema / mode identity and the full 11-stage topology, in order
+  * stage 1 (strategy research) is backed by the live Hermes Scout cron projection, or records an
+    explicit gap for it — never a silent placeholder, never a prompt/state leak
   * required count keys present; null values are reported, never invented
   * reconciliation invariants that are expected to hold are actually true
   * snapshot age against --max-age-seconds (warn by default, fail with --require-fresh)
@@ -41,6 +43,14 @@ VOCAB = [
     "WAITING_DATA", "READY_TO_RESUME", "BLOCKED", "TECHNICAL_INCOMPLETE", "REJECT",
     "PASS", "RUNNING_QLIB", "ARTIFACT_READY", "FAILED_SCRIPT",
 ]
+# Stage 1 is backed by the live Hermes Scout cron projection: the job must be observed, and only the
+# documented cron fields may appear there (no prompt/other-job state leaks into the snapshot).
+SCOUT_JOB_ID = "f5c0648122f3"
+SCOUT_OBS_KEYS = {
+    "job_id", "name", "enabled", "state", "schedule_display", "last_run_at", "last_status",
+    "last_error", "failure_streak", "next_run_at", "last_dispatch",
+    "source_readable", "state_file_updated_at", "note",
+}
 
 
 def _int(flag, raw):
@@ -131,6 +141,19 @@ def main(argv):
     ok("shadow states use only the documented vocabulary", not bad_token, str(bad_token))
     mapped = {k: v for k, v in states.items() if v is not None}
     print(f"INFO shadow states present: {json.dumps(mapped, ensure_ascii=False)}")
+
+    research = next((s for s in topology if s.get("stage") == "strategy_research"), {})
+    obs = research.get("observation") or {}
+    extra = sorted(set(obs) - SCOUT_OBS_KEYS)
+    if obs.get("job_id"):
+        ok("strategy research stage carries the live Scout cron projection",
+           obs.get("source_readable") is True and obs.get("job_id") == SCOUT_JOB_ID and not extra,
+           f"job_id={obs.get('job_id')} enabled={obs.get('enabled')} state={obs.get('state')} "
+           f"next_run_at={obs.get('next_run_at')}" + (f" unexpected_keys={extra}" if extra else ""))
+    else:
+        gap_fields = {g.get("field") for g in (doc.get("gaps") or [])}
+        ok("strategy research stage is never silently empty",
+           "strategy_research_scout_cron" in gap_fields, f"gaps={sorted(gap_fields)}")
 
     counts = doc.get("counts") or {}
     missing = [k for k in COUNT_KEYS if k not in counts]

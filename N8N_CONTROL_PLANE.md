@@ -14,7 +14,7 @@
 
 | 是 | 不是 |
 |---|---|
-| 現有 pipeline 的**唯讀投影**：把既有狀態（dashboard projection、canonical intake state、prerequisite-gate evidence、parking mirror metadata）集中成一份 machine-readable 快照 | 第二套 pipeline／第二個 backtester／新的狀態儲存 |
+| 現有 pipeline 的**唯讀投影**：把既有狀態（Hermes Scout cron state、dashboard projection、canonical intake state、prerequisite-gate evidence、parking mirror metadata）集中成一份 machine-readable 快照 | 第二套 pipeline／第二個 backtester／新的狀態儲存 |
 | 階段計數的**對帳面**：讓 operator 一眼看出哪個階段有邏輯缺口 | 新的 gate：快照不參與任何 PASS/REJECT 判定 |
 | 未來控制面的**前身**：拓撲與 vocabulary 已固定，控制節點尚未接上 | 控制面本體：沒有任何 mutating node、沒有 credentials |
 | 沿用既有真值：`runtime/` 語意、`candidate_snapshot.py` 投影、intake state 皆**不重算、不改寫** | 真相來源：真值仍在原本的位置，快照只是投影 |
@@ -24,26 +24,28 @@
 
 ## 2. Topology：pipeline 階段 ↔ workflow 節點 ↔ 來源
 
-單一 workflow，兩顆 trigger（manual validation + 排程觀測），5 個 read-only 來源節點，1 個 assembler Code node，1 個輸出節點：
+單一 workflow，兩顆 trigger（manual validation + 排程觀測），6 個 read-only 來源節點，1 個 assembler Code node，1 個輸出節點：
 
 ```
 Manual Trigger ─┐
-                ├─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Candidate/Qlib/Leaderboard ─→ Parking ─→ Assemble ─→ Emit
+                ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Candidate/Qlib/Leaderboard ─→ Parking ─→ Assemble ─→ Emit
 Schedule (15m)  ┘
 ```
 
 | # | workflow 節點（節點名即拓撲名） | 讀什麼（唯讀） | 對應 pipeline 階段 |
 |---|---|---|---|
-| 1 | `Pool — alpha-strategy-research pool (read-only)` | `/host/workspace-ro/alpha-strategy-research` 的 root `*.md`（canonical 規則：`len(parts)==1 and suffix==".md" and not startswith("README")`，即 `review_state.py:111`）＋ checkout HEAD sha | Strategy Research → GitHub alpha-strategy-research pool |
-| 2 | `Intake Review — canonical intake state (read-only)` | `/host/workspace-ro/alpha-strategy-review-state.json`（current_snapshot buckets、pending_ingestion、deferred_delta、ingested_wiki_records、last_reviewed_*） | Intake Review → Wiki Brain |
-| 3 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/<current_family>-prerequisite-gate-*.json`（僅在與投影 current family **相符**時採用；不符即 unavailable） | Data / Preflight Gate |
-| 4 | `Candidate→Qlib→Leaderboard — dashboard projection (read-only)` | `/host/quant-dashboard-data/dashboard.json`（`runtime/candidate_snapshot.py` 產出的既有投影：health／current／funnel／leaderboard） | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
-| 5 | `Parking — private survivor repo metadata (read-only)` | `/host/workspace-ro/validated-survivor-research`：`survivors/` 目錄數、`leaderboard/leaderboard.json` 的 count／metadata／sha256、mirror HEAD sha（**只有 metadata，不讀 survivor 內容**） | Private Repo Parking |
-| 6 | `Assemble shadow snapshot (read-only)` | 以上 5 個來源的 stdout（純解析；Code node 無 fs／無網路） | 全鏈 |
-| 7 | `Emit snapshot (n8n shadow dir only)` | 寫入唯一輸出路徑（§6） | 觀測輸出 |
+| 1 | `Strategy Research — Hermes Scout cron state (read-only)` | `/host/hermes-cron-ro/jobs.json`（＝ `~/.hermes/cron/jobs.json` 的 **ro** 掛載）：只投影 job `f5c0648122f3` 的固定欄位（job_id／name／enabled／state／schedule_display／last_run_at／last_status／last_error／failure_streak／next_run_at／last_dispatch） | Strategy Research → Hermes cron `f5c0648122f3`（`Quant Research Scout`，上游研究產生者） |
+| 2 | `Pool — alpha-strategy-research pool (read-only)` | `/host/workspace-ro/alpha-strategy-research` 的 root `*.md`（canonical 規則：`len(parts)==1 and suffix==".md" and not startswith("README")`，即 `review_state.py:111`）＋ checkout HEAD sha | Strategy Research → GitHub alpha-strategy-research pool |
+| 3 | `Intake Review — canonical intake state (read-only)` | `/host/workspace-ro/alpha-strategy-review-state.json`（current_snapshot buckets、pending_ingestion、deferred_delta、ingested_wiki_records、last_reviewed_*） | Intake Review → Wiki Brain |
+| 4 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/<current_family>-prerequisite-gate-*.json`（僅在與投影 current family **相符**時採用；不符即 unavailable） | Data / Preflight Gate |
+| 5 | `Candidate→Qlib→Leaderboard — dashboard projection (read-only)` | `/host/quant-dashboard-data/dashboard.json`（`runtime/candidate_snapshot.py` 產出的既有投影：health／current／funnel／leaderboard） | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
+| 6 | `Parking — private survivor repo metadata (read-only)` | `/host/workspace-ro/validated-survivor-research`：`survivors/` 目錄數、`leaderboard/leaderboard.json` 的 count／metadata／sha256、mirror HEAD sha（**只有 metadata，不讀 survivor 內容**） | Private Repo Parking |
+| 7 | `Assemble shadow snapshot (read-only)` | 以上 6 個來源的 stdout（純解析；Code node 無 fs／無網路） | 全鏈 |
+| 8 | `Emit snapshot (n8n shadow dir only)` | 寫入唯一輸出路徑（§6） | 觀測輸出 |
 
-節點實作要點：來源節點 1／2／3／5 為 `executeCommand`（只做 `readdirSync`／`readFileSync`／`SHA-256` 投影，**唯讀、deterministic**），
-節點 4 為 `cat`（6.6 KB，verbatim）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
+節點實作要點：來源節點 1／2／3／4／6 為 `executeCommand`（只做 `readdirSync`／`readFileSync`／`SHA-256` 投影，**唯讀、deterministic**），
+節點 5 為 `cat`（6.6 KB，verbatim）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
+節點 1 的讀取面只有 `jobs.json` 一個檔案；它對 15 分鐘拍點做一次投影，讀不到時輸出 `available: false` ＋ 理由（**不會**讓 execution 失敗，也不以預設值代替）。
 
 ## 3. State vocabulary（SHADOW 顯示語意）
 
@@ -62,6 +64,9 @@ Vocabulary 只**顯示**，不驅動任何動作。可驗證來源者以來源 t
 
 Intake 分支語意（顯示用，不重判）：`PASS` + 真正完成 ingest 的 `PASS-WITH-CAVEAT` → Wiki Brain（＋ sibling candidate append）；
 `REJECT` → 正常篩選終局；`REMEDIATE` → 尚未接受、**不是**系統錯誤；`Error` → 只保留給真正的系統／讀取／解析失敗，**不得**與 reject／remediate 混用。
+
+Stage 1 `strategy_research` 不是 vocabulary token，而是 Hermes cron job `f5c0648122f3` 的**逐字欄位投影**（§2 節點 1）：
+`shadow_state` 維持 `null`，欄位一律照來源顯示，來源不可讀或 job 不存在時記入 `gaps`（`field = strategy_research_scout_cron`）、**不以預設值或推論值代替**。
 
 ---
 
@@ -99,6 +104,7 @@ Intake 分支語意（顯示用，不重判）：`PASS` + 真正完成 ingest �
 註：本表是 **2026-09-21T14:36Z 當次實跑**的逐項值；快照是 live 投影，來源變動即反映——
 15:45Z 拍點已見 `pool_records_total` / `pool_root_md_total` = **831 / 833**（checkout HEAD `2a34d59`），
 差異來自 pipeline 自身的 `Quant Research Scout` cron（job `f5c0648122f3`，15:22Z 新增 1 筆 root `.md`），**不是** shadow 寫入。
+2026-09-22 起 stage 1 直接逐字顯示同一個 job 的 live 欄位（本輪新增的唯一來源）；該輪的 count 讀值與逐項證據見 §9.E。
 
 ## 5. Future resume policy（**已文件化，未啟用**）
 
@@ -119,8 +125,11 @@ Shadow-1 的行為：**只顯示、不執行**（`resume_policy.enabled = false`
 | `/Users/hong/workspace/n8n/files` | `/home/node/.n8n-files` | rw（**新增**） | 唯一輸出：shadow snapshot（n8n 自身檔案區，非任何 pipeline 狀態） |
 | `/Users/hong/quant-dashboard/data` | `/host/quant-dashboard-data` | **ro** | dashboard projection |
 | `/Users/hong/workspace` | `/host/workspace-ro` | **ro** | intake state、pool checkout、repo `evidence/`、parking mirror |
+| `/Users/hong/.hermes/cron` | `/host/hermes-cron-ro` | **ro** | Hermes cron state：只讀 `jobs.json`，且只投影 job `f5c0648122f3` 的固定欄位（prompt／`executions.db`／`output/`／`usage_audit.jsonl` 皆不讀、不進快照） |
 
-其他 host 狀態（`/Volumes/ExpansionDrive/qlib-results`、`market-data-raw`、Kanban DB、cron、private repo 的寫入面、GitHub）**完全沒有掛載**，
+其他 host 狀態（`/Volumes/ExpansionDrive/qlib-results`、`market-data-raw`、Kanban DB、private repo 的寫入面、GitHub）**完全沒有掛載**；
+cron 只有 `~/.hermes/cron` 以 **ro** 掛入——Apple `container` 不支援單檔 bind mount（實測 `Error: path '…/jobs.json' is not a directory`），
+故以「最小目錄」為掛載單位，而節點只讀其中一個檔案、只投影其中一個 job 的固定欄位。
 所以 shadow workflow 在結構上**不可能**寫到那些地方。唯讀性另有實測（§9）：`touch /host/...` → `Read-only file system`。
 
 **n8n 設定變更（唯一一項，最小化）：** `NODES_EXCLUDE=["n8n-nodes-base.localFileTrigger"]`。
@@ -150,6 +159,7 @@ container run -d --name n8n -c 4 -m 1024M -u node \
   --mount type=bind,source=/Users/hong/workspace/n8n/files,target=/home/node/.n8n-files \
   --mount type=bind,source=/Users/hong/quant-dashboard/data,target=/host/quant-dashboard-data,readonly \
   --mount type=bind,source=/Users/hong/workspace,target=/host/workspace-ro,readonly \
+  --mount type=bind,source=/Users/hong/.hermes/cron,target=/host/hermes-cron-ro,readonly \
   docker.io/n8nio/n8n:latest
 ```
 
@@ -213,7 +223,8 @@ python3 n8n/shadow_check.py                                            # 驗證�
 |---|---|---|---|---|
 | 60s ＋ `saveDataSuccessExecution: none` | 1,252 B（但**永不 finalize**：`status` 永遠停在 `running`） | 1,440 | — | 執行列表被幽靈 running 洗版 → **不安全** |
 | 60s ＋ 全量儲存（未修剪 payload） | 458,606 B | 1,440 | ~640 MB | **不安全** |
-| **900s ＋ 全量儲存（payload 已投影修剪）** | **26,815 B**（exec 12–15 實測；最早一拍 exec 11 為 26,416 B） | 96 | **~2.5 MB** | **~35 MB** ✔ |
+| 900s ＋ 全量儲存（payload 已投影修剪）— 2026-09-21 版 | **26,815 B**（exec 12–15 實測；最早一拍 exec 11 為 26,416 B） | 96 | ~2.5 MB | ~35 MB ✔ |
+| 同上 ＋ Scout cron 來源（2026-09-22 起） | **28,425 B**（§9.E 實測；同節亦載變更前基線 26,796–26,797 B） | 96 | **~2.7 MB** | **~38 MB** ✔ |
 
 三項對策：(a) 來源節點只輸出**投影後**欄位（原本 `cat` 進 payload 的 intake state 210 KB／gate 86 KB／parking 107 KB 不再進入 execution data）；
 (b) 開啟成功執行的資料儲存（`all`），使 execution 正確 finalize；
@@ -225,7 +236,7 @@ execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫�
 
 ## 9. 驗證記錄（實跑證據）
 
-> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項；第三輪（§9.C）＝review round-2 要求項（CLI 契約、文件漂移）。
+> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項；第三輪（§9.C）＝review round-2 要求項（CLI 契約、文件漂移）；第四輪（§9.D）＝review round-3 要求項；第五輪（§9.E）＝2026-09-22 新增唯一一個 read-only 來源（Hermes Scout cron state）＋對應的 ro 掛載與容器重建。
 
 ### 9.A 第一輪：部署與投影
 
@@ -276,13 +287,13 @@ execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫�
 
 **execution 現況（本文件唯一權威敘述；point-in-time 讀值，不是常數）**
 
-截至 **2026-09-21T17:00:25Z**（第 6 拍、exec 21 落地後）以唯讀探針讀取：`total = 14`、`running = 0`、`max_id = 21`。
+截至 **2026-09-21T23:30:33Z**（本輪 §9.E 變更後的排程拍點、exec 48 落地後）以唯讀探針讀取：`total = 41`、`running = 0`、`max_id = 48`。
 
 | status | n | execution id |
 |---|---|---|
 | `crashed` | 1 | 1（早期 CLI） |
 | `error` | 1 | 2（早期 CLI） |
-| `success` | 12 | 9・11（CLI 手動驗證）、12–13（60 s 節奏）、14–15（`minutes/15` 切換後首批 900 s）、16–21（修復後 900 s 排程拍點） |
+| `success` | 39 | 9・11（CLI 手動驗證）、12–13（60 s 節奏）、14–15（`minutes/15` 切換後首批 900 s）、16–46（修復後 900 s 排程拍點）、47（§9.E CLI 驗證）、48（§9.E 排程拍點） |
 
 此表隨每 15 分鐘拍點前進；取當下值一律用 §7.1 的唯讀探針
 （`container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`），**不在 host 端開 live DB**。
@@ -433,6 +444,75 @@ PY
 
 **本輪範圍**：只改 `n8n/shadow_check.py`（新增 `_int()` 硬化 ＋ 2 個 selftest 拒絕形）與 `N8N_CONTROL_PLANE.md`；未重啟容器、未重新 import workflow、未觸發任何 n8n execution、未動 pipeline／cron／`qlib-run`／任何權威狀態。
 
+### 9.E 第五輪：唯一新增來源 — Hermes Scout cron state（2026-09-22T23:19Z–23:31Z 實跑）
+
+**本輪範圍**：新增 **一個** read-only 來源節點（`Strategy Research — Hermes Scout cron state (read-only)`，插在 Pool 之前）＋ n8n 多一個 **ro** 掛載 ＋ `shadow_check.py` 一條斷言；
+未動 Scout cron（prompt／schedule／model／狀態）、未動 pipeline／Qlib／Kanban／GitHub，`mutations_enabled` 仍 `false`、resume 仍 `false`。
+
+**E1 — 節點與拓撲（repo 匯出檔 → live）**
+
+- repo 檔 sha256 `6fc50e0f…`（34,411 B；`+28 / −3` 行，單檔）：節點 11 個（新增 `executeCommand` 節點，插在 Pool 之前），connections 改為 兩顆 trigger → **Scout** → Pool → …；
+- `import:workflow` → `Successfully imported 1 workflow.`；`update:workflow --id=shadowQuantCp1 --active=true` → CLI 提示需重啟；重啟後 stdio.log → `Activated workflow "Quant Control Plane — SHADOW (read-only)" (ID: shadowQuantCp1)`；`list:workflow --active=true` → `shadowQuantCp1|Quant Control Plane — SHADOW (read-only)`；
+- 容器內 `export:workflow` 讀回：`active`、**11 nodes**，順序為 Trigger／Schedule／**Scout**／Pool／Intake／Gate／Dashboard／Parking／Assemble／Emit／Sticky。
+
+**E2 — 掛載與安全重啟（§7.1 全程遵守）**
+
+- **單檔 bind mount 不可行**（Apple `container` 實測回 `Error: path '…/jobs.json' is not a directory`），故掛目錄層最小單位：`/Users/hong/.hermes/cron → /host/hermes-cron-ro`（**ro**）；節點只讀其中 `jobs.json` 一個檔、只投影一個 job 的固定欄位。
+- `container inspect` before／after：**新增的唯一 mount 就是這一個**，其他 4 個逐項不變；image／cpus（4）／mem（1024 MB）／env／ports（`127.0.0.1:5678`）／user（`node`）／workdir 全部相同。
+- 兩次重啟（重建前、啟用後）都走 §7.1：`container stop -t 60` → stdio.log 顯示 `Received SIGTERM. Shutting down...`／`Stopping n8n...`（**無** `Shutdown timed out`）→ `PRAGMA wal_checkpoint(TRUNCATE)` = `0|0|0`、`PRAGMA integrity_check` = `ok` → 僅在停止時移除 `-wal`／`-shm` → `container start`；
+  健康 `curl /healthz` → `{"status":"ok"}`、readiness `200`；開機後 log 中 `SQLITE_IOERR|SQLITE_CORRUPT|disk I/O error|malformed|Failed to hard-delete` 行數 = **0**。備份：`/Users/hong/workspace/n8n/backups/pre-scout-20260921T232112Z/`（`database.sqlite`＋`-wal`＋`-shm`）。
+
+**E3 — 一次成功執行＋ stage 1 的 live 欄位**
+
+- `container exec n8n sh -c 'N8N_RUNNERS_BROKER_PORT=5699 n8n execute --id=shadowQuantCp1'` → `"status": "success"`（exec **47**、mode `cli`、`2026-09-21T23:22:23.915Z → 23:22:24.723Z`）。
+- 快照：**17,029 B**（原 16,013 B）、sha256 `6c3b851b…`、`generated_at_utc = 2026-09-21T23:22:24.709Z`；`mode = SHADOW_READ_ONLY`、`mutations_enabled = false`、topology 仍 11 階同序。
+- stage 1 `observation`（逐字）與 host 端**同時**讀值比對：**11／11 欄位相同**（`job_id`／`name`／`enabled`／`state`／`schedule_display`／`last_run_at`／`last_status`／`last_error`／`failure_streak`／`next_run_at`／`last_dispatch`，另 `source_readable`／`state_file_updated_at`）：
+
+| 欄位 | 值（live 逐字） |
+|---|---|
+| `job_id` / `name` | `f5c0648122f3` / `Quant Research Scout` |
+| `enabled` / `state` | `true` / `scheduled` |
+| `schedule_display` | `15 * * * *` |
+| `last_run_at` / `last_status` / `last_error` | `2026-09-22T07:21:35.352109+08:00` / `ok` / `null` |
+| `failure_streak` / `next_run_at` | `0` / `2026-09-22T08:15:00+08:00` |
+| `last_dispatch` | `scheduled_at 2026-09-22T07:15:00+08:00`、`dispatched_at …07:15:49.146058+08:00`、`lateness_seconds 49.1`、`kind on_time` |
+| `source_readable` / `state_file_updated_at` | `true` / `2026-09-22T07:21:35.352458+08:00` |
+
+- `sources[0]`（`hermes_scout_cron_state`）：`path /host/hermes-cron-ro/jobs.json`、`readable true`、`bytes 56,603`、`sha256 aa993d81…`。
+- **沒有外洩鍵**：stage 1 的 observation 逐鍵比對後，白名單外 = **0 個鍵**（Scout 的 prompt／其他 15 個 job／`executions.db`／`output/`／`usage_audit.jsonl` 都不在快照中）；`shadow_check.py` 的 `SCOUT_OBS_KEYS` 斷言會在未來任何多餘欄位出現時 FAIL。
+- reader 強健性（實測，非推論）：以 throwaway 容器掛同一顆 scratch 目錄，host 端用 **tmp＋rename** 原子替換被掛載檔案後，容器端第一次 `cat` 會短暫 `ENOENT`（≤5 s 後恢復；in-place 改寫則立即可見）。Hermes ticker 正是以 tmp＋rename 改寫 `jobs.json`，故節點在同拍內 **重試一次**（300 ms）；兩次都讀不到時輸出 `available: false` ＋ 理由並 `exit 0`（**不會**讓 execution 失敗，也不會以預設值代替）。
+- **變更後第一個排程拍點也成功**：exec **48**（mode `trigger`、`2026-09-21T23:30:25.039Z → 23:30:25.211Z`、`success`），與前一拍（exec 46，`23:15:25.333Z`）相隔 **900.1 s**＝15 分鐘節奏未被重建／重啟破壞；該拍快照 `generated_at_utc = 2026-09-21T23:30:25.203Z`（17,029 B、sha256 `77354946…`），`shadow_check.py --max-age-seconds 300 --require-fresh` → **PASS**（rc 0）。
+
+**E4 — `shadow_check.py`（+1 斷言，附負向對照）**
+
+| 呼叫 | 結果 | rc |
+|---|---|---|
+| `--selftest` | `PASS parser self-test (6 accepted forms, 5 rejected)` | 0 |
+| 變更**前**快照（複本，stage 1 無 Scout 投影且無 gap） | `FAIL strategy research stage is never silently empty` | 1 |
+| 變更後快照 `--max-age-seconds 600 --require-fresh` | **PASS**，含 `PASS strategy research stage carries the live Scout cron projection — job_id=f5c0648122f3 enabled=True state=scheduled next_run_at=2026-09-22T08:15:00+08:00` | 0 |
+
+**E5 — live／repo 等價（§9.D 兩段取證原封重跑）**
+
+- 差異鍵只剩 instance／版本鍵 13 個：`activeVersionId`／`createdAt`／`description`／`isArchived`／`nodeGroups`／`shared`／`sourceWorkflowId`／`staticData`／`triggerCount`／`updatedAt`／`versionCounter`／`versionId`／`versionMetadata`；
+  `id`／`name`／`active`／`connections`／`nodes`／`settings`／`pinData`／`tags`／`meta` **逐鍵相同**（本輪連 `nodes`／`settings` 也 canon 相等——比 §9.D 當時更嚴；§9.D 記錄的正規化差異是前一次 n8n 自身儲存路徑留下的）。
+- 逐節點：11 個節點的 `name`／`type`／`typeVersion`／參數（除 4 個正規化鍵）全部 `params_same=True`；payload sha256：
+  Scout（新）`c60bc406…`、Pool `329eb9b9…`、Intake `18b5df35…`、Gate `46959354…`、Dashboard `c1275683…`、Parking `92208ab0…`、Code `c6f6b689…`。
+- live 匯出 32,897 B／sha256 `058c8589…`；repo 檔 34,411 B／sha256 `6fc50e0f…`（兩段取證指令見 §9.D，未改）。
+
+**E6 — 邊界（before／after 實測）**
+
+| 對象 | 證據 |
+|---|---|
+| Hermes cron | 16 jobs → 16 jobs、id 集合相同（**未新增任何 cron**）；Scout `f5c0648122f3` 的 `id`／`name`／`enabled`／`state`／`schedule`／`model`／`provider`／**prompt sha256 `0699cf5a…`**／`skills`／`deliver`／`workdir` 逐項不變。`jobs.json` 本身的 sha 每拍由 Hermes ticker 改寫（`last_run_at`／`fire_claim`），非本卡寫入；該目錄對容器為 **ro**（`touch` → `Read-only file system`）。 |
+| `alpha-strategy-review-state.json` | sha256 `8ac9030d…`、mtime `2026-09-21T18:48:57Z`（before ＝ after） |
+| parking mirror `leaderboard/leaderboard.json` | sha256 `96f5b15f…`（before ＝ after） |
+| `qlib-run` 容器 | `startedDate` 不變（`2026-09-20T21:07:42Z`） |
+| Kanban／GitHub／results root／`/Volumes/*` | 未掛載（§6）＝結構上不可寫；本輪未 push／未 merge |
+| 唯讀掛載 | 容器內 `touch /host/hermes-cron-ro/NOPE`／`/host/quant-dashboard-data/NOPE3`／`/host/workspace-ro/NOPE3` → 三者皆 `Read-only file system` |
+
+**E7 — 成本（§8 追加）**：變更前拍點（exec 44–46）每拍儲存 26,796–26,797 B；變更後 exec 47 = **28,425 B**（+6%），快照本體 16,013 → 17,029 B。
+換算：96 拍／日 ≈ 2.7 MB／日、14 天保留窗 ≈ 38 MB（原估 35 MB），仍在同一量級。
+
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
 此 shadow **不得**在沒有下列明確授權前升級為控制面：
@@ -450,5 +530,6 @@ PY
 - 不重寫 `runtime/`、`candidate_snapshot.py`、reconciler、watchdog、handoff、Homepage、Qlib 或任何 backtest 語意。
 - 不在 repo 內新增任何可自動觸發的排程（排程在 n8n，不在 repo；本 repo 只有 deterministic 腳本與版本控管）。
 - 不 direct-read 需要寫入面的資料夾；`/Volumes/ExpansionDrive/*` 一律不掛載（gap 可接受，不為此建基礎設施）。
+- 不動 Hermes cron：Scout `f5c0648122f3` 的 prompt／schedule／model／狀態一律未改，也未新增任何 cron；n8n 對 cron 只有 **ro** 讀取面（無 cron 寫入節點、無新 service／DB／daemon／watchdog）。
 - 不調和 §4 第 4 項的 leaderboard／parking 數量差：只呈現缺口，交由 operator 判定。
 
