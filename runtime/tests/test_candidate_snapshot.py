@@ -313,6 +313,37 @@ class Harness(unittest.TestCase):
         self.assertIn("Wiki Brain unavailable", out)
         self.assertIn("Backtested unavailable", out)
 
+    def test_cumulative_workload_counts_actual_grid_rows_across_attempts(self):
+        self.family(family="fam-a", round_id="fam-a-r1")
+        self.attempt("fam-a-r1", "fam-a-r1-u1", rows=2)
+        self.attempt("fam-a-r1", "fam-a-r1-u2", rows=3, created="2026-09-14T02:00:00Z")
+        self.write("fam-a/rounds/fam-a-r1/attempts/fam-a-r1-u2/artifacts/grid_oos.csv",
+                   "symbol,timeframe,net_pnl\nSYM,5m,1\n")
+        self.write("fam-a/rounds/fam-a-r1/attempts/fam-a-r1-u2/artifacts/grid_empty.csv",
+                   "symbol,timeframe,net_pnl\n")
+        evaluations, artifacts = snap.cumulative_backtest_workload(self.root)
+        self.assertEqual(evaluations, 6)
+        self.assertEqual(artifacts, 4)
+        doc = self.dashboard()
+        self.assertEqual(doc["funnel"]["workload"]["evaluations"], 6)
+        self.assertEqual(doc["funnel"]["workload"]["grid_artifacts"], 4)
+        self.assertEqual(doc["funnel"]["workload"]["unit"], "streamed_grid_rows")
+
+    def test_cumulative_workload_prefers_authoritative_result_total(self):
+        self.family(family="fam-a", round_id="fam-a-r1")
+        base = self.attempt("fam-a-r1", "fam-a-r1-u1", rows=2)
+        self.write(base + "/result.json", {"case_evaluations_total": 17})
+        evaluations, artifacts = snap.cumulative_backtest_workload(self.root)
+        self.assertEqual((evaluations, artifacts), (17, 1))
+
+    def test_cumulative_workload_zero_is_real_not_unavailable(self):
+        self.family()
+        evaluations, artifacts = snap.cumulative_backtest_workload(self.root)
+        self.assertEqual((evaluations, artifacts), (0, 0))
+        doc = self.dashboard()
+        self.assertTrue(doc["funnel"]["workload"]["available"])
+        self.assertEqual(doc["funnel"]["workload"]["evaluations"], 0)
+
     def test_backtested_counts_distinct_families_not_inflated_by_attempts(self):
         self.family(family="fam-a", round_id="fam-a-r1")
         self.family(family="fam-b", round_id="fam-b-r1")

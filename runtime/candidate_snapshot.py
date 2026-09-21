@@ -268,6 +268,48 @@ def backtested_counts(results_root):
     return backtested, len(families)
 
 
+def cumulative_backtest_workload(results_root):
+    """(evaluations, grid_artifacts) for cumulative executed backtest workload.
+
+    Completed attempts use the authoritative ``result.json.case_evaluations_total`` when present.
+    Legacy/incomplete attempts without that field fall back to physical non-header rows in their
+    streamed ``grid_*.csv`` artifacts.  Retries/superseded attempts remain included because the KPI
+    measures work actually executed, not unique strategies or unique parameter cases.
+    """
+    root = Path(results_root)
+    if not root.is_dir():
+        return None, None
+    evaluations = 0
+    artifacts = 0
+    for attempt in sorted(root.glob("*/rounds/*/attempts/*")):
+        if not attempt.is_dir() or attempt.relative_to(root).parts[0].startswith("_"):
+            continue
+        grids = sorted((attempt / "artifacts").glob("grid_*.csv"))
+        artifacts += len(grids)
+        result = load_json(attempt / "result.json")
+        result_total = result.get("case_evaluations_total") if isinstance(result, dict) else None
+        if isinstance(result_total, (int, float)) and not isinstance(result_total, bool) and result_total >= 0:
+            evaluations += int(result_total)
+            continue
+        for grid in grids:
+            try:
+                lines = 0
+                last = b""
+                with grid.open("rb") as fh:
+                    while True:
+                        chunk = fh.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        lines += chunk.count(b"\n")
+                        last = chunk[-1:]
+                if last and last != b"\n":
+                    lines += 1
+            except OSError:
+                return None, None
+            evaluations += max(lines - 1, 0)
+    return evaluations, artifacts
+
+
 def research_counts(now=None):
     """(reviewed, ingested, delta_24h) from the canonical intake state; delta_24h None = unavailable.
 
@@ -492,7 +534,16 @@ def dashboard_payload(results_root, now=None):
     reviewed, ingested, delta = research_counts(now=local_now)
     wiki = bool(reviewed) and ingested is not None
     backtested, registered = backtested_counts(results_root) if root_present else (None, None)
+    workload_evaluations, workload_artifacts = (
+        cumulative_backtest_workload(results_root) if root_present else (None, None))
     funnel = {
+        "workload": {"available": workload_evaluations is not None,
+                     "evaluations": workload_evaluations,
+                     "grid_artifacts": workload_artifacts,
+                     "unit": "streamed_grid_rows",
+                     "summary": ("%s cumulative executed evaluations across %s grid artifacts" %
+                                 ("{:,}".format(workload_evaluations), workload_artifacts)
+                                 if workload_evaluations is not None else "unavailable")},
         "wiki_brain": {"available": wiki, "reviewed": reviewed if wiki else None,
                        "ingested": ingested if wiki else None,
                        "share_pct": round(100.0 * ingested / reviewed, 1) if wiki else None,

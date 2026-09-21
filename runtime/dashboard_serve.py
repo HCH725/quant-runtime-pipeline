@@ -136,6 +136,8 @@ FIELD_LABELS = {
     "entries": "策略", "rank": "排名", "sharpe": "Sharpe", "annualized_return": "年化報酬率",
     "max_dd_pct": "最大回撤", "avg_trades_per_year": "年均交易次數",
     "evidence_state": "證據狀態", "top_n": "最多顯示",
+    "workload": "累積回測工作量", "evaluations": "累積回測評估量",
+    "grid_artifacts": "Grid artifacts", "unit": "統計單位",
     "wiki_brain": "研究池", "reviewed": "已審閱策略", "ingested": "已納入策略",
     "share_pct": "比例", "delta_24h": "24 小時變化", "delta_available": "變化資料可用",
     "backtested": "回測進度", "families": "已完成回測家族", "registered": "已登錄家族",

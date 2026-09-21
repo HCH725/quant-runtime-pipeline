@@ -370,15 +370,35 @@ body {
   }
 }
 
-/* Research funnel: ordinal stage narrowing only; widths do not encode cross-unit conversion rates. */
-.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(2) {
+/* Research workload hero + ordinal funnel. The hero is a different unit and is not a funnel stage. */
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:first-child {
+  margin: 2px 0 9px;
+  padding: 11px 13px !important;
+  border: 1px solid rgba(240, 185, 11, 0.18);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(240, 185, 11, 0.08), rgba(26, 74, 132, 0.12));
+}
+
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:first-child .font-bold {
+  color: #f5f7fb;
+  font-size: 1.45rem !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:first-child .text-xs {
+  color: #d6aa3c !important;
+  font-size: 0.72rem !important;
+}
+
+/* Funnel widths encode ordinal narrowing only, never cross-unit conversion rates. */
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(3) {
   margin-inline: 12px;
 }
 
-.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(3) {
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(4) {
   margin-inline: 20px;
 }
 
-.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(4) {
+.service[data-name="研究漏斗"] .service-container .flex.flex-col.w-full > div:nth-child(5) {
   margin-inline: 28px;
 }
