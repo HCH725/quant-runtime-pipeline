@@ -255,6 +255,8 @@ Homepage + Detail → Cloudflare Tunnel + Access → operator
 7. `python3 runtime/preflight.py` — Contract §16 的 P1–P10 deterministic preflight（只讀）；正式 launch 前加上
    `--attempt-dir <attempt> --launch`（P10 的 `script.sha256` 以 host 上 `/scripts` 的來源目錄重算，必要時用
    `--host-scripts <dir>` 或 `QLIB_HOST_SCRIPTS` 指定）。此步驟是可選的獨立檢查，不會被 repo clone 或任何排程自動觸發。
+8. `runtime/recover_gate.py` ＋ `runtime/ai.quant.recover-gate.plist` — 可選的 host 重啟復原 gate（n8n＋qlib-run，
+   `RunAtLoad`＋`StartInterval 300`，語意與實測證據見 `N8N_CONTROL_PLANE.md` §7.2）。
 
 **執行環境限制（Contract §9.4，2026-09-13 實測）**：`runtime/reconcile.py` 的唯一變更動作是 `hermes kanban unblock`，
 而 Hermes 會拒絕來自 `HERMES_DELEGATED_CHILD_CONTEXT=1` context（delegate_task 子行程、kanban worker session，

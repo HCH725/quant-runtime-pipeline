@@ -219,6 +219,33 @@ python3 n8n/shadow_check.py                                            # 驗證�
 3. 回復容器原狀：以上方指令移除 `NODES_EXCLUDE` 與後三行 mount，只留 `/Users/hong/workspace/n8n/data → /home/node/.n8n`，即為本卡前的原始狀態。
 4. 刪除輸出：`/Users/hong/workspace/n8n/files/quant-control-plane-shadow.json`（n8n 自身檔案區，與 pipeline 狀態無關）。
 
+### 7.2 Host 復原 gate：`ai.quant.recover-gate`（2026-09-22 實測）
+
+Phase 2 control cutover 前的最小 host 級重啟／復原：只補「重啟後兩個既有 Apple Container 服務自己回健康」，
+**不**新增 daemon／service／DB／cron／n8n workflow，**不**動 container 定義與 mount、Qlib 計算語意、candidate 邏輯、
+Shadow workflow、Homepage、Research Scout。
+
+| 檔 | 角色 |
+|---|---|
+| `runtime/recover_gate.py` | 短命腳本，每次四步後退出：① 確保 Apple Container system running（bounded wait 120 s）→ ② 確保**既有** n8n container running（缺失＝fail closed 只記錄、**絕不自動建立／重建**）＋驗 `http://127.0.0.1:5678/healthz/readiness` = 200 → ③ 執行既有 `runtime/preflight.py --recover --json`（qlib-run 的 ExpansionDrive／system start／container start 與 image、version、raw、results 檢查維持 canonical，不在此重寫；qlib-run 缺失即 fail closed）→ ④ append 一行 log 後退出（rc 0＝健康、1＝任一 gate 失敗）。健康時為 no-op。 |
+| `runtime/ai.quant.recover-gate.plist` | launchd：`RunAtLoad` ＋ `StartInterval 300`（**無常駐程序**）、絕對 PATH、WorkingDirectory 指本 repo；`plutil -lint` 通過後才複製到 `~/Library/LaunchAgents/ai.quant.recover-gate.plist`。 |
+
+- **Log**：`~/quant-dashboard/logs/recover_gate.log`，每次一行 `boot= system= n8n= qlib_preflight= rc= problems=`；超過 1 MiB 整檔截斷（刻意簡化，不做 rotation）。launchd stdout/stderr → `recover_gate.err.log`（平時 0 B）。
+- **非重疊**：單一非阻塞 lock 檔，interval 撞上前一輪時只記 `skipped=previous_run_still_active`。
+- **路徑注意**：本卡不 merge／不 push，故 plist 指向 feature worktree `…/quant-runtime-pipeline-n8n`；併回 main 後應改指 canonical repo 路徑。
+
+**驗證（2026-09-22 12:51–13:02 CST 實測；停機前兩次確認無 active Qlib backtest：qlib-run 內只有 PID 1 `sleep infinity`、唯一 `stage=RUNNING_QLIB` 的 `state.json` 是 9/14 已帶 `FAILED` sentinel 的舊 attempt、當日無任何 `run.log` 寫入）：**
+
+1. **受控 stop → RunAtLoad 復原**：`container stop -t 60 n8n` → stdio.log `Received SIGTERM. Shutting down...`／`Deregistered all crons`、`Shutdown timed out` **0** 筆 → host `PRAGMA wal_checkpoint(TRUNCATE)` = `0|0|0`、`PRAGMA integrity_check` = `ok` → **僅在容器停止時** `rm -f` `-wal`/`-shm` → `container stop -t 60 qlib-run`（12:52:52 兩者 `stopped`）→ 複製 plist ＋ `launchctl bootstrap gui/501/…`（RunAtLoad）→ log `04:53:10Z system=running n8n=started qlib_preflight=PASS(rc=0 actions=container_start …)`；讀回 readiness `200`、`/healthz` `{"status":"ok"}`、`list:workflow --active=true` → `shadowQuantCp1`。
+2. **container-system-down 復原（實測一次，安全）**：同 §7.1 乾淨停 n8n（`0|0|0`＋`ok`、`rm -wal/-shm`）→ 停 qlib-run → `container system stop`（12:56:03：`apiserver is not running`、`container ls` XPC 失敗）→ `launchctl kickstart gui/501/ai.quant.recover-gate` → **19 秒後** log `04:56:22Z system=started n8n=started qlib_preflight=PASS(rc=0 actions=container_start)`；讀回 `containers.running 2/2`、n8n `startedDate 04:56:12Z`、qlib-run `04:56:20Z`、readiness `200`、重啟後 stdio.log `SQLITE_IOERR|SQLITE_CORRUPT|disk I/O error|malformed|Failed to hard-delete` = **0** 筆。
+3. **interval 自動跑 ＋ 健康 no-op**：`StartInterval` 自動觸發 `05:01:23Z system=running n8n=already_running qlib_preflight=PASS(rc=0 actions=noop …) rc=0`；`launchctl print` → `runs = 3`、`last exit code = 0`；`recover_gate.err.log` = 0 B。
+4. **recovery 後一個新鮮排程 tick**：exec **66**（`mode=trigger`、`status=success`、`startedAt 2026-09-22 05:00:25.038Z`，前一拍 65 = `04:45:25Z` 即停機前基線）；`tick_probe.js` → `integrity_check = ok`、`max_id = 66`；`python3 n8n/shadow_check.py --require-fresh --max-age-seconds 1800` → **PASS**（age 82 s）。
+5. **qlib 執行面**：獨立 `python3 runtime/preflight.py --recover --json` → `overall PASS`（P4/P5/P6 PASS、P8 `/opt/venv/bin/python … version=0.9.7`）。
+6. **fail-closed 負向實測**：以不存在的 container 名跑同一支腳本 → `rc=1`、log `n8n=missing_fail_closed(container '__definitely_absent__' not listed)`，前後 `container ls` 皆 `['n8n', 'qlib-run']`（**沒有**被自動建立）。
+
+**Rollback（任一步都可獨立回退）**：`launchctl bootout gui/501/ai.quant.recover-gate` ＋ 刪除
+`~/Library/LaunchAgents/ai.quant.recover-gate.plist`（與 repo 內兩檔）；不影響任何容器與 pipeline 狀態。
+
 ## 8. 取樣節奏與儲存成本（實測）
 
 卡片允許「60s for observation **if safe**」。實測結果如下，因此 shadow-1 採 **900s（15 分鐘）**：

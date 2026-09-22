@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.quant.recover-gate</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/python3</string>
+    <string>/Users/hong/workspace/quant-runtime-pipeline-n8n/runtime/recover_gate.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/hong/workspace/quant-runtime-pipeline-n8n</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/hong</string>
+    <key>PATH</key>
+    <string>/Users/hong/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>300</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/hong/quant-dashboard/logs/recover_gate.err.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/hong/quant-dashboard/logs/recover_gate.err.log</string>
+</dict>
+</plist>
