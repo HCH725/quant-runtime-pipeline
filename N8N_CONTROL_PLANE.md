@@ -34,7 +34,7 @@ Schedule (15m)  ┘
 
 | # | workflow 節點（節點名即拓撲名） | 讀什麼（唯讀） | 對應 pipeline 階段 |
 |---|---|---|---|
-| 1 | `Strategy Research — Hermes Scout cron state (read-only)` | `/host/hermes-cron-ro/jobs.json`（＝ `~/.hermes/cron/jobs.json` 的 **ro** 掛載）：只投影 job `f5c0648122f3` 的固定欄位（job_id／name／enabled／state／schedule_display／last_run_at／last_status／last_error／failure_streak／next_run_at／last_dispatch） | Strategy Research → Hermes cron `f5c0648122f3`（`Quant Research Scout`，上游研究產生者） |
+| 1 | `Strategy Research — Hermes Scout cron state (read-only)` | `/host/hermes-cron-ro/jobs.json`（＝ `~/.hermes/cron/jobs.json` 的 **ro** 掛載）：只投影 job `f5c0648122f3` 的**契約白名單**（10 個固定鍵：job_id／name／enabled／state／schedule_display／last_run_at／last_status／last_error／failure_streak／next_run_at，一律存在、來源無值時為 `null`）＋ optional `last_dispatch`（只在來源真有 dispatch 記錄時出現，且只含 scheduled_at／dispatched_at／lateness_seconds／kind 四個子鍵） | Strategy Research → Hermes cron `f5c0648122f3`（`Quant Research Scout`，上游研究產生者） |
 | 2 | `Pool — alpha-strategy-research pool (read-only)` | `/host/workspace-ro/alpha-strategy-research` 的 root `*.md`（canonical 規則：`len(parts)==1 and suffix==".md" and not startswith("README")`，即 `review_state.py:111`）＋ checkout HEAD sha | Strategy Research → GitHub alpha-strategy-research pool |
 | 3 | `Intake Review — canonical intake state (read-only)` | `/host/workspace-ro/alpha-strategy-review-state.json`（current_snapshot buckets、pending_ingestion、deferred_delta、ingested_wiki_records、last_reviewed_*） | Intake Review → Wiki Brain |
 | 4 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/<current_family>-prerequisite-gate-*.json`（僅在與投影 current family **相符**時採用；不符即 unavailable） | Data / Preflight Gate |
@@ -46,6 +46,7 @@ Schedule (15m)  ┘
 節點實作要點：來源節點 1／2／3／4／6 為 `executeCommand`（只做 `readdirSync`／`readFileSync`／`SHA-256` 投影，**唯讀、deterministic**），
 節點 5 為 `cat`（6.6 KB，verbatim）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
 節點 1 的讀取面只有 `jobs.json` 一個檔案；它對 15 分鐘拍點做一次投影，讀不到時輸出 `available: false` ＋ 理由（**不會**讓 execution 失敗，也不以預設值代替）。
+節點 1 投影出的欄位就是 §3 的 stage 1 白名單本身；來源可讀性與檔案時間戳留在 `sources[]`（`hermes_scout_cron_state`），**不進** stage 1。
 
 ## 3. State vocabulary（SHADOW 顯示語意）
 
@@ -66,7 +67,10 @@ Intake 分支語意（顯示用，不重判）：`PASS` + 真正完成 ingest �
 `REJECT` → 正常篩選終局；`REMEDIATE` → 尚未接受、**不是**系統錯誤；`Error` → 只保留給真正的系統／讀取／解析失敗，**不得**與 reject／remediate 混用。
 
 Stage 1 `strategy_research` 不是 vocabulary token，而是 Hermes cron job `f5c0648122f3` 的**逐字欄位投影**（§2 節點 1）：
-`shadow_state` 維持 `null`，欄位一律照來源顯示，來源不可讀或 job 不存在時記入 `gaps`（`field = strategy_research_scout_cron`）、**不以預設值或推論值代替**。
+`shadow_state` 維持 `null`，observation **只**含契約白名單——10 個固定鍵（job_id／name／enabled／state／schedule_display／last_run_at／last_status／last_error／failure_streak／next_run_at）
+一律存在（來源無值時為 `null`），`last_dispatch` 為 **optional**（來源真有 dispatch 記錄時才出現，且只含 scheduled_at／dispatched_at／lateness_seconds／kind）；
+來源可讀性／檔案時間戳／說明等診斷 metadata 一律放 `sources[]`（`hermes_scout_cron_state`），**不進** stage 1。
+來源不可讀或 job 不存在時 observation 為 `null` 並記入 `gaps`（`field = strategy_research_scout_cron`）、**不以預設值或推論值代替**；`shadow_check.py` 同時驗「欄位齊全」「沒有白名單外鍵」「`last_dispatch` 有值即完整」三件事（§9.F F4）。
 
 ---
 
@@ -104,7 +108,7 @@ Stage 1 `strategy_research` 不是 vocabulary token，而是 Hermes cron job `f5
 註：本表是 **2026-09-21T14:36Z 當次實跑**的逐項值；快照是 live 投影，來源變動即反映——
 15:45Z 拍點已見 `pool_records_total` / `pool_root_md_total` = **831 / 833**（checkout HEAD `2a34d59`），
 差異來自 pipeline 自身的 `Quant Research Scout` cron（job `f5c0648122f3`，15:22Z 新增 1 筆 root `.md`），**不是** shadow 寫入。
-2026-09-22 起 stage 1 直接逐字顯示同一個 job 的 live 欄位（本輪新增的唯一來源）；該輪的 count 讀值與逐項證據見 §9.E。
+2026-09-22 起 stage 1 直接逐字顯示同一個 job 的 live 欄位（本輪新增的唯一來源）；該輪的 count 讀值與逐項證據見 §9.E；欄位集合已於 §9.F 收緊為白名單（見 §3）。
 
 ## 5. Future resume policy（**已文件化，未啟用**）
 
@@ -225,6 +229,7 @@ python3 n8n/shadow_check.py                                            # 驗證�
 | 60s ＋ 全量儲存（未修剪 payload） | 458,606 B | 1,440 | ~640 MB | **不安全** |
 | 900s ＋ 全量儲存（payload 已投影修剪）— 2026-09-21 版 | **26,815 B**（exec 12–15 實測；最早一拍 exec 11 為 26,416 B） | 96 | ~2.5 MB | ~35 MB ✔ |
 | 同上 ＋ Scout cron 來源（2026-09-22 起） | **28,425 B**（§9.E 實測；同節亦載變更前基線 26,796–26,797 B） | 96 | **~2.7 MB** | **~38 MB** ✔ |
+| 同上 ＋ stage 1 白名單收緊（§9.F，2026-09-21T23:47Z 起） | **28,794 B**（排程拍點 exec 51 實測；CLI exec 50 = 28,396 B；同輪基線：排程 exec 49 = 28,823 B、CLI exec 47 = 28,425 B） | 96 | **~2.7 MB** | **~38 MB** ✔ |
 
 三項對策：(a) 來源節點只輸出**投影後**欄位（原本 `cat` 進 payload 的 intake state 210 KB／gate 86 KB／parking 107 KB 不再進入 execution data）；
 (b) 開啟成功執行的資料儲存（`all`），使 execution 正確 finalize；
@@ -236,7 +241,7 @@ execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫�
 
 ## 9. 驗證記錄（實跑證據）
 
-> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項；第三輪（§9.C）＝review round-2 要求項（CLI 契約、文件漂移）；第四輪（§9.D）＝review round-3 要求項；第五輪（§9.E）＝2026-09-22 新增唯一一個 read-only 來源（Hermes Scout cron state）＋對應的 ro 掛載與容器重建。
+> 第一輪（§9.A）＝部署與投影；第二輪（§9.B）＝2026-09-21T15:36Z 起的 DB 修復、節奏復活與 review round-1 要求項；第三輪（§9.C）＝review round-2 要求項（CLI 契約、文件漂移）；第四輪（§9.D）＝review round-3 要求項；第五輪（§9.E）＝2026-09-21T23:19Z–23:31Z 新增唯一一個 read-only 來源（Hermes Scout cron state）＋對應的 ro 掛載與容器重建；第六輪（§9.F）＝2026-09-21T23:44Z–2026-09-22T00:01Z 的 review（t_5fbebce6 changes_requested）要求項：stage 1 收緊為契約白名單、`shadow_check.py` 加 presence 斷言＋回歸 fixture、live／repo 等價敘述與時間戳更正（純本機 shadow 層，未動 pipeline）。
 
 ### 9.A 第一輪：部署與投影
 
@@ -444,7 +449,7 @@ PY
 
 **本輪範圍**：只改 `n8n/shadow_check.py`（新增 `_int()` 硬化 ＋ 2 個 selftest 拒絕形）與 `N8N_CONTROL_PLANE.md`；未重啟容器、未重新 import workflow、未觸發任何 n8n execution、未動 pipeline／cron／`qlib-run`／任何權威狀態。
 
-### 9.E 第五輪：唯一新增來源 — Hermes Scout cron state（2026-09-22T23:19Z–23:31Z 實跑）
+### 9.E 第五輪：唯一新增來源 — Hermes Scout cron state（2026-09-21T23:19Z–23:31Z 實跑；＝ CST 09-22 07:19–07:31）
 
 **本輪範圍**：新增 **一個** read-only 來源節點（`Strategy Research — Hermes Scout cron state (read-only)`，插在 Pool 之前）＋ n8n 多一個 **ro** 掛載 ＋ `shadow_check.py` 一條斷言；
 未動 Scout cron（prompt／schedule／model／狀態）、未動 pipeline／Qlib／Kanban／GitHub，`mutations_enabled` 仍 `false`、resume 仍 `false`。
@@ -483,6 +488,9 @@ PY
 - reader 強健性（實測，非推論）：以 throwaway 容器掛同一顆 scratch 目錄，host 端用 **tmp＋rename** 原子替換被掛載檔案後，容器端第一次 `cat` 會短暫 `ENOENT`（≤5 s 後恢復；in-place 改寫則立即可見）。Hermes ticker 正是以 tmp＋rename 改寫 `jobs.json`，故節點在同拍內 **重試一次**（300 ms）；兩次都讀不到時輸出 `available: false` ＋ 理由並 `exit 0`（**不會**讓 execution 失敗，也不會以預設值代替）。
 - **變更後第一個排程拍點也成功**：exec **48**（mode `trigger`、`2026-09-21T23:30:25.039Z → 23:30:25.211Z`、`success`），與前一拍（exec 46，`23:15:25.333Z`）相隔 **900.1 s**＝15 分鐘節奏未被重建／重啟破壞；該拍快照 `generated_at_utc = 2026-09-21T23:30:25.203Z`（17,029 B、sha256 `77354946…`），`shadow_check.py --max-age-seconds 300 --require-fresh` → **PASS**（rc 0）。
 
+> **歷史註（2026-09-21T23:47Z 修訂）**：本節 E1–E4 是**當輪**的逐項記錄，其中 stage 1 的欄位集合（`source_readable`／`state_file_updated_at`／`note`）與 E5 的 live／repo 敘述已由 §9.F 的 review 要求項修正：
+> stage 1 現行契約是**只含白名單**（§3），診斷 metadata 移到 `sources[]`；E5 的「canon 相等」claim 已由審查者複驗證偽並改寫。E3 的欄位表保留為當輪證據（當時快照確實長那樣），**不得**當成現行契約引用。
+
 **E4 — `shadow_check.py`（+1 斷言，附負向對照）**
 
 | 呼叫 | 結果 | rc |
@@ -491,13 +499,15 @@ PY
 | 變更**前**快照（複本，stage 1 無 Scout 投影且無 gap） | `FAIL strategy research stage is never silently empty` | 1 |
 | 變更後快照 `--max-age-seconds 600 --require-fresh` | **PASS**，含 `PASS strategy research stage carries the live Scout cron projection — job_id=f5c0648122f3 enabled=True state=scheduled next_run_at=2026-09-22T08:15:00+08:00` | 0 |
 
-**E5 — live／repo 等價（§9.D 兩段取證原封重跑）**
+**E5 — live／repo 等價（§9.D 兩段取證原封重跑；2026-09-21T23:46Z 由本輪獨立複驗，claim 已更正）**
 
-- 差異鍵只剩 instance／版本鍵 13 個：`activeVersionId`／`createdAt`／`description`／`isArchived`／`nodeGroups`／`shared`／`sourceWorkflowId`／`staticData`／`triggerCount`／`updatedAt`／`versionCounter`／`versionId`／`versionMetadata`；
-  `id`／`name`／`active`／`connections`／`nodes`／`settings`／`pinData`／`tags`／`meta` **逐鍵相同**（本輪連 `nodes`／`settings` 也 canon 相等——比 §9.D 當時更嚴；§9.D 記錄的正規化差異是前一次 n8n 自身儲存路徑留下的）。
-- 逐節點：11 個節點的 `name`／`type`／`typeVersion`／參數（除 4 個正規化鍵）全部 `params_same=True`；payload sha256：
-  Scout（新）`c60bc406…`、Pool `329eb9b9…`、Intake `18b5df35…`、Gate `46959354…`、Dashboard `c1275683…`、Parking `92208ab0…`、Code `c6f6b689…`。
-- live 匯出 32,897 B／sha256 `058c8589…`；repo 檔 34,411 B／sha256 `6fc50e0f…`（兩段取證指令見 §9.D，未改）。
+- **相同**：`id`（`shadowQuantCp1`）／`name`／`active`（`true`）／`connections`／`meta`／`pinData`／`tags`；11 個節點的 `id`／`name`／`type`／`typeVersion`，以及 `settings` 的 `executionOrder`／`saveDataSuccessExecution`／`saveDataErrorExecution`／`saveManualExecutions` 逐值相同。
+- **不同 —— `nodes`／`settings`：n8n 自身的正規化，不是等價**：`nodes` 的差異只有 4 類正規化鍵（6 個 `executeCommand` 的 `parameters.executeOnce`、Code 的 `mode`／`language`、`readWriteFile` 的 `dataPropertyName`：repo 有、live 無）＋ **9 個節點的 `position` 格點吸附**（6 個來源節點 `y 420→432`、`Assemble`／`Emit` `y 140→144`、sticky `[-260,400]→[-112,32]`）；`settings` live 多一個 `binaryMode="separate"`。→ **不是 canon 相等**（§9.D 已記錄同一類差異，本輪實測再次成立）。
+- **不同 —— top-level instance／版本鍵 13 個**：`activeVersionId`／`createdAt`／`description`／`isArchived`／`nodeGroups`／`shared`／`sourceWorkflowId`／`staticData`／`triggerCount`／`updatedAt`／`versionCounter`／`versionId`／`versionMetadata`。
+- **語意等價（可重跑）**：除上列正規化鍵外，每個節點的參數**逐位元相同**（§9.D 第二段逐節點印 `params_same=True`）；payload sha256：
+  Scout（新）`c60bc406…`、Pool `329eb9b9…`、Intake `18b5df35…`、Gate `46959354…`、Dashboard `c1275683…`、Parking `92208ab0…`、Code `c6f6b689…`；本輪另比對 live／repo 的 `Assemble` `jsCode` sha256 兩側同為 `783720e0…`（§9.F F5）。
+- live 匯出 32,897 B／sha256 `058c8589…`；repo 檔（當輪）34,411 B／sha256 `6fc50e0f…`（兩段取證指令見 §9.D，未改）。
+- 結論：repo 匯出檔是**可重現的來源**，live 部署是**同一份拓樸**多一層 n8n 自身的正規化與 instance 書籤；驗收條件是「**語意等價 ＋ 列明已知正規化差異**」，**不是**逐鍵 canon 相等。本節 E5 記錄的是 **re-import 前**的 live 狀態；§9.F 的 re-import 之後，live 匯出的 `nodes`／`settings` 已與 repo 檔逐鍵相同（`position` 差異 0 個）。
 
 **E6 — 邊界（before／after 實測）**
 
@@ -512,6 +522,73 @@ PY
 
 **E7 — 成本（§8 追加）**：變更前拍點（exec 44–46）每拍儲存 26,796–26,797 B；變更後 exec 47 = **28,425 B**（+6%），快照本體 16,013 → 17,029 B。
 換算：96 拍／日 ≈ 2.7 MB／日、14 天保留窗 ≈ 38 MB（原估 35 MB），仍在同一量級。
+
+### 9.F 第六輪：review（`changes_requested`）要求項 — stage 1 收緊為契約白名單（2026-09-21T23:44Z–2026-09-22T00:01Z 實跑）
+
+**來源**：kanban `t_5fbebce6` 的 auditor review（`changes_requested`）三項要求：① stage 1 observation 只留卡片指定的 live 欄位、來源／診斷 metadata 移到 `sources[]` 或 gap；② `shadow_check.py` 補 required-key／presence 斷言＋一個會失敗的回歸 fixture；③ §9.E E5 的 live／repo「canon 相等」claim 與 §9.E 標題時間戳更正。
+
+**本輪範圍**：只改 repo 內 3 個既有檔（`n8n/quant-control-plane-shadow.workflow.json`、`n8n/shadow_check.py`、`N8N_CONTROL_PLANE.md`）＋一次 re-import／publish／§7.1 重啟；
+未動 Scout cron（prompt／schedule／model／狀態）、未動 pipeline／Qlib／Kanban／GitHub／results root，未新增 workflow／service／DB／daemon／watchdog／cron，`mutations_enabled` 仍 `false`、resume 仍 `false`。
+
+**F1 — 改動內容（repo 檔）**
+
+| 檔案 | 變更 | after |
+|---|---|---|
+| `n8n/quant-control-plane-shadow.workflow.json` | assembler：stage 1 observation 由 13 鍵（含 `source_readable`／`state_file_updated_at`／`note`）收緊為 **10 個固定鍵 ＋ optional `last_dispatch`**；`sources[0]` 加 `note`（診斷 metadata 落點）；節點數／順序／connections 與其他 10 個節點未動 | 34,461 B／sha256 `528d2b1b…` |
+| `n8n/shadow_check.py` | stage 1 斷言改為 3 條（欄位齊全／沒有白名單外鍵／`last_dispatch` 有值即完整）；斷言抽成 `check_snapshot()` 讓 `--selftest` 用 fixture 驅動；selftest 由「parser 6 接受／5 拒絕」擴為再加 **8 個 snapshot fixture** | 13,624 B（見 commit） |
+| `N8N_CONTROL_PLANE.md` | §2 節點 1、§3 stage 1、§8 成本、§9 前言、§9.E 標題／歷史註／E5 更正，＋本節 | — |
+
+**F2 — 部署（§7.1 全程遵守）**
+
+- 備份：`/Users/hong/workspace/n8n/backups/pre-whitelist-20260921T234647Z/`（`database.sqlite`＋`-wal`＋`-shm`）。
+- `import:workflow --input=/host/workspace-ro/…/quant-control-plane-shadow.workflow.json` → `Successfully imported 1 workflow.`；本版 CLI 對 `update:workflow --active=true` 回 `Please use: publish:workflow --id=shadowQuantCp1`，故補跑 `publish:workflow`；`list:workflow --active=true` 讀回 `shadowQuantCp1|Quant Control Plane — SHADOW (read-only)`。
+- 重啟：`container stop -t 60 n8n`（`23:47:01Z`）→ stdio.log 出現 `Received SIGTERM. Shutting down...`／`Stopping n8n...`、**無** `Shutdown timed out`／`Waiting for N active executions` → `PRAGMA wal_checkpoint(TRUNCATE)` = `0|0|0`、`PRAGMA integrity_check` = `ok` → 停止時 `rm -f` 只刪 `-wal`／`-shm` → `container start n8n`（`23:47:15Z`）→ `/healthz` `{"status":"ok"}`、readiness `200`；開機 log 中 `SQLITE_IOERR|SQLITE_CORRUPT|disk I/O error|malformed|Failed to hard-delete` = **0** 行。
+- `container inspect` before／after 逐鍵比對（含 `mounts`）：**全部相同**——本輪只 stop／start，未重建容器、未新增掛載。
+
+**F3 — 變更後執行（一次即可；本卡明示不需等下一小時）**
+
+- `n8n execute --id=shadowQuantCp1` → `"status": "success"`（exec **50**、mode `cli`、`2026-09-21T23:47:35.185Z → 23:47:35.796Z`）。
+- 快照：**16,947 B**、sha256 `c4e74fd1…`、`generated_at_utc = 2026-09-21T23:47:35.782Z`；topology 11 階同序、`mode = SHADOW_READ_ONLY`、`mutations_enabled = false`、resume `false`。
+- **重啟後的第一個排程拍點也成功**：exec **51**（mode `trigger`、`2026-09-22T00:00:25.264Z → 00:00:25.445Z`、`success`），與改動前最後一拍（exec 49、`23:45:25.115Z`）相隔 **900.1 s**＝15 分鐘節奏未被 re-import／重啟破壞；快照 `16,947 B`、sha256 `005d28f6…`、`generated_at_utc = 2026-09-22T00:00:25.436Z`，`shadow_check.py --max-age-seconds 300 --require-fresh` → **PASS**（rc 0），stage 1 仍為白名單 11 鍵、host 10／10 相同、`last_dispatch` 相同。
+
+**F4 — stage 1 白名單（live 逐字）**
+
+| 面 | 值／結果 |
+|---|---|
+| observation 鍵集合 | 恰為 11 鍵（10 個固定鍵 ＋ `last_dispatch`）；**白名單外 = 0 個鍵** |
+| host（同時讀 `~/.hermes/cron/jobs.json`）vs 快照 | **10／10 相同**：`job_id f5c0648122f3`／`name Quant Research Scout`／`enabled true`／`state scheduled`／`schedule_display 15 * * * *`／`last_run_at 2026-09-22T07:21:35.352109+08:00`／`last_status ok`／`last_error null`／`failure_streak 0`／`next_run_at 2026-09-22T08:15:00+08:00`；`last_dispatch` 亦逐字相同（`scheduled_at 2026-09-22T07:15:00+08:00`／`dispatched_at …07:15:49.146058+08:00`／`lateness_seconds 49.1`／`kind on_time`） |
+| 診斷 metadata 落點 | `source_readable`／`state_file_updated_at`／`note` **不在** observation；對應值在 `sources[0]`（`readable true`、`as_of_utc 2026-09-22T07:46:59.982968+08:00`、`path /host/hermes-cron-ro/jobs.json`、`bytes 56,603`、`sha256 f6602a5e…`、`note`） |
+
+**F5 — live／repo 等價（re-import 後；§9.D 兩段取證原封重跑）**
+
+- live export **32,948 B**／sha256 `5546af3f…`（改動前：`32,729 B`／`5c8099d3…`）；repo 檔 34,461 B／`528d2b1b…`。
+- **`nodes` 與 `settings` 逐鍵相同**：`canon(live.nodes) == canon(repo.nodes)` = True、11 個節點 `param_diff=[]`、`position` 差異 = 0 個、`settings` 逐值相同。
+  對照 §9.E E5（re-import **前**：9 個 `position` 差異、4 類參數正規化鍵、`settings.binaryMode`）：那些差異來自 **n8n server 自身的儲存路徑**，而 CLI `import:workflow` 會把 repo 檔寫成 current version 並原封保存，故 re-import 後 live 匯出即回到 repo 形式。
+- 差異鍵只剩 13 個 instance／版本鍵（`activeVersionId`／`createdAt`／`description`／`isArchived`／`nodeGroups`／`shared`／`sourceWorkflowId`／`staticData`／`triggerCount`／`updatedAt`／`versionCounter`／`versionId`／`versionMetadata`）；`id`／`name`／`active`／`connections`／`meta`／`pinData`／`tags` 相同。
+- 語意等價證據：`Assemble` 的 `jsCode` sha256 live／repo 兩側同為 `783720e0…`；6 個來源節點 payload sha256 與 §9.E 相同（`c60bc406…`／`329eb9b9…`／`18b5df35…`／`46959354…`／`c1275683…`／`92208ab0…`，本輪未動）。
+- 註：live 形式日後若經 UI／server 儲存，可能再被正規化；驗收條件仍是「**語意等價 ＋ 列明已知正規化差異**」，不是逐鍵相等。
+
+**F6 — 斷言的活體與負向對照**
+
+| 呼叫 | 結果 | rc |
+|---|---|---|
+| `shadow_check.py --selftest` | `PASS parser self-test (6 accepted forms, 5 rejected)` ＋ `PASS snapshot self-test (8 fixtures: 3 sound, 5 each with exactly the expected failure)` | 0 |
+| review 重現：複製 live 快照後刪 `last_status`，`--max-age-seconds 999999 --require-fresh` | **FAIL** — `stage 1 carries every required cron key` | 1 |
+| 改動**前**的 live 快照（observation 含 `source_readable` 等 3 鍵） | **FAIL** — `stage 1 carries only the whitelisted cron keys` | 1 |
+| 改動後 live 快照 `--max-age-seconds 300 --require-fresh` | **PASS**（含 `stage 1 carries every required cron key — missing=[]`、`… only the whitelisted cron keys — unexpected=[]`、`… last_dispatch is optional and complete when present`） | 0 |
+
+**F7 — 邊界（before／after 實測）**
+
+| 對象 | 證據 |
+|---|---|
+| Hermes cron | 16 jobs → 16 jobs、id 集合相同（**未新增任何 cron**）；Scout `f5c0648122f3` 的 `id`／`name`／`enabled`／`state`（`scheduled`）／`schedule`（`cron 15 * * * *`）／`model`（`mimo-v2.5`）／`provider`（`opencode-go`）／**prompt sha256 `0699cf5a…`（6,223 B）**／`skills`／`deliver`（`local`）／`workdir` 逐項不變（與 §9.E E6 同值）。 |
+| `alpha-strategy-review-state.json` | sha256 `8ac9030d…`、mtime `2026-09-21T18:48:57Z`（與 §9.E E6 同值，早於本輪任何寫入） |
+| parking mirror `leaderboard/leaderboard.json` | sha256 `96f5b15f…`、mtime `2026-09-20T20:20:53Z`（同上） |
+| `qlib-run` 容器 | `container list` 的 STARTED 仍 `2026-09-20T21:07:42Z`（未動） |
+| Kanban／GitHub／results root／`/Volumes/*` | 未掛載（§6）＝結構上不可寫；本輪未 push／未 merge |
+| 唯讀掛載 | 容器內 `touch /host/hermes-cron-ro/NOPE5`／`/host/quant-dashboard-data/NOPE5`／`/host/workspace-ro/NOPE5` → 三者皆 `Read-only file system`，且無殘留檔 |
+
+**F8 — 成本（§8 追加）**：同模式對照 exec 49（改動前排程拍點）= 28,823 B → exec 51（改動後排程拍點）= 28,794 B；CLI 對照 exec 47（改動前）= 28,425 B → exec 50（改動後）= 28,396 B（量測方式：容器內對 DB 複本讀 `length(execution_data.data)`，不碰 live 檔）。96 拍／日 ≈ 2.7 MB、14 天 ≈ 38 MB，量級不變。
 
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
