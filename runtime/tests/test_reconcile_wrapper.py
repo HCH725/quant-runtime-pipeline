@@ -81,6 +81,22 @@ class WrapperGateNonzeroRc(unittest.TestCase):
         self.assertEqual(sig1, sig2)
 
 
+class WrapperIncidentSchemaRegression(unittest.TestCase):
+    """The core report has shipped incident as dict, path string, or omitted/None."""
+
+    def test_incident_kind_accepts_dict_string_and_none(self):
+        self.assertEqual(wrapper._incident_kind({
+            "incident": {"kind": "checksum_mismatch"}, "reason": "fallback",
+        }), "checksum_mismatch")
+        self.assertEqual(wrapper._incident_kind({
+            "incident": "/Volumes/ExpansionDrive/qlib-results/_incidents/x.jsonl",
+            "reason": "checksum_mismatch",
+        }), "checksum_mismatch")
+        self.assertEqual(wrapper._incident_kind({
+            "incident": None, "reason": "attempt_selection_ambiguous",
+        }), "attempt_selection_ambiguous")
+
+
 class WrapperMainLevelRegression(unittest.TestCase):
     """Main-level regression: wrapper.main() must not call core reconcile
     when preflight rc!=0 and stdout claims overall=PASS."""
