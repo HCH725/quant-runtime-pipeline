@@ -1,0 +1,3555 @@
+{
+  "schema_version": 1,
+  "document_kind": "prerequisite-gate evidence snapshot (contract 13 card-local technical terminal; no launch, no performance claim)",
+  "snapshot_taken_at_utc": "2026-09-22T09:55:24Z",
+  "snapshot_boundary": "Read-only re-measurement of canonical raw/results plus tamper and fixture controls; round artifacts are read back by hash and never rewritten.",
+  "card": {
+    "kanban_task_id": "t_5f96962c",
+    "title": "Production Candidate — Cross-Venue Bounded Liquidity Loss Versus Rebalancing and Harmonic Arbitrage Bounds (full backtest)",
+    "kanban_board": "quant-strategy-research",
+    "frozen_candidate_body_bytes": 19612,
+    "frozen_candidate_body_sha256": "sha256:b7208ab0656e102208c3d0d55556b750c2dc0ec9577c8bbcb6a9dc8b28bce01e",
+    "system_owned_footer_bytes": 1514,
+    "system_owned_footer_sha256": "sha256:29679abe60656f59db0776ed22db2672f3d84021761d8e1f754a273768ad7f11"
+  },
+  "reviewed_source": {
+    "record_path": "/Users/hong/.hermes/wiki/quant/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01.md",
+    "record_sha256": "sha256:8eaf57cce3bbb000181dee843dfc204936933d0f03d06d401f082d24007f338f",
+    "record_status": "research-only",
+    "record_intake_decision": "PASS-WITH-CAVEAT",
+    "family_id": "crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01",
+    "family_json_path": "/Volumes/ExpansionDrive/qlib-results/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01/family.json",
+    "family_json_sha256": "sha256:31e79370618c9b9d27340b994f33b13fd01d0bfc64cbe3ad3618bdcf6d280cac"
+  },
+  "determination": {
+    "verdict": "TECHNICAL_INCOMPLETE",
+    "performance_claimable": false,
+    "failure_layer": "card-local",
+    "failure_class": "data_window_invalid",
+    "failure_class_note": "Contract 13 has no dedicated prerequisite-missing class; data_window_invalid (instrument/data surface missing) is the closest registered card-local class, the same mapping used for the sibling equity-perp prerequisite terminal. Disclosed as a prerequisite absence, not a scientific rejection.",
+    "run_id": null,
+    "last_run_id": null,
+    "yield_decision": "STOP_TECHNICAL_INCOMPLETE",
+    "attempts_launched": 0,
+    "incomplete_reason": "Core-signal data surfaces are absent and measured before launch; zero attempts were submitted, so no backtest output is fabricated.",
+    "scientific_conclusion": "NOT_EVALUATED",
+    "no_substitute_or_universe_shrink": true
+  },
+  "measured_canonical_raw": {
+    "raw_root": "/Volumes/ExpansionDrive/market-data-raw",
+    "exists": true,
+    "measured_at_utc": "2026-09-22T09:55:22Z",
+    "top_level": [
+      ".DS_Store",
+      "_meta",
+      "_tools",
+      "alternative_me",
+      "binance",
+      "cboe",
+      "cftc",
+      "coinmetrics",
+      "deribit",
+      "fama_french",
+      "fred"
+    ],
+    "dataset_dirs": 104,
+    "file_count": 6401,
+    "files_per_top_level_group": {
+      "alternative_me": 1,
+      "binance": 6303,
+      "cboe": 5,
+      "cftc": 3,
+      "coinmetrics": 38,
+      "deribit": 14,
+      "fama_french": 10,
+      "fred": 27
+    },
+    "rows_sampled": 11285,
+    "read_errors": [],
+    "field_universe": [
+      "ask_price",
+      "asset",
+      "base_currency",
+      "bid_price",
+      "close",
+      "close_time_ms",
+      "columns",
+      "contract_market_code",
+      "currency",
+      "current_funding",
+      "date",
+      "estimated_delivery_price",
+      "factor_set",
+      "factor_values",
+      "frequency",
+      "funding_8h",
+      "funding_price_source",
+      "funding_rate",
+      "funding_time_ms",
+      "high",
+      "index_price",
+      "instrument_name",
+      "interest_1h",
+      "interest_8h",
+      "interest_rate",
+      "kind",
+      "label",
+      "last",
+      "low",
+      "mark_iv",
+      "mark_price",
+      "market",
+      "market_type",
+      "methodology",
+      "metric",
+      "mid_price",
+      "open",
+      "open_interest",
+      "open_time_ms",
+      "period",
+      "price_change",
+      "quote_currency",
+      "rate_type",
+      "report_date",
+      "report_type",
+      "series",
+      "series_id",
+      "snapshot_date",
+      "source",
+      "source_endpoint",
+      "source_url",
+      "symbol",
+      "time",
+      "timestamp",
+      "truth_status",
+      "underlying_index",
+      "underlying_price",
+      "unit",
+      "value",
+      "value_classification",
+      "venue",
+      "volume",
+      "volume_notional",
+      "volume_usd"
+    ],
+    "path_probe_hits": {
+      "dex_pool": [],
+      "dex_swap_event": [],
+      "orderbook_depth": []
+    },
+    "schema_dataset_sections": [
+      "Dataset: klines (Binance USD-M perpetual futures, UTC)",
+      "Dataset: funding",
+      "Dataset: instruments",
+      "Dataset: mark/index/premium klines (Binance USD-M derivatives)",
+      "Dataset: spot klines (Binance spot, UTC)",
+      "Dataset: CBOE VIX daily",
+      "Dataset: Deribit DVOL",
+      "Dataset: FRED macro series",
+      "Dataset: CBOE volatility family",
+      "Dataset: Alternative.me Fear & Greed Index",
+      "Dataset: Coin Metrics Community asset metrics",
+      "Dataset: CFTC Commitments of Traders",
+      "Dataset: Kenneth French factor tables",
+      "Dataset: Deribit derivatives"
+    ],
+    "schema_has_orderbook_dataset": false,
+    "schema_orderbook_sections": [],
+    "schema_has_dex_dataset": false,
+    "schema_dex_sections": [],
+    "classified_datasets": [
+      {
+        "rel_dir": "alternative_me/FGI_DAILY",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "open_time_ms",
+          "source",
+          "source_url",
+          "timestamp",
+          "truth_status",
+          "value",
+          "value_classification"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BNBUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/BTCUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/ETHUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/spot/klines/SOLUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/funding/BNBUSDT",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/funding/BTCUSDT",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/funding/ETHUSDT",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/funding/SOLUSDT",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "funding_price_source",
+          "funding_rate",
+          "funding_time_ms",
+          "mark_price",
+          "market_type",
+          "rate_type",
+          "symbol",
+          "truth_status",
+          "venue"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/BNBUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/BNBUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/BTCUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/BTCUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/ETHUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/ETHUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/SOLUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/index/SOLUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BNBUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/BTCUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/ETHUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/15m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/1w",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/30m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/4h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/klines/SOLUSDT/5m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/BNBUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/BNBUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/BTCUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/BTCUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/ETHUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/ETHUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/SOLUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/mark/SOLUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/BNBUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/BNBUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/BTCUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/BTCUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/ETHUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/ETHUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/SOLUSDT/1d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "binance/usdm/premium/SOLUSDT/1h",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "close_time_ms",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "volume"
+        ]
+      },
+      {
+        "rel_dir": "cboe/skew",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "open_time_ms",
+          "series",
+          "source",
+          "source_url",
+          "truth_status",
+          "value"
+        ]
+      },
+      {
+        "rel_dir": "cboe/vix",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "methodology",
+          "open",
+          "open_time_ms",
+          "series",
+          "source"
+        ]
+      },
+      {
+        "rel_dir": "cboe/vix3m",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "series",
+          "source",
+          "source_url",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "cboe/vix9d",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "date",
+          "high",
+          "low",
+          "open",
+          "open_time_ms",
+          "series",
+          "source",
+          "source_url",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "cboe/vvix",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "open_time_ms",
+          "series",
+          "source",
+          "source_url",
+          "truth_status",
+          "value"
+        ]
+      },
+      {
+        "rel_dir": "cftc/cot/disaggregated",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "columns",
+          "contract_market_code",
+          "market",
+          "open_time_ms",
+          "report_date",
+          "report_type",
+          "source",
+          "source_url",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "cftc/cot/legacy",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "columns",
+          "contract_market_code",
+          "market",
+          "open_time_ms",
+          "report_date",
+          "report_type",
+          "source",
+          "source_url",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "cftc/cot/tff",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "columns",
+          "contract_market_code",
+          "market",
+          "open_time_ms",
+          "report_date",
+          "report_type",
+          "source",
+          "source_url",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "coinmetrics/community/asset_metrics/btc",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "asset",
+          "frequency",
+          "metric",
+          "open_time_ms",
+          "source",
+          "source_endpoint",
+          "time",
+          "truth_status",
+          "value"
+        ]
+      },
+      {
+        "rel_dir": "coinmetrics/community/asset_metrics/eth",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "asset",
+          "frequency",
+          "metric",
+          "open_time_ms",
+          "source",
+          "source_endpoint",
+          "time",
+          "truth_status",
+          "value"
+        ]
+      },
+      {
+        "rel_dir": "deribit/book_summary/BTC",
+        "classification": "top_of_book_summary",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [
+          "ask_price",
+          "bid_price",
+          "mid_price"
+        ],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "ask_price",
+          "base_currency",
+          "bid_price",
+          "currency",
+          "current_funding",
+          "estimated_delivery_price",
+          "funding_8h",
+          "high",
+          "instrument_name",
+          "interest_rate",
+          "kind",
+          "last",
+          "low",
+          "mark_iv",
+          "mark_price",
+          "mid_price",
+          "open_interest",
+          "price_change",
+          "quote_currency",
+          "snapshot_date",
+          "source",
+          "source_endpoint",
+          "truth_status",
+          "underlying_index",
+          "underlying_price",
+          "volume",
+          "volume_notional",
+          "volume_usd"
+        ]
+      },
+      {
+        "rel_dir": "deribit/book_summary/ETH",
+        "classification": "top_of_book_summary",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [
+          "ask_price",
+          "bid_price",
+          "mid_price"
+        ],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": true,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "ask_price",
+          "base_currency",
+          "bid_price",
+          "currency",
+          "current_funding",
+          "estimated_delivery_price",
+          "funding_8h",
+          "high",
+          "instrument_name",
+          "interest_rate",
+          "kind",
+          "last",
+          "low",
+          "mark_iv",
+          "mark_price",
+          "mid_price",
+          "open_interest",
+          "price_change",
+          "quote_currency",
+          "snapshot_date",
+          "source",
+          "source_endpoint",
+          "truth_status",
+          "underlying_index",
+          "underlying_price",
+          "volume",
+          "volume_notional",
+          "volume_usd"
+        ]
+      },
+      {
+        "rel_dir": "deribit/dvol/BTC",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "high",
+          "low",
+          "open",
+          "open_time_ms"
+        ]
+      },
+      {
+        "rel_dir": "deribit/dvol/ETH",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "close",
+          "high",
+          "low",
+          "open",
+          "open_time_ms"
+        ]
+      },
+      {
+        "rel_dir": "deribit/funding/BTC-PERPETUAL",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "index_price",
+          "instrument_name",
+          "interest_1h",
+          "interest_8h",
+          "open_time_ms",
+          "source",
+          "source_endpoint",
+          "timestamp",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "deribit/funding/ETH-PERPETUAL",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "index_price",
+          "instrument_name",
+          "interest_1h",
+          "interest_8h",
+          "open_time_ms",
+          "source",
+          "source_endpoint",
+          "timestamp",
+          "truth_status"
+        ]
+      },
+      {
+        "rel_dir": "fama_french/developed",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "factor_set",
+          "factor_values",
+          "frequency",
+          "market",
+          "open_time_ms",
+          "period",
+          "source",
+          "source_url",
+          "truth_status",
+          "unit"
+        ]
+      },
+      {
+        "rel_dir": "fama_french/us",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "factor_set",
+          "factor_values",
+          "frequency",
+          "market",
+          "open_time_ms",
+          "period",
+          "source",
+          "source_url",
+          "truth_status",
+          "unit"
+        ]
+      },
+      {
+        "rel_dir": "fred/macro",
+        "classification": "bar_or_series",
+        "is_l2_depth_surface": false,
+        "is_pool_reserve_surface": false,
+        "is_swap_event_surface": false,
+        "depth_ladder_fields": [],
+        "depth_size_fields": [],
+        "top_of_book_fields": [],
+        "reserve_fields": [],
+        "swap_fields": [],
+        "has_volume_field": false,
+        "path_token_hits": {
+          "exact": [],
+          "substring": []
+        },
+        "row_keys": [
+          "date",
+          "label",
+          "open_time_ms",
+          "series_id",
+          "source",
+          "source_url",
+          "truth_status",
+          "unit",
+          "value"
+        ]
+      }
+    ],
+    "pool_reserve_surface_dirs": [],
+    "l2_depth_surface_dirs": [],
+    "swap_event_dirs": [],
+    "top_of_book_summary_dirs": [
+      "deribit/book_summary/BTC",
+      "deribit/book_summary/ETH"
+    ],
+    "liquidity_surface_dirs": [],
+    "venues_with_liquidity": [],
+    "deribit_book_summary_probe": {
+      "present": true,
+      "files": 8,
+      "snapshot_dates": [
+        "2026-09-21",
+        "2026-09-22"
+      ],
+      "fields_union": [
+        "ask_price",
+        "base_currency",
+        "bid_price",
+        "currency",
+        "current_funding",
+        "estimated_delivery_price",
+        "funding_8h",
+        "high",
+        "instrument_name",
+        "interest_rate",
+        "kind",
+        "last",
+        "low",
+        "mark_iv",
+        "mark_price",
+        "mid_price",
+        "open_interest",
+        "price_change",
+        "quote_currency",
+        "snapshot_date",
+        "source",
+        "source_endpoint",
+        "truth_status",
+        "underlying_index",
+        "underlying_price",
+        "volume",
+        "volume_notional",
+        "volume_usd"
+      ],
+      "has_size_at_level": false,
+      "has_level_ladder": false,
+      "rows_sampled": 128,
+      "note": "best bid/ask price only, no size-at-level and no ladder; 2 snapshot date(s) only - cannot identify the empirical slope |x~*'(Q)|",
+      "file_list": [
+        "deribit/book_summary/BTC/2026-09-21-future.jsonl.gz",
+        "deribit/book_summary/BTC/2026-09-21-option.jsonl.gz",
+        "deribit/book_summary/BTC/2026-09-22-future.jsonl.gz",
+        "deribit/book_summary/BTC/2026-09-22-option.jsonl.gz",
+        "deribit/book_summary/ETH/2026-09-21-future.jsonl.gz",
+        "deribit/book_summary/ETH/2026-09-21-option.jsonl.gz",
+        "deribit/book_summary/ETH/2026-09-22-future.jsonl.gz",
+        "deribit/book_summary/ETH/2026-09-22-option.jsonl.gz"
+      ],
+      "is_l2_depth_surface": false
+    },
+    "price_markets": {
+      "binance/spot": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ],
+      "binance/usdm": [
+        "BNBUSDT",
+        "BTCUSDT",
+        "ETHUSDT",
+        "SOLUSDT"
+      ]
+    },
+    "kline_intervals": [
+      "15m",
+      "1d",
+      "1h",
+      "1w",
+      "30m",
+      "4h",
+      "5m"
+    ],
+    "kline_row_keys": [
+      "close",
+      "close_time_ms",
+      "high",
+      "low",
+      "open",
+      "open_time_ms",
+      "volume"
+    ],
+    "core_signal_inputs": {
+      "two_venue_liquidity_curves": false,
+      "two_venue_price_series": true,
+      "realized_vol_rolling_1h": true,
+      "order_flow_split_rolling_24h_two_venue": false
+    },
+    "required_data_matrix": [
+      {
+        "item": "dex_pool_reserves_per_block",
+        "requirement": "full-depth pool reserves (x1,y1) and (x2,y2) sampled per block, on two venues",
+        "status": "ABSENT",
+        "measured": {
+          "pool_reserve_surface_dirs": [],
+          "required": ">= 2",
+          "count": 0
+        }
+      },
+      {
+        "item": "pool_invariants_K1_K2",
+        "requirement": "K = sqrt(x*y) derivable from per-block reserves",
+        "status": "ABSENT",
+        "measured": {
+          "derivation": "requires pool reserves",
+          "count": 0
+        }
+      },
+      {
+        "item": "dex_tick_level_swap_events",
+        "requirement": "tick-level swap events and transaction indices",
+        "status": "ABSENT",
+        "measured": {
+          "swap_event_dirs": [],
+          "count": 0
+        }
+      },
+      {
+        "item": "l2_orderbook_depth_around_mid",
+        "requirement": "L2 order book snapshots around mid-price to evaluate |x~*'(Q)|",
+        "status": "ABSENT",
+        "measured": {
+          "l2_depth_dirs": [],
+          "count": 0,
+          "top_of_book_summary_dirs": [
+            "deribit/book_summary/BTC",
+            "deribit/book_summary/ETH"
+          ],
+          "deribit_book_summary": {
+            "present": true,
+            "files": 8,
+            "snapshot_dates": [
+              "2026-09-21",
+              "2026-09-22"
+            ],
+            "fields_union": [
+              "ask_price",
+              "base_currency",
+              "bid_price",
+              "currency",
+              "current_funding",
+              "estimated_delivery_price",
+              "funding_8h",
+              "high",
+              "instrument_name",
+              "interest_rate",
+              "kind",
+              "last",
+              "low",
+              "mark_iv",
+              "mark_price",
+              "mid_price",
+              "open_interest",
+              "price_change",
+              "quote_currency",
+              "snapshot_date",
+              "source",
+              "source_endpoint",
+              "truth_status",
+              "underlying_index",
+              "underlying_price",
+              "volume",
+              "volume_notional",
+              "volume_usd"
+            ],
+            "has_size_at_level": false,
+            "has_level_ladder": false,
+            "rows_sampled": 128,
+            "note": "best bid/ask price only, no size-at-level and no ladder; 2 snapshot date(s) only - cannot identify the empirical slope |x~*'(Q)|",
+            "file_list": [
+              "deribit/book_summary/BTC/2026-09-21-future.jsonl.gz",
+              "deribit/book_summary/BTC/2026-09-21-option.jsonl.gz",
+              "deribit/book_summary/BTC/2026-09-22-future.jsonl.gz",
+              "deribit/book_summary/BTC/2026-09-22-option.jsonl.gz",
+              "deribit/book_summary/ETH/2026-09-21-future.jsonl.gz",
+              "deribit/book_summary/ETH/2026-09-21-option.jsonl.gz",
+              "deribit/book_summary/ETH/2026-09-22-future.jsonl.gz",
+              "deribit/book_summary/ETH/2026-09-22-option.jsonl.gz"
+            ],
+            "is_l2_depth_surface": false
+          }
+        }
+      },
+      {
+        "item": "two_venue_marginal_liquidity_curves",
+        "requirement": "L1 and L2 for the harmonic mean L1*L2/(L1+L2)",
+        "status": "ABSENT",
+        "measured": {
+          "liquidity_surface_dirs": [],
+          "venues_with_liquidity": [],
+          "required": ">= 2 venue/pool liquidity surfaces",
+          "count": 0
+        }
+      },
+      {
+        "item": "realized_vol_sigma_rolling_1h",
+        "requirement": "realized volatility via quadratic variation, rolling 1-hour windows",
+        "status": "PRESENT",
+        "measured": {
+          "kline_intervals": [
+            "15m",
+            "1d",
+            "1h",
+            "1w",
+            "30m",
+            "4h",
+            "5m"
+          ],
+          "intraday_intervals_present": [
+            "15m",
+            "1h",
+            "30m",
+            "5m"
+          ]
+        }
+      },
+      {
+        "item": "order_flow_split_pi_rolling_24h_two_venue",
+        "requirement": "rolling 24-hour volume fractions across BOTH mechanism venues",
+        "status": "ABSENT",
+        "measured": {
+          "liquidity_surfaces_with_volume": [],
+          "required": ">= 2",
+          "count": 0,
+          "note": "bar volume exists on Binance spot and USD-M perp, but those are two markets of one operator, not the two mechanism venues; no DEX venue contributes any row"
+        }
+      }
+    ],
+    "required_data_available": false,
+    "core_signal_available": false,
+    "structural_fingerprint": "sha256:865a9713e9b31648a7959e460756f1e83fcd0452f3019ef45e4c0f6fd7423b53",
+    "determination": "PREREQUISITE_MISSING"
+  },
+  "host_wide_scan": {
+    "roots": [
+      "/Users/hong/workspace",
+      "/Volumes/ExpansionDrive",
+      "/Users/hong/.hermes/wiki/quant"
+    ],
+    "files_scanned": 41501,
+    "truncated": false,
+    "lexical_hits_total": 14,
+    "data_shaped_hits": [
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "data_shaped_candidate",
+        "characterisation": {
+          "bytes": 925,
+          "shape": "object",
+          "entries": 1,
+          "has_level_ladder": true,
+          "has_timestamp_series": false,
+          "venues": 1,
+          "reason": "single instantaneous snapshot of one venue at one timestamp; not a time series and not two venues | not usable: needs an L2 ladder over time on two venues",
+          "single_snapshot": true,
+          "usable_for_core_signal": false
+        }
+      }
+    ],
+    "data_shaped_hit_count": 1,
+    "data_shaped_hits_usable_for_core_signal": [],
+    "prose_or_non_market_hits": 13,
+    "prose_or_non_market_hit_sample": [
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "alpha-strategy-research/crypto-uniswap-v3-just-in-time-jit-liquidity-provision-price-impact-2026-09-01.md",
+        "matched_tokens": [
+          "uniswap"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "alpha-strategy-research/defi-ppo-active-liquidity-uniswap-v3-concentrated-range-2026-09-06.md",
+        "matched_tokens": [
+          "uniswap"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "alpha-strategy-research/hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "alpha-strategy-research/orderfusion-plus-intraday-electricity-buy-sell-price-trajectory-orderbook-dynamic-mask-2026-09-22.md",
+        "matched_tokens": [
+          "orderbook"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "alpha-strategy-research/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "hermes-remediation/apps/desktop/src/lib/markdown-html-depth.test.ts",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/workspace",
+        "relative": "hermes-remediation/apps/desktop/src/lib/markdown-html-depth.ts",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "relative": "qlib-results/_handoff/bodies/defi-ppo-active-liquidity-uniswap-v3-concentrated-range-2026-09-06.md",
+        "matched_tokens": [
+          "uniswap"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "relative": "qlib-results/_handoff/bodies/hyperliquid-ofi-depth-elasticity-nonlinear-v1.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Volumes/ExpansionDrive",
+        "relative": "qlib-results/_handoff/bodies/sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "relative": "defi-ppo-active-liquidity-uniswap-v3-concentrated-range-2026-09-06.md",
+        "matched_tokens": [
+          "uniswap"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "relative": "hyperliquid-perpetual-order-flow-imbalance-depth-elasticity-nonlinearity-2026-09-13.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      },
+      {
+        "root": "/Users/hong/.hermes/wiki/quant",
+        "relative": "sequential-lob-heavy-tailed-liquidity-crossover-depth-2026-09-02.md",
+        "matched_tokens": [
+          "depth"
+        ],
+        "classification": "prose_or_non_market_false_positive"
+      }
+    ],
+    "complete_core_surface_hits": [],
+    "note": "Host scan is disclosure-only and cannot promote non-canonical stores into canonical raw. A complete core surface would need two-venue pool reserves plus L2 depth for one token pair, not a lexical mention or an unrelated data file."
+  },
+  "run_checks": {
+    "overall": "PASS",
+    "checks": [
+      {
+        "id": "C1",
+        "status": "PASS",
+        "detail": "raw_root=/Volumes/ExpansionDrive/market-data-raw dataset_dirs=104 files=6401 rows_sampled=11285 groups={'alternative_me': 1, 'binance': 6303, 'cboe': 5, 'cftc': 3, 'coinmetrics': 38, 'deribit': 14, 'fama_french': 10, 'fred': 27}"
+      },
+      {
+        "id": "C2",
+        "status": "PASS",
+        "detail": "venue=BINANCE market_type=usdm_perp symbols=['BNBUSDT', 'BTCUSDT', 'ETHUSDT', 'SOLUSDT']"
+      },
+      {
+        "id": "C3",
+        "status": "PASS",
+        "detail": "intervals=['15m', '1d', '1h', '1w', '30m', '4h', '5m'] row_keys=['close', 'close_time_ms', 'high', 'low', 'open', 'open_time_ms', 'volume'] (OHLCV only: no depth, no quote_volume, no trade count)"
+      },
+      {
+        "id": "C4",
+        "status": "PASS",
+        "detail": "reserve=[] depth=[] swap=[] top_of_book=['deribit/book_summary/BTC', 'deribit/book_summary/ETH']"
+      },
+      {
+        "id": "C5",
+        "status": "PASS",
+        "detail": "path_probe_hits={'dex_pool': [], 'dex_swap_event': [], 'orderbook_depth': []}"
+      },
+      {
+        "id": "C6",
+        "status": "PASS",
+        "detail": "schema sections=['Dataset: klines (Binance USD-M perpetual futures, UTC)', 'Dataset: funding', 'Dataset: instruments', 'Dataset: mark/index/premium klines (Binance USD-M derivatives)', 'Dataset: spot klines (Binance spot, UTC)', 'Dataset: CBOE VIX daily', 'Dataset: Deribit DVOL', 'Dataset: FRED macro series', 'Dataset: CBOE volatility family', 'Dataset: Alternative.me Fear & Greed Index', 'Dataset: Coin Metrics Community asset metrics', 'Dataset: CFTC Commitments of Traders', 'Dataset: Kenneth French factor tables', 'Dataset: Deribit derivatives']"
+      },
+      {
+        "id": "C7",
+        "status": "PASS",
+        "detail": "deribit book_summary files=8 dates=['2026-09-21', '2026-09-22'] has_size_at_level=False has_ladder=False note=\"best bid/ask price only, no size-at-level and no ladder; 2 snapshot date(s) only - cannot identify the empirical slope |x~*'(Q)|\""
+      },
+      {
+        "id": "C8",
+        "status": "PASS",
+        "detail": "core_signal_available=False inputs={'two_venue_liquidity_curves': False, 'two_venue_price_series': True, 'realized_vol_rolling_1h': True, 'order_flow_split_rolling_24h_two_venue': False} statuses={'dex_pool_reserves_per_block': 'ABSENT', 'pool_invariants_K1_K2': 'ABSENT', 'dex_tick_level_swap_events': 'ABSENT', 'l2_orderbook_depth_around_mid': 'ABSENT', 'two_venue_marginal_liquidity_curves': 'ABSENT', 'realized_vol_sigma_rolling_1h': 'PRESENT', 'order_flow_split_pi_rolling_24h_two_venue': 'ABSENT'}"
+      },
+      {
+        "id": "C9",
+        "status": "PASS",
+        "detail": "structural_fingerprint=sha256:865a9713e9b31648a7959e460756f1e83fcd0452f3019ef45e4c0f6fd7423b53 recompute=sha256:865a9713e9b31648a7959e460756f1e83fcd0452f3019ef45e4c0f6fd7423b53"
+      },
+      {
+        "id": "C10",
+        "status": "PASS",
+        "detail": "host_files=41501 lexical_hits=14 data_shaped=1 prose=13 usable=0 truncated=False detail=[{'root': '/Users/hong/workspace', 'relative': 'phase12-l2-l3-execution-tca/raw/binance_futures_depth_btcusdt_limit20.json', 'classification': 'data_shaped_candidate', 'characterisation': {'bytes': 925, 'shape': 'object', 'entries': 1, 'has_level_ladder': True, 'has_timestamp_series': False, 'venues': 1, 'reason': 'single instantaneous snapshot of one venue at one timestamp; not a time series and not two venues | not usable: needs an L2 ladder over time on two venues', 'single_snapshot': True, 'usable_for_core_signal': False}}]"
+      },
+      {
+        "id": "C11",
+        "status": "PASS",
+        "detail": "local_eligible_universe=[] cohorts_if_computable=28 shrunk=False substitute=False"
+      },
+      {
+        "id": "C12",
+        "status": "PASS",
+        "detail": "grid=48 exact_cartesian=True base_quote=1000/PROJECT_PRE_REGISTERED_CONSTANT statuses={'spacing_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'size_multiplier': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'breakeven_tp_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN', 'invalidation_pct': 'PROJECT_PRE_REGISTERED_SEARCH_DOMAIN'}"
+      },
+      {
+        "id": "C13",
+        "status": "PASS",
+        "detail": "family task=t_5f96962c fingerprint=sha256:8d1217246ad77a08069632d12a0625ddf7f77308f83c9340796213a5639ccfaf parent=None"
+      },
+      {
+        "id": "C14",
+        "status": "PASS",
+        "detail": "excerpt_count=23 problems=[]"
+      },
+      {
+        "id": "C15",
+        "status": "PASS",
+        "detail": "in_sample={'start': '2022-01-01', 'end': '2025-09-30', 'source': 'card body; frozen before computation'} oos={'start': '2025-10-01', 'end': '2026-09-11', 'source': 'card body; frozen before computation'} phase_grids=10"
+      },
+      {
+        "id": "C16",
+        "status": "PASS",
+        "detail": "items=2 status=NOT_EXECUTED_PREREQUISITE_MISSING lowered=False removed=False"
+      },
+      {
+        "id": "C17",
+        "status": "PASS",
+        "detail": "attempts_dir_exists=False sentinels=[] launch={'qlib_launched': False, 'launched': False, 'attempts': 0, 'attempts_launched': 0, 'run_specs': 0, 'run_spec': None, 'terminal_sentinels': 0, 'terminal_sentinel_paths': [], 'preflight': 'not evaluated: prerequisite gate terminalised before any run-spec or container launch', 'host_deploy': 'no runner deployed or pinned; launch never occurred'}"
+      },
+      {
+        "id": "C18",
+        "status": "PASS",
+        "detail": "verdict=TECHNICAL_INCOMPLETE claimable=False failure=card-local/data_window_invalid fingerprint_match=True attempts=0 yield=STOP_TECHNICAL_INCOMPLETE"
+      },
+      {
+        "id": "C19",
+        "status": "PASS",
+        "detail": "performance_claims=[] scientific_conclusion=NOT_EVALUATED"
+      }
+    ]
+  },
+  "self_test": {
+    "overall": "PASS",
+    "variants": [
+      {
+        "variant": "verdict_pass",
+        "refused": true
+      },
+      {
+        "variant": "performance_claimed",
+        "refused": true
+      },
+      {
+        "variant": "shared_layer",
+        "refused": true
+      },
+      {
+        "variant": "wrong_class",
+        "refused": true
+      },
+      {
+        "variant": "run_id_fabricated",
+        "refused": true
+      },
+      {
+        "variant": "core_signal_claimed_present",
+        "refused": true
+      },
+      {
+        "variant": "universe_shrunk",
+        "refused": true
+      },
+      {
+        "variant": "substitute_market",
+        "refused": true
+      },
+      {
+        "variant": "yield_continue",
+        "refused": true
+      },
+      {
+        "variant": "scientific_result_claimed",
+        "refused": true
+      }
+    ],
+    "note": "every tampered verdict copy is refused by the C18 predicate"
+  },
+  "fixture_control": {
+    "fixture_raw": "/var/folders/1p/pnkpmtl17vgfzw3t4yqgw28w0000gn/T/bl-fixture-raw-evacv3_8",
+    "flipped_to_present": true,
+    "overall": "PASS",
+    "detail": {
+      "core_signal_available": true,
+      "required_data_available": true,
+      "reserve_dirs": [
+        "dex/sushiswap/v2/pools/WETH-USDC",
+        "dex/uniswap/v2/events",
+        "dex/uniswap/v2/pools/WETH-USDC"
+      ],
+      "depth_dirs": [
+        "orderbook/depth/BTCUSDT"
+      ],
+      "swap_dirs": [
+        "dex/sushiswap/v2/pools/WETH-USDC",
+        "dex/uniswap/v2/events",
+        "dex/uniswap/v2/pools/WETH-USDC"
+      ],
+      "price_markets": {
+        "binance/spot": [
+          "BTCUSDT"
+        ],
+        "binance/usdm": [
+          "BTCUSDT"
+        ]
+      },
+      "inputs": {
+        "two_venue_liquidity_curves": true,
+        "two_venue_price_series": true,
+        "realized_vol_rolling_1h": true,
+        "order_flow_split_rolling_24h_two_venue": true
+      }
+    }
+  },
+  "terminal_artifacts": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01/rounds/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01-r1/round-spec.json",
+      "sha256": "sha256:9a135bc84fc867e6edcbb6c2278976ccf46e3509f9daf69e710917399cab9631",
+      "bytes": 49222
+    },
+    "verdict_json": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01/rounds/crypto-bounded-liquidity-lvr-harmonic-arbitrage-2026-09-01-r1/verdict.json",
+      "sha256": "sha256:fa25756309b94e0e5db05aaef8c553ee9dd61d290b0241a49eb1b2306c8cf24f",
+      "bytes": 7975
+    },
+    "round_directory_entries": [
+      "round-spec.json",
+      "verdict.json"
+    ],
+    "attempts_directory_exists": false,
+    "terminal_sentinels": []
+  },
+  "checker": {
+    "path": "/Users/hong/workspace/quant-runtime-pipeline/runtime/crypto_bounded_liquidity_lvr_harmonic_arbitrage_prerequisite_check.py",
+    "sha256": "sha256:24489ffd2c486851ebc71f0fbb5c05904387088e6417a91e92752578aac12065"
+  },
+  "contract_semantics": {
+    "prerequisite_missing_is_card_local": true,
+    "missing_prerequisite_is_not_scientific_rejection": true,
+    "local_universe_rule_applied": "no legal local universe can compute the harmonic-marginal-liquidity core signal because every depth/reserve surface is absent; therefore no local full backtest was authorized",
+    "block_reserved_for": "shared-layer failure or an unresolved contract/human decision; neither occurred"
+  },
+  "disclosures": [
+    "round-spec prerequisite_gate.lifecycle_footer_verbatim stores the production_handoff LIFECYCLE_FOOTER constant verbatim, which carries the two leading newlines of the marker; excerpt_source_map.footer.lifecycle_footer_verbatim records the card-body suffix slice. Both sha256 values are published in round-spec.json and both are verified here.",
+    "host_wide_scan is disclosure-only: lexical hits outside the canonical raw are never promoted into /data/raw, and none of them forms a two-venue depth/reserve surface for one token pair.",
+    "No attempt directory and no terminal sentinel exist, by design."
+  ]
+}
