@@ -96,11 +96,27 @@ CFTC legacy/TFF/disaggregated selected-market COT、Kenneth French US/developed
 3F/5F/momentum daily/monthly factors，以及 Deribit perpetual funding 與 current
 futures/options book-summary snapshots。
 
-`[C]` 每個 provider row 必須保留 source identity/provenance 與 `truth_status`；不得由
-FGI/COT/factor/IV/OI/macro 欄位在 raw layer 偷算或補造不存在的觀測。CFTC 的 long/short/
+`[C]` Common Data Pack 是**高復用回測原料庫**，不是 data-governance platform。官方 API／
+官方下載優先；來源透明、維護可靠、授權與原始資料可追溯的權威 GitHub 專案或成熟
+adapter／distribution 也可作資料取得管道，但不因此成為 production framework、runtime
+dependency 或第二套資料管線。
+
+`[C]` provenance 依資料結構分級：homogeneous single-source dataset 只需 dataset／provider
+層級 metadata 可追溯；row-level `source`／`truth_status` 只有在來源／真值語意會逐 observation
+改變，或策略科學正確性確實需要時才是必要欄位。單純缺少重複 row-level metadata 屬
+**non-blocking hygiene**，不得阻擋不相關策略、不得據此重寫已落地 raw、不得形成 human gate。
+不得由 FGI/COT/factor/IV/OI/macro 欄位在 raw layer 偷算或補造不存在的觀測；CFTC 的 long/short/
 spread 欄位保留於 `columns`；Fama-French `-99.99` 只轉成 JSON null；Coin Metrics
 catalog-v2 404 時只能使用已驗證的 explicit timeseries endpoint；Deribit options
 snapshot 不得宣稱完整歷史 backfill。
+
+`[C]` Common Data Pack 的完成定義只有：①高復用通用資料已落地；②基本完整性、coverage、
+可讀性與時間對齊合理；③掛入同一支 `_tools/market_data_sync.py`；④由同一個 launchd
+`ai.marketdata.raw-sync` 每日統一補資料。達成即 DONE，不新增其他 gate。candidate 的
+data readiness 只看該 candidate 核心 signal／mechanism 所需資料是否存在、真實且可合法對齊／
+計算；其他 dataset 的 hygiene finding 不得 block candidate。Common Data Pack v2 到此 freeze；
+之後只在出現明顯高復用的新共通資料時增補；tick／orderbook／full option-chain 等 heavy data
+維持 lazy／on-demand。
 
 `[V]` 初次匯入、第二次 up-to-date/incremental read-back、gzip deterministic write、
 duplicate-key 檢查與 provider failure 的非零 exit code 均已由 raw updater 實跑驗證；
