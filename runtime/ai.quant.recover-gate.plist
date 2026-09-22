@@ -7,10 +7,10 @@
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/python3</string>
-    <string>/Users/hong/workspace/quant-runtime-pipeline-n8n/runtime/recover_gate.py</string>
+    <string>/Users/hong/workspace/quant-runtime-pipeline/runtime/recover_gate.py</string>
   </array>
   <key>WorkingDirectory</key>
-  <string>/Users/hong/workspace/quant-runtime-pipeline-n8n</string>
+  <string>/Users/hong/workspace/quant-runtime-pipeline</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>HOME</key>

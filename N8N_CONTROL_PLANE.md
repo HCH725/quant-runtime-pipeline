@@ -227,12 +227,12 @@ Shadow workflow、Homepage、Research Scout。
 
 | 檔 | 角色 |
 |---|---|
-| `runtime/recover_gate.py` | 短命腳本，每次四步後退出：① 確保 Apple Container system running（bounded wait 120 s）→ ② 確保**既有** n8n container running（缺失＝fail closed 只記錄、**絕不自動建立／重建**）＋驗 `http://127.0.0.1:5678/healthz/readiness` = 200 → ③ 執行既有 `runtime/preflight.py --recover --json`（qlib-run 的 ExpansionDrive／system start／container start 與 image、version、raw、results 檢查維持 canonical，不在此重寫；qlib-run 缺失即 fail closed）→ ④ append 一行 log 後退出（rc 0＝健康、1＝任一 gate 失敗）。健康時為 no-op。 |
+| `runtime/recover_gate.py` | 短命腳本，每次四步後退出：① 確保 Apple Container system running（bounded wait 120 s）→ ② 確保**既有** n8n container running（缺失＝fail closed 只記錄、**絕不自動建立／重建**）＋驗 `http://127.0.0.1:5678/healthz/readiness` = 200 → ③ **只讀既有 qlib-run 狀態**（`container ls --all`，不開子程序）：system 本就 running 且 qlib-run running → 記 `qlib=already_running`、**不跑 preflight、不做 P1–P8**（健康 interval 是真 no-op）；只有 **qlib-run stopped** 或 **① 需要復原 container system** 才委派既有 `runtime/preflight.py --recover --json`（ExpansionDrive／system start／container start 與 image、version、raw、results 檢查維持 canonical，不在此重寫）；qlib-run 缺失即 fail closed 且**絕不委派**、絕不建立 → ④ append 一行 log 後退出（rc 0＝健康、1＝任一 gate 失敗）。健康時為 no-op。 |
 | `runtime/ai.quant.recover-gate.plist` | launchd：`RunAtLoad` ＋ `StartInterval 300`（**無常駐程序**）、絕對 PATH、WorkingDirectory 指本 repo；`plutil -lint` 通過後才複製到 `~/Library/LaunchAgents/ai.quant.recover-gate.plist`。 |
 
-- **Log**：`~/quant-dashboard/logs/recover_gate.log`，每次一行 `boot= system= n8n= qlib_preflight= rc= problems=`；超過 1 MiB 整檔截斷（刻意簡化，不做 rotation）。launchd stdout/stderr → `recover_gate.err.log`（平時 0 B）。
+- **Log**：`~/quant-dashboard/logs/recover_gate.log`，每次一行 `boot= system= n8n= qlib= rc= problems=`；`qlib=` 的值為 `already_running`（健康 no-op，未跑 preflight）、`preflight:PASS(…)`／`preflight:FAIL(…)`（委派既有 preflight --recover）或 `absent_fail_closed(…)`（fail closed，絕不建立）；超過 1 MiB 整檔截斷（刻意簡化，不做 rotation）。launchd stdout/stderr → `recover_gate.err.log`（平時 0 B）。
 - **非重疊**：單一非阻塞 lock 檔，interval 撞上前一輪時只記 `skipped=previous_run_still_active`。
-- **路徑注意**：本卡不 merge／不 push，故 plist 指向 feature worktree `…/quant-runtime-pipeline-n8n`；併回 main 後應改指 canonical repo 路徑。
+- **路徑注意**：本卡不 push origin（遠端 `origin/main` 動都不動），只把本地 canonical `main` fast-forward 到本 branch；plist 已改指 canonical repo `/Users/hong/workspace/quant-runtime-pipeline`（LaunchAgent 不再依賴暫存 feature worktree）。**殘留依賴（不在本卡範圍）**：n8n container 的 ro mount 仍把 feature worktree 掛成 `/host/workspace-ro/quant-runtime-pipeline-n8n`（shadow workflow 的 `SHADOW_GATE_DIR` 與 `tick_probe.js` 走該路徑）；改它＝重建 container（本卡明文禁止動 mount），故 worktree 與 feature branch 在稽核前都要留著。
 
 **驗證（2026-09-22 12:51–13:02 CST 實測；停機前兩次確認無 active Qlib backtest：qlib-run 內只有 PID 1 `sleep infinity`、唯一 `stage=RUNNING_QLIB` 的 `state.json` 是 9/14 已帶 `FAILED` sentinel 的舊 attempt、當日無任何 `run.log` 寫入）：**
 

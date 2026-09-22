@@ -9,10 +9,15 @@ does exactly four things, then exits:
   2. ensure the EXISTING n8n container is running — a missing container fails
      closed and is never created/rebuilt — and verify
      http://127.0.0.1:5678/healthz/readiness,
-  3. run runtime/preflight.py --recover --json so the canonical qlib-run recovery
+  3. inspect the EXISTING qlib-run state only (`container ls --all`, no
+     subprocess): when the container system was already running and qlib-run
+     is running, log qlib=already_running and skip preflight entirely — the
+     healthy interval is a cheap no-op, not a P1-P8 sweep every 5 minutes.
+     Only qlib-run stopped OR the container system having to be recovered in
+     step 1 delegates to the canonical runtime/preflight.py --recover --json
      (ExpansionDrive present, container system start, qlib-run start, image /
-     version / raw / results checks) stays in preflight.py instead of being
-     duplicated here — a missing qlib-run fails closed there,
+     version / raw / results checks stay in preflight.py instead of being
+     duplicated here); a missing qlib-run fails closed here, never created,
   4. append one line to LOG and exit (0 = healthy, 1 = any gate failed).
 
 Healthy runs change nothing (idempotent no-op).  No new daemon/service/DB/
@@ -31,6 +36,7 @@ if HERE not in sys.path:
 import preflight as pf  # noqa: E402  (canonical helpers: run/system_status/container_info/_wait_until)
 
 N8N = "n8n"
+QLIB = "qlib-run"
 READINESS = "http://127.0.0.1:5678/healthz/readiness"
 LOG = "/Users/hong/quant-dashboard/logs/recover_gate.log"
 LOCK = "/Users/hong/quant-dashboard/logs/recover_gate.lock"
@@ -110,10 +116,31 @@ def qlib_preflight():
         report.get("overall"), rc, actions, rec.get("fail_reason") or "-", failed)
 
 
+def qlib_gate(system, name=QLIB):
+    """(ok, logged_value): inspect EXISTING qlib-run state, delegate only if needed.
+
+    Healthy path = one `container ls --all` and out (no subprocess preflight, no
+    P1-P8 probes every interval).  Delegation to the canonical preflight happens
+    only when there is something to recover/validate: qlib-run stopped, or the
+    Apple Container system had to be recovered in ensure_system() above.
+    Absent qlib-run fails closed here — never auto-created, never delegated to
+    a recovery path that could be mistaken for permission to rebuild.
+    """
+    info, why = pf.container_info(name)
+    if info is None:
+        return False, "absent_fail_closed(%s)" % (why or "no detail")
+    if system == "running" and (info.get("status", {}).get("state") == "running"):
+        return True, "already_running"
+    rc, detail = qlib_preflight()
+    return (rc == 0 and detail.startswith("PASS")), "preflight:%s" % detail
+
+
 def main():
-    # argv[1] exists only so the fail-closed branch can be exercised without touching
-    # the real container (recovery self-test); launchd passes no arguments.
+    # argv exists only so the fail-closed branches can be exercised without touching
+    # the real containers (recovery self-test: n8n name, then qlib-run name);
+    # launchd passes no arguments.
     n8n_name = sys.argv[1] if len(sys.argv) > 1 else N8N
+    qlib_name = sys.argv[2] if len(sys.argv) > 2 else QLIB
     problems = []
     try:
         fh = open(LOCK, "a")
@@ -132,11 +159,11 @@ def main():
         n8n = ensure_n8n(n8n_name)
         if n8n not in ("running", "started", "already_running"):
             problems.append("n8n=%s" % n8n)
-        qlib_rc, qlib = qlib_preflight()
-        if qlib_rc != 0 or not qlib.startswith("PASS"):
-            problems.append("qlib_preflight=%s" % qlib)
+        qlib_ok, qlib = qlib_gate(system, qlib_name)
+        if not qlib_ok:
+            problems.append("qlib=%s" % qlib)
         rc = 1 if problems else 0
-        log("boot=%s system=%s n8n=%s qlib_preflight=%s rc=%d problems=%s" % (
+        log("boot=%s system=%s n8n=%s qlib=%s rc=%d problems=%s" % (
             pf.host_boot_id(), system, n8n, qlib, rc, ";".join(problems) or "-"))
         return rc
     except Exception as exc:  # keep the gate observable instead of dying silently
