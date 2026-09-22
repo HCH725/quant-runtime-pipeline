@@ -170,6 +170,27 @@ class Harness(unittest.TestCase):
         self.assertIn("Cohort: NEWUSDT / 5m", out)
         self.assertNotIn("OLDUSDT", out)
 
+    def test_missing_attempt_timestamps_order_rounds_by_numeric_ordinal(self):
+        first_round = self.family(round_id="fam-a-r9")
+        self.attempt(first_round, "fam-a-r9-u1", rows=900, created="", symbol="OLDUSDT")
+        second_round = self.family(round_id="fam-a-r10")
+        self.attempt(second_round, "fam-a-r10-u1", rows=100, created="", symbol="NEWUSDT")
+        out = self.snapshot()
+        self.assertIn("10.0% (100 / 1,000)", out)
+        self.assertIn("Cohort: NEWUSDT / 5m", out)
+        self.assertNotIn("OLDUSDT", out)
+
+    def test_equal_attempt_timestamps_order_rounds_by_numeric_ordinal(self):
+        stamp = "2026-09-14T00:00:00Z"
+        first_round = self.family(round_id="fam-a-r9")
+        self.attempt(first_round, "fam-a-r9-u1", rows=900, created=stamp, symbol="OLDUSDT")
+        second_round = self.family(round_id="fam-a-r10")
+        self.attempt(second_round, "fam-a-r10-u1", rows=100, created=stamp, symbol="NEWUSDT")
+        out = self.snapshot()
+        self.assertIn("10.0% (100 / 1,000)", out)
+        self.assertIn("Cohort: NEWUSDT / 5m", out)
+        self.assertNotIn("OLDUSDT", out)
+
     def test_no_attempt_yet_is_zero_percent(self):
         self.family()
         out = self.snapshot()

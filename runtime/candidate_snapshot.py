@@ -187,6 +187,17 @@ def published_steps(attempt):
     return None, None
 
 
+def round_ordinal(family_id, round_id):
+    """Numeric ``N`` from the contract's ``<family_id>-r<N>`` round ID, or None if malformed."""
+    prefix = "%s-r" % family_id
+    if not isinstance(round_id, str) or not round_id.startswith(prefix):
+        return None
+    ordinal = round_id[len(prefix):]
+    if not re.fullmatch(r"[1-9][0-9]*", ordinal):
+        return None
+    return int(ordinal)
+
+
 def progress(results_root, family_id):
     """(pct, done, total, stage, note, attempt, round_id) for the family's authoritative attempt."""
     rounds = [r for r in discover_rounds(results_root) if r[0] == family_id]
@@ -200,10 +211,13 @@ def progress(results_root, family_id):
         authoritative, _superseded, problem = select_authoritative(records)
         if problem or authoritative is None:
             return 0.0, 0, None, "unknown", "attempt selection ambiguous: %s" % (problem or "?"), None, None
+        ordinal = round_ordinal(family_id, round_id)
+        if ordinal is None:
+            return 0.0, 0, None, "unknown", "round selection ambiguous: malformed round_id %s" % round_id, None, None
         # ponytail: legacy attempts without timestamps use stable round/run identity, not wall-clock guesses.
         order_key = (authoritative.created_at is not None,
                      authoritative.created_at or datetime.datetime.min.replace(tzinfo=datetime.timezone.utc),
-                     round_id, authoritative.run_id)
+                     ordinal, authoritative.run_id)
         if best is None or order_key > best[0]:
             best = (order_key, authoritative, round_id)
     assert best is not None
