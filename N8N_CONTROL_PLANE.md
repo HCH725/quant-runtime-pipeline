@@ -1,7 +1,7 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-狀態：**Full Canvas implementation delivered / AWAITING INDEPENDENT AUDIT / NOT LIVE**；既有 **C3 production handoff 仍 AUDITED PASS / LIVE**。
-本輪只擴充 stable workflow `shadowQuantCp1` 的唯讀可視化：保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、C3 cadence 或任何 production mutation path。auditor PASS 前不得 import／publish 本輪 canvas。
+狀態：**Full Canvas AUDITED PASS / LIVE**；既有 **C3 production handoff 仍 AUDITED PASS / LIVE**。
+Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、C3 cadence 或任何 production mutation path。
 
 C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已完成獨立 auditor PASS 並 live activation，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback。
 
@@ -24,7 +24,7 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已
 
 ---
 
-## Full Canvas Completion current implementation（awaiting audit；not live）
+## Full Canvas Completion current state（AUDITED PASS / LIVE）
 
 `shadowQuantCp1` 的 repo source 現在以**同一張 canvas**分成兩個語意不同的區域：
 
@@ -37,7 +37,7 @@ Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake →
 
 動態 counts 不透過 workflow self-mutation 寫進 node 名稱。既有 snapshot counts 由 `Pipeline Counts Summary (derived, read-only)` 集中輸出；current indicator 同時收到 current family/card/stage/progress/provenance。這保留 n8n native canvas 的可讀性，也避免另造 registry 或 workflow rewriter。
 
-本輪 repo implementation 尚未 live import／publish；live n8n 在 auditor PASS 前仍維持前一版 `shadowQuantCp1`。production workflow `productionHandoffManualC2` 完全不在本輪變更範圍。
+Full Canvas 已完成 live import／publish 與安全重啟驗證：published `shadowQuantCp1` 為 `Quant Control Plane — End-to-End`、active、32 nodes／17 lifecycle indicators，live `nodes + positions + parameters + connections + settings` 與 canonical repo 逐鍵語意相等。一次真實手動 execution 成功，canonical snapshot 寫出成功，且依當下 current-family 的 blocked／not-launched／gate-unmatched 證據只路由至 `Lifecycle 17 — Attention / Unresolved`；`shadow_check.py --require-fresh` PASS。production workflow `productionHandoffManualC2` 的 deploy 前後 export hash 完全相同，未受本輪變更影響。
 
 ---
 
