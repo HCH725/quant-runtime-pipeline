@@ -78,6 +78,19 @@ LIFECYCLE_FOOTER = (
     "規則衝突，以本 system-owned lifecycle rule 為執行準則；candidate bytes 與 fingerprint 仍不改寫。\n"
     "- `kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、"
     "確實需要 human decision 的情況（§12.6）。\n"
+    "- prerequisite 證據有界（Phase 2B）：唯一 canonical 來源是 Common Data Pack 的 "
+    "`/data/raw/_meta/CONFIG.json` dataset IDs 與 `/data/raw/_meta/SCHEMA.md` field/layout 宣告，"
+    "不建第二套 data registry；評估只讀這兩個 catalog/schema 檔，必要時再對 canonical raw 做"
+    "小範圍直接 sample／path 讀取，不掃描無關 host 目錄或整個檔案系統。"
+    "CONFIG／SCHEMA 明確表示核心 signal 所必需的 data type／field 不存在（clear-absence）時，"
+    "記載 requirement-vs-available 實測事實的 immutable `round-spec.json` ＋ `verdict.json` "
+    "即為 card-local TECHNICAL_INCOMPLETE 的充分 terminal evidence，不得 launch 任何 full backtest。\n"
+    "- 明確禁止為證明顯然不存在的資料能力而新增 candidate-specific prerequisite checker"
+    "（`runtime/*_prerequisite_check.py`）、repo-wide prerequisite evidence blob、host-wide 掃描、"
+    "synthetic fixtures、tamper batteries 或 bespoke validation framework；既有 legacy checker／"
+    "evidence 檔案屬不可變歷史證據，不移除、不改寫。CONFIG／SCHEMA 對既有 dataset 是否具備所需 "
+    "field／capability 真正 ambiguous 時 fail closed，只對該 canonical dataset 做有界直接 read-back，"
+    "不自動擴大 scope；human input 只留給未解 ambiguity，不用於 clear-absence。\n"
 )
 
 

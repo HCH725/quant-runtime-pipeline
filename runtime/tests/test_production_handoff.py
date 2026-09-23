@@ -229,12 +229,39 @@ class TestAppend(Base):
         create = [c for c in self.fake.calls if c[4] == "create"][0]
         body = create[create.index("--body") + 1]
         self.assertTrue(body.startswith(V13_BODY), "candidate body must be preserved verbatim")
+        # Exact equality proves both halves at once: candidate bytes unchanged + one fixed footer.
+        self.assertEqual(body, V13_BODY + h.LIFECYCLE_FOOTER)
         self.assertIn("canonical local raw", body)
         self.assertIn("source-market exact-match", body)
         self.assertIn("symbols × timeframes × parameter domain × DCA execution × historical/OOS/robustness", body)
         self.assertIn("TECHNICAL_INCOMPLETE", body)
         self.assertIn("kanban_block", body)
         # The footer is system-owned chrome, never part of the candidate spec or its fingerprint.
+        self.assertEqual(json.loads((Path(self.root) / FAMILY_B / "family.json").read_text())
+                         ["semantic_fingerprint"], h.fingerprint(candidate()["fingerprint_input"]))
+
+    def test_footer_carries_the_bounded_prerequisite_evidence_rule(self):
+        """Phase 2B guardrail by subtraction: one bounded-evidence rule, no per-candidate checkers.
+
+        The rule lives only in the system-owned footer (contract 6.4): Common Data Pack CONFIG/SCHEMA
+        is the sole canonical evidence source, a clear absence is bounded to those files plus a small
+        canonical-raw sample, immutable round-spec + verdict are sufficient terminal evidence, and new
+        candidate-specific checker code / host-wide scans are prohibited. Candidate bytes and
+        fingerprint semantics stay untouched - the rule must not leak into the candidate spec.
+        """
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        for marker in ("_meta/CONFIG.json", "_meta/SCHEMA.md", "Common Data Pack",
+                       "round-spec.json", "verdict.json", "不得 launch 任何 full backtest",
+                       "runtime/*_prerequisite_check.py", "repo-wide prerequisite evidence blob",
+                       "host-wide", "synthetic fixtures", "tamper batteries",
+                       "fail closed", "read-back"):
+            self.assertIn(marker, h.LIFECYCLE_FOOTER, marker)
+        create = [c for c in self.fake.calls if c[4] == "create"][0]
+        body = create[create.index("--body") + 1]
+        # The new rule rides the footer only; candidate bytes/fingerprint input are unchanged.
+        self.assertEqual(body, V13_BODY + h.LIFECYCLE_FOOTER)
+        self.assertNotIn("runtime/*_prerequisite_check.py", V13_BODY)
         self.assertEqual(json.loads((Path(self.root) / FAMILY_B / "family.json").read_text())
                          ["semantic_fingerprint"], h.fingerprint(candidate()["fingerprint_input"]))
 
