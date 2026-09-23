@@ -287,6 +287,14 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "fenced_context"))
 
+    def test_hermes_read_unavailable_fails_closed_without_mutation(self):
+        """An unavailable board read holds this cadence without creating card or family state."""
+        h.sh = lambda cmd, timeout=0: (1, "", "kanban list unavailable")
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "board_unreadable"))
+        self.assertEqual(self.fake.actions(), [])
+        self.assertFalse((Path(self.root) / FAMILY_B).exists())
+
     def test_blocked_strategy_without_verdict_blocks_the_append(self):
         """A strategy card (canonical family.json ownership) parked in `blocked` with no round
         verdict is still a freeze/human gate (contract 12.5/12.6)."""

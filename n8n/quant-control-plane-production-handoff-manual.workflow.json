@@ -1,6 +1,6 @@
 {
   "id": "productionHandoffManualC2",
-  "name": "Quant Control Plane — Production Handoff (manual)",
+  "name": "Quant Control Plane — Production Handoff",
   "nodes": [
     {
       "parameters": {},
@@ -11,6 +11,26 @@
       "position": [
         0,
         0
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "5,35 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "b6e5a2f7-9d41-4c6b-8a30-5f2d7e1c9b04",
+      "name": "Schedule — production handoff :05/:35",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
       ]
     },
     {
@@ -30,6 +50,17 @@
   ],
   "connections": {
     "Manual Trigger — production handoff": {
+      "main": [
+        [
+          {
+            "node": "Invoke production_handoff_once through host bridge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule — production handoff :05/:35": {
       "main": [
         [
           {

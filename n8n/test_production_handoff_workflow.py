@@ -15,32 +15,56 @@ WORKFLOW_PATH = Path(__file__).with_name(
 
 
 class ProductionHandoffWorkflowContract(unittest.TestCase):
+    ACTION_NODE = "Invoke production_handoff_once through host bridge"
+    MANUAL_TRIGGER = "Manual Trigger — production handoff"
+    SCHEDULE_TRIGGER = "Schedule — production handoff :05/:35"
+
     @classmethod
     def setUpClass(cls):
         cls.workflow = json.loads(WORKFLOW_PATH.read_text(encoding="utf-8"))
         cls.nodes = cls.workflow["nodes"]
         cls.by_name = {node["name"]: node for node in cls.nodes}
         cls.command = cls.by_name[
-            "Invoke production_handoff_once through host bridge"
+            cls.ACTION_NODE
         ]["parameters"]["command"]
 
-    def test_is_a_separate_manual_only_workflow(self):
+    def test_has_manual_and_scheduled_triggers_for_the_same_action(self):
         self.assertEqual(self.workflow["id"], "productionHandoffManualC2")
         self.assertEqual(
-            self.workflow["name"], "Quant Control Plane — Production Handoff (manual)"
+            self.workflow["name"], "Quant Control Plane — Production Handoff"
         )
         self.assertFalse(self.workflow["active"])
         self.assertNotIn("credentials", self.workflow)
         self.assertEqual(
-            [node["type"] for node in self.nodes],
-            ["n8n-nodes-base.manualTrigger", "n8n-nodes-base.executeCommand"],
+            [node["name"] for node in self.nodes],
+            [self.MANUAL_TRIGGER, self.SCHEDULE_TRIGGER, self.ACTION_NODE],
         )
-        self.assertNotIn("n8n-nodes-base.scheduleTrigger", [node["type"] for node in self.nodes])
-        self.assertNotIn("n8n-nodes-base.webhook", [node["type"] for node in self.nodes])
         self.assertEqual(
-            self.workflow["connections"]["Manual Trigger — production handoff"]["main"][0][0]["node"],
-            "Invoke production_handoff_once through host bridge",
+            [node["type"] for node in self.nodes],
+            [
+                "n8n-nodes-base.manualTrigger",
+                "n8n-nodes-base.scheduleTrigger",
+                "n8n-nodes-base.executeCommand",
+            ],
         )
+        self.assertNotIn("n8n-nodes-base.webhook", [node["type"] for node in self.nodes])
+        self.assertFalse(
+            any(".ai" in node["type"] for node in self.nodes),
+        )
+        schedule = self.by_name[self.SCHEDULE_TRIGGER]
+        self.assertEqual(
+            schedule["parameters"]["rule"]["interval"],
+            [{"field": "cronExpression", "expression": "5,35 * * * *"}],
+        )
+        self.assertEqual(
+            set(self.workflow["connections"]),
+            {self.MANUAL_TRIGGER, self.SCHEDULE_TRIGGER},
+        )
+        for trigger in (self.MANUAL_TRIGGER, self.SCHEDULE_TRIGGER):
+            self.assertEqual(
+                self.workflow["connections"][trigger]["main"][0][0],
+                {"node": self.ACTION_NODE, "type": "main", "index": 0},
+            )
 
     def test_request_response_contract_is_fixed_and_bounded(self):
         command = self.command
@@ -66,6 +90,7 @@ class ProductionHandoffWorkflowContract(unittest.TestCase):
         self.assertNotIn("process.env", command)
         self.assertNotIn("child_process", command)
         self.assertNotIn("execSync", command)
+        self.assertIn('ACTION="production_handoff_once"', command)
 
     def test_atomic_publish_does_not_replace_existing_request(self):
         """The same-dir hard-link publish is atomic and no-overwrite."""
