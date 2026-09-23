@@ -179,20 +179,24 @@ class ShadowWorkflowContract(unittest.TestCase):
             ],
         }
 
-    def _build(self, snapshot):
+    def _build(self, snapshot, binary=None, include_binary=False):
         if self.node is None:
             self.skipTest("node is unavailable")
         payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+        binary_payload = json.dumps(binary, ensure_ascii=False, separators=(",", ":")) if binary is not None else "undefined"
         wrapper = (
             "(async()=>{const $input={first:()=>({json:"
             + payload
+            + ",binary:"
+            + binary_payload
             + "})};"
             + self.build_code
             + "})().then((value)=>process.stdout.write(JSON.stringify(value)))"
         )
         result = subprocess.run([self.node, "-e", wrapper], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(result.stdout)[0]["json"]
+        item = json.loads(result.stdout)[0]
+        return item if include_binary else item["json"]
 
     def test_current_stage_mapping_routes_exactly_one_indicator(self):
         expected = {
@@ -333,6 +337,44 @@ class ShadowWorkflowContract(unittest.TestCase):
         self.assertEqual(current["key"], "attention_unresolved")
         self.assertIsNone(current["source_token"])
         self.assertEqual(current["context"]["stage"], "BASELINE")
+
+    def test_derived_view_preserves_assembler_binary_for_snapshot_writer(self):
+        binary = {
+            "data": {
+                "data": "c2VudGluZWw=",
+                "fileName": "quant-control-plane-shadow.json",
+                "mimeType": "application/json",
+            }
+        }
+        result = self._build(self._fixture("RUNNING_QLIB"), binary, include_binary=True)
+        self.assertIn("binary", result)
+        self.assertIn("data", result["binary"])
+        self.assertEqual(result["binary"], binary)
+
+    def test_conflicting_current_family_tokens_route_attention(self):
+        snapshot = self._fixture("RUNNING_QLIB")
+        snapshot["counts"]["gate_record_matched_current_family"] = True
+        snapshot["topology"].append(
+            {
+                "stage": "data_preflight_gate",
+                "shadow_state": "TECHNICAL_INCOMPLETE",
+                "state_provenance": "verbatim matched gate verdict",
+                "observation": {"family_id": "family-x", "kanban_task_id": "t_x"},
+            }
+        )
+        result = self._build(snapshot)
+        current = result["lifecycle_view"]["current_stage"]
+        self.assertEqual(current["key"], "attention_unresolved")
+        self.assertIsNone(current["source_token"])
+        self.assertIn("conflicting current-family evidence", current["reason"])
+        self.assertEqual(
+            [item["token"] for item in result["lifecycle_view"]["evidence"]],
+            ["RUNNING_QLIB", "TECHNICAL_INCOMPLETE"],
+        )
+        self.assertEqual(current["context"]["current_family_id"], "family-x")
+        self.assertEqual(current["context"]["kanban_task_id"], "t_x")
+        self.assertEqual(current["context"]["stage"], "RUNNING_QLIB")
+        self.assertTrue(result["lifecycle_view"]["exact_one_current_stage"])
 
 
 if __name__ == "__main__":
