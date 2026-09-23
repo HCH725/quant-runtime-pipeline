@@ -256,6 +256,29 @@ Shadow workflow、Homepage、Research Scout。
 **Rollback（任一步都可獨立回退）**：`launchctl bootout gui/501/ai.quant.recover-gate` ＋ 刪除
 `~/Library/LaunchAgents/ai.quant.recover-gate.plist`（與 repo 內兩檔）；不影響任何容器與 pipeline 狀態。
 
+### 7.3 Host action bridge：`ai.quant.n8n-host-bridge`（Phase 2C1；2026-09-23 實測）
+
+n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑 → 一個 allowlist 動作 → 既有 scheduler wrapper。
+只有這三樣（一 script ＋ 一 plist ＋ focused tests），**不是** queue／service／daemon，**尚未**新增任何 mutating n8n workflow 節點。
+
+| 檔 | 角色 |
+|---|---|
+| `runtime/n8n_host_action_bridge.py` | 短命腳本：只讀固定 `…/n8n/files/control/production_handoff.request.json`、只寫同目錄固定 `production_handoff.response.json`（**路徑永不由 request 資料決定**）。claim 用**同目錄 per-PID `os.rename`**（同一 request 的多個 wake 恰一個贏，其餘 ENOENT no-op；per-PID 讓在途 run 的 claim 不會被下一個 request 摺掉）。request schema 只收 `quant-control-action/v1` ＋ `action=production_handoff_once` ＋ 非空 bounded `request_id`（≤128 字元、≤4096 bytes、**恰三鍵**）；malformed／non-object／oversize／多餘鍵／錯 schema／未知 action／壞 request_id 全部 fail-closed：寫 rejection response、**絕不**呼叫 host action。唯一放行的命令硬編碼為 `[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_production_handoff.py]`（既有 thin wrapper → runpy canonical `runtime/production_handoff.py`，不複製 handoff 邏輯），bounded timeout 600s、stdout/stderr 各 4096 bytes 截斷、子環境**新造**只含 `HOME`+`PATH`（不繼承、零 Hermes secret／fence var）。response 為 **非權威 read-back**（temp+rename 原子寫）：`schema/request_id/action/started_at_utc/finished_at_utc/exit_code/status/stdout/stderr`；claim 只在 response 寫出後清掉（寫不出 → 留存當證據）。exit：0＝no-op 或 action rc 0、1＝任何 rejection／action 失敗／timeout（fail closed）。 |
+| `runtime/ai.quant.n8n-host-bridge.plist` | launchd：**`WatchPaths` 指向精確 request 檔**、`RunAtLoad=false`、**無 `StartInterval`、無 `KeepAlive`**（事件喚醒、跑完即退）、`/opt/homebrew/bin/python3` 啟動；`plutil -lint` 通過後複製到 `~/Library/LaunchAgents/`（tests 全綠後才安裝）。stdout/stderr → `~/quant-dashboard/logs/n8n_host_action_bridge.err.log`。 |
+| `runtime/tests/test_n8n_host_action_bridge.py` | **20 checks**：exact wrapper command（stub runner，真實 wrapper 從未被測試執行）、minimal env、malformed/non-object/oversize/未知 action／錯 schema／多餘鍵／壞 request_id fail-closed、atomic claim（同目錄 per-PID、二度 claim no-op、他 PID orphan 不重讀）、重複 wake 不 double-run、bounded output、temp+rename 原子性 spy、request 竊路徑被拒、no-request no-op、action rc≠0／timeout 記錄、plist 契約（WatchPaths 精確路徑／RunAtLoad false／無 StartInterval／無 KeepAlive）。 |
+
+**Live validation（2026-09-23 10:46–10:48 CST；**4 個 invalid request create/delete 週期**，全程零真實 handoff——board 空、有效 action 可能 append，故只用 invalid action 證喚醒）：**
+
+1. **WatchPaths 可靠喚醒**：4 週期（wrong action／malformed JSON／wrong schema／wrong action）各於 **0.7s、0.7s、9.9s、0.49s** 內落地 response；每週期 request 檔被 claim 刪除後**下一個 create 仍可靠喚醒**（第 3 週期 9.9s 為與前一 claim 刪除事件引發的 no-op run 併發時的事件 coalescing，非丟失——settled 後第 4 週期回到 0.49s）；`launchctl print` `runs` 6、全部 rejection `last exit code = 1`（fail-closed）；no-op 無 request 直跑 `rc=0` 且 response 未動；`err.log` = 0 B。
+2. **零 mutation（前後逐項同值）**：board 257 卡（archived 160／done 96／running 1）、`candidates.json` sha256 `005c1c5d…` 不變、handoff cron `624d0be5b23c` 仍 **paused**、`container ls` 兩容器與 startedDate 不動、`control/` 最終只剩一個 `production_handoff.response.json`（request／claim／temp 全清）。
+3. **測試**：focused 20/20 OK ＋ runtime 全 **25 檔 507/507 OK**（同一 `/opt/homebrew/bin/python3` 3.14.6）＋ `git diff --check` 乾淨。
+
+**殘依賴（本卡範圍外，同 §7.2 先例）**：卡片限定只在 feature worktree 工作且不 push／不 merge，故已安裝 plist 的 script 路徑指向暫存 worktree `/…/.worktrees/phase2c-host-bridge/…`；**audit 通過、branch 正典化後必須 re-point 到 canonical repo**（與 recover-gate 當時相反方向的同一課題），屆時 `launchctl bootout` ＋ 重裝即可。
+
+**刻意不做**：無 queue／DB／socket server／HTTP daemon／SSH／credential store／新 cron／n8n DB 存取／request 內任意命令執行；未改 n8n workflow、Qlib、data、Scout、Intake、Homepage、reconciler/watchdog、candidate pool、contract 語意與 immutable artifacts。
+
+**Rollback（任一步都可獨立回退）**：`launchctl bootout gui/501/ai.quant.n8n-host-bridge` ＋ 刪除 `~/Library/LaunchAgents/ai.quant.n8n-host-bridge.plist`（與 repo 內三檔）＋ 可選 `rm /Users/hong/workspace/n8n/files/control/`；不影響任何容器、cron 與 pipeline 狀態。
+
 ## 8. 取樣節奏與儲存成本（實測）
 
 卡片允許「60s for observation **if safe**」。實測結果如下，因此 shadow-1 採 **900s（15 分鐘）**：

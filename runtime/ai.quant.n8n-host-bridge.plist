@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.quant.n8n-host-bridge</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/python3</string>
+    <string>/Users/hong/workspace/quant-runtime-pipeline/.worktrees/phase2c-host-bridge/runtime/n8n_host_action_bridge.py</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/hong/workspace/quant-runtime-pipeline/.worktrees/phase2c-host-bridge</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>/Users/hong</string>
+    <key>PATH</key>
+    <string>/Users/hong/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>WatchPaths</key>
+  <array>
+    <string>/Users/hong/workspace/n8n/files/control/production_handoff.request.json</string>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardOutPath</key>
+  <string>/Users/hong/quant-dashboard/logs/n8n_host_action_bridge.err.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/hong/quant-dashboard/logs/n8n_host_action_bridge.err.log</string>
+</dict>
+</plist>

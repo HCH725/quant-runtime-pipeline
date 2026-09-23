@@ -257,6 +257,8 @@ Homepage + Detail → Cloudflare Tunnel + Access → operator
    `--host-scripts <dir>` 或 `QLIB_HOST_SCRIPTS` 指定）。此步驟是可選的獨立檢查，不會被 repo clone 或任何排程自動觸發。
 8. `runtime/recover_gate.py` ＋ `runtime/ai.quant.recover-gate.plist` — 可選的 host 重啟復原 gate（n8n＋qlib-run，
    `RunAtLoad`＋`StartInterval 300`，語意與實測證據見 `N8N_CONTROL_PLANE.md` §7.2）。
+9. `runtime/n8n_host_action_bridge.py` ＋ `runtime/ai.quant.n8n-host-bridge.plist` — Phase 2C1 最小 n8n→host
+   動作橋（固定 request/response 路徑＋單一 allowlist 動作＋WatchPaths 喚醒，fail-closed；見 `N8N_CONTROL_PLANE.md` §7.3）。
 
 **執行環境限制（Contract §9.4，2026-09-13 實測）**：`runtime/reconcile.py` 的唯一變更動作是 `hermes kanban unblock`，
 而 Hermes 會拒絕來自 `HERMES_DELEGATED_CHILD_CONTEXT=1` context（delegate_task 子行程、kanban worker session，
