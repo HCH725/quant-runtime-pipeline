@@ -7,10 +7,10 @@
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/python3</string>
-    <string>/Users/hong/workspace/quant-runtime-pipeline/.worktrees/phase2c-host-bridge/runtime/n8n_host_action_bridge.py</string>
+    <string>/Users/hong/workspace/quant-runtime-pipeline/runtime/n8n_host_action_bridge.py</string>
   </array>
   <key>WorkingDirectory</key>
-  <string>/Users/hong/workspace/quant-runtime-pipeline/.worktrees/phase2c-host-bridge</string>
+  <string>/Users/hong/workspace/quant-runtime-pipeline</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>HOME</key>

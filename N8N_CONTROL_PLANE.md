@@ -275,7 +275,7 @@ n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑
 
 **Remediation revalidation（commit `b13c53f`）**：focused **27/27 OK**、runtime **514/514 OK**、`plutil -lint` 與 `git diff --check` 均通過；獨立 invalid request `audit-remediation-b13c53f` 經已安裝的 `WatchPaths` 於 **0.277 s** 落地 `rejected_unknown_action`，request／claim／temp 全清，Kanban DB 與 `_handoff/candidates.json` SHA-256 前後不變，launchd 該次 `last exit code = 1`。另直接 no-request 執行 `rc=0` 且 response SHA-256 不變；全程未執行 valid production handoff。
 
-**殘依賴（本卡範圍外，同 §7.2 先例）**：卡片限定只在 feature worktree 工作且不 push／不 merge，故已安裝 plist 的 script 路徑指向暫存 worktree `/…/.worktrees/phase2c-host-bridge/…`；**audit 通過、branch 正典化後必須 re-point 到 canonical repo**（與 recover-gate 當時相反方向的同一課題），屆時 `launchctl bootout` ＋ 重裝即可。
+**部署正典化（2026-09-23）**：本卡獨立 auditor PASS 後，tracked plist 與已安裝 LaunchAgent 的 script／WorkingDirectory 已 re-point 到 canonical repo `/Users/hong/workspace/quant-runtime-pipeline`；feature worktree 不再是 production dependency。正典化只替換部署路徑，不改 bridge 邏輯或 trust boundary。
 
 **刻意不做**：無 queue／DB／socket server／HTTP daemon／SSH／credential store／新 cron／n8n DB 存取／request 內任意命令執行；未改 n8n workflow、Qlib、data、Scout、Intake、Homepage、reconciler/watchdog、candidate pool、contract 語意與 immutable artifacts。
 
