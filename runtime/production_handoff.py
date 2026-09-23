@@ -20,9 +20,11 @@ work-order card in the same round. Duplicate / ambiguous / ineligible / incident
 -> fail-closed: no card, ONE finding line, no retry storm.
 
 Runtime guards (all objective, all from results-root artifacts):
-  * an ACTIVE attempt (non-terminal runtime evidence whose newest write is inside
-    ACTIVE_WINDOW_MINUTES) holds the pipeline: the next candidate is not launched while compute is
-    really running;
+  * the family's NEWEST attempt holds the pipeline while it is inside ACTIVE_WINDOW_MINUTES and either
+    has published no terminal sentinel (compute is really running) or the round verdict is still
+    missing (the round is not decided). A verdict is per ROUND (contract 7.3/9.4), so an earlier
+    round's terminal verdict never releases a family whose current round is still writing runtime
+    evidence;
   * a family registered less than LAUNCH_GRACE_MINUTES ago that has produced no runtime evidence
     yet is a launch in flight (the worker still has to publish its round/run specs) -> wait;
   * an unresolved canonical incident (its family/attempt carries no terminal evidence) still gates.
@@ -253,11 +255,15 @@ def runtime_state(results_root, family_id, family_doc, now=None):
     """One family's runtime state from artifacts only -> dict(family_id, verdict, attempt, activity,
     in_flight, why).
 
-    `in_flight` is the pipeline guard: the family still owes the pipeline something. Terminal
-    verdict -> done. Otherwise the newest attempt decides: fresh non-terminal runtime evidence means
-    compute is really running; a family that has produced no runtime evidence yet is a launch in
-    flight for LAUNCH_GRACE_MINUTES. Anything older than the windows is stale/abandoned and no longer
-    holds the pipeline (this is what keeps a blocked or dead card from freezing production).
+    `in_flight` is the pipeline guard: the family still owes the pipeline something. The newest
+    attempt decides first - a terminal verdict is per ROUND (contract 7.3/9.4), so an earlier round's
+    verdict must never release a family whose current round is still writing runtime evidence. Inside
+    ACTIVE_WINDOW_MINUTES the family holds while its newest attempt has published no terminal
+    sentinel (compute is really running) or while the round verdict is still missing (the round is
+    not decided). A family with no live attempt left is closed by its terminal verdict, and one that
+    has produced no runtime evidence yet is a launch in flight for LAUNCH_GRACE_MINUTES. Anything
+    outside those windows is stale/abandoned and no longer holds the pipeline (this is what keeps a
+    blocked or dead card from freezing production).
     """
     now = time.time() if now is None else now
     state = {"family_id": family_id, "verdict": None, "attempt": None, "activity": None,
@@ -267,11 +273,7 @@ def runtime_state(results_root, family_id, family_doc, now=None):
         state["in_flight"] = True  # fail-closed: an unreadable family is never skipped silently
         return state
 
-    verdict = family_verdict_token(results_root, family_id, family_doc)
-    state["verdict"] = verdict
-    if verdict:
-        state["why"] = "terminal verdict %s" % verdict
-        return state
+    state["verdict"] = verdict = family_verdict_token(results_root, family_id, family_doc)
 
     attempts = family_attempts(results_root, family_id)
     activity = [(attempt_activity(a) or 0.0, a) for a in attempts]
@@ -281,11 +283,28 @@ def runtime_state(results_root, family_id, family_doc, now=None):
         state["attempt"] = str(attempt)
         state["activity"] = stamp
         age_minutes = (now - stamp) / 60.0
-        state["in_flight"] = age_minutes <= ACTIVE_WINDOW_MINUTES
-        state["why"] = ("attempt %s last write %.0f min ago%s"
-                        % (attempt.name, age_minutes,
-                           "" if state["in_flight"] else " (stale: outside the %d min window)"
-                           % ACTIVE_WINDOW_MINUTES))
+        inside = age_minutes <= ACTIVE_WINDOW_MINUTES
+        # A published terminal sentinel (any of DONE/FAILED/INCOMPLETE) is the "run finished" signal
+        # here - the same one the snapshot's progress uses; strict parsability belongs to the incident
+        # gate (`clean_terminal`), not to this liveness heuristic.
+        terminals = [t for t in TERMINALS if (attempt / t).is_file()]
+        state["in_flight"] = inside and (not terminals or not verdict)
+        why = "attempt %s last write %.0f min ago" % (attempt.name, age_minutes)
+        if not inside:
+            why += " (stale: outside the %d min window)" % ACTIVE_WINDOW_MINUTES
+            if verdict:
+                why += " + terminal verdict %s" % verdict
+        elif not terminals:
+            why += " (no terminal sentinel: live compute)"
+        elif verdict:
+            why += " (terminal %s published + terminal verdict %s)" % (terminals[0], verdict)
+        else:
+            why += " (terminal %s published, round verdict still missing)" % terminals[0]
+        state["why"] = why
+        return state
+
+    if verdict:
+        state["why"] = "terminal verdict %s" % verdict
         return state
 
     registered = parse_utc(family_doc.get("created_at_utc"))

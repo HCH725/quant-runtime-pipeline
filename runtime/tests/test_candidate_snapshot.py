@@ -222,6 +222,22 @@ class Harness(unittest.TestCase):
         out = self.snapshot()
         self.assertIn(snap.CURRENT + "\nidle (no active runtime work)", out)
 
+    def test_follow_up_round_after_a_verdict_is_current(self):
+        # verdict.json is per ROUND (contract 7.3/9.4): r1 decided while r2 is writing runtime evidence
+        # is real current work, never `idle` (round-1 review defect).
+        round_id = self.family()
+        self.write("fam-a/rounds/%s/verdict.json" % round_id,
+                   {"family_id": "fam-a", "verdict": "PASS"})
+        self.attempt(round_id, "fam-a-r1-u1", rows=900, terminal="DONE", symbol="OLDUSDT")
+        self.family(round_id="fam-a-r2")
+        self.attempt("fam-a-r2", "fam-a-r2-u1", rows=100, created="2026-09-14T01:00:00Z",
+                     symbol="NEWUSDT")
+        out = self.snapshot()
+        self.assertIn(snap.CURRENT + "\nfam-a", out)
+        self.assertIn("10.0% (100 / 1,000)", out)
+        self.assertIn("Cohort: NEWUSDT / 5m", out)
+        self.assertNotIn("OLDUSDT", out)
+
     def test_active_attempt_is_current(self):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=10)

@@ -10,8 +10,10 @@ without touching a real board or a real /results tree. Asserts the properties th
     one idempotent-by-family_id `create` carrying the candidate bytes verbatim plus the system-owned
     lifecycle footer (contract 6.4: a prerequisite-missing TECHNICAL_INCOMPLETE terminal satisfies the
     card goal) and no `--parent` edge;
-  * real runtime evidence holds the pipeline (no duplicate launch); stale evidence and registered-but-
-    never-launched families do not; a terminal verdict releases the family;
+  * real runtime evidence holds the pipeline (no duplicate launch) - including a live follow-up round
+    of a family whose earlier round already carries a terminal verdict, because verdict.json is per
+    ROUND (contract 7.3/9.4); stale evidence and registered-but-never-launched families do not, and a
+    terminal verdict releases only a family whose newest attempt is not live;
   * every ambiguous state is fail-closed with no dispatch, and a dispatch failure never rewinds the
     canonical advance.
 
@@ -106,7 +108,8 @@ class Base(unittest.TestCase):
 
     # --- fixture helpers -------------------------------------------------
     def _write_family(self, family, task_id="t_x", fingerprint_hex=None, created=None,
-                      with_attempt=False, attempt_age_minutes=0, terminal=None, verdict=None):
+                      with_attempt=False, attempt_age_minutes=0, terminal=None, verdict=None,
+                      attempt_round=None):
         d = Path(self.root) / family
         d.mkdir(parents=True, exist_ok=True)
         doc = {"schema_version": 1, "family_id": family, "kanban_task_id": task_id,
@@ -116,14 +119,15 @@ class Base(unittest.TestCase):
             doc["semantic_fingerprint"] = fingerprint_hex
         (d / "family.json").write_text(json.dumps(doc))
         if with_attempt:
-            self._write_attempt(family, age_minutes=attempt_age_minutes, terminal=terminal)
+            self._write_attempt(family, age_minutes=attempt_age_minutes, terminal=terminal,
+                                round_id=attempt_round)
         if verdict:
             self._write_verdict(family, verdict)
         return family
 
-    def _write_attempt(self, family, run_id=None, age_minutes=0, terminal=None):
+    def _write_attempt(self, family, run_id=None, age_minutes=0, terminal=None, round_id=None):
         """An attempt dir with a run-spec; `age_minutes` backdates every mtime (stale evidence)."""
-        round_id = family + "-r1"
+        round_id = round_id or family + "-r1"
         run_id = run_id or round_id + "-u1"
         base = Path(self.root) / family / "rounds" / round_id / "attempts" / run_id
         base.mkdir(parents=True, exist_ok=True)
@@ -238,13 +242,51 @@ class TestAdvance(Base):
         self.assertIn("launch grace", res.reason)
         self.assertEqual(self.fake.calls, [])
 
-    def test_terminal_verdict_releases_the_family(self):
-        # A contract-terminal verdict means the family owes the pipeline nothing - even with a fresh
-        # attempt directory lying around.
+    def test_terminal_verdict_cannot_release_a_live_attempt(self):
+        # Was `test_terminal_verdict_releases_the_family` (round-1 review defect): verdict.json is PER
+        # ROUND (contract 7.3/9.4), so a family whose newest attempt is still writing runtime evidence
+        # (no terminal sentinel, write inside the window) holds the pipeline even when a round of that
+        # family already carries a terminal verdict.
         self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1,
                            verdict="TECHNICAL_INCOMPLETE")
         res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(res.detail["active_family"], FRESH)
+        self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_live_follow_up_round_holds_after_the_earlier_round_verdict(self):
+        # The reported defect shape: r1 is decided (verdict PASS) while r2 is writing runtime evidence
+        # right now - a multi-round follow-up is the normal live pattern, not a finished family.
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, verdict="PASS",
+                           attempt_round=FRESH + "-r2")
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(self.fake.calls, [])
+
+    def test_verdict_releases_a_family_whose_attempt_is_finished(self):
+        # Closed = a terminal verdict AND a newest attempt that published its terminal sentinel: the
+        # family owes the pipeline nothing, so the next candidate advances.
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, terminal="DONE",
+                           verdict="TECHNICAL_INCOMPLETE")
+        res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
+        self.assertEqual(res.family_id, FAMILY_B)
+
+    def test_stale_attempt_with_a_verdict_advances(self):
+        # A dead run never freezes the pipeline: outside the window the verdict closes the family.
+        self._write_family(STALE, with_attempt=True, attempt_age_minutes=360,
+                           verdict="TECHNICAL_INCOMPLETE")
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+
+    def test_finished_attempt_without_a_round_verdict_still_holds(self):
+        # The run finished but the round verdict is not written yet: the family still owes the round,
+        # so the next candidate waits (bounded by the 90-minute window).
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, terminal="DONE")
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(self.fake.calls, [])
 
     def test_non_terminal_verdict_token_cannot_bypass(self):
         # A non-terminal token is not a release: the family still holds the pipeline with its live run.

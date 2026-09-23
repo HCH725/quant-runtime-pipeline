@@ -11,9 +11,11 @@ watchdog's own state, passed through.
 
 Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the family whose authoritative attempt
 is *real active runtime work* (contract 14.4 runtime-evidence selection, shared with
-`production_handoff.runtime_state`: a non-terminal attempt whose newest write is inside the 90-minute
-window) - a registered-but-never-launched or stale family is NOT current, and with no active work at
-all the snapshot reports **idle** instead of showing the newest `family.json` as if it were running.
+`production_handoff.runtime_state`: a newest attempt inside the 90-minute window that either has
+published no terminal sentinel yet or belongs to a round whose verdict is still missing - verdict.json
+is per ROUND, so an earlier round's verdict never hides a live follow-up round) - a registered-but-never-
+launched, stale or finished family is NOT current, and with no active work at all the snapshot reports
+**idle** instead of showing the newest `family.json` as if it were running.
 That family's authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) gives the progress
 (round-spec `expected.expected_case_evaluations` as the denominator, and the larger of the streamed
 `grid_*.csv` row count and the engine's own `artifacts/progress.json` cohort / pair counter
@@ -100,10 +102,10 @@ def active_family(results_root, now=None):
     """The family that currently owes the pipeline real runtime work; None when the pipeline is idle.
 
     Contract 14.4 runtime-evidence selection, shared with `production_handoff.runtime_state` (never a
-    second calculation): current = a family whose newest attempt is non-terminal runtime evidence
-    inside the active window. A family that is merely registered - never launched, stale, or already
-    carrying a contract-terminal verdict - is NOT current, so `Current` can never present the newest
-    `family.json` as if it were running work.
+    second calculation): current = a family whose newest attempt is real runtime work inside the active
+    window - no terminal sentinel published yet, or a round verdict still missing. A family that is
+    merely registered (never launched), stale, or finished (terminal verdict plus a terminal sentinel)
+    is NOT current, so `Current` can never present the newest `family.json` as if it were running work.
     """
     best = None
     for family_id, doc in sorted(read_families(results_root).items()):
@@ -626,9 +628,9 @@ def dashboard_payload(results_root, now=None):
         "sources": {"results_root": results_root, "results_root_readable": root_present,
                     "leaderboard_as_of_utc": leaderboard_as_of,
                     "family_created_at_utc": (family or {}).get("created_at_utc"),
-                    "current_selection": ("contract 14.4 runtime evidence: newest non-terminal "
-                                          "attempt inside the %d-minute active window"
-                                          % ACTIVE_WINDOW_MINUTES)},
+                    "current_selection": ("contract 14.4 runtime evidence: newest attempt inside the "
+                                          "%d-minute active window with no terminal sentinel yet, or "
+                                          "no terminal round verdict" % ACTIVE_WINDOW_MINUTES)},
         "current": {"state": "running" if family_id else "idle",
                     "family_id": family_id,
                     "round_id": round_id,
