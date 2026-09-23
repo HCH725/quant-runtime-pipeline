@@ -18,11 +18,14 @@ import json
 import os
 import plistlib
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 RUNTIME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RUNTIME))
@@ -130,6 +133,30 @@ class BridgeCase(unittest.TestCase):
         self.assertEqual(resp["stdout"], "late-out")
         self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
 
+    def test_action_timeout_kills_descendant_process_group(self):
+        """A timed-out wrapper cannot leave a grandchild mutating host state later."""
+        marker = Path(self.tmp) / "descendant-marker"
+        grandchild = (
+            "from pathlib import Path; import time; "
+            f"p=Path({str(marker)!r}); p.write_text('ready'); "
+            "time.sleep(2); p.write_text('late')"
+        )
+        parent = (
+            "from pathlib import Path; import subprocess,sys,time\n"
+            f"subprocess.Popen([sys.executable, '-c', {grandchild!r}])\n"
+            f"p=Path({str(marker)!r}); deadline=time.time()+1.0\n"
+            "while not p.exists() and time.time() < deadline:\n"
+            "    time.sleep(0.01)\n"
+            "time.sleep(10)\n"
+        )
+        with self.assertRaises(subprocess.TimeoutExpired):
+            br._run_action([sys.executable, "-c", parent],
+                           {"PATH": os.environ.get("PATH", "")}, 1.5)
+        self.assertTrue(marker.exists(), "the regression child must have spawned its descendant")
+        time.sleep(2.5)
+        self.assertEqual(marker.read_text(encoding="utf-8"), "ready",
+                         "the descendant must die with the timed-out process group")
+
     # --- fail closed: malformed / unknown / oversize ---
     def test_malformed_json_fails_closed(self):
         self.put_request(b'{"schema": "quant-control-')
@@ -137,6 +164,46 @@ class BridgeCase(unittest.TestCase):
         self.assertEqual(self.calls, [], "malformed JSON must never invoke the action")
         self.assertEqual(self.response()["status"], "rejected_malformed_json")
         self.assertIsNone(self.response()["request_id"])
+
+    def test_invalid_utf8_fails_closed_and_cleans_claim(self):
+        self.put_request(b"\xff\xfe\xfd")
+        self.assertEqual(self.run_bridge(), 1)
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.response()["status"], "rejected_malformed_json")
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
+
+    def test_deep_json_recursion_fails_closed_and_cleans_claim(self):
+        nested = b"[" * 2000 + b"]" * 2000
+        self.assertLessEqual(len(nested), br.MAX_REQUEST_BYTES)
+        self.put_request(nested)
+        self.assertEqual(self.run_bridge(), 1)
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.response()["status"], "rejected_malformed_json")
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
+
+    def test_request_symlink_is_rejected_without_following_external_target(self):
+        outside = Path(self.tmp) / "outside-request.json"
+        outside.write_text(json.dumps(VALID), encoding="utf-8")
+        Path(br.REQUEST_PATH).symlink_to(outside)
+        self.assertEqual(self.run_bridge(), 1)
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.response()["status"], "rejected_non_regular_file")
+        self.assertEqual(outside.read_text(encoding="utf-8"), json.dumps(VALID))
+        self.assertFalse(os.path.lexists(br.REQUEST_PATH))
+        self.assertEqual(sorted(os.listdir(self.tmp)),
+                         ["outside-request.json", "production_handoff.response.json"])
+
+    def test_request_fifo_is_rejected_without_blocking(self):
+        if not hasattr(os, "mkfifo"):
+            self.skipTest("mkfifo is unavailable on this platform")
+        os.mkfifo(br.REQUEST_PATH)
+        started = time.monotonic()
+        self.assertEqual(self.run_bridge(), 1)
+        elapsed = time.monotonic() - started
+        self.assertLess(elapsed, 1.0, "FIFO input must not block the bridge")
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.response()["status"], "rejected_non_regular_file")
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
 
     def test_non_object_json_fails_closed(self):
         self.put_request(b'["quant-control-action/v1"]')
@@ -167,7 +234,7 @@ class BridgeCase(unittest.TestCase):
         self.assertFalse(os.path.exists("/tmp/evil.json"))
 
     def test_bad_request_id_fails_closed(self):
-        for bad in ("", "x" * (br.MAX_REQUEST_ID + 1), 42, None):
+        for bad in ("", "x" * (br.MAX_REQUEST_ID + 1), "\ud800", 42, None):
             with self.subTest(request_id=bad):
                 if os.path.exists(br.REQUEST_PATH):
                     os.remove(br.REQUEST_PATH)
@@ -227,23 +294,50 @@ class BridgeCase(unittest.TestCase):
         self.assertTrue(resp["stderr"].endswith("...[truncated]"))
 
     def test_response_is_atomic_temp_rename_no_partial_left(self):
-        """Response lands only via fixed-path temp+rename; no strays remain."""
+        """Response lands only via same-dir temp+rename; no strays remain."""
         real_replace = br.os.replace
         seen = []
 
         def spy(src, dst):
-            seen.append((os.path.basename(src), os.path.basename(dst)))
+            seen.append((src, dst))
             return real_replace(src, dst)
 
         br.os.replace = spy
         self.addCleanup(setattr, br.os, "replace", real_replace)
         self.put_request(VALID)
         self.assertEqual(self.run_bridge(), 0)
-        self.assertEqual(seen, [(os.path.basename(br.RESPONSE_PATH) + ".tmp.%d" % os.getpid(),
-                                 os.path.basename(br.RESPONSE_PATH))],
-                         "response must be written by temp+rename to the fixed path")
+        self.assertEqual(len(seen), 1)
+        src, dst = seen[0]
+        self.assertEqual(os.path.dirname(src), os.path.dirname(br.RESPONSE_PATH))
+        self.assertEqual(dst, br.RESPONSE_PATH)
+        self.assertNotEqual(src, dst)
         self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"],
                          "no temp/claim strays after a clean run")
+
+    def test_response_temp_collision_never_follows_symlink(self):
+        """A pre-existing temp symlink cannot redirect response bytes outside control/."""
+        outside = Path(self.tmp) / "outside-target"
+        outside.write_text("sentinel", encoding="utf-8")
+        first = "preexisting"
+        temp_link = Path(br.RESPONSE_PATH + ".tmp." + first)
+        temp_link.symlink_to(outside)
+        with patch.object(br.secrets, "token_hex", side_effect=[first, "fresh"]):
+            self.put_request(VALID)
+            self.assertEqual(self.run_bridge(), 0)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "sentinel")
+        self.assertTrue(temp_link.is_symlink(), "the pre-existing link must not be followed or removed")
+        self.assertTrue(stat.S_ISREG(os.lstat(br.RESPONSE_PATH).st_mode))
+        self.assertEqual(self.response()["status"], "ok")
+
+    def test_response_path_symlink_is_replaced_by_regular_file(self):
+        """Replacing the fixed response symlink must not write its external target."""
+        outside = Path(self.tmp) / "outside-target"
+        outside.write_text("sentinel", encoding="utf-8")
+        Path(br.RESPONSE_PATH).symlink_to(outside)
+        self.put_request(VALID)
+        self.assertEqual(self.run_bridge(), 0)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "sentinel")
+        self.assertTrue(stat.S_ISREG(os.lstat(br.RESPONSE_PATH).st_mode))
 
     def test_request_cannot_steal_paths(self):
         """Path-shaped fields are rejected, not honored; only fixed paths touched."""

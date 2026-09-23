@@ -25,8 +25,12 @@ semantics + evidence: N8N_CONTROL_PLANE.md section 7.3).
 Exit codes: 0 = no-op (no request) or action finished with rc 0; 1 = rejected
 request, action failure, action timeout, or internal error (fail closed).
 """
+import errno
 import json
 import os
+import secrets
+import signal
+import stat
 import subprocess
 import sys
 import time
@@ -107,25 +111,62 @@ def _claim():
 
 
 def _read_claim(claim_path):
-    """(bytes, reject_reason). Bounded read; oversize fails closed."""
-    with open(claim_path, "rb") as fh:
-        raw = fh.read(MAX_REQUEST_BYTES + 1)
+    """(bytes, reject_reason). Bounded read; reject non-regular files safely."""
+    try:
+        initial = os.lstat(claim_path)
+    except FileNotFoundError:
+        return b"", "error_internal"
+    except OSError:
+        return b"", "error_internal"
+    if stat.S_ISLNK(initial.st_mode) or not stat.S_ISREG(initial.st_mode):
+        return b"", "rejected_non_regular_file"
+
+    flags = os.O_RDONLY | os.O_NONBLOCK
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    flags |= getattr(os, "O_CLOEXEC", 0)
+    fd = -1
+    try:
+        fd = os.open(claim_path, flags)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            return b"", "rejected_non_regular_file"
+        return b"", "error_internal"
+    try:
+        current = os.fstat(fd)
+        if not stat.S_ISREG(current.st_mode):
+            return b"", "rejected_non_regular_file"
+        with os.fdopen(fd, "rb", closefd=True) as fh:
+            fd = -1
+            raw = fh.read(MAX_REQUEST_BYTES + 1)
+    except OSError:
+        return b"", "error_internal"
+    finally:
+        if fd != -1:
+            os.close(fd)
     if len(raw) > MAX_REQUEST_BYTES:
         return b"", "rejected_oversize"
     return raw, None
+
+
+def _valid_request_id(value):
+    return (
+        isinstance(value, str)
+        and 0 < len(value) <= MAX_REQUEST_ID
+        and all(not 0xD800 <= ord(char) <= 0xDFFF for char in value)
+    )
 
 
 def _validate(raw):
     """(reject_reason, request_id, action). reason None = accepted."""
     try:
         data = json.loads(raw.decode("utf-8"))
-    except (ValueError, UnicodeDecodeError):
+    except (ValueError, UnicodeError, RecursionError):
         return "rejected_malformed_json", None, None
     if not isinstance(data, dict):
         # Well-formed JSON that is not the schema object is still malformed for us.
         return "rejected_malformed_json", None, None
     rid = data.get("request_id")
-    rid_ok = isinstance(rid, str) and 0 < len(rid) <= MAX_REQUEST_ID
+    rid_ok = _valid_request_id(rid)
     act = data.get("action")
     act_echo = _clip_chars(act, MAX_ECHO) if isinstance(act, str) else None
     rid_echo = rid if rid_ok else None
@@ -141,11 +182,32 @@ def _validate(raw):
 
 
 def _run_action(cmd, env, timeout):
-    proc = subprocess.run(
-        cmd, env=env, timeout=timeout, stdin=subprocess.DEVNULL,
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    proc = subprocess.Popen(
+        cmd, env=env, stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, encoding="utf-8", errors="replace",
+        start_new_session=True,
     )
-    return proc.returncode, proc.stdout or "", proc.stderr or ""
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        # The wrapper may spawn hermes/child processes. Kill the whole session,
+        # not only the direct wrapper, before producing the timeout response.
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass
+        out, err = proc.communicate()
+        if not out:
+            out = getattr(exc, "output", None)
+        if not err:
+            err = getattr(exc, "stderr", None)
+        raise subprocess.TimeoutExpired(cmd, timeout, output=out, stderr=err) from None
+    return proc.returncode, out or "", err or ""
 
 
 def _dispatch(runner, rid, act, started):
@@ -176,22 +238,67 @@ def _response(rid, act, started, exit_code, status, stdout, stderr):
     }
 
 
+def _open_response_temp():
+    """Create a same-directory response temp without following symlinks."""
+    directory = os.path.dirname(RESPONSE_PATH) or "."
+    basename = os.path.basename(RESPONSE_PATH)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    flags |= getattr(os, "O_CLOEXEC", 0)
+    for _ in range(32):
+        token = secrets.token_hex(8)
+        tmp = os.path.join(directory, basename + ".tmp." + token)
+        try:
+            return tmp, os.open(tmp, flags, 0o600)
+        except OSError as exc:
+            if exc.errno in (errno.EEXIST, errno.ELOOP):
+                continue
+            raise
+    raise FileExistsError("could not allocate a response temp path")
+
+
 def _write_response(payload):
     """Atomic temp+rename; a failed write never leaves a partial response behind."""
-    tmp = RESPONSE_PATH + ".tmp.%d" % os.getpid()
+    tmp = None
+    fd = None
     try:
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh, ensure_ascii=False, indent=2)
+        tmp, fd = _open_response_temp()
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fd = None
+            json.dump(payload, fh, ensure_ascii=True, indent=2)
             fh.write("\n")
             fh.flush()
             os.fsync(fh.fileno())
-        os.replace(tmp, RESPONSE_PATH)  # temp+rename
+        os.replace(tmp, RESPONSE_PATH)  # temp+rename; destination symlink is replaced
+        if not stat.S_ISREG(os.lstat(RESPONSE_PATH).st_mode):
+            raise OSError("response path is not a regular file")
     except Exception:
-        try:
-            os.remove(tmp)
-        except OSError:
-            pass
+        if fd is not None:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        if tmp is not None:
+            try:
+                os.unlink(tmp)
+            except FileNotFoundError:
+                pass
         raise
+
+
+def _remove_claim(claim_path):
+    """Remove only the claimed directory entry; never recursively delete."""
+    try:
+        claimed = os.lstat(claim_path)
+    except FileNotFoundError:
+        return
+    try:
+        if stat.S_ISDIR(claimed.st_mode) and not stat.S_ISLNK(claimed.st_mode):
+            os.rmdir(claim_path)
+        else:
+            os.unlink(claim_path)
+    except OSError:
+        pass
 
 
 def main(runner=None):
@@ -225,10 +332,7 @@ def main(runner=None):
         # read again - at most one stale file per crash can accumulate in control/,
         # there is deliberately no janitor (ceiling: crash rate; manual `rm` if ever needed).
         if written:
-            try:
-                os.remove(claim_path)
-            except FileNotFoundError:
-                pass
+            _remove_claim(claim_path)
     return 0 if ok else 1
 
 
