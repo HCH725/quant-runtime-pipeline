@@ -1,9 +1,9 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-狀態：**Full Canvas AUDITED PASS / LIVE**；既有 **C3 production handoff 仍 AUDITED PASS / LIVE**。
-Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、C3 cadence 或任何 production mutation path。
+狀態：**Full Canvas AUDITED PASS / LIVE**；既有 **C3 production handoff AUDITED PASS / LIVE**，本次 C3.1 新 cadence **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**。
+Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 只改 repo export 的目標 cadence，尚未部署。
 
-C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已完成獨立 auditor PASS 並 live activation，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback。
+C3 handoff workflow 仍是獨立、最小的 cadence 編排；既有 implementation 已完成獨立 auditor PASS 並 live activation，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback；本次 C3.1 新目標 `:05/:20/:35/:50` 尚未部署。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
@@ -11,20 +11,20 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已
 ## C3 current state（production handoff cadence）
 
 - workflow `productionHandoffManualC2` 保持 stable ID；功能節點恰為 **Manual Trigger + Schedule Trigger + 既有 host-bridge action**。
-  Schedule Trigger 的 exact cron 是 `5,35 * * * *`，Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
+  Schedule Trigger 的新目標 exact cron 是 `5,20,35,50 * * * *`（`:05/:20/:35/:50`）；目前 live deployment 仍是 `5,35 * * * *`，Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
   repo export 維持 `active=false`，因此本卡不會自行啟用 live cadence。
-- C3 已完成 activation，現在由 n8n 擁有 production handoff cadence；Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
+- 既有 C3 已完成 activation，現在由 n8n 擁有 production handoff cadence；本次 C3.1 repo 目標仍 **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**，Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
   n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 及既有 Hermes/Kanban kernel 負責。
 - Hermes／Kanban read-back unavailable 時，canonical handoff fail-closed：結果是 finding、**不建卡、不寫 family.json**；該 cadence operationally 轉為 **HOLD**，
-  下一個 `:05`／`:35` tick 自然重試。這裡不新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。
+  下一個 `:05`／`:20`／`:35`／`:50` tick 自然重試。這裡不新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。
 - 維護 SOP：先做 HOLD transition；乾淨停止 n8n，checkpoint／integrity check 並保留 known-good DB snapshot；reboot/update 與 login 後，
   由既有 `ai.quant.recover-gate` ＋ `ai.quant.n8n-host-bridge` LaunchAgent 復原；再做 readiness、Shadow、dry-run smoke，通過後繼續。**不新增 recovery service**。
 
 ## C4 current state（runtime reconciler cadence）
 
-- **IMPLEMENTED / AWAITING INDEPENDENT AUDIT / NOT LIVE**：新增 stable workflow `runtimeReconcilerC4`（`Quant Control Plane — Runtime Reconciler`），repo export `active=false`；功能節點恰為 Manual Trigger、Schedule Trigger 與單一 `runtime_reconcile_once` host-bridge action。Schedule exact cron 為 `6,21,36,51 * * * *`，沿用既有 container timezone（Asia/Taipei）。
+- **AUDITED PASS / LIVE**：stable workflow `runtimeReconcilerC4`（`Quant Control Plane — Runtime Reconciler`）的 repo export 維持 `active=false`，live deployment 以 Manual Trigger、Schedule Trigger 與單一 `runtime_reconcile_once` host-bridge action 運作；目前 live cadence 為 `6,21,36,51 * * * *`，沿用既有 container timezone（Asia/Taipei）。C4 automatic trigger 已於 2026-09-23 22:06 Asia/Taipei 成功觀測（execution 103、mode `trigger`、status `success`），前一拍為 C3 execution 102（22:05）。
 - bridge 仍只讀同一固定 request path `/Users/hong/workspace/n8n/files/control/production_handoff.request.json`、寫同一固定 response path `production_handoff.response.json`；新增的第二個固定 action 只映射到既有 `~/.hermes/scripts/quant_runtime_reconcile.py`，request schema、atomic claim／response、correlation、bounded timeout 與最小環境不變。不新增 mailbox、queue、DB、service、daemon、retry queue 或 runtime state machine。
-- C4 尚未 live import／publish，也未操作 Hermes cron。獨立 audit PASS 後的預定 cutover 是：operator 暫停 reconciler cron `f6b9aa5e9034` → 啟用 `runtimeReconcilerC4` → 手動驗證一次 action、讀回 correlated response → 驗證下一個 scheduled tick。失敗 rollback：停用 C4，再恢復 Hermes cron。
+- C4 live import／publish 與 automatic trigger 驗證已完成；Hermes reconciler cron `f6b9aa5e9034` 保持 **paused**，只作 rollback path。若需 rollback，停用 C4，再恢復 Hermes cron；watchdog `c5314d86cdfe` 保持 active 且獨立。
 - watchdog `c5314d86cdfe` 保持 active 且獨立；Full Canvas `shadowQuantCp1` 保持 read-only，production control 仍在獨立 production workflows，C4 不接入 shadow／Full Canvas mutating path。
 
 既有 C3 handoff workflow 沒有 webhook、AI node、credentials、host path 或 request 內任意 action；它只保留 C2 已稽核的固定 bridge request/response semantics。
@@ -712,7 +712,7 @@ PY
 3. 寫入面必須落在既有真值的 owner 路徑（`_handoff/candidates.json`、Kanban、`/results`），且先有 atomic-write ＋ read-back ＋ incident 路徑，
    不得由 n8n 自建第二套 candidate／leaderboard／狀態儲存。
 4. resume policy（§5）必須由 pipeline 端（reconciler／handoff）實作或明確委派，n8n 只呼叫既有機制，不自帶佇列語意。
-5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff 與 C3 cadence trigger／HOLD 語意皆已完成獨立審計；C3 implementation commit `68b338c` 已 PASS 並完成 live scheduled cutover。後續新增 mutating path 仍須先 audit，不得以此次 C3 通過作為一般放寬。
+5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff 與既有 C3 cadence trigger／HOLD 語意皆已完成獨立審計；本次 C3.1 cadence 仍 **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**，不得以既有 C3 通過作為本次放行。後續新增 mutating path 仍須先 audit，不得以既有 C3 通過作為一般放寬。
 
 ## 11. 刻意不做（避免過度工程）
 

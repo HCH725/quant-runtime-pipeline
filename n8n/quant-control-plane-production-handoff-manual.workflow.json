@@ -19,13 +19,13 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "5,35 * * * *"
+              "expression": "5,20,35,50 * * * *"
             }
           ]
         }
       },
       "id": "b6e5a2f7-9d41-4c6b-8a30-5f2d7e1c9b04",
-      "name": "Schedule — production handoff :05/:35",
+      "name": "Schedule — production handoff :05/:20/:35/:50",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -60,7 +60,7 @@
         ]
       ]
     },
-    "Schedule — production handoff :05/:35": {
+    "Schedule — production handoff :05/:20/:35/:50": {
       "main": [
         [
           {

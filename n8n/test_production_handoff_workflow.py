@@ -17,7 +17,7 @@ WORKFLOW_PATH = Path(__file__).with_name(
 class ProductionHandoffWorkflowContract(unittest.TestCase):
     ACTION_NODE = "Invoke production_handoff_once through host bridge"
     MANUAL_TRIGGER = "Manual Trigger — production handoff"
-    SCHEDULE_TRIGGER = "Schedule — production handoff :05/:35"
+    SCHEDULE_TRIGGER = "Schedule — production handoff :05/:20/:35/:50"
 
     @classmethod
     def setUpClass(cls):
@@ -54,7 +54,7 @@ class ProductionHandoffWorkflowContract(unittest.TestCase):
         schedule = self.by_name[self.SCHEDULE_TRIGGER]
         self.assertEqual(
             schedule["parameters"]["rule"]["interval"],
-            [{"field": "cronExpression", "expression": "5,35 * * * *"}],
+            [{"field": "cronExpression", "expression": "5,20,35,50 * * * *"}],
         )
         self.assertEqual(
             set(self.workflow["connections"]),
