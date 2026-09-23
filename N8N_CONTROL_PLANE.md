@@ -53,14 +53,27 @@ Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake →
 快照 artifact（host 路徑）：`/Users/hong/workspace/n8n/files/quant-control-plane-shadow.json`
 （容器內 `/home/node/.n8n-files/quant-control-plane-shadow.json`，`schema = quant-control-plane-shadow/v1`）。
 
+## 1.A End-to-end canvas（`shadowQuantCp1`）
+
+`shadowQuantCp1` 是唯一的 Shadow workflow，stable ID 不變；display name 現為 **Quant Control Plane — End-to-End**。它把同一份已組裝的 `quant-control-plane-shadow/v1` 快照分成兩條清楚的視覺語意：
+
+- **SOURCE / METRICS REFRESH**：Manual + 15m observation、6 個既有唯讀來源、assembler 與唯一 shadow snapshot write。這條線顯示綠色，只代表來源讀取／快照寫出成功，**不代表 lifecycle 活動**。
+- **CURRENT LIFECYCLE**：`Build lifecycle view (derived, read-only)` 只從 assembler 輸入建立衍生 view；`Current Stage Router` 依 current-family/card-scoped token 或 matched current-family gate evidence，只把本次 refresh 送到**一個** stage indicator，另有 `Pipeline Counts Summary (derived, read-only)`。它不讀新來源、不寫狀態、不啟動／重排／續跑任何 runtime。
+
+Lifecycle indicator 的固定順序為：
+`Strategy Research / Hermes Scout` → `GitHub Strategy Pool` → `Intake Review` → `Wiki Brain` → `Candidate Queue` → `WAITING_DATA / READY_TO_RESUME Parking` → `Data Readiness / Preflight` → `Qlib Full Backtest (symbols x timeframes x parameter domain x DCA)` → `Historical / OOS` → `Robustness` → `Failure Analysis / Result Validation` → `Result / Verdict` → `REJECT`／`Survivor / PASS` → `Leaderboard` → `Private Survivor Repo Parking`，另有 `Attention / Unresolved`。`REJECT` 與 `Survivor / PASS` 是展示分支；`Leaderboard` → `Private Survivor Repo Parking` 是 promoted display path，不是第二套執行狀態機。
+
+`Pipeline Counts Summary` 沿用 snapshot 既有 counts；WAITING_DATA、READY_TO_RESUME 與 backtest-layer REJECT 沒有 authoritative 值時維持 `null`／reason，不從 leaderboard、intake 或其他全域數字推導。n8n 原生 canvas 不會在每次 refresh 自動改寫 node name／Sticky Note 顯示動態數字，因此即時 counts 留在 node output 與專用 summary node；workflow 不做 self-mutation。
+
 ## 2. Topology：pipeline 階段 ↔ workflow 節點 ↔ 來源
 
-單一 workflow，兩顆 trigger（manual validation + 排程觀測），6 個 read-only 來源節點，1 個 assembler Code node，1 個輸出節點：
+單一 workflow（stable ID `shadowQuantCp1`），兩顆 trigger（manual validation + 排程觀測），6 個 read-only 來源節點，1 個 assembler Code node，1 個 derived lifecycle builder，1 個 current-stage Switch router，1 個 counts summary，1 個 shadow 輸出節點，17 個 lifecycle indicators，及 2 個 lane-label Sticky Notes。source lane 與 lifecycle lane 共用同一份 snapshot，不各自建立 state。
 
 ```
 Manual Trigger ─┐
-                ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Candidate/Qlib/Leaderboard ─→ Parking ─→ Assemble ─→ Emit
-Schedule (15m)  ┘
+                ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Candidate/Qlib/Leaderboard ─→ Parking ─→ Assemble ─┬→ Build lifecycle view ─→ Counts Summary
+Schedule (15m)  ┘                                                                                                               ├→ Current Stage Router ─→ exactly one indicator
+                                                                                                                                  └→ Emit snapshot
 ```
 
 | # | workflow 節點（節點名即拓撲名） | 讀什麼（唯讀） | 對應 pipeline 階段 |

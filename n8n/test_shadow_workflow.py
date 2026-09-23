@@ -264,6 +264,75 @@ class ShadowWorkflowContract(unittest.TestCase):
         self.assertFalse(waiting["available"])
         self.assertIn("exact token", waiting["reason"])
         self.assertIsNone(result["pipeline_counts_summary"]["current_stage_token"])
+    def test_global_survivor_pass_never_routes_current_family(self):
+        snapshot = self._fixture("ambiguous")
+        snapshot["topology"][0]["shadow_state"] = "PASS"
+        snapshot["topology"][0]["state_provenance"] = "global leaderboard projection"
+        snapshot["topology"].append(
+            {
+                "stage": "survivor",
+                "shadow_state": "PASS",
+                "state_provenance": "global historical survivor inventory",
+                "observation": {"leaderboard_count": 1},
+            }
+        )
+        result = self._build(snapshot)
+        current = result["lifecycle_view"]["current_stage"]
+        self.assertEqual(current["key"], "attention_unresolved")
+        self.assertIsNone(current["source_token"])
+        self.assertTrue(result["lifecycle_view"]["exact_one_current_stage"])
+
+    def test_current_token_requires_current_family_card_scope(self):
+        snapshot = self._fixture("RUNNING_QLIB")
+        snapshot["counts"]["current_family_id"] = None
+        result = self._build(snapshot)
+        current = result["lifecycle_view"]["current_stage"]
+        self.assertEqual(current["key"], "attention_unresolved")
+        self.assertIsNone(current["source_token"])
+        self.assertEqual(current["context"]["current_family_id"], None)
+        self.assertEqual(current["context"]["stage"], "RUNNING_QLIB")
+
+    def test_matched_current_family_gate_token_can_route(self):
+        snapshot = self._fixture("ambiguous")
+        snapshot["counts"]["gate_record_matched_current_family"] = True
+        snapshot["topology"].append(
+            {
+                "stage": "data_preflight_gate",
+                "shadow_state": "TECHNICAL_INCOMPLETE",
+                "state_provenance": "verbatim matched gate verdict",
+                "observation": {"family_id": "family-x", "kanban_task_id": "t_x"},
+            }
+        )
+        result = self._build(snapshot)
+        current = result["lifecycle_view"]["current_stage"]
+        self.assertEqual(current["key"], "result_verdict")
+        self.assertEqual(current["source_token"], "TECHNICAL_INCOMPLETE")
+        self.assertEqual(current["source_field"], "topology.data_preflight_gate.shadow_state")
+        self.assertTrue(result["lifecycle_view"]["exact_one_current_stage"])
+
+    def test_mismatched_gate_evidence_routes_attention(self):
+        snapshot = self._fixture("ambiguous")
+        snapshot["counts"]["gate_record_matched_current_family"] = True
+        snapshot["topology"].append(
+            {
+                "stage": "data_preflight_gate",
+                "shadow_state": "TECHNICAL_INCOMPLETE",
+                "state_provenance": "verbatim mismatched gate verdict",
+                "observation": {"family_id": "other-family", "kanban_task_id": "t_other"},
+            }
+        )
+        result = self._build(snapshot)
+        self.assertEqual(result["lifecycle_view"]["current_stage"]["key"], "attention_unresolved")
+        self.assertTrue(result["lifecycle_view"]["exact_one_current_stage"])
+
+    def test_unrecognised_stage_token_is_not_invented(self):
+        snapshot = self._fixture("ambiguous")
+        snapshot["counts"]["current_stage"] = "BASELINE"
+        result = self._build(snapshot)
+        current = result["lifecycle_view"]["current_stage"]
+        self.assertEqual(current["key"], "attention_unresolved")
+        self.assertIsNone(current["source_token"])
+        self.assertEqual(current["context"]["stage"], "BASELINE")
 
 
 if __name__ == "__main__":
