@@ -69,6 +69,14 @@ MAX_ECHO = 128  # rejected `action` echoed into the response, char-bounded
 MAX_OUTPUT_BYTES = 4096  # stdout/stderr byte cap in the response
 
 
+class _ClaimRejected(Exception):
+    """The fixed request path exists but is unsafe to claim."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason = reason
+
+
 def now_utc():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -102,6 +110,17 @@ def _claim_path():
 def _claim():
     """Atomically claim the request; returns the claim path, or None = no-op."""
     claim_path = _claim_path()
+    try:
+        source = os.lstat(REQUEST_PATH)
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise _ClaimRejected("error_internal") from exc
+    if stat.S_ISDIR(source.st_mode):
+        # Never rename a directory into the claim namespace: cleanup must not
+        # recurse into attacker-controlled contents. Leave this unclaimed and
+        # emit a rejection response from main().
+        raise _ClaimRejected("rejected_non_regular_file")
     try:
         os.rename(REQUEST_PATH, claim_path)
         return claim_path
@@ -292,18 +311,25 @@ def _remove_claim(claim_path):
         claimed = os.lstat(claim_path)
     except FileNotFoundError:
         return
+    if stat.S_ISDIR(claimed.st_mode):
+        # Directories are refused before rename. If a TOCTOU race still puts
+        # one in the claim namespace, leave its contents untouched rather than
+        # recursively deleting attacker-controlled data.
+        return
     try:
-        if stat.S_ISDIR(claimed.st_mode) and not stat.S_ISLNK(claimed.st_mode):
-            os.rmdir(claim_path)
-        else:
-            os.unlink(claim_path)
+        os.unlink(claim_path)
     except OSError:
         pass
 
 
 def main(runner=None):
     runner = runner or _run_action
-    claim_path = _claim()
+    started = now_utc()
+    try:
+        claim_path = _claim()
+    except _ClaimRejected as exc:
+        _write_response(_response(None, None, started, None, exc.reason, "", ""))
+        return 1
     if claim_path is None:
         return 0  # no request = no-op, no response
     started = now_utc()

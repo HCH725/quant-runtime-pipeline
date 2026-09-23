@@ -65,6 +65,12 @@ class BridgeCase(unittest.TestCase):
             else:
                 json.dump(payload, fh)
 
+    def outside_path(self, name):
+        outside_dir = Path(tempfile.mkdtemp(
+            prefix="qrp-n8n-bridge-outside-", dir=str(Path(self.tmp).parent)))
+        self.addCleanup(shutil.rmtree, outside_dir, True)
+        return outside_dir / name
+
     def response(self):
         with open(br.RESPONSE_PATH) as fh:
             return json.load(fh)
@@ -205,6 +211,19 @@ class BridgeCase(unittest.TestCase):
         self.assertEqual(self.response()["status"], "rejected_non_regular_file")
         self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
 
+    def test_nonempty_directory_is_rejected_without_claim_residue(self):
+        request_dir = Path(br.REQUEST_PATH)
+        request_dir.mkdir()
+        nested = request_dir / "nested"
+        nested.write_text("sentinel", encoding="utf-8")
+        self.assertEqual(self.run_bridge(), 1)
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.response()["status"], "rejected_non_regular_file")
+        self.assertTrue(request_dir.is_dir(), "unsafe directory input must not be recursively deleted")
+        self.assertEqual(nested.read_text(encoding="utf-8"), "sentinel")
+        self.assertEqual(sorted(os.listdir(self.tmp)),
+                         ["production_handoff.request.json", "production_handoff.response.json"])
+
     def test_non_object_json_fails_closed(self):
         self.put_request(b'["quant-control-action/v1"]')
         self.assertEqual(self.run_bridge(), 1)
@@ -316,7 +335,7 @@ class BridgeCase(unittest.TestCase):
 
     def test_response_temp_collision_never_follows_symlink(self):
         """A pre-existing temp symlink cannot redirect response bytes outside control/."""
-        outside = Path(self.tmp) / "outside-target"
+        outside = self.outside_path("outside-target")
         outside.write_text("sentinel", encoding="utf-8")
         first = "preexisting"
         temp_link = Path(br.RESPONSE_PATH + ".tmp." + first)
@@ -331,7 +350,7 @@ class BridgeCase(unittest.TestCase):
 
     def test_response_path_symlink_is_replaced_by_regular_file(self):
         """Replacing the fixed response symlink must not write its external target."""
-        outside = Path(self.tmp) / "outside-target"
+        outside = self.outside_path("outside-target")
         outside.write_text("sentinel", encoding="utf-8")
         Path(br.RESPONSE_PATH).symlink_to(outside)
         self.put_request(VALID)
