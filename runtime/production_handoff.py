@@ -21,10 +21,12 @@ work-order card in the same round. Duplicate / ambiguous / ineligible / incident
 
 Runtime guards (all objective, all from results-root artifacts):
   * the family's NEWEST attempt holds the pipeline while it is inside ACTIVE_WINDOW_MINUTES and either
-    has published no terminal sentinel (compute is really running) or the round verdict is still
-    missing (the round is not decided). A verdict is per ROUND (contract 7.3/9.4), so an earlier
-    round's terminal verdict never releases a family whose current round is still writing runtime
-    evidence;
+    has published no terminal sentinel (compute is really running) or its OWN round's verdict is still
+    missing (the round is not decided). A verdict is per ROUND (contract 7.3/9.4), so the read is
+    scoped to that attempt's own `rounds/<round>/verdict.json` and re-validated (family_id /
+    kanban_task_id / round_id ownership plus a contract-terminal token); an earlier round's verdict -
+    or a malformed / foreign / partial one - never releases a family whose current round still owes the
+    pipeline runtime evidence, and counts as missing (fail-closed);
   * a family registered less than LAUNCH_GRACE_MINUTES ago that has produced no runtime evidence
     yet is a launch in flight (the worker still has to publish its round/run specs) -> wait;
   * an unresolved canonical incident (its family/attempt carries no terminal evidence) still gates.
@@ -169,31 +171,57 @@ def parse_utc(value):
     return stamp.timestamp()
 
 
+def _terminal_verdict_token(doc, family_id, owner):
+    """One parsed `verdict.json` -> its contract-terminal token, else None (fail-closed).
+
+    A verdict counts only when it is a dict whose `family_id` matches and, whenever both sides carry
+    an ownership id, whose `kanban_task_id` agrees too: a malformed, foreign or partial verdict can
+    never close anything.
+    """
+    if not isinstance(doc, dict) or doc.get("family_id") != family_id:
+        return None
+    verdict_owner = doc.get("kanban_task_id")
+    if owner and verdict_owner and verdict_owner != owner:
+        return None
+    return doc.get("verdict") if doc.get("verdict") in TERMINAL_VERDICTS else None
+
+
 def family_verdict_token(results_root, family_id, family_doc):
     """The family's contract-terminal round verdict token, else None (results artifacts only).
 
     Reads `results/<family>/rounds/*/verdict.json` - the artifacts are already there, so no
-    registry, DB or state store. A verdict counts only when `family_id` matches and, whenever both
-    sides carry an ownership id, `kanban_task_id` agrees too: a malformed, foreign or partial
-    verdict can never close a family (fail-closed). The ownership id is read from the *family.json
-    artifact* (`kanban_task_id`), never from the board.
+    registry, DB or state store. The ownership id is read from the *family.json artifact*
+    (`kanban_task_id`), never from the board. This is the family-scoped token: it closes a family
+    that has no live attempt left and feeds the incident ledger; it must never release a live
+    attempt - that is `round_verdict_token` below, because verdict.json is per ROUND.
     """
     rounds = Path(results_root) / family_id / "rounds"
     if not rounds.is_dir():
         return None
     owner = family_doc.get("kanban_task_id") if isinstance(family_doc, dict) else None
     for path in sorted(rounds.glob("*/verdict.json")):
-        doc = _load_json(path)
-        if not isinstance(doc, dict):
-            continue
-        if doc.get("family_id") != family_id:
-            continue
-        verdict_owner = doc.get("kanban_task_id")
-        if owner and verdict_owner and verdict_owner != owner:
-            continue
-        if doc.get("verdict") in TERMINAL_VERDICTS:
-            return doc["verdict"]
+        token = _terminal_verdict_token(_load_json(path), family_id, owner)
+        if token:
+            return token
     return None
+
+
+def round_verdict_token(round_dir, family_id, family_doc):
+    """The verdict token of ONE round - the newest attempt's own round - else None (fail-closed).
+
+    verdict.json is per ROUND (contract 7.3/9.4), so a release decision about a live attempt must
+    read *that attempt's own* round, never an earlier round of the same family. Same ownership
+    validation as `family_verdict_token` (`family_id` + `kanban_task_id`, token in
+    TERMINAL_VERDICTS) plus the round identity: a verdict whose `round_id` names a different round is
+    foreign to this one. A malformed, foreign or partial verdict is treated as *missing*, so the
+    round stays undecided and the family keeps holding the pipeline.
+    """
+    round_dir = Path(round_dir)
+    doc = _load_json(round_dir / "verdict.json")
+    if isinstance(doc, dict) and doc.get("round_id") not in (None, round_dir.name):
+        return None
+    owner = family_doc.get("kanban_task_id") if isinstance(family_doc, dict) else None
+    return _terminal_verdict_token(doc, family_id, owner)
 
 
 def family_attempts(results_root, family_id):
@@ -252,22 +280,22 @@ def clean_terminal(attempt_dir):
 
 
 def runtime_state(results_root, family_id, family_doc, now=None):
-    """One family's runtime state from artifacts only -> dict(family_id, verdict, attempt, activity,
-    in_flight, why).
+    """One family's runtime state from artifacts only -> dict(family_id, verdict, round_verdict,
+    attempt, activity, in_flight, why).
 
     `in_flight` is the pipeline guard: the family still owes the pipeline something. The newest
-    attempt decides first - a terminal verdict is per ROUND (contract 7.3/9.4), so an earlier round's
-    verdict must never release a family whose current round is still writing runtime evidence. Inside
-    ACTIVE_WINDOW_MINUTES the family holds while its newest attempt has published no terminal
-    sentinel (compute is really running) or while the round verdict is still missing (the round is
-    not decided). A family with no live attempt left is closed by its terminal verdict, and one that
-    has produced no runtime evidence yet is a launch in flight for LAUNCH_GRACE_MINUTES. Anything
-    outside those windows is stale/abandoned and no longer holds the pipeline (this is what keeps a
-    blocked or dead card from freezing production).
+    attempt decides first - a terminal verdict is per ROUND (contract 7.3/9.4), so the release
+    decision reads the verdict of *that attempt's own round* (`round_verdict_token`), never an
+    earlier round's. Inside ACTIVE_WINDOW_MINUTES the family holds while its newest attempt has
+    published no terminal sentinel (compute is really running) or while its own round verdict is
+    still missing (the round is not decided). A family with no live attempt left is closed by its
+    terminal verdict, and one that has produced no runtime evidence yet is a launch in flight for
+    LAUNCH_GRACE_MINUTES. Anything outside those windows is stale/abandoned and no longer holds the
+    pipeline (this is what keeps a blocked or dead card from freezing production).
     """
     now = time.time() if now is None else now
-    state = {"family_id": family_id, "verdict": None, "attempt": None, "activity": None,
-             "in_flight": False, "why": ""}
+    state = {"family_id": family_id, "verdict": None, "round_verdict": None, "attempt": None,
+             "activity": None, "in_flight": False, "why": ""}
     if not isinstance(family_doc, dict) or family_doc.get("_unparsable"):
         state["why"] = "family.json unreadable"
         state["in_flight"] = True  # fail-closed: an unreadable family is never skipped silently
@@ -288,7 +316,12 @@ def runtime_state(results_root, family_id, family_doc, now=None):
         # here - the same one the snapshot's progress uses; strict parsability belongs to the incident
         # gate (`clean_terminal`), not to this liveness heuristic.
         terminals = [t for t in TERMINALS if (attempt / t).is_file()]
-        state["in_flight"] = inside and (not terminals or not verdict)
+        # results/<family>/rounds/<round>/attempts/<run>: parents[1] is this attempt's OWN round.
+        # verdict.json is per ROUND, so only that round's verdict can release this attempt; a
+        # malformed / foreign / partial verdict reads as missing and keeps the family holding.
+        round_verdict = round_verdict_token(attempt.parents[1], family_id, family_doc)
+        state["round_verdict"] = round_verdict
+        state["in_flight"] = inside and (not terminals or not round_verdict)
         why = "attempt %s last write %.0f min ago" % (attempt.name, age_minutes)
         if not inside:
             why += " (stale: outside the %d min window)" % ACTIVE_WINDOW_MINUTES
@@ -296,10 +329,11 @@ def runtime_state(results_root, family_id, family_doc, now=None):
                 why += " + terminal verdict %s" % verdict
         elif not terminals:
             why += " (no terminal sentinel: live compute)"
-        elif verdict:
-            why += " (terminal %s published + terminal verdict %s)" % (terminals[0], verdict)
+        elif round_verdict:
+            why += (" (terminal %s published + this round's terminal verdict %s)"
+                    % (terminals[0], round_verdict))
         else:
-            why += " (terminal %s published, round verdict still missing)" % terminals[0]
+            why += (" (terminal %s published, this round's verdict still missing)" % terminals[0])
         state["why"] = why
         return state
 

@@ -238,6 +238,20 @@ class Harness(unittest.TestCase):
         self.assertIn("Cohort: NEWUSDT / 5m", out)
         self.assertNotIn("OLDUSDT", out)
 
+    def test_finished_follow_up_round_without_its_own_verdict_is_current(self):
+        # Round-2 review defect: the verdict that releases an attempt must be its OWN round's. r1 is
+        # decided while r2 already published DONE and is still waiting for its round verdict - the
+        # family is still the work the pipeline owes a verdict to, never `idle`.
+        round_id = self.family()
+        self.write("fam-a/rounds/%s/verdict.json" % round_id,
+                   {"family_id": "fam-a", "verdict": "PASS"})
+        self.attempt(round_id, "fam-a-r1-u1", rows=900, terminal="DONE", symbol="OLDUSDT")
+        self.family(round_id="fam-a-r2")
+        self.attempt("fam-a-r2", "fam-a-r2-u1", rows=100, terminal="DONE", symbol="NEWUSDT")
+        out = self.snapshot()
+        self.assertIn(snap.CURRENT + "\nfam-a", out)
+        self.assertNotIn("idle (no active runtime work)", out)
+
     def test_active_attempt_is_current(self):
         round_id = self.family()
         self.attempt(round_id, "fam-a-r1-u1", rows=10)

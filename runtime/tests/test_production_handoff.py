@@ -142,8 +142,8 @@ class Base(unittest.TestCase):
                 os.utime(str(path), (old, old))
         return base
 
-    def _write_verdict(self, family, verdict, doc=None, raw=None):
-        round_id = family + "-r1"
+    def _write_verdict(self, family, verdict, doc=None, raw=None, round_id=None):
+        round_id = round_id or family + "-r1"
         path = Path(self.root) / family / "rounds" / round_id / "verdict.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         if raw is None:
@@ -287,6 +287,47 @@ class TestAdvance(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.outcome), ("noop", "running"))
         self.assertEqual(self.fake.calls, [])
+
+    def test_finished_follow_up_round_without_its_own_verdict_holds(self):
+        # Round-2 review defect: the release decision must read the newest attempt's OWN round. r1 is
+        # decided (PASS) and r2 already published DONE but has not been judged yet -> the family still
+        # owes the pipeline r2, so the next candidate waits instead of racing the round verdict.
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, terminal="DONE",
+                           verdict="PASS", attempt_round=FRESH + "-r2")
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(res.detail["active_family"], FRESH)
+        self.assertIn("this round's verdict still missing", res.reason)
+        self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_follow_up_round_with_its_own_verdict_releases_the_family(self):
+        # Same multi-round shape, but r2 carries its own terminal verdict: the family owes the
+        # pipeline nothing and the next candidate advances.
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, terminal="DONE",
+                           verdict="PASS", attempt_round=FRESH + "-r2")
+        self._write_verdict(FRESH, "TECHNICAL_INCOMPLETE", round_id=FRESH + "-r2")
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        self.assertEqual(res.family_id, FAMILY_B)
+
+    def test_foreign_round_verdict_never_releases_the_attempt(self):
+        # Fail-closed ownership: a verdict file that is not *this* round's own - a foreign family_id, a
+        # mismatched kanban_task_id, or a round_id naming another round - reads as missing, so the
+        # family keeps holding instead of being closed by someone else's evidence.
+        self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1, terminal="DONE",
+                           attempt_round=FRESH + "-r2")
+        path = self._write_verdict(FRESH, "TECHNICAL_INCOMPLETE", round_id=FRESH + "-r2")
+        for field, value in (("family_id", "fam-other-v1"), ("kanban_task_id", "t_other"),
+                             ("round_id", FRESH + "-r1")):
+            doc = {"family_id": FRESH, "kanban_task_id": "t_x", "round_id": FRESH + "-r2",
+                   "verdict": "TECHNICAL_INCOMPLETE"}
+            doc[field] = value
+            path.write_text(json.dumps(doc))
+            res = self.run_round()
+            self.assertEqual((res.action, res.outcome), ("noop", "running"), (field, res.reason))
+            self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
 
     def test_non_terminal_verdict_token_cannot_bypass(self):
         # A non-terminal token is not a release: the family still holds the pipeline with its live run.
