@@ -14,7 +14,7 @@ PRODUCTION_WORKFLOW_PATH = Path(__file__).with_name(
     "quant-control-plane-production-handoff-manual.workflow.json"
 )
 PRODUCTION_WORKFLOW_SHA256 = (
-    "8d8cd68c55f5f0db8d6d126cb639e5e62e1a1f75a9fd134fa14e7c36c9c91462"
+    "7713da6d2e2ba726eddfdb9610904263315b006e99c0f9cdc4744c718fe5ad02"
 )
 
 
