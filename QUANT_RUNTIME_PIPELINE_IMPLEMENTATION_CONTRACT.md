@@ -1,7 +1,7 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：**IMPLEMENTATION DELIVERED / AWAITING INDEPENDENT AUDIT**（v1.11.0；2026-09-23；本卡未 live activation、未操作任何 cron）。
-[C3 current state] operator 完成 activation 後，n8n workflow `productionHandoffManualC2` 擁有 `5,35 * * * *` production handoff cadence；Hermes cron `624d0be5b23c` 保持 **paused**、只作 rollback。n8n 不取代 Hermes default、Kanban、Qlib 或 `runtime/production_handoff.py`，只透過既有 audited host bridge 編排。
+文件狀態：**AUDITED PASS / LIVE**（v1.11.0；2026-09-23；C3 implementation commit `68b338c` 已完成獨立 auditor PASS，並已完成 live scheduled cutover 驗證）。
+[C3 current state] n8n workflow `productionHandoffManualC2` 已 live activation，正式擁有 `5,35 * * * *` production handoff cadence；Hermes cron `624d0be5b23c` 保持 **paused**、只作 rollback。n8n 不取代 Hermes default、Kanban、Qlib 或 `runtime/production_handoff.py`，只透過既有 audited host bridge 編排。live cutover 已實證 scheduled tick 能 append exactly one candidate，active-family gate 會在下一輪正確 no-op。
 [C3 fail-closed] Hermes／Kanban read-back unavailable 時，canonical `production_handoff` 回報 finding、**不建卡、不寫 family.json**；該 cadence 轉為 **HOLD**，下一個 cadence 自然重試。不得新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；active-family gate 既有防重複語意不變。
 [C3 maintenance SOP] HOLD transition → 乾淨停止 n8n／checkpoint／integrity check／known-good DB snapshot → reboot/update → login／既有 `ai.quant.recover-gate` 與 `ai.quant.n8n-host-bridge` LaunchAgent 復原 → readiness／Shadow／dry-run smoke → continue；不新增 recovery service。
 
@@ -713,7 +713,7 @@ family F
 - `[C]` 既有（v1.2.0 及以前）`family.json` 的 `fingerprint_input` 與 `semantic_fingerprint` 一律 **grandfather**：immutable、不重算、不回填（INV-4）。v1.3.0 只約束**新建立**的 family；同一 board 內不得出現兩個不同 `family_id` 卻相同 `semantic_fingerprint` 的紀錄。
 
 ### 14.3.1 C3 current cutover ownership（2026-09-23）
-- `[C]` **current scheduler ownership**：operator 完成 C3 activation 後，n8n workflow `productionHandoffManualC2` 擁有 production handoff cadence `5,35 * * * *`；workflow 只有 Manual Trigger、Schedule Trigger 與既有 host-bridge action 三個功能節點，兩條 trigger 都接同一固定 `production_handoff_once` request/response。
+- `[C]` **current scheduler ownership**：C3 已完成 activation，n8n workflow `productionHandoffManualC2` 現在擁有 production handoff cadence `5,35 * * * *`；workflow 只有 Manual Trigger、Schedule Trigger 與既有 host-bridge action 三個功能節點，兩條 trigger 都接同一固定 `production_handoff_once` request/response。
 - `[C]` **runtime ownership 不變**：n8n 只負責 cadence 與既有 `ai.quant.n8n-host-bridge` 的編排；`runtime/production_handoff.py` 仍是 canonical 判定、append、`family.json` 與 finding source of truth，n8n 不取代 Hermes default、Kanban kernel、Qlib 或 reconciler/watchdog。
 - `[C]` **rollback**：Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path；本 C3 implementation card 不啟動 n8n、不操作 cron。
 - `[C]` **HOLD on unavailable**：Hermes／Kanban read-back unavailable 時，handoff 只回報 finding，**不建卡、不寫 family.json**；該 cadence 視為 **HOLD**，下一個 `:05`／`:35` tick 自然重試。不得為此新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。

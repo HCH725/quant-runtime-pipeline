@@ -1,8 +1,8 @@
 # N8N Control Plane — SHADOW + C3 PRODUCTION HANDOFF
 
-狀態：**C3 implementation delivered；live activation operator-owned**。Shadow 仍是唯讀觀測層；C3 handoff workflow
+狀態：**C3 AUDITED PASS / LIVE**。Shadow 仍是唯讀觀測層；C3 handoff workflow
 是獨立、最小的 cadence 編排，不取代 Hermes default、Kanban、Qlib 或 repo 內 canonical runtime。
-本卡只提交 workflow／contract／tests，**未 live activation、未操作任何 cron**；獨立 auditor review 完成後，才由 operator 依既有 cutover gate 啟用。
+C3 implementation 已完成獨立 auditor PASS，之後由 operator 依既有 cutover gate 完成 live activation；legacy Hermes handoff cron `624d0be5b23c` 仍保持 paused、只作 rollback。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
@@ -12,7 +12,7 @@
 - workflow `productionHandoffManualC2` 保持 stable ID；功能節點恰為 **Manual Trigger + Schedule Trigger + 既有 host-bridge action**。
   Schedule Trigger 的 exact cron 是 `5,35 * * * *`，Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
   repo export 維持 `active=false`，因此本卡不會自行啟用 live cadence。
-- operator 完成 C3 activation 後，由 n8n 擁有 production handoff cadence；Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
+- C3 已完成 activation，現在由 n8n 擁有 production handoff cadence；Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
   n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 及既有 Hermes/Kanban kernel 負責。
 - Hermes／Kanban read-back unavailable 時，canonical handoff fail-closed：結果是 finding、**不建卡、不寫 family.json**；該 cadence operationally 轉為 **HOLD**，
   下一個 `:05`／`:35` tick 自然重試。這裡不新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。
@@ -674,7 +674,7 @@ PY
 3. 寫入面必須落在既有真值的 owner 路徑（`_handoff/candidates.json`、Kanban、`/results`），且先有 atomic-write ＋ read-back ＋ incident 路徑，
    不得由 n8n 自建第二套 candidate／leaderboard／狀態儲存。
 4. resume policy（§5）必須由 pipeline 端（reconciler／handoff）實作或明確委派，n8n 只呼叫既有機制，不自帶佇列語意。
-5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge 與 C2 manual handoff 已完成獨立審計；本次 C3 只新增 cadence trigger／HOLD 文件語意，狀態為 **IMPLEMENTATION DELIVERED / AWAITING INDEPENDENT AUDIT**，audit PASS 前不得 live activation。
+5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff 與 C3 cadence trigger／HOLD 語意皆已完成獨立審計；C3 implementation commit `68b338c` 已 PASS 並完成 live scheduled cutover。後續新增 mutating path 仍須先 audit，不得以此次 C3 通過作為一般放寬。
 
 ## 11. 刻意不做（避免過度工程）
 
