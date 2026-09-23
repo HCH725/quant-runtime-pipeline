@@ -11,7 +11,10 @@ Not a daemon, service, factory, queue or registry. Every input is either a read-
 Legal action: append at most ONE new family card at the chain tail
 (`parents=[tail_id]`, `idempotency_key=<family_id>`) and land its `family.json` in the same round.
 Duplicate / ambiguous / ineligible / incident / freeze -> fail-closed: no card, ONE finding line,
-no retry storm.  Since v1.3.0 a candidate whose card body does not register the DCA parameter
+no retry storm.  A freeze counts only for strategy cards owned by a canonical `family.json`, and a
+hold-status (blocked/triage) family whose immutable round verdict is already contract-terminal is
+terminal-equivalent for ordering, so the next candidate may proceed (Phase 2A).  Since v1.3.0 a
+candidate whose card body does not register the DCA parameter
 domain and the cohort survivor rules is also fail-closed (`candidate_body_not_v13`): a v1.2-era
 body cannot express a v1.3 full backtest (contract 7.2/7.3/14.4).  The created body is the candidate
 body verbatim plus a fixed system-owned lifecycle footer (contract 6.4: an honest prerequisite-missing
@@ -43,6 +46,11 @@ INCIDENT_DIRNAME = "_incidents"
 INCIDENT_FILENAME = "reconciliation_incident.jsonl"
 ACTIVE_STATUSES = ("ready", "running", "scheduled")
 TERMINAL_STATUSES = ("done", "archived")
+# Hold statuses: a strategy card parked in one of these gates the tail append (contract 12.5/12.6)
+# UNLESS its family already carries a contract-terminal round verdict (Phase 2A non-blocking handoff).
+HOLD_STATUSES = ("blocked", "triage")
+# Contract-terminal verdict tokens accepted from results/<family>/rounds/*/verdict.json.
+TERMINAL_VERDICTS = ("PASS", "REJECT", "FINALIST", "DEFERRED", "TECHNICAL_INCOMPLETE")
 _STRATEGY_CARD_FIELDS = ("id", "status", "created_at", "title")
 # v1.3.0 candidate requirement (contract 14.4 + 7.2/7.3): a card appended by this automation
 # must register the DCA parameter domain and the cohort survivor rules, otherwise it cannot
@@ -197,6 +205,30 @@ def _recover_legacy_task_id(results_root, rec):
     if any(owner is None for owner in owners) or len(set(owners)) != 1:
         return None
     return owners[0]
+
+
+def family_has_terminal_verdict(results_root, family_id, task_id):
+    """True when an existing immutable round verdict already terminates this strategy family.
+
+    Reads `results/<family>/rounds/*/verdict.json` only - the artifacts are already there, so no
+    registry, DB or state store. A verdict counts only if `family_id` AND `kanban_task_id` both
+    match and the token is contract-terminal, so a malformed, foreign or partial verdict can never
+    bypass the gate (fail-closed).
+    """
+    rounds = Path(results_root) / family_id / "rounds"
+    if not rounds.is_dir():
+        return False
+    for path in sorted(rounds.glob("*/verdict.json")):
+        try:
+            doc = json.loads(path.read_text())
+        except (OSError, UnicodeError, ValueError):
+            continue
+        if not isinstance(doc, dict):
+            continue
+        if (doc.get("family_id") == family_id and doc.get("kanban_task_id") == task_id
+                and doc.get("verdict") in TERMINAL_VERDICTS):
+            return True
+    return False
 
 
 def unresolved_incidents(results_root, tasks):
@@ -428,7 +460,13 @@ def round_once(args):
         if tid not in tasks:
             return res.finding("family_card_missing", "family %s card %s not on board %s"
                                % (family_id, tid, args.board), family_id=family_id)
-        strategy.append({"family_id": family_id, "id": tid, "status": tasks[tid]["status"],
+        status = tasks[tid]["status"]
+        strategy.append({"family_id": family_id, "id": tid, "status": status,
+                         # A hold-status card whose immutable round verdict is already
+                         # contract-terminal is terminal-equivalent for handoff ordering.
+                         "terminal": status in TERMINAL_STATUSES or (
+                             status in HOLD_STATUSES
+                             and family_has_terminal_verdict(args.results_root, family_id, tid)),
                          "created_at": tasks[tid].get("created_at") or 0,
                          "semantic_fingerprint": doc.get("semantic_fingerprint")})
     res.detail["strategy_cards"] = len(strategy)
@@ -440,11 +478,15 @@ def round_once(args):
             active[0]["id"], active[0]["status"])
         return res
 
-    blocked = sorted(t["id"] for t in tasks.values() if t["status"] == "blocked")
-    if blocked:
+    # Only strategy-family cards (canonical family.json ownership) can freeze the handoff; an
+    # unrelated blocked board task is somebody else's gate, not a pipeline freeze.
+    held = sorted(c["id"] for c in strategy
+                  if c["status"] in HOLD_STATUSES and not c["terminal"])
+    if held:
         return res.finding("blocked_card_present",
-                           "board has blocked card(s) %s (freeze/human gate, contract 12.5/12.6)"
-                           % ",".join(blocked))
+                           "strategy card(s) %s are blocked/triage with no contract-terminal "
+                           "verdict (freeze/human gate, contract 12.5/12.6)"
+                           % ",".join(held))
 
     incidents = unresolved_incidents(args.results_root, tasks)
     if incidents:
@@ -458,7 +500,7 @@ def round_once(args):
     strategy.sort(key=lambda c: (c["created_at"], c["id"]))
     tail = strategy[-1]
     res.tail_id = tail["id"]
-    if tail["status"] not in TERMINAL_STATUSES:
+    if not tail["terminal"]:
         return res.finding("tail_not_terminal", "tail %s status=%s (contract 14.1)"
                            % (tail["id"], tail["status"]), tail_id=tail["id"])
 

@@ -31,6 +31,8 @@ LEGACY_FAMILY = "legacy-family"
 LEGACY_ROUND = "legacy-round"
 LEGACY_RUN = "legacy-run"
 LEGACY_OWNER = "t_LEGACY"
+FAMILY_HOLD = "fam-hold-v1"
+HOLD_TASK = "t_HOLD"
 
 
 def candidate(family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short", body=None):
@@ -112,6 +114,28 @@ class Base(unittest.TestCase):
         if fingerprint_hex:
             doc["semantic_fingerprint"] = fingerprint_hex
         (d / "family.json").write_text(json.dumps(doc))
+
+    def _write_hold_family(self, status, verdict=None, family=FAMILY_HOLD, task_id=HOLD_TASK,
+                           created_at=2, doc=None, raw=None):
+        """A strategy family whose board card sits in a hold status (blocked/triage).
+
+        `verdict=` writes a contract-shaped round verdict; `doc=`/`raw=` control the exact bytes for
+        malformed and mismatched fixtures. No verdict file at all = the fail-closed hold.
+        """
+        self._write_family(family, task_id)
+        self.tasks[task_id] = {"status": status, "created_at": created_at,
+                               "title": "hold %s" % status}
+        if raw is None and doc is None and verdict is None:
+            return task_id
+        if raw is None:
+            if doc is None:
+                doc = {"schema_version": 1, "family_id": family, "round_id": family + "-r1",
+                       "kanban_task_id": task_id, "verdict": verdict}
+            raw = json.dumps(doc)
+        path = Path(self.root) / family / "rounds" / (family + "-r1") / "verdict.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(raw)
+        return task_id
 
     def _write_pool(self, cands):
         d = Path(self.root) / h.HANDOFF_DIRNAME
@@ -236,9 +260,11 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "fenced_context"))
 
-    def test_blocked_card_blocks_the_append(self):
+    def test_blocked_strategy_without_verdict_blocks_the_append(self):
+        """A strategy card (canonical family.json ownership) parked in `blocked` with no round
+        verdict is still a freeze/human gate (contract 12.5/12.6)."""
         self.tasks[TAIL]["status"] = "done"
-        self.tasks["t_BLOCKED"] = {"status": "blocked", "created_at": 2, "title": "freeze"}
+        self._write_hold_family("blocked")
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "blocked_card_present"))
         self.assertNotIn("create", self.fake.actions())
@@ -368,6 +394,87 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.finding_key), ("finding", "readback_failed"))
         self.assertFalse((Path(self.root) / FAMILY_B).exists())
+
+
+class TestTerminalFamilyHandoff(Base):
+    """Phase 2A non-blocking handoff: only strategy-family cards freeze the pipeline, and a
+    hold-status (blocked/triage) family whose immutable round verdict is already contract-terminal
+    is terminal-equivalent, so the next candidate may proceed. Everything else stays fail-closed."""
+
+    def _append(self, **over):
+        res = self.run_round(**over)
+        self.assertEqual(res.action, "appended", res.reason)
+        return res
+
+    def test_unrelated_blocked_board_task_does_not_block(self):
+        """A blocked board task with no family.json ownership is not a pipeline freeze."""
+        self.tasks["t_UNRELATED"] = {"status": "blocked", "created_at": 0, "title": "other lane"}
+        res = self._append()
+        self.assertEqual(res.tail_id, TAIL)
+        self.assertEqual(len([c for c in self.fake.calls if c[4] == "create"]), 1)
+
+    def test_blocked_strategy_with_technical_incomplete_verdict_appends(self):
+        """Legacy t_5f96962c pattern: blocked tail card + contract-terminal verdict -> proceed."""
+        self._write_hold_family("blocked", verdict="TECHNICAL_INCOMPLETE")
+        res = self._append()
+        self.assertEqual(res.tail_id, HOLD_TASK)   # the hold card is terminal-equivalent, not frozen
+        self.assertEqual(json.loads((Path(self.root) / FAMILY_B / "family.json")
+                                    .read_text())["kanban_task_id"], NEW)
+
+    def test_triage_strategy_without_verdict_fails_closed(self):
+        self._write_hold_family("triage")
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "blocked_card_present"))
+        self.assertNotIn("create", self.fake.actions())
+
+    def test_triage_strategy_with_terminal_verdict_appends(self):
+        self._write_hold_family("triage", verdict="DEFERRED")
+        res = self._append()
+        self.assertEqual(res.tail_id, HOLD_TASK)
+
+    def test_non_terminal_verdict_token_cannot_bypass(self):
+        """Only the contract-terminal token set counts; a near-miss token keeps the gate shut."""
+        self._write_hold_family("blocked", verdict="PROVISIONAL")
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "blocked_card_present"))
+        self.assertNotIn("create", self.fake.actions())
+
+    def test_malformed_or_mismatched_verdict_cannot_bypass(self):
+        """family_id + kanban_task_id ownership must both match; unparsable bytes never bypass."""
+        cases = {
+            "unparsable": {"raw": "{"},
+            "family_mismatch": {"doc": {"family_id": "fam-other-v1", "kanban_task_id": HOLD_TASK,
+                                        "verdict": "PASS"}},
+            "task_mismatch": {"doc": {"family_id": FAMILY_HOLD, "kanban_task_id": "t_SOMEONE_ELSE",
+                                      "verdict": "PASS"}},
+            "task_missing": {"doc": {"family_id": FAMILY_HOLD, "verdict": "PASS"}},
+            "verdict_missing": {"doc": {"family_id": FAMILY_HOLD, "kanban_task_id": HOLD_TASK}},
+        }
+        for name, kw in cases.items():
+            with self.subTest(case=name):
+                self.tearDown()
+                self.setUp()
+                self._write_hold_family("blocked", **kw)
+                res = self.run_round()
+                self.assertEqual((res.action, res.finding_key),
+                                 ("finding", "blocked_card_present"))
+                self.assertNotIn("create", self.fake.actions())
+
+    def test_active_strategy_card_still_noops(self):
+        """READY/RUNNING/SCHEDULED stays a single-active-family noop - no verdict lookup wins over it."""
+        self.tasks[TAIL]["status"] = "running"
+        self._write_hold_family("blocked", verdict="PASS")
+        res = self.run_round()
+        self.assertEqual(res.action, "noop", res.reason)
+        self.assertNotIn("create", self.fake.actions())
+
+    def test_unresolved_incident_still_blocks_with_terminal_verdict(self):
+        """The terminal verdict unblocks the family gate, never the contract 12.6 incident gate."""
+        self._write_hold_family("blocked", verdict="PASS")
+        self._write_incident(NEW)   # dangling card -> non-terminal status -> open incident
+        res = self.run_round()
+        self.assertEqual((res.action, res.finding_key), ("finding", "unresolved_incident"))
+        self.assertNotIn("create", self.fake.actions())
 
 
 class TestDryRunAndReporting(Base):
