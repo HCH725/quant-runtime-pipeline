@@ -28,6 +28,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 RUNTIME = Path(__file__).resolve().parents[1]
+CANONICAL_RUNTIME = Path("/Users/hong/workspace/quant-runtime-pipeline/runtime")
 sys.path.insert(0, str(RUNTIME))
 import n8n_host_action_bridge as br  # noqa: E402
 
@@ -387,7 +388,7 @@ class PlistContract(unittest.TestCase):
     def test_program_arguments_use_homebrew_python_and_repo_script(self):
         args = self.plist.get("ProgramArguments", [])
         self.assertEqual(args[0], "/opt/homebrew/bin/python3")
-        self.assertEqual(args[1], str(RUNTIME / "n8n_host_action_bridge.py"))
+        self.assertEqual(args[1], str(CANONICAL_RUNTIME / "n8n_host_action_bridge.py"))
         self.assertEqual(self.plist.get("Label"), "ai.quant.n8n-host-bridge")
 
 

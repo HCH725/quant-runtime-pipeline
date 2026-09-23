@@ -1,0 +1,58 @@
+{
+  "id": "productionHandoffManualC2",
+  "name": "Quant Control Plane — Production Handoff (manual)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3d8cf09a-7a5a-4e9e-8bbf-6f0d58e8c2a1",
+      "name": "Manual Trigger — production handoff",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "executeOnce": true,
+        "command": "node -e 'const fs=require(\"fs\"),crypto=require(\"crypto\");const CONTROL=\"/home/node/.n8n-files/control\";const REQUEST=CONTROL+\"/production_handoff.request.json\";const RESPONSE=CONTROL+\"/production_handoff.response.json\";const SCHEMA=\"quant-control-action/v1\";const RESPONSE_SCHEMA=\"quant-control-action-response/v1\";const ACTION=\"production_handoff_once\";const REQUEST_ID=\"n8n-\"+crypto.randomUUID();const payload=JSON.stringify({schema:SCHEMA,action:ACTION,request_id:REQUEST_ID});const tmp=CONTROL+\"/.production_handoff.request.\"+process.pid+\".\"+crypto.randomUUID()+\".tmp\";const sleep=(ms)=>new Promise((resolve)=>setTimeout(resolve,ms));const fail=(message)=>{process.stderr.write(message+\"\\n\");process.exit(1);};(async()=>{let fd=null;try{fs.mkdirSync(CONTROL,{recursive:true});fd=fs.openSync(tmp,\"wx\",0o600);fs.writeFileSync(fd,payload,{encoding:\"utf8\"});fs.fsyncSync(fd);fs.closeSync(fd);fd=null;try{fs.linkSync(tmp,REQUEST);}finally{try{fs.unlinkSync(tmp);}catch{}}}catch(error){if(fd!==null)try{fs.closeSync(fd);}catch{};try{fs.unlinkSync(tmp);}catch{};fail(\"request_publish_failed: \"+error.message);}const deadline=Date.now()+615000;while(Date.now()<deadline){let response=null;try{const stat=fs.lstatSync(RESPONSE);if(!stat.isFile()||stat.isSymbolicLink())throw new Error(\"response_not_regular\");response=JSON.parse(fs.readFileSync(RESPONSE,\"utf8\"));}catch{}if(response&&response.schema===RESPONSE_SCHEMA&&response.request_id===REQUEST_ID&&response.action===ACTION){process.stdout.write(JSON.stringify(response)+\"\\n\");return;}await sleep(250);}fail(JSON.stringify({schema:RESPONSE_SCHEMA,request_id:REQUEST_ID,action:ACTION,status:\"response_timeout\"}));})().catch((error)=>fail(\"request_response_failed: \"+error.message));'"
+      },
+      "id": "4a5bc27e-9c9c-4f8a-b3c1-2fcb34b7d6e2",
+      "name": "Invoke production_handoff_once through host bridge",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger — production handoff": {
+      "main": [
+        [
+          {
+            "node": "Invoke production_handoff_once through host bridge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "versionId": "7c7e8c8a-4e9d-4c96-bc88-f52a72e7c2d5",
+  "meta": {
+    "instanceId": "production-handoff-manual-c2"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": []
+}
