@@ -20,7 +20,14 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已
 - 維護 SOP：先做 HOLD transition；乾淨停止 n8n，checkpoint／integrity check 並保留 known-good DB snapshot；reboot/update 與 login 後，
   由既有 `ai.quant.recover-gate` ＋ `ai.quant.n8n-host-bridge` LaunchAgent 復原；再做 readiness、Shadow、dry-run smoke，通過後繼續。**不新增 recovery service**。
 
-本卡新增的 handoff workflow 沒有 webhook、AI node、credentials、host path 或 request 內任意 action；它只保留 C2 已稽核的固定 bridge request/response semantics。
+## C4 current state（runtime reconciler cadence）
+
+- **IMPLEMENTED / AWAITING INDEPENDENT AUDIT / NOT LIVE**：新增 stable workflow `runtimeReconcilerC4`（`Quant Control Plane — Runtime Reconciler`），repo export `active=false`；功能節點恰為 Manual Trigger、Schedule Trigger 與單一 `runtime_reconcile_once` host-bridge action。Schedule exact cron 為 `6,21,36,51 * * * *`，沿用既有 container timezone（Asia/Taipei）。
+- bridge 仍只讀同一固定 request path `/Users/hong/workspace/n8n/files/control/production_handoff.request.json`、寫同一固定 response path `production_handoff.response.json`；新增的第二個固定 action 只映射到既有 `~/.hermes/scripts/quant_runtime_reconcile.py`，request schema、atomic claim／response、correlation、bounded timeout 與最小環境不變。不新增 mailbox、queue、DB、service、daemon、retry queue 或 runtime state machine。
+- C4 尚未 live import／publish，也未操作 Hermes cron。獨立 audit PASS 後的預定 cutover 是：operator 暫停 reconciler cron `f6b9aa5e9034` → 啟用 `runtimeReconcilerC4` → 手動驗證一次 action、讀回 correlated response → 驗證下一個 scheduled tick。失敗 rollback：停用 C4，再恢復 Hermes cron。
+- watchdog `c5314d86cdfe` 保持 active 且獨立；Full Canvas `shadowQuantCp1` 保持 read-only，production control 仍在獨立 production workflows，C4 不接入 shadow／Full Canvas mutating path。
+
+既有 C3 handoff workflow 沒有 webhook、AI node、credentials、host path 或 request 內任意 action；它只保留 C2 已稽核的固定 bridge request/response semantics。
 
 ---
 
@@ -302,12 +309,12 @@ Shadow workflow、Homepage、Research Scout。
 
 ### 7.3 Host action bridge：`ai.quant.n8n-host-bridge`（Phase 2C1；2026-09-23 實測）
 
-n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑 → 一個 allowlist 動作 → 既有 scheduler wrapper。
-只有這三樣（一 script ＋ 一 plist ＋ focused tests），**不是** queue／service／daemon，**尚未**新增任何 mutating n8n workflow 節點。
+n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑 → **兩個固定 allowlist 動作** → 既有 scheduler wrapper。
+只有這些固定元件（one script ＋ one plist ＋ focused tests），**不是** queue／service／daemon；C3／C4 workflow 都只透過同一個固定 host bridge，不新增另一套 runtime。
 
 | 檔 | 角色 |
 |---|---|
-| `runtime/n8n_host_action_bridge.py` | 短命腳本：只讀固定 `…/n8n/files/control/production_handoff.request.json`、只寫同目錄固定 `production_handoff.response.json`（**路徑永不由 request 資料決定**）。claim 用**同目錄 per-PID `os.rename`**（同一 request 的多個 wake 恰一個贏，其餘 ENOENT no-op；per-PID 讓在途 run 的 claim 不會被下一個 request 摺掉）。request schema 只收 `quant-control-action/v1` ＋ `action=production_handoff_once` ＋非空 bounded `request_id`（≤128 字元、≤4096 bytes、**恰三鍵**；request_id 必須是合法 Unicode scalar）；malformed／non-object／oversize／多餘鍵／錯 schema／未知 action／壞 request_id 全部 fail-closed：寫 rejection response、**絕不**呼叫 host action；非空 directory request 會在 claim 前拒絕，絕不遞迴刪除其內容。唯一放行的命令硬編碼為 `[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_production_handoff.py]`（既有 thin wrapper → runpy canonical `runtime/production_handoff.py`，不複製 handoff 邏輯），bounded timeout 600s（獨立 session/process group；timeout 會終止整個 group）、stdout/stderr 各 4096 bytes 截斷、子環境**新造**只含 `HOME`+`PATH`（不繼承、零 Hermes secret／fence var）。response 為 **非權威 read-back**（同目錄 exclusive/nofollow temp + rename 原子寫，固定 response 最終必為 regular file）：`schema/request_id/action/started_at_utc/finished_at_utc/exit_code/status/stdout/stderr`；claim 只在 response 寫出後清掉（寫不出 → 留存當證據）。exit：0＝no-op 或 action rc 0、1＝任何 rejection／action 失敗／timeout（fail closed）。 |
+| `runtime/n8n_host_action_bridge.py` | 短命腳本：只讀固定 `…/n8n/files/control/production_handoff.request.json`、只寫同目錄固定 `production_handoff.response.json`（**路徑永不由 request 資料決定**）。claim 用**同目錄 per-PID `os.rename`**（同一 request 的多個 wake 恰一個贏，其餘 ENOENT no-op；per-PID 讓在途 run 的 claim 不會被下一個 request 摺掉）。request schema 只收 `quant-control-action/v1` ＋ `action ∈ {production_handoff_once, runtime_reconcile_once}` ＋非空 bounded `request_id`（≤128 字元、≤4096 bytes、**恰三鍵**；request_id 必須是合法 Unicode scalar）；malformed／non-object／oversize／多餘鍵／錯 schema／未知 action／壞 request_id 全部 fail-closed：寫 rejection response、**絕不**呼叫 host action；非空 directory request 會在 claim 前拒絕，絕不遞迴刪除其內容。兩個放行命令皆硬編碼：`[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_production_handoff.py]` 或 `[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_runtime_reconcile.py]`（既有 thin wrappers → 各自 runpy canonical runtime module，不複製邏輯），bounded timeout 600s（獨立 session/process group；timeout 會終止整個 group）、stdout/stderr 各 4096 bytes 截斷、子環境**新造**只含 `HOME`+`PATH`（不繼承、零 Hermes secret／fence var）。response 為 **非權威 read-back**（同目錄 exclusive/nofollow temp + rename 原子寫，固定 response 最終必為 regular file）：`schema/request_id/action/started_at_utc/finished_at_utc/exit_code/status/stdout/stderr`；claim 只在 response 寫出後清掉（寫不出 → 留存當證據）。exit：0＝no-op 或 action rc 0、1＝任何 rejection／action 失敗／timeout（fail closed）。 |
 | `runtime/ai.quant.n8n-host-bridge.plist` | launchd：**`WatchPaths` 指向精確 request 檔**、`RunAtLoad=false`、**無 `StartInterval`、無 `KeepAlive`**（事件喚醒、跑完即退）、`/opt/homebrew/bin/python3` 啟動；`plutil -lint` 通過後複製到 `~/Library/LaunchAgents/`（tests 全綠後才安裝）。stdout/stderr → `~/quant-dashboard/logs/n8n_host_action_bridge.err.log`。 |
 | `runtime/tests/test_n8n_host_action_bridge.py` | **28 checks**：exact wrapper command（stub runner，真實 wrapper 從未被測試執行）、minimal env、malformed/non-object/oversize/未知 action／錯 schema／多餘鍵／壞 request_id fail-closed、atomic claim（同目錄 per-PID、二度 claim no-op、他 PID orphan 不重讀）、重複 wake 不 double-run、bounded output、temp+rename 原子性 spy／預置 symlink 防護、固定 response regular-file、request symlink/FIFO/non-regular 防護（非空 directory 在 claim 前拒絕且不遞迴刪除）、深巢 JSON／invalid UTF-8、timeout descendant group termination、request 竊路徑被拒、no-request no-op、action rc≠0／timeout 記錄、plist 契約（WatchPaths 精確路徑／RunAtLoad false／無 StartInterval／無 KeepAlive）。 |
 

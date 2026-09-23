@@ -1,13 +1,13 @@
 #!/opt/homebrew/bin/python3
 """Focused checks for the n8n host-action bridge (card t_e886543c).
 
-Contract under test, in one line: only the one allowlisted request
-(schema=quant-control-action/v1, action=production_handoff_once, bounded
-non-empty request_id) may invoke the ONE hardcoded existing wrapper command -
-every other payload fails closed with a response and zero host action, the
-claim is an atomic rename (duplicate wakes cannot double-run), the response is
-a bounded atomic temp+rename at a fixed path, and no path ever comes from
-request data.
+Contract under test, in one line: only the two allowlisted requests
+(schema=quant-control-action/v1, action=production_handoff_once or
+runtime_reconcile_once, bounded non-empty request_id) may invoke their exact
+hardcoded existing wrapper command - every other payload fails closed with a
+response and zero host action, the claim is an atomic rename (duplicate wakes
+cannot double-run), the response is a bounded atomic temp+rename at a fixed
+path, and no path ever comes from request data.
 
 The action is always an injected stub runner: no test ever executes the real
 handoff wrapper (a real run could append a candidate card).
@@ -33,6 +33,11 @@ sys.path.insert(0, str(RUNTIME))
 import n8n_host_action_bridge as br  # noqa: E402
 
 VALID = {"schema": br.SCHEMA, "action": br.ACTION, "request_id": "req-0001"}
+RUNTIME_VALID = {
+    "schema": br.SCHEMA,
+    "action": br.RUNTIME_RECONCILE_ACTION,
+    "request_id": "req-reconcile-0001",
+}
 
 
 class BridgeCase(unittest.TestCase):
@@ -116,6 +121,46 @@ class BridgeCase(unittest.TestCase):
         self.assertRegex(resp["finished_at_utc"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
         self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"],
                          "request and claim must be cleaned up after the response")
+
+    def test_runtime_reconcile_invokes_exact_existing_wrapper_command(self):
+        self.put_request(RUNTIME_VALID)
+        rc = self.run_bridge()
+        self.assertEqual(rc, 0, self.response())
+        self.assertEqual(len(self.calls), 1)
+        cmd, env, timeout = self.calls[0]
+        self.assertEqual(
+            cmd,
+            ["/opt/homebrew/bin/python3", br.RUNTIME_RECONCILE_WRAPPER],
+            "runtime reconcile must map to the exact existing wrapper",
+        )
+        self.assertTrue(os.path.isfile(br.RUNTIME_RECONCILE_WRAPPER))
+        self.assertEqual(sorted(env), ["HOME", "PATH"], "minimal env only")
+        self.assertNotIn("HERMES_DELEGATED_CHILD_CONTEXT", env)
+        self.assertEqual(timeout, br.ACTION_TIMEOUT_S)
+        resp = self.response()
+        self.assertEqual(resp["schema"], br.RESPONSE_SCHEMA)
+        self.assertEqual(resp["request_id"], RUNTIME_VALID["request_id"])
+        self.assertEqual(resp["action"], br.RUNTIME_RECONCILE_ACTION)
+        self.assertEqual(resp["status"], "ok")
+
+    def test_allowlist_is_exactly_the_two_fixed_actions(self):
+        self.assertEqual(
+            br.ALLOWED_ACTIONS,
+            (br.PRODUCTION_HANDOFF_ACTION, br.RUNTIME_RECONCILE_ACTION),
+        )
+        self.assertEqual(
+            br.ACTION_COMMANDS,
+            {
+                br.PRODUCTION_HANDOFF_ACTION: [
+                    "/opt/homebrew/bin/python3",
+                    "/Users/hong/.hermes/scripts/quant_production_handoff.py",
+                ],
+                br.RUNTIME_RECONCILE_ACTION: [
+                    "/opt/homebrew/bin/python3",
+                    "/Users/hong/.hermes/scripts/quant_runtime_reconcile.py",
+                ],
+            },
+        )
 
     def test_action_failure_reports_exit_code_and_fails_closed(self):
         self.runner_result = (7, "partial", "boom")

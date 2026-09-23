@@ -1,12 +1,11 @@
 #!/opt/homebrew/bin/python3
 """Minimal n8n -> host action bridge (Phase 2C1, card t_e886543c).
 
-One fixed request file, one fixed response file, ONE allowlisted action.
+One fixed request file, one fixed response file, TWO allowlisted actions.
 Claim `production_handoff.request.json` by same-filesystem rename (so a
 duplicate launchd wake cannot double-run the same request), and ONLY if the
-tiny allowlisted payload validates, invoke the EXISTING scheduler wrapper
-`~/.hermes/scripts/quant_production_handoff.py` - which runpy-calls canonical
-`runtime/production_handoff.py`. No handoff logic is duplicated here.
+tiny allowlisted payload validates, invoke one of the EXISTING scheduler
+wrappers. No handoff or reconciler logic is duplicated here.
 
 Fail closed: unknown / malformed / oversize / wrong-field-set payloads write
 a rejection response and invoke NOTHING. Both paths are module constants -
@@ -48,13 +47,24 @@ CLAIM_SUFFIX = ".claimed.%d"  # % os.getpid()
 
 SCHEMA = "quant-control-action/v1"
 RESPONSE_SCHEMA = "quant-control-action-response/v1"
-ACTION = "production_handoff_once"
+PRODUCTION_HANDOFF_ACTION = "production_handoff_once"
+RUNTIME_RECONCILE_ACTION = "runtime_reconcile_once"
+# Keep the original names as compatibility aliases for the existing C3 path.
+ACTION = PRODUCTION_HANDOFF_ACTION
+ALLOWED_ACTIONS = (PRODUCTION_HANDOFF_ACTION, RUNTIME_RECONCILE_ACTION)
 ALLOWED_KEYS = ("schema", "action", "request_id")
 
-# The ONLY allowed action: the existing thin scheduler wrapper (runpy -> canonical
-# runtime/production_handoff.py). Hardcoded; no field of the request may alter it.
+# The ONLY allowed commands: existing thin scheduler wrappers (runpy -> canonical
+# runtime modules). Hardcoded; no field of the request may alter either command.
 WRAPPER = "/Users/hong/.hermes/scripts/quant_production_handoff.py"
-ACTION_CMD = ["/opt/homebrew/bin/python3", WRAPPER]
+RUNTIME_RECONCILE_WRAPPER = "/Users/hong/.hermes/scripts/quant_runtime_reconcile.py"
+PYTHON = "/opt/homebrew/bin/python3"
+ACTION_COMMANDS = {
+    PRODUCTION_HANDOFF_ACTION: [PYTHON, WRAPPER],
+    RUNTIME_RECONCILE_ACTION: [PYTHON, RUNTIME_RECONCILE_WRAPPER],
+}
+# Existing C3 tests and callers use ACTION_CMD; retain its exact mapping.
+ACTION_CMD = ACTION_COMMANDS[PRODUCTION_HANDOFF_ACTION]
 # Fresh minimal env (hermes CLI lives on ~/.local/bin). Never os.environ: the
 # launchd/manual context must not donate HERMES_* fence vars or credentials.
 ACTION_ENV = {
@@ -193,7 +203,7 @@ def _validate(raw):
         return "rejected_field_set", rid_echo, act_echo
     if data.get("schema") != SCHEMA:
         return "rejected_schema", rid_echo, act_echo
-    if act != ACTION:  # missing, wrong type, or simply not the one allowlisted action
+    if act not in ALLOWED_ACTIONS:
         return "rejected_unknown_action", rid_echo, act_echo
     if not rid_ok:
         return "rejected_request_id", None, act_echo
@@ -230,9 +240,13 @@ def _run_action(cmd, env, timeout):
 
 
 def _dispatch(runner, rid, act, started):
-    """(response_payload, ok). The allowlisted action - nothing else can reach here."""
+    """(response_payload, ok). Only the two fixed commands can reach runner."""
     try:
-        rc, out, err = runner(ACTION_CMD, ACTION_ENV, ACTION_TIMEOUT_S)
+        cmd = ACTION_COMMANDS[act]
+    except KeyError:
+        return _response(rid, act, started, None, "rejected_unknown_action", "", ""), False
+    try:
+        rc, out, err = runner(cmd, ACTION_ENV, ACTION_TIMEOUT_S)
     except subprocess.TimeoutExpired as exc:
         return _response(rid, act, started, None, "action_timeout",
                          _as_text(getattr(exc, "stdout", None)),
