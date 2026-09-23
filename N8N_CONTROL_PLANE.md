@@ -1,9 +1,9 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-狀態：**Full Canvas AUDITED PASS / LIVE**；既有 **C3 production handoff AUDITED PASS / LIVE**，本次 C3.1 新 cadence **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**。
-Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 只改 repo export 的目標 cadence，尚未部署。
+狀態：**Full Canvas AUDITED PASS / LIVE**；**C3 production handoff C3.1 AUDITED PASS / LIVE**。
+Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 commits `9832b07`＋`fc44eb0` 已由 auditor run 445 PASS，並完成 live import／publish；2026-09-23 23:05 Asia/Taipei C3 execution 112 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦 `success`。
 
-C3 handoff workflow 仍是獨立、最小的 cadence 編排；既有 implementation 已完成獨立 auditor PASS 並 live activation，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback；本次 C3.1 新目標 `:05/:20/:35/:50` 尚未部署。
+C3 handoff workflow 仍是獨立、最小的 cadence 編排；C3.1 已完成獨立 auditor PASS 並 live activation，live cadence 為 `:05/:20/:35/:50`，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
@@ -11,9 +11,9 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；既有 implementat
 ## C3 current state（production handoff cadence）
 
 - workflow `productionHandoffManualC2` 保持 stable ID；功能節點恰為 **Manual Trigger + Schedule Trigger + 既有 host-bridge action**。
-  Schedule Trigger 的新目標 exact cron 是 `5,20,35,50 * * * *`（`:05/:20/:35/:50`）；目前 live deployment 仍是 `5,35 * * * *`，Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
+  Schedule Trigger 的 live exact cron 是 `5,20,35,50 * * * *`（`:05/:20/:35/:50`）；Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
   repo export 維持 `active=false`，因此本卡不會自行啟用 live cadence。
-- 既有 C3 已完成 activation，現在由 n8n 擁有 production handoff cadence；本次 C3.1 repo 目標仍 **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**，Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
+- C3.1 已完成獨立 audit 與 live activation，現在由 n8n 擁有 `5,20,35,50 * * * *` production handoff cadence；2026-09-23 23:05 Asia/Taipei execution 112 `mode=trigger`／`status=success`。Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
   n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 及既有 Hermes/Kanban kernel 負責。
 - Hermes／Kanban read-back unavailable 時，canonical handoff fail-closed：結果是 finding、**不建卡、不寫 family.json**；該 cadence operationally 轉為 **HOLD**，
   下一個 `:05`／`:20`／`:35`／`:50` tick 自然重試。這裡不新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。
@@ -712,7 +712,7 @@ PY
 3. 寫入面必須落在既有真值的 owner 路徑（`_handoff/candidates.json`、Kanban、`/results`），且先有 atomic-write ＋ read-back ＋ incident 路徑，
    不得由 n8n 自建第二套 candidate／leaderboard／狀態儲存。
 4. resume policy（§5）必須由 pipeline 端（reconciler／handoff）實作或明確委派，n8n 只呼叫既有機制，不自帶佇列語意。
-5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff 與既有 C3 cadence trigger／HOLD 語意皆已完成獨立審計；本次 C3.1 cadence 仍 **IMPLEMENTED / AWAITING AUDIT / NOT YET LIVE**，不得以既有 C3 通過作為本次放行。後續新增 mutating path 仍須先 audit，不得以既有 C3 通過作為一般放寬。
+5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff、C3 cadence trigger／HOLD 語意與本次 C3.1 15 分鐘 cadence 均已完成獨立審計；C3.1 已 live，後續新增 mutating path 仍須先 audit，不得以本次通過作為一般放寬。
 
 ## 11. 刻意不做（避免過度工程）
 
