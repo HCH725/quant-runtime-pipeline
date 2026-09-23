@@ -1,8 +1,9 @@
-# N8N Control Plane — SHADOW + C3 PRODUCTION HANDOFF
+# N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-狀態：**C3 AUDITED PASS / LIVE**。Shadow 仍是唯讀觀測層；C3 handoff workflow
-是獨立、最小的 cadence 編排，不取代 Hermes default、Kanban、Qlib 或 repo 內 canonical runtime。
-C3 implementation 已完成獨立 auditor PASS，之後由 operator 依既有 cutover gate 完成 live activation；legacy Hermes handoff cron `624d0be5b23c` 仍保持 paused、只作 rollback。
+狀態：**Full Canvas implementation delivered / AWAITING INDEPENDENT AUDIT / NOT LIVE**；既有 **C3 production handoff 仍 AUDITED PASS / LIVE**。
+本輪只擴充 stable workflow `shadowQuantCp1` 的唯讀可視化：保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、C3 cadence 或任何 production mutation path。auditor PASS 前不得 import／publish 本輪 canvas。
+
+C3 handoff workflow 仍是獨立、最小的 cadence 編排；implementation 已完成獨立 auditor PASS 並 live activation，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
@@ -20,6 +21,23 @@ C3 implementation 已完成獨立 auditor PASS，之後由 operator 依既有 cu
   由既有 `ai.quant.recover-gate` ＋ `ai.quant.n8n-host-bridge` LaunchAgent 復原；再做 readiness、Shadow、dry-run smoke，通過後繼續。**不新增 recovery service**。
 
 本卡新增的 handoff workflow 沒有 webhook、AI node、credentials、host path 或 request 內任意 action；它只保留 C2 已稽核的固定 bridge request/response semantics。
+
+---
+
+## Full Canvas Completion current implementation（awaiting audit；not live）
+
+`shadowQuantCp1` 的 repo source 現在以**同一張 canvas**分成兩個語意不同的區域：
+
+- **SOURCE / METRICS REFRESH**：沿用既有 15 分鐘 read-only source chain。這一列節點變綠只代表「來源成功讀取」，**不代表 lifecycle 正在該站執行**。
+- **CURRENT LIFECYCLE**：由已組好的 shadow snapshot 做 deterministic derived view，再經 `Current Stage Router` 每拍只送往 **1 個** lifecycle indicator；若 current-family evidence 無法安全定位，就只亮 `Attention / Unresolved`，不得猜測。
+
+Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake → Wiki Brain → Candidate Queue → WAITING_DATA / READY_TO_RESUME Parking → Data / Preflight → Qlib Full Backtest（symbols × timeframes × parameter domain × DCA）→ Historical/OOS → Robustness → Failure Analysis / Result Validation → Result/Verdict → REJECT 或 Survivor/PASS → Leaderboard → Private Survivor Repo，另有 `Attention / Unresolved`。
+
+`Historical/OOS`、`Robustness` 等細站**只是既定 lifecycle 的可視節點，不是新增 runtime state**；目前 authoritative runtime 沒提供可安全細分時，router 不會把粗粒度 `RUNNING_QLIB` 假裝成其中任一細站。`WAITING_DATA` / `READY_TO_RESUME` 也只有在 snapshot 真正帶 exact token 時才會亮，現階段不可得就維持 unavailable。
+
+動態 counts 不透過 workflow self-mutation 寫進 node 名稱。既有 snapshot counts 由 `Pipeline Counts Summary (derived, read-only)` 集中輸出；current indicator 同時收到 current family/card/stage/progress/provenance。這保留 n8n native canvas 的可讀性，也避免另造 registry 或 workflow rewriter。
+
+本輪 repo implementation 尚未 live import／publish；live n8n 在 auditor PASS 前仍維持前一版 `shadowQuantCp1`。production workflow `productionHandoffManualC2` 完全不在本輪變更範圍。
 
 ---
 
