@@ -14,9 +14,10 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；C3.1 已完成獨�
   Schedule Trigger 的 live exact cron 是 `5,20,35,50 * * * *`（`:05/:20/:35/:50`）；Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
   repo export 維持 `active=false`，因此本卡不會自行啟用 live cadence。
 - C3.1 已完成獨立 audit 與 live activation，現在由 n8n 擁有 `5,20,35,50 * * * *` production handoff cadence；2026-09-23 23:05 Asia/Taipei execution 112 `mode=trigger`／`status=success`。Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
-  n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 及既有 Hermes/Kanban kernel 負責。
-- Hermes／Kanban read-back unavailable 時，canonical handoff fail-closed：結果是 finding、**不建卡、不寫 family.json**；該 cadence operationally 轉為 **HOLD**，
-  下一個 `:05`／`:20`／`:35`／`:50` tick 自然重試。這裡不新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；既有 active-family gate 防止重複。
+  n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 負責；該判定**只讀 `/results` artifacts**（`family.json`／`verdict.json`／attempt terminal 證據／candidate pool／incident ledger），**不讀、也不要求 Hermes／Kanban**。
+- 因此 Hermes／Kanban 的卡片狀態（blocked／stale／無法讀回）**不可能**凍結或改寫 production advance：blocked 卡在本輪沒有任何 gate 效力；advance ＝ `family.json` 落地（與派送同一輪完成），work-order 卡只是既有 agent lane 的執行載具、以 `--idempotency-key <family_id>` 冪等派送，派送失敗只留一筆 finding，不回滾、不 freeze。
+- 真正的 runtime guard 是客觀 artifact 證據：active attempt（非 terminal 且 90 分鐘內有新寫入）→ 本輪等待；剛註冊未滿 90 分鐘且尚無 runtime evidence 的 family → launch in flight、本輪等待；未解 incident（其 family／attempt 尚無 terminal 證據）→ fail-closed finding。兩個 90 分鐘窗沿用 watchdog 既有的 stall 窗，沒有新增 state store 或 state machine。
+- 每個 tick 都在 stderr 留一行 bounded outcome token（`outcome=advanced|running|idle|finding|incident` ＋ `action=` ＋ `reason=`），C3／C4 因此能區分「invocation 成功」與「pipeline 結果」，不需新增 mailbox／queue／daemon；下一個 `:05`／`:20`／`:35`／`:50` tick 自然重試。
 - 維護 SOP：先做 HOLD transition；乾淨停止 n8n，checkpoint／integrity check 並保留 known-good DB snapshot；reboot/update 與 login 後，
   由既有 `ai.quant.recover-gate` ＋ `ai.quant.n8n-host-bridge` LaunchAgent 復原；再做 readiness、Shadow、dry-run smoke，通過後繼續。**不新增 recovery service**。
 

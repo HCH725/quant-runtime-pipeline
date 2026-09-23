@@ -191,12 +191,43 @@ class Harness(unittest.TestCase):
         self.assertIn("Cohort: NEWUSDT / 5m", out)
         self.assertNotIn("OLDUSDT", out)
 
-    def test_no_attempt_yet_is_zero_percent(self):
+    def test_no_attempt_yet_is_idle_not_current(self):
+        # A registered family that never launched is NOT current (contract 14.4 runtime-evidence
+        # selection): `Current` is real runtime work or idle, never the newest family.json.
         self.family()
         out = self.snapshot()
-        self.assertIn("0.0% (0 / 1,000)", out)
+        self.assertIn(snap.CURRENT + "\nidle (no active runtime work)", out)
+        self.assertNotIn("0.0% (0 / 1,000)", out)
         self.assertNotIn("Stage:", out)   # the stage line is gone: cohort carries the observation
         self.assertIn("Cohort: unavailable", out)
+
+    def test_stale_attempt_is_not_current(self):
+        # Runtime evidence outside the active window is not "current work": the family stops being
+        # current instead of pinning the snapshot to an abandoned attempt forever.
+        round_id = self.family()
+        base = Path(self.root) / self.attempt(round_id, "fam-a-r1-u1", rows=10)
+        old = (datetime.datetime.now() - datetime.timedelta(hours=6)).timestamp()
+        for path in [base] + list(base.rglob("*")):
+            os.utime(path, (old, old))
+        out = self.snapshot()
+        self.assertIn(snap.CURRENT + "\nidle (no active runtime work)", out)
+        self.assertNotIn("1.0% (10 / 1,000)", out)
+
+    def test_terminal_verdict_family_is_not_current(self):
+        # A contract-terminal family owes the pipeline nothing, even with a fresh attempt dir.
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=10, terminal="DONE")
+        self.write("fam-a/rounds/%s/verdict.json" % round_id,
+                   {"family_id": "fam-a", "verdict": "PASS"})
+        out = self.snapshot()
+        self.assertIn(snap.CURRENT + "\nidle (no active runtime work)", out)
+
+    def test_active_attempt_is_current(self):
+        round_id = self.family()
+        self.attempt(round_id, "fam-a-r1-u1", rows=10)
+        out = self.snapshot()
+        self.assertIn(snap.CURRENT + "\nfam-a", out)
+        self.assertIn("1.0% (10 / 1,000)", out)
 
     def test_terminal_done_is_hundred_percent(self):
         round_id = self.family()
@@ -275,7 +306,7 @@ class Harness(unittest.TestCase):
         self.write("fam-a/rounds/fam-a-r1/verdict.json", {"verdict": "TECHNICAL_INCOMPLETE"})
         out = self.snapshot()
         self.assertIn("Progress: unavailable", out)
-        self.assertIn("no round/attempt directory yet", out)
+        self.assertIn("no active runtime work", out)
         self.assertNotIn("Progress: 0.0%", out)
 
     def test_string_expected_round_spec_behind_an_attempt_is_unavailable(self):
@@ -392,7 +423,7 @@ class Harness(unittest.TestCase):
     def test_no_leaderboard_entries_is_unavailable(self):
         out = self.snapshot()
         self.assertIn(snap.TROPHY + ": unavailable (no entries)", out)
-        self.assertIn(snap.CURRENT + "\nunavailable", out)
+        self.assertIn(snap.CURRENT + "\nidle (no active runtime work)", out)
         self.assertIn("Cohort: unavailable", out)
 
     # --- dashboard payload (Homepage JSON twin) ---------------------------
@@ -421,6 +452,7 @@ class Harness(unittest.TestCase):
         # the snapshot's own read-back, and nothing else is monitored from here.
         self.assertNotIn("runtime", doc)
         cur = doc["current"]
+        self.assertEqual(cur["state"], "running")
         self.assertEqual(cur["family_id"], "fam-a")
         self.assertEqual((cur["round_id"], cur["attempt"], cur["stage"]),
                          (round_id, "fam-a-r1-u1", "RUNNING_QLIB"))
@@ -467,6 +499,8 @@ class Harness(unittest.TestCase):
         # line says "unavailable"), never a fabricated 0.
         doc = self.dashboard()
         self.assertIsNone(doc["current"]["family_id"])
+        self.assertEqual(doc["current"]["state"], "idle")
+        self.assertIn("no active runtime work", doc["current"]["note"])
         self.assertIsNone(doc["current"]["stage"])
         self.assertIsNone(doc["current"]["progress_pct"])
         self.assertIsNone(doc["current"]["progress_done"])

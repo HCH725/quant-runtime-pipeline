@@ -9,15 +9,19 @@ PATH` (the only write this file can make; a target under /results is refused), r
 helpers - never a second calculation.  Runtime health is not derived here either: it is the quant
 watchdog's own state, passed through.
 
-Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the current family's newest
-`<family_id>/family.json`; its authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) for
-the progress (round-spec `expected.expected_case_evaluations` as the denominator, and the larger of the
-streamed `grid_*.csv` row count and the engine's own `artifacts/progress.json` cohort / pair counter
+Sources: `_survivors/leaderboard.json` entries verbatim (top 5); the family whose authoritative attempt
+is *real active runtime work* (contract 14.4 runtime-evidence selection, shared with
+`production_handoff.runtime_state`: a non-terminal attempt whose newest write is inside the 90-minute
+window) - a registered-but-never-launched or stale family is NOT current, and with no active work at
+all the snapshot reports **idle** instead of showing the newest `family.json` as if it were running.
+That family's authoritative attempt (reconcile.py selection, contract 9.4 v1.7.1) gives the progress
+(round-spec `expected.expected_case_evaluations` as the denominator, and the larger of the streamed
+`grid_*.csv` row count and the engine's own `artifacts/progress.json` cohort / pair counter
 converted with it as the numerator) and, while it is still RUNNING_QLIB, its latest *observable* cohort
 (newest streamed grid row); the canonical intake state for the funnel (reviewed = the four
 current_snapshot buckets, ingested = unique ingested_wiki_records, +N/24h read-only from the intake
 cron's own reports, distinct registered / backtested families); the board's live running / blocked
-counts.
+counts (agent-lane display only - never a pipeline decision).
 """
 import argparse
 import csv
@@ -29,6 +33,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from production_handoff import (ACTIVE_WINDOW_MINUTES, read_families,  # noqa: E402
+                                runtime_state)
 from reconcile import (DEFAULT_RESULTS, attempt_metadata, card_status, discover_rounds,  # noqa: E402
                        select_authoritative, sh)
 from terminal_evidence import TERMINALS  # noqa: E402
@@ -90,15 +96,25 @@ def load_json(path):
         return None
 
 
-def current_family(results_root):
-    """The newest family.json under the results root; None when there is none."""
+def active_family(results_root, now=None):
+    """The family that currently owes the pipeline real runtime work; None when the pipeline is idle.
+
+    Contract 14.4 runtime-evidence selection, shared with `production_handoff.runtime_state` (never a
+    second calculation): current = a family whose newest attempt is non-terminal runtime evidence
+    inside the active window. A family that is merely registered - never launched, stale, or already
+    carrying a contract-terminal verdict - is NOT current, so `Current` can never present the newest
+    `family.json` as if it were running work.
+    """
     best = None
-    for doc_path in sorted(Path(results_root).glob("*/family.json")):
-        doc = load_json(doc_path)
-        if doc and doc.get("kanban_task_id") and doc.get("created_at_utc"):
-            if best is None or doc["created_at_utc"] > best["created_at_utc"]:
-                best = doc
-    return best
+    for family_id, doc in sorted(read_families(results_root).items()):
+        state = runtime_state(results_root, family_id, doc, now=now)
+        if not state["in_flight"] or state["attempt"] is None:
+            continue
+        key = (state["activity"] or 0.0, family_id)
+        if best is None or key > best[0]:
+            best = (key, {"family_id": family_id, "doc": doc, "attempt": state["attempt"],
+                          "activity": state["activity"], "why": state["why"]})
+    return best[1] if best else None
 
 
 def leaderboard_entries(results_root):
@@ -372,7 +388,9 @@ def render(results_root):
                                   TROPHY + ": unavailable", CURRENT + ": unavailable",
                                   FUNNEL + ": unavailable",
                                   "%s Running/Blocked: unavailable" % WARN])
-    family = current_family(results_root)
+    current = active_family(results_root)
+    family = (current or {}).get("doc") or None
+    family_id = (current or {}).get("family_id")
     board = (family or {}).get("kanban_board") or DEFAULT_BOARD
     task_id = (family or {}).get("kanban_task_id")
 
@@ -389,9 +407,10 @@ def render(results_root):
         lines.append(TROPHY + ": unavailable (no entries)")
 
     pct, done, total, stage, note, attempt, _round_id = (
-        (0.0, 0, None, "unknown", "", None, None) if not family
-        else progress(results_root, family["family_id"]))
-    lines += ["", CURRENT, family["family_id"] if family else "unavailable"]
+        (0.0, 0, None, "unknown", "no active runtime work", None, None) if not family_id
+        else progress(results_root, family_id))
+    # Current is real runtime work or nothing: an unlaunched/stale family is never shown as current.
+    lines += ["", CURRENT, family_id if family_id else "idle (no active runtime work)"]
     if total:
         lines.append("Progress: %s %.1f%% (%s / %s)" % (bar(pct), pct, format(done, ","),
                                                        format(total, ",")))
@@ -404,7 +423,8 @@ def render(results_root):
         status, why = card_status(board, task_id)
         lines.append("Card: %s" % (status or "unreadable (%s)" % why))
     else:
-        lines.append("Card: unavailable (no family.json with a kanban_task_id)")
+        lines.append("Card: unavailable (no active family)" if not family_id
+                     else "Card: unavailable (family.json has no kanban_task_id)")
 
     reviewed, ingested, delta = research_counts()
     lines += ["", FUNNEL]
@@ -506,22 +526,25 @@ def dashboard_payload(results_root, now=None):
     generated = stamp.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     root_present = Path(results_root).is_dir()
-    family = current_family(results_root) if root_present else None
+    current = active_family(results_root) if root_present else None
+    family = (current or {}).get("doc") or None
+    family_id = (current or {}).get("family_id")
     board = (family or {}).get("kanban_board") or DEFAULT_BOARD
     task_id = (family or {}).get("kanban_task_id")
 
-    if family is None:
+    if family_id is None:
         pct, done, total, stage, attempt, round_id = None, None, None, None, None, None
-        note = "no family.json with a kanban_task_id under the results root"
+        note = "no active runtime work (no non-terminal attempt inside the active window)"
     else:
-        pct, done, total, stage, note, attempt, round_id = progress(results_root, family["family_id"])
+        pct, done, total, stage, note, attempt, round_id = progress(results_root, family_id)
     available = total is not None
     if available:
         progress_text = "%.1f%% (%s / %s)" % (pct, format(done, ","), format(total, ","))
     else:
         progress_text = "unavailable (%s)" % note
     cohort = latest_observable_cohort(attempt) if attempt and stage == RUNNING_STAGE else (None, None)
-    card, card_why = card_status(board, task_id) if task_id else (None, "no family.json with a kanban_task_id")
+    card, card_why = (card_status(board, task_id) if task_id
+                      else (None, "no active family with a kanban_task_id"))
 
     entries = leaderboard_entries(results_root) if root_present else []
     leaderboard_path = Path(results_root) / "_survivors" / "leaderboard.json"
@@ -602,8 +625,12 @@ def dashboard_payload(results_root, now=None):
         "health": health,
         "sources": {"results_root": results_root, "results_root_readable": root_present,
                     "leaderboard_as_of_utc": leaderboard_as_of,
-                    "family_created_at_utc": (family or {}).get("created_at_utc")},
-        "current": {"family_id": (family or {}).get("family_id"),
+                    "family_created_at_utc": (family or {}).get("created_at_utc"),
+                    "current_selection": ("contract 14.4 runtime evidence: newest non-terminal "
+                                          "attempt inside the %d-minute active window"
+                                          % ACTIVE_WINDOW_MINUTES)},
+        "current": {"state": "running" if family_id else "idle",
+                    "family_id": family_id,
                     "round_id": round_id,
                     "attempt": attempt.run_id if attempt else None,
                     "stage": stage, "note": note,
