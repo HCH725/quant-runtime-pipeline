@@ -12,6 +12,7 @@ Two layers:
 
 Run: python3 n8n/test_shadow_workflow.py     (stdlib unittest; needs `node` for the code nodes)
 """
+import base64
 import json
 import shutil
 import subprocess
@@ -300,7 +301,7 @@ class ShadowWorkflowContract(unittest.TestCase):
         payloads.update(overrides)
         return payloads
 
-    def _assemble(self, sources):
+    def _assemble(self, sources, include_binary=False):
         if self.node is None:
             self.skipTest("node is unavailable")
         wrapper = (
@@ -314,7 +315,8 @@ class ShadowWorkflowContract(unittest.TestCase):
         )
         result = subprocess.run([self.node, "-e", wrapper], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(result.stdout)[0]["json"]
+        item = json.loads(result.stdout)[0]
+        return item if include_binary else item["json"]
 
     def _fixture(self, state, stage=None, verdict=None, family_id=UNSET, gate=None, why=None):
         family_id = "family-x" if family_id is UNSET else family_id
@@ -390,13 +392,15 @@ class ShadowWorkflowContract(unittest.TestCase):
         payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
         binary_payload = json.dumps(binary, ensure_ascii=False, separators=(",", ":")) if binary is not None else "undefined"
         wrapper = (
-            "(async()=>{const $input={first:()=>({json:"
+            "(async function(){const $input={first:()=>({json:"
             + payload
             + ",binary:"
             + binary_payload
             + "})};"
             + self.build_code
-            + "})().then((value)=>process.stdout.write(JSON.stringify(value)))"
+            + "}).call({helpers:{prepareBinaryData:async(buffer,fileName,mimeType)=>"
+              "({data:buffer.toString('base64'),fileName:fileName,mimeType:mimeType})}})"
+              ".then((value)=>process.stdout.write(JSON.stringify(value)))"
         )
         result = subprocess.run([self.node, "-e", wrapper], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -574,7 +578,7 @@ class ShadowWorkflowContract(unittest.TestCase):
         self.assertIn("runtime observation of the canonical runtime", summary["provenance"])
         self.assertNotIn("kanban", json.dumps(summary).lower())
 
-    def test_derived_view_preserves_assembler_binary_for_snapshot_writer(self):
+    def test_derived_view_rebuilds_binary_from_post_lifecycle_snapshot(self):
         binary = {
             "data": {
                 "data": "c2VudGluZWw=",
@@ -583,9 +587,41 @@ class ShadowWorkflowContract(unittest.TestCase):
             }
         }
         result = self._build(self._fixture("qlib_active", "RUNNING_QLIB"), binary, include_binary=True)
-        self.assertIn("binary", result)
-        self.assertIn("data", result["binary"])
-        self.assertEqual(result["binary"], binary)
+        emitted = json.loads(base64.b64decode(result["binary"]["data"]["data"]).decode("utf-8"))
+        self.assertNotEqual(result["binary"], binary)
+        self.assertEqual(emitted, result["json"])
+        self.assertIn("lifecycle_view", emitted)
+        self.assertIn("pipeline_counts_summary", emitted)
+
+    def test_emit_snapshot_binary_contains_the_post_lifecycle_displayed_snapshot(self):
+        assembled = self._assemble(self._sources(), include_binary=True)
+        pre_lifecycle = assembled["json"]
+        self.assertNotIn("lifecycle_view", pre_lifecycle)
+        self.assertNotIn("pipeline_counts_summary", pre_lifecycle)
+
+        result = self._build(pre_lifecycle, assembled["binary"], include_binary=True)
+        emitted = json.loads(base64.b64decode(result["binary"]["data"]["data"]).decode("utf-8"))
+        snapshot = result["json"]
+        self.assertEqual(emitted, snapshot)
+        self.assertNotEqual(emitted, pre_lifecycle)
+        self.assertIn("lifecycle_view", emitted)
+        self.assertIn("pipeline_counts_summary", emitted)
+        self.assertEqual(emitted["pipeline_counts_summary"]["current_stage"],
+                         emitted["lifecycle_view"]["current_stage"]["key"])
+        self.assertEqual(emitted["pipeline_counts_summary"]["current_family_id"],
+                         emitted["counts"]["current_family_id"])
+
+        if self.node is None:
+            self.skipTest("node is unavailable")
+        summary_code = self.by_name[SUMMARY_NODE]["parameters"]["jsCode"]
+        wrapper = ("(async()=>{const $input={first:()=>({json:" + json.dumps(snapshot) + "})};"
+                   + summary_code
+                   + "})().then((value)=>process.stdout.write(JSON.stringify(value)))")
+        summary_result = subprocess.run([self.node, "-e", wrapper], capture_output=True, text=True)
+        self.assertEqual(summary_result.returncode, 0, summary_result.stderr)
+        displayed = json.loads(summary_result.stdout)[0]["json"]
+        self.assertEqual(displayed["summary"], emitted["pipeline_counts_summary"])
+        self.assertEqual(displayed["current_stage"], emitted["lifecycle_view"]["current_stage"])
 
 
 if __name__ == "__main__":

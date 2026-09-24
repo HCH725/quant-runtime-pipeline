@@ -19,6 +19,8 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from typing import Optional
+from unittest import mock
 
 RUNTIME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RUNTIME))
@@ -60,7 +62,7 @@ def family(root, family_id, created_minutes_ago=1.0, kanban_task_id=None):
     return path
 
 
-def round_spec(root, family_id, round_id, expected=1000, age_minutes=240.0):
+def round_spec(root, family_id, round_id, expected: Optional[int] = 1000, age_minutes=240.0):
     """`expected=None` writes the scalar a prerequisite-gated round carries (no case denominator)."""
     spec = {"schema": "quant-round-spec/v1", "family_id": family_id, "round_id": round_id}
     spec["expected"] = ("not_computable" if expected is None
@@ -212,6 +214,62 @@ class LifecycleStates(ObservationHarness):
         self.assertEqual(current["progress"], {"available": True, "pct": 4.0, "done": 40,
                                                "total": 1000, "text": "4.0% (40 / 1,000)"})
         self.assertIsNone(current["verdict"])
+
+    def test_live_attempt_uses_cohort_progress_without_a_case_denominator(self):
+        family(self.root, "fam-live", created_minutes_ago=240.0)
+        round_spec(self.root, "fam-live", "fam-live-r1", expected=None)
+        attempt(self.root, "fam-live", "fam-live-r1", "run1", cs.RUNNING_STAGE, 1.0,
+                progress={"cohorts_done": 4, "cohorts_total": 28, "case_evaluations": 9500})
+        progress = self.observe()["current"]["progress"]
+        self.assertEqual(progress, {"available": True, "mode": "cohort", "pct": 14.3,
+                                    "done": 4, "total": 28,
+                                    "text": "14.3% cohorts (4 / 28)"})
+
+    def test_case_denominator_progress_still_precedes_cohort_fallback(self):
+        family(self.root, "fam-live", created_minutes_ago=240.0)
+        round_spec(self.root, "fam-live", "fam-live-r1", expected=1000)
+        attempt(self.root, "fam-live", "fam-live-r1", "run1", cs.RUNNING_STAGE, 1.0,
+                progress={"cohorts_done": 4, "cohorts_total": 28})
+        progress = self.observe()["current"]["progress"]
+        self.assertTrue(progress["available"])
+        self.assertEqual(progress["total"], 1000)
+        self.assertNotIn("mode", progress)
+        self.assertNotIn("cohorts", progress["text"])
+
+    def test_malformed_or_mismatched_cohort_progress_stays_unavailable(self):
+        family(self.root, "fam-live", created_minutes_ago=240.0)
+        round_spec(self.root, "fam-live", "fam-live-r1", expected=None)
+        base = attempt(self.root, "fam-live", "fam-live-r1", "run1", cs.RUNNING_STAGE, 1.0,
+                       progress={"cohorts_done": 4, "cohorts_total": 28})
+        progress_path = base / "artifacts" / "progress.json"
+        invalid_payloads = {
+            "malformed JSON": "{not json\n",
+            "cohort count exceeds total": json.dumps({"cohorts_done": 29, "cohorts_total": 28}),
+            "another attempt identity": json.dumps({"cohorts_done": 4, "cohorts_total": 28,
+                                                     "run_id": "run2"}),
+        }
+        for label, payload in invalid_payloads.items():
+            with self.subTest(case=label):
+                progress_path.write_text(payload)
+                progress = self.observe()["current"]["progress"]
+                self.assertFalse(progress["available"])
+                self.assertIsNone(progress["pct"])
+                self.assertIsNone(progress["done"])
+                self.assertIsNone(progress["total"])
+
+    def test_cohort_fallback_is_not_borrowed_from_a_different_selected_attempt(self):
+        attempt_path = attempt(self.root, "fam-live", "fam-live-r1", "run1", cs.RUNNING_STAGE, 1.0,
+                               progress={"cohorts_done": 4, "cohorts_total": 28})
+        selected_elsewhere = mock.Mock()
+        selected_elsewhere.path = attempt_path.parent / "run2"
+        with mock.patch.object(cs, "progress", return_value=(0.0, 0, None, cs.RUNNING_STAGE,
+                                                              "other attempt", selected_elsewhere,
+                                                              "fam-live-r1")):
+            _stage, progress, _cohort, note = ro._progress_projection(
+                self.root, "fam-live", attempt_path)
+        self.assertFalse(progress["available"])
+        self.assertIsNotNone(note)
+        self.assertIn("differs from the live attempt", note)
 
     def test_published_sentinel_without_its_round_verdict_is_disposition(self):
         family(self.root, "fam-disp", created_minutes_ago=240.0)

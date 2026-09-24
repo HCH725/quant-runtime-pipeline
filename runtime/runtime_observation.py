@@ -188,12 +188,27 @@ def _stage_of(attempt):
     return doc.get("stage") if isinstance(doc, dict) else None
 
 
+def _cohort_progress(attempt_path, family_id, round_id):
+    """(done, total) from this attempt's cohort counter, or None when it is unusable."""
+    doc = cs.load_json(Path(attempt_path) / "artifacts" / "progress.json")
+    if not isinstance(doc, dict):
+        return None
+    identity = {"family_id": family_id, "round_id": round_id,
+                "run_id": Path(attempt_path).name}
+    if any(key in doc and doc[key] != value for key, value in identity.items()):
+        return None
+    done, total = doc.get("cohorts_done"), doc.get("cohorts_total")
+    if type(done) is not int or type(total) is not int or total <= 0 or not 0 <= done <= total:
+        return None
+    return done, total
+
+
 def _progress_projection(results_root, family_id, attempt):
     """(stage, progress, cohort, note) for the live family's authoritative attempt.
 
-    Progress is `candidate_snapshot.progress` - the canonical projection the dashboard shows - and is
-    only published when it selected *the same* attempt this observation classified as live; otherwise
-    the numbers are reported unavailable instead of being borrowed from another attempt.
+    Prefer `candidate_snapshot.progress` - the canonical projection the dashboard shows. Only when it
+    has no case denominator, use a validated cohort counter from that same attempt's artifact; otherwise
+    the numbers stay unavailable instead of being borrowed from another attempt.
     """
     stage, note, cohort = _stage_of(attempt), None, None
     pct, done, total, pstage, pnote, selected, _round = cs.progress(str(results_root), family_id)
@@ -208,6 +223,15 @@ def _progress_projection(results_root, family_id, attempt):
                 "total": total,
                 "text": ("%.1f%% (%s / %s)" % (pct, format(done, ","), format(total, ","))
                          if total is not None else "unavailable (%s)" % pnote)}
+    if total is None:
+        cohort_steps = _cohort_progress(selected_path, family_id, _round)
+        if cohort_steps is not None:
+            cohort_done, cohort_total = cohort_steps
+            cohort_pct = 100.0 * cohort_done / cohort_total
+            progress = {"available": True, "mode": "cohort", "pct": round(cohort_pct, 1),
+                        "done": cohort_done, "total": cohort_total,
+                        "text": "%.1f%% cohorts (%s / %s)" %
+                                (cohort_pct, format(cohort_done, ","), format(cohort_total, ","))}
     if stage is None:
         stage = pstage
     if stage == cs.RUNNING_STAGE:
