@@ -78,7 +78,7 @@ C3 handoff workflow 仍是獨立、最小的 cadence 編排；C3.1 已完成獨�
 
 `shadowQuantCp1` 的 repo source 現在以**同一張 canvas**分成兩個語意不同的區域：
 
-- **SOURCE / METRICS REFRESH**：沿用既有 15 分鐘 read-only source chain。這一列節點變綠只代表「來源成功讀取」，**不代表 lifecycle 正在該站執行**。
+- **SOURCE / METRICS REFRESH**：沿用既有 read-only source chain；repo 排程已由 15 分鐘改為 5 分鐘。這一列節點變綠只代表「來源成功讀取」，**不代表 lifecycle 正在該站執行**。
 - **CURRENT LIFECYCLE**：由已組好的 shadow snapshot 做 deterministic derived view，再經 `Current Stage Router` 每拍只送往 **1 個** lifecycle indicator；若 current-family evidence 無法安全定位，就只亮 `Attention / Unresolved`，不得猜測。
 
 Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake → Wiki Brain → Candidate Queue → WAITING_DATA / READY_TO_RESUME Parking → Data / Preflight → Qlib Full Backtest（symbols × timeframes × parameter domain × DCA）→ Historical/OOS → Robustness → Failure Analysis / Result Validation → Result/Verdict → REJECT 或 Survivor/PASS → Leaderboard → Private Survivor Repo，另有 `Attention / Unresolved`。
@@ -88,6 +88,8 @@ Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake →
 動態 counts 不透過 workflow self-mutation 寫進 node 名稱。既有 snapshot counts 由 `Pipeline Counts Summary (derived, read-only)` 集中輸出；current indicator 同時收到 current family/card/stage/progress/provenance。這保留 n8n native canvas 的可讀性，也避免另造 registry 或 workflow rewriter。
 
 Full Canvas 已完成 live import／publish 與安全重啟驗證：published `shadowQuantCp1` 為 `Quant Control Plane — End-to-End`、active、32 nodes／17 lifecycle indicators，live `nodes + positions + parameters + connections + settings` 與 canonical repo 逐鍵語意相等。一次真實手動 execution 成功，canonical snapshot 寫出成功，且依當下 current-family 的 blocked／not-launched／gate-unmatched 證據只路由至 `Lifecycle 17 — Attention / Unresolved`；`shadow_check.py --require-fresh` PASS。production workflow `productionHandoffManualC2` 的 deploy 前後 export hash 完全相同，未受本輪變更影響。
+
+上述 live 等價是先前版本的歷史驗證；本次 5m／canonical incident 修補僅在 repo worktree，尚未 import／publish 到 live n8n，也尚未實測連續 5 分鐘拍點。
 
 ---
 
@@ -107,8 +109,8 @@ Full Canvas 已完成 live import／publish 與安全重啟驗證：published `s
 
 `shadowQuantCp1` 是唯一的 Shadow workflow，stable ID 不變；display name 現為 **Quant Control Plane — End-to-End**。它把同一份已組裝的 `quant-control-plane-shadow/v1` 快照分成兩條清楚的視覺語意：
 
-- **SOURCE / METRICS REFRESH**：Manual + 15m observation、6 個既有唯讀來源、assembler 與唯一 shadow snapshot write。這條線顯示綠色，只代表來源讀取／快照寫出成功，**不代表 lifecycle 活動**。
-- **CURRENT LIFECYCLE**：`Build lifecycle view (derived, read-only)` 只從 assembler 輸入建立衍生 view；`Current Stage Router` 依 **runtime observation 的 lifecycle state**（`preflight`／`qlib_active`／`disposition`／`terminal`／`idle`；Phase 2，§9.G）與其逐字 token，只把本次 refresh 送到**一個** stage indicator；prerequisite-gate record 只作**佐證**（agree／disagree 都顯示，**不路由**），另有 `Pipeline Counts Summary (derived, read-only)`。它不讀新來源、不寫狀態、不啟動／重排／續跑任何 runtime，**也不讀任何 Kanban 卡片狀態**（`current` 不因卡片狀態改變）。
+- **SOURCE / METRICS REFRESH**：Manual + 5m observation、6 個既有唯讀來源、assembler 與唯一 shadow snapshot write。這條線顯示綠色，只代表來源讀取／快照寫出成功，**不代表 lifecycle 活動**。
+- **CURRENT LIFECYCLE**：`Build lifecycle view (derived, read-only)` 只從 assembler 輸入建立衍生 view；`Current Stage Router` 依 **runtime observation 的 lifecycle state**（`preflight`／`qlib_active`／`disposition`／`terminal`／`idle`；Phase 2，§9.G）與其逐字 token，只把本次 refresh 送到**一個** stage indicator；canonical `production_handoff.unresolved_incidents` 若有未結案事件，則展示優先導向既有 `Attention / Unresolved`，不覆寫 `current.state`；prerequisite-gate record 只作**佐證**（agree／disagree 都顯示，**不路由**），另有 `Pipeline Counts Summary (derived, read-only)`。它不讀新來源、不寫狀態、不啟動／重排／續跑任何 runtime，**也不讀任何 Kanban 卡片狀態**（`current` 不因卡片狀態改變）。
 
 Lifecycle indicator 的固定順序為：
 `Strategy Research / Hermes Scout` → `GitHub Strategy Pool` → `Intake Review` → `Wiki Brain` → `Candidate Queue` → `WAITING_DATA / READY_TO_RESUME Parking` → `Data Readiness / Preflight` → `Qlib Full Backtest (symbols x timeframes x parameter domain x DCA)` → `Historical / OOS` → `Robustness` → `Failure Analysis / Result Validation` → `Result / Verdict` → `REJECT`／`Survivor / PASS` → `Leaderboard` → `Private Survivor Repo Parking`，另有 `Attention / Unresolved`。`REJECT` 與 `Survivor / PASS` 是展示分支；`Leaderboard` → `Private Survivor Repo Parking` 是 promoted display path，不是第二套執行狀態機。
@@ -122,7 +124,7 @@ Lifecycle indicator 的固定順序為：
 ```
 Manual Trigger ─┐
                 ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Runtime Observation ─→ Parking ─→ Assemble ─┬→ Build lifecycle view ─→ Counts Summary
-Schedule (15m)  ┘                                                                                                               ├→ Current Stage Router ─→ exactly one indicator
+Schedule (5m)   ┘                                                                                                               ├→ Current Stage Router ─→ exactly one indicator
                                                                                                                                   └→ Emit snapshot
 ```
 
@@ -132,14 +134,14 @@ Schedule (15m)  ┘                                                             
 | 2 | `Pool — alpha-strategy-research pool (read-only)` | `/host/workspace-ro/alpha-strategy-research` 的 root `*.md`（canonical 規則：`len(parts)==1 and suffix==".md" and not startswith("README")`，即 `review_state.py:111`）＋ checkout HEAD sha | Strategy Research → GitHub alpha-strategy-research pool |
 | 3 | `Intake Review — canonical intake state (read-only)` | `/host/workspace-ro/alpha-strategy-review-state.json`（current_snapshot buckets、pending_ingestion、deferred_delta、ingested_wiki_records、last_reviewed_*） | Intake Review → Wiki Brain |
 | 4 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/*-prerequisite-gate-*.json`：投影**每個 family 最新一筆**（family／round／conclusion／verdict／sha256／bytes），再由 assembler 取用**observation 指名的那個 family** 的 record；沒有就 `null`＋`gaps`，**不臆測**（不再需要投影檔提供 family 提示） | Data / Preflight Gate |
-| 5 | `Runtime Observation — canonical runtime evidence (read-only)` | **不再讀任何投影檔**：對既有 host bridge 發一次固定唯讀 action `runtime_observe_once`（request／response 皆固定路徑，`request_id` 對帳），取回 `runtime/runtime_observation.py` 對 canonical `/Volumes/ExpansionDrive/qlib-results` 的**當下**投影：`current`（lifecycle state＋family／round／attempt／stage／progress／cohort／verdict）、runtime counts、candidate pool、leaderboard、watchdog health | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
+| 5 | `Runtime Observation — canonical runtime evidence (read-only)` | **不再讀任何投影檔**：對既有 host bridge 發一次固定唯讀 action `runtime_observe_once`（request／response 皆固定路徑，`request_id` 對帳），取回 `runtime/runtime_observation.py` 對 canonical `/Volumes/ExpansionDrive/qlib-results` 的**當下**投影：`current`（lifecycle state＋family／round／attempt／stage／progress／cohort／verdict）、runtime counts、candidate pool、leaderboard、watchdog health 與 canonical unresolved incidents | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
 | 6 | `Parking — private survivor repo metadata (read-only)` | `/host/workspace-ro/validated-survivor-research`：`survivors/` 目錄數、`leaderboard/leaderboard.json` 的 count／metadata／sha256、mirror HEAD sha（**只有 metadata，不讀 survivor 內容**） | Private Repo Parking |
 | 7 | `Assemble shadow snapshot (read-only)` | 以上 6 個來源的 stdout（純解析；Code node 無 fs／無網路） | 全鏈 |
 | 8 | `Emit snapshot (n8n shadow dir only)` | 寫入唯一輸出路徑（§6） | 觀測輸出 |
 
 節點實作要點：來源節點 1／2／3／4／6 為 `executeCommand`（只做 `readdirSync`／`readFileSync`／`SHA-256` 投影，**唯讀、deterministic**），
 節點 5 亦為 `executeCommand`，但只**發布**一個固定 request 並**讀回**對應 response（不改任何 host 檔案；`action`／路徑皆為硬編碼常數，request 內只有 `request_id`）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
-節點 1 的讀取面只有 `jobs.json` 一個檔案；它對 15 分鐘拍點做一次投影，讀不到時輸出 `available: false` ＋ 理由（**不會**讓 execution 失敗，也不以預設值代替）。
+節點 1 的讀取面只有 `jobs.json` 一個檔案；repo 版對 5 分鐘拍點做一次投影，讀不到時輸出 `available: false` ＋ 理由（**不會**讓 execution 失敗，也不以預設值代替）。
 節點 1 投影出的欄位就是 §3 的 stage 1 白名單本身；來源可讀性與檔案時間戳留在 `sources[]`（`hermes_scout_cron_state`），**不進** stage 1。
 
 ## 3. State vocabulary（SHADOW 顯示語意）
@@ -409,7 +411,7 @@ n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑
 **實測教訓**：本版 n8n（2.39.9）對 `field: "seconds", secondsInterval: 900` 實測仍**每 60 秒**觸發（DB 內已是 900 卻在 14:37:00／14:38:00 連續觸發），因此改用 minutes 單位；
 改節奏只需改這一個欄位，但需先接受上表成本或設定 execution 修剪。
 註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除。
-**Phase 2（§9.G）追加**：runtime 真值不再來自 5 分鐘投影檔，而是**每次 refresh 由既有 host bridge 執行一次 on-demand observation**（15 分鐘拍點不變）。observation 不寫任何 snapshot 檔、不快取，讀的是 canonical artifacts 當下的值，因此「≤5 分鐘 observation」由來源本身的即時性保證，**不需要**新增 daemon、watcher 或縮短節奏。成本量級不變：原本節點 5 `cat` 的 dashboard.json 為 6.6 KB，現在同一位置換成 observation envelope（real root 57 families 實測 **7.4 KB**），皆在 n8n execution data 內。
+**Phase 2（§9.G）追加／本次修正**：runtime 真值不再來自 5 分鐘投影檔，而是每次 refresh 由既有 host bridge 執行一次 on-demand observation。先前「來源即時即可保證 ≤5 分鐘展示」的主張有誤：canvas 仍只每 15 分鐘寫快照。本次 repo 排程改為 `minutesInterval: 5`，仍不加 daemon／watcher；**live 未部署，≤5 分鐘展示尚待部署後連續拍點驗證**。原先 15 分鐘節奏的儲存實測值保留於上表，5 分鐘節奏的 DB 成本不可直接稱為實測。原本節點 5 `cat` 的 dashboard.json 為 6.6 KB，現在同一位置換成 observation envelope（real root 57 families 實測 **7.4 KB**），皆在 n8n execution data 內。
 
 execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫一次**；本節先前另寫一份（12–15），與 §9.B（12–19）及 A2 表（exec 20）三方漂移，已收斂。
 

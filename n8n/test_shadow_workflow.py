@@ -77,7 +77,7 @@ class ShadowWorkflowContract(unittest.TestCase):
             [node["name"] for node in self.nodes[:10]],
             [
                 "Manual Trigger — shadow validation",
-                "Schedule — 15m observation",
+                "Schedule — 5m observation",
                 "Strategy Research — Hermes Scout cron state (read-only)",
                 "Pool — alpha-strategy-research pool (read-only)",
                 "Intake Review — canonical intake state (read-only)",
@@ -89,8 +89,8 @@ class ShadowWorkflowContract(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            self.by_name["Schedule — 15m observation"]["parameters"]["rule"]["interval"],
-            [{"field": "minutes", "minutesInterval": 15}],
+            self.by_name["Schedule — 5m observation"]["parameters"]["rule"]["interval"],
+            [{"field": "minutes", "minutesInterval": 5}],
         )
         self.assertIn("SOURCE / METRICS REFRESH", self.by_name["Sticky Note — SOURCE / METRICS REFRESH"]["parameters"]["content"])
         self.assertIn("not lifecycle activity", self.by_name["Sticky Note — SOURCE / METRICS REFRESH"]["parameters"]["content"])
@@ -113,6 +113,14 @@ class ShadowWorkflowContract(unittest.TestCase):
                             node_names,
                             f"{source} targets unknown node: {connection['node']}",
                         )
+
+    def test_single_existing_schedule_refreshes_every_five_minutes(self):
+        schedules = [node for node in self.nodes if node["type"] == "n8n-nodes-base.scheduleTrigger"]
+        self.assertEqual(len(schedules), 1)
+        self.assertEqual(schedules[0]["id"], "f68608d5-ed85-4e26-99c5-8ea21c243b96")
+        self.assertEqual(schedules[0]["name"], "Schedule — 5m observation")
+        self.assertEqual(schedules[0]["parameters"]["rule"]["interval"],
+                         [{"field": "minutes", "minutesInterval": 5}])
 
     def test_runtime_truth_never_comes_from_the_dashboard_projection(self):
         for node in self.nodes:
@@ -177,7 +185,7 @@ class ShadowWorkflowContract(unittest.TestCase):
 
     def test_both_observation_triggers_feed_only_the_source_refresh_lane(self):
         source = "Strategy Research — Hermes Scout cron state (read-only)"
-        for trigger in ("Manual Trigger — shadow validation", "Schedule — 15m observation"):
+        for trigger in ("Manual Trigger — shadow validation", "Schedule — 5m observation"):
             self.assertEqual(
                 self.workflow["connections"][trigger]["main"][0],
                 [{"node": source, "type": "main", "index": 0}],
@@ -508,6 +516,53 @@ class ShadowWorkflowContract(unittest.TestCase):
         self.assertIn("the runtime is idle", current["reason"])
         self.assertIsNone(current["context"]["current_family_id"])
         self.assertEqual(current["context"]["lifecycle_state"], "idle")
+
+    def test_canonical_incident_routes_attention_with_identity_even_if_current_is_idle(self):
+        for state, family_id, stage in (("idle", None, None),
+                                        ("preflight", "family-x", None)):
+            with self.subTest(state=state):
+                body = self._observation_body(state=state, stage=stage, family_id=family_id)
+                body["health"].update({
+                    "status": "attention", "active_count": 1,
+                    "active": [{"incident_id": "inc-184f01fd0e16db99", "kind": "sentinel_ambiguous",
+                                "family_id": "family-incident", "why": "attempt run1 carries no clean terminal",
+                                "label": "inc-184f01fd0e16db99 sentinel_ambiguous family-incident",
+                                "source": "production_handoff.unresolved_incidents"}],
+                })
+                snapshot = self._assemble(self._sources(observation=body))
+                self.assertEqual(snapshot["counts"]["current_state"], state)
+                result = self._build(snapshot)
+                current = result["lifecycle_view"]["current_stage"]
+                self.assertEqual(current["key"], "attention_unresolved")
+                self.assertTrue(current["available"])
+                self.assertEqual(current["source_field"], "observation.health.active")
+                for value in ("inc-184f01fd0e16db99", "sentinel_ambiguous", "family-incident",
+                              "attempt run1 carries no clean terminal"):
+                    self.assertIn(value, current["reason"])
+                incident = current["context"]["active_incidents"][0]
+                self.assertEqual(incident["incident_id"], "inc-184f01fd0e16db99")
+                self.assertEqual(incident["family_id"], "family-incident")
+                self.assertEqual(result["pipeline_counts_summary"]["current_lifecycle_state"], state)
+                self.assertEqual(result["pipeline_counts_summary"]["runtime_health"]["active_count"], 1)
+
+    def test_zero_canonical_incidents_keeps_normal_routing(self):
+        for state, stage, family_id, expected in (("idle", None, None, "candidate_queue"),
+                                                  ("qlib_active", "RUNNING_QLIB", "family-x",
+                                                   "qlib_full_backtest")):
+            with self.subTest(state=state):
+                body = self._observation_body(state=state, stage=stage, family_id=family_id)
+                if state == "idle":
+                    body["health"].update({"status": "attention", "active_count": 1,
+                                           "active": [{"kind": "terminal_pending",
+                                                       "label": "watchdog alert",
+                                                       "first_seen_utc": "2026-09-24T00:00:00Z"}]})
+                snapshot = self._assemble(self._sources(observation=body))
+                current = self._build(snapshot)["lifecycle_view"]["current_stage"]
+                self.assertEqual(current["key"], expected)
+                if state == "idle":
+                    self.assertEqual(snapshot["topology"][7]["observation"]["active_incidents"],
+                                     [{"kind": "terminal_pending", "label": "watchdog alert",
+                                       "first_seen_utc": "2026-09-24T00:00:00Z"}])
 
     def test_unprovable_state_routes_attention_without_guessing(self):
         cases = [

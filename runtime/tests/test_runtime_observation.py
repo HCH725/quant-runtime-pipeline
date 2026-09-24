@@ -403,6 +403,67 @@ class Counts(ObservationHarness):
                          ["candidate_pool", "last_pipeline_advance"])
 
 
+class CanonicalIncidents(ObservationHarness):
+    def test_unresolved_incident_overlays_watchdog_health_without_rewriting_current(self):
+        family(self.root, "fam-blocked", created_minutes_ago=400.0)
+        round_spec(self.root, "fam-blocked", "fam-blocked-r1")
+        attempt(self.root, "fam-blocked", "fam-blocked-r1", "run1", cs.RUNNING_STAGE, 360.0)
+        write(Path(self.root) / ph.INCIDENT_DIRNAME / ph.INCIDENT_FILENAME,
+              json.dumps({"schema_version": 1, "incident_id": "inc-1", "kind": "sentinel_ambiguous",
+                          "family_id": "fam-blocked", "round_id": "fam-blocked-r1",
+                          "run_id": "run1"}) + "\n")
+        observation = self.observe()
+        self.assertEqual(observation["current"]["state"], "idle")
+        self.assertEqual(observation["health"]["status"], "attention")
+        self.assertEqual(observation["health"]["active_count"], 1)
+        incident = observation["health"]["active"][0]
+        for field, value in (("incident_id", "inc-1"), ("kind", "sentinel_ambiguous"),
+                             ("family_id", "fam-blocked")):
+            self.assertEqual(incident[field], value)
+        self.assertIn("no clean terminal", incident["why"])
+        self.assertIn("inc-1", observation["health"]["summary"])
+
+    def test_resolved_incident_leaves_existing_health_unchanged(self):
+        family(self.root, "fam-done", created_minutes_ago=240.0)
+        round_spec(self.root, "fam-done", "fam-done-r1")
+        attempt(self.root, "fam-done", "fam-done-r1", "run1", "ARTIFACT_READY", 4.0,
+                sentinel="INCOMPLETE")
+        verdict(self.root, "fam-done", "fam-done-r1", "TECHNICAL_INCOMPLETE")
+        write(Path(self.root) / ph.INCIDENT_DIRNAME / ph.INCIDENT_FILENAME,
+              json.dumps({"schema_version": 1, "incident_id": "inc-old", "kind": "sentinel_ambiguous",
+                          "family_id": "fam-done", "round_id": "fam-done-r1", "run_id": "run1"}) + "\n")
+        observation = self.observe()
+        self.assertEqual(observation["current"]["state"], "terminal")
+        self.assertEqual(observation["health"], cs.health_payload())
+
+    def test_canonical_incident_adds_to_existing_watchdog_alert(self):
+        write(cs.WATCHDOG_STATE, json.dumps({"schema_version": 1,
+                                             "active_signatures": {"fixture|terminal_pending": {}}}))
+        write(Path(self.root) / ph.INCIDENT_DIRNAME / ph.INCIDENT_FILENAME,
+              json.dumps({"schema_version": 1, "incident_id": "inc-no-family",
+                          "kind": "mapping_mismatch"}) + "\n")
+        health = self.observe()["health"]
+        self.assertEqual(health["active_count"], 2)
+        self.assertEqual(health["status"], "attention")
+        self.assertEqual(health["active"][0]["signature"], "fixture|terminal_pending")
+        self.assertEqual(health["active"][1]["incident_id"], "inc-no-family")
+        self.assertIn("no family identity", health["active"][1]["why"])
+
+    def test_unreadable_incident_ledger_never_reports_health_ok(self):
+        with mock.patch.object(ph, "unresolved_incidents", side_effect=OSError("incident ledger unreadable")):
+            observation = self.observe()
+        self.assertEqual(observation["health"]["status"], "unknown")
+        self.assertIn("canonical_incidents", [item["field"] for item in observation["gaps"]])
+
+    def test_invalid_utf8_incident_ledger_is_an_explicit_gap(self):
+        path = Path(self.root) / ph.INCIDENT_DIRNAME / ph.INCIDENT_FILENAME
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"\xff\n")
+        observation = self.observe()
+        self.assertEqual(observation["health"]["status"], "unknown")
+        self.assertIn("canonical_incidents", [item["field"] for item in observation["gaps"]])
+
+
 class ReadOnlyGuarantees(ObservationHarness):
     def test_observation_reads_no_kanban_status(self):
         """A card-bearing family is classified from artifacts alone, and no board call may happen."""

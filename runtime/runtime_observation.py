@@ -13,12 +13,13 @@ must not answer itself:
     `terminal` (the round/family verdict is terminal and that evidence is recent), or `idle`.
   * `counts` - the runtime-side counters (registered/backtested families, cumulative workload
     evaluations, survivors/leaderboard, candidate pool queued/consumed, last pipeline advance) plus
-    the quant watchdog's own health pass-through.
+    the quant watchdog's health and canonical unresolved production incidents.
 
 Semantics are never re-derived here: `production_handoff.runtime_state` (contract 14.4 selection and
 the per-round verdict release rule) decides in-flight/terminal, `candidate_snapshot`'s own helpers
-provide progress / cohort / backtested / workload / leaderboard / top-N, and health is
-`candidate_snapshot.health_payload` (the watchdog's verdict passed through). This module only selects,
+provide progress / cohort / backtested / workload / leaderboard / top-N; health overlays the existing
+`production_handoff.unresolved_incidents` onto `candidate_snapshot.health_payload` without changing
+the watchdog's own verdict. This module only selects,
 projects and labels with provenance; anything it cannot prove stays null and is listed in `gaps`.
 
 Read-only by construction: the results root is a module default / one CLI argument, no file is ever
@@ -398,6 +399,33 @@ def observe(results_root=None, now=None):
     # The funnel (workload / wiki_brain / backtested) is `candidate_snapshot.funnel_view` verbatim -
     # the same computation the dashboard JSON carries, so the two can never disagree about it.
     funnel = cs.funnel_view(results_root, now=datetime.datetime.fromtimestamp(now))
+    health = cs.health_payload()
+    if root_present:
+        try:
+            unresolved = ph.unresolved_incidents(results_root, families)
+        except (OSError, UnicodeError) as exc:
+            _gap(gaps, "canonical_incidents", "canonical incident ledger unreadable: %s" % exc)
+            health["status"] = "attention" if health["status"] == "attention" else "unknown"
+            health["available"] = False
+            health["active_count"] = None
+            health["summary"] = "unknown: canonical incident ledger unreadable; " + health["summary"]
+        else:
+            if unresolved:
+                incidents = [{"incident_id": item.get("incident_id"), "kind": item.get("kind"),
+                              "family_id": item.get("family_id"),
+                              "why": item.get("why") or "incident ledger line is unparsable",
+                              "label": "%s %s %s" % (item.get("incident_id") or "unidentified",
+                                                      item.get("kind") or "unknown kind",
+                                                      item.get("family_id") or "unknown family"),
+                              "source": "production_handoff.unresolved_incidents"}
+                             for item in unresolved]
+                health["active"] = health["active"] + incidents
+                health["active_count"] = len(health["active"])
+                health["status"] = "attention"
+                health["source"] += " + production_handoff.unresolved_incidents"
+                labels = [item["label"] for item in health["active"]]
+                health["summary"] = "attention: %s" % "; ".join(
+                    labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else []))
 
     return {
         "schema": SCHEMA,
@@ -415,7 +443,7 @@ def observe(results_root=None, now=None):
         "leaderboard": {"available": bool(leaderboard_entries), "count": counts["leaderboard_count"],
                         "shown": counts["leaderboard_shown"], "top_n": cs.DASHBOARD_TOP_N,
                         "entries": leaderboard_entries or []},
-        "health": cs.health_payload(),
+        "health": health,
         "sources": [
             {"id": "runtime_results_root", "kind": "canonical runtime artifacts (read-only)",
              "path": results_root, "readable": root_present},
