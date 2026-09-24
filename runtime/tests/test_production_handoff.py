@@ -157,6 +157,18 @@ class Base(unittest.TestCase):
         d.mkdir(parents=True, exist_ok=True)
         (d / h.INCIDENT_FILENAME).write_text(json.dumps(rec) + "\n")
 
+    def _write_execution_blocker(self, family, **over):
+        path = Path(self.root) / family / "execution-blocker.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        doc = {"schema_version": 1, "document_kind": "prelaunch_execution_blocker",
+               "family_id": family, "status": "BLOCKED_BEFORE_ROUND_FREEZE",
+               "required_human_input": "resolve the stated prerequisite question",
+               "round_id": None, "run_id": None,
+               "attempt_launched": False, "qlib_launched": False}
+        doc.update(over)
+        path.write_text(json.dumps(doc) + "\n")
+        return path
+
     def args(self, **over):
         base = dict(results_root=str(self.root), board=BOARD, pool=None, detector="handoff",
                     dry_run=False, json=False, quiet_noop=True)
@@ -330,11 +342,19 @@ class TestAdvance(Base):
         self.assertEqual((res.action, res.outcome), ("noop", "running"))
 
     def test_registered_without_attempt_retries_same_family(self):
-        self.run_round()
+        first = self.run_round()
+        self.assertEqual((first.action, first.outcome), ("appended", "advanced"))
         self.assertEqual(len(self.fake.launches()), 1)
         again = self.run_round()
-        self.assertEqual((again.family_id, again.outcome), (FAMILY_B, "advanced"))
+        self.assertEqual((again.action, again.outcome, again.family_id),
+                         ("retried", "running", FAMILY_B))
         self.assertEqual([c[1] for c in self.fake.launches()], [FAMILY_B, FAMILY_B])
+
+    def test_dry_run_of_registered_family_is_not_a_pipeline_advance(self):
+        self.run_round()
+        retry = self.run_round(dry_run=True)
+        self.assertEqual((retry.action, retry.outcome), ("would_retry", "running"))
+        self.assertEqual(len(self.fake.launches()), 1)
 
     def test_created_body_keeps_candidate_bytes_and_carries_the_lifecycle_footer(self):
         self.run_round()
@@ -435,6 +455,75 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
 
+    def test_active_prelaunch_blocker_is_normalized_and_stops_c3(self):
+        self._write_family(BLOCKED, created="2026-09-13T00:00:00Z")
+        retry_candidate = candidate(family=BLOCKED, fingerprint_input="blocked-family-v1")
+        family_path = self.root / BLOCKED / "family.json"
+        family_doc = json.loads(family_path.read_text())
+        family_doc["semantic_fingerprint"] = h.fingerprint(retry_candidate["fingerprint_input"])
+        family_doc["handoff"] = {
+            "execution": h.DIRECT_MODE,
+            "body_sha256": h.fingerprint(h.body_with_footer(retry_candidate)),
+        }
+        family_path.write_text(json.dumps(family_doc) + "\n")
+        self._write_pool([retry_candidate])
+        self._write_execution_blocker(BLOCKED)
+
+        incidents = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+        self.assertEqual(len(incidents), 1)
+        self.assertEqual(incidents[0]["kind"], "prelaunch_execution_blocker")
+        self.assertEqual(incidents[0]["family_id"], BLOCKED)
+        self.assertIn("human input", incidents[0]["why"])
+
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome, res.finding_key),
+                         ("finding", "incident", "unresolved_incident"))
+        self.assertEqual(self.fake.calls, [])
+
+    def test_invalid_or_nonmatching_prelaunch_blocker_is_not_an_incident(self):
+        self._write_family(BLOCKED)
+        self.assertEqual(h.unresolved_incidents(str(self.root), h.read_families(str(self.root))), [])
+        blocker = self._write_execution_blocker(BLOCKED)
+
+        invalid = [
+            {"family_id": "fam-other-v1"},
+            {"required_human_input": ""},
+            {"round_id": "fam-blocked-r1"},
+            {"run_id": "run1"},
+            {"attempt_launched": True},
+            {"qlib_launched": True},
+            {"status": "RESOLVED"},
+            {"document_kind": "other"},
+        ]
+        for changes in invalid:
+            with self.subTest(changes=changes):
+                blocker = self._write_execution_blocker(BLOCKED)
+                doc = json.loads(blocker.read_text())
+                doc.update(changes)
+                blocker.write_text(json.dumps(doc) + "\n")
+                self.assertEqual(h.unresolved_incidents(
+                    str(self.root), h.read_families(str(self.root))), [])
+        for missing_field in ("round_id", "run_id"):
+            with self.subTest(missing_field=missing_field):
+                blocker = self._write_execution_blocker(BLOCKED)
+                doc = json.loads(blocker.read_text())
+                del doc[missing_field]
+                blocker.write_text(json.dumps(doc) + "\n")
+                self.assertEqual(h.unresolved_incidents(
+                    str(self.root), h.read_families(str(self.root))), [])
+        blocker.write_text("{not json\n")
+        self.assertEqual(h.unresolved_incidents(str(self.root), h.read_families(str(self.root))), [])
+
+    def test_only_later_terminal_verdict_resolves_prelaunch_blocker(self):
+        self._write_family(BLOCKED)
+        self._write_verdict(BLOCKED, "TECHNICAL_INCOMPLETE")
+        self._write_execution_blocker(BLOCKED)
+        families = h.read_families(str(self.root))
+        self.assertEqual(len(h.unresolved_incidents(str(self.root), families)), 1)
+
+        self._write_verdict(BLOCKED, "TECHNICAL_INCOMPLETE")
+        self.assertEqual(h.unresolved_incidents(str(self.root), families), [])
+
     def test_incident_without_family_identity_fails_closed(self):
         self._write_incident({"schema_version": 1, "incident_id": "inc-2", "kind": "mapping_mismatch"})
         res = self.run_round()
@@ -479,6 +568,17 @@ class TestDryRunAndReporting(Base):
         self.assertIn("outcome=advanced", err)
         log = (self.root / h.HANDOFF_DIRNAME / h.LOG_FILENAME).read_text().strip().splitlines()
         self.assertEqual(json.loads(log[-1])["action"], "appended")
+
+    def test_retry_is_logged_as_running_without_claiming_an_advance(self):
+        self.run_main("--json")
+        rc, out, err = self.run_main("--json")
+        self.assertEqual(rc, 0)
+        retry = json.loads(out)
+        self.assertEqual((retry["action"], retry["outcome"]), ("retried", "running"))
+        self.assertIn("outcome=running", err)
+        log = [json.loads(line) for line in
+               (self.root / h.HANDOFF_DIRNAME / h.LOG_FILENAME).read_text().splitlines()]
+        self.assertEqual([row["action"] for row in log], ["appended", "retried"])
 
     def test_noop_round_stays_silent_on_stdout_but_reports_its_outcome(self):
         self._write_family(FRESH, with_attempt=True, attempt_age_minutes=1)
@@ -558,7 +658,7 @@ class TestPoolOrdering(Base):
         self.assertEqual(self.run_round().family_id, self.order[1])
         again = self.run_round()
         self.assertEqual((again.action, again.outcome, again.family_id),
-                         ("appended", "advanced", self.order[1]))
+                         ("retried", "running", self.order[1]))
         self.assertEqual([c[1] for c in self.fake.launches()], [self.order[1]] * 2)
 
     def test_consumed_b_v1_is_never_recreated(self):

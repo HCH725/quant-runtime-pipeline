@@ -7,7 +7,7 @@ Every decision input is a read-only file contract under the results root:
   * `/results/*/rounds/*/attempts/*`      = real runtime evidence (run-spec, sentinels, artifacts)
   * `/results/_handoff/candidates.json`   = the reviewed candidate pool (contract 14.4)
   * `/results/_incidents/...`             = fail-closed incident ledger (contract 12.6)
-  * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/finding decisions
+  * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/retry/finding decisions
 
 The reviewed candidate is handed directly to a detached Hermes default CLI session; no Kanban
 board, dispatcher, card status or task id participates. A file lock held by the agent process
@@ -361,7 +361,7 @@ def runtime_state(results_root, family_id, family_doc, now=None):
 
 
 def unresolved_incidents(results_root, families, now=None):
-    """Incident lines whose canonical subject still carries no terminal evidence (contract 12.6).
+    """Canonical incidents plus active family-local prelaunch blockers (contract 12.6).
 
     Kanban-free replacement for the old "is the incident's card still non-terminal" read: an incident
     is resolved once its own subject - the family (contract-terminal verdict) or the referenced
@@ -370,10 +370,9 @@ def unresolved_incidents(results_root, families, now=None):
     real results/reconciliation safety incident still gates the pipeline.
     """
     path = Path(results_root) / INCIDENT_DIRNAME / INCIDENT_FILENAME
-    if not path.is_file():
-        return []
     open_incidents = []
-    for line in path.read_text().splitlines():
+    lines = path.read_text().splitlines() if path.is_file() else []
+    for line in lines:
         line = line.strip()
         if not line:
             continue
@@ -407,6 +406,48 @@ def unresolved_incidents(results_root, families, now=None):
         subject["why"] = ("family has no terminal verdict and attempt %s carries no clean terminal"
                           % (run_id or "(unidentified)"))
         open_incidents.append(subject)
+
+    root = Path(results_root)
+    for family_id, family_doc in families.items():
+        if not isinstance(family_id, str) or not family_id or not isinstance(family_doc, dict) \
+                or family_doc.get("_unparsable") or family_doc.get("family_id") != family_id:
+            continue
+        family_dir = root / family_id
+        blocker_path = family_dir / "execution-blocker.json"
+        blocker = _load_json(blocker_path)
+        if not isinstance(blocker, dict) or blocker.get("document_kind") != \
+                "prelaunch_execution_blocker" or blocker.get("family_id") != family_id or \
+                blocker.get("status") != "BLOCKED_BEFORE_ROUND_FREEZE" or \
+                "round_id" not in blocker or blocker.get("round_id") is not None or \
+                "run_id" not in blocker or blocker.get("run_id") is not None or \
+                blocker.get("attempt_launched") is not False or blocker.get("qlib_launched") is not False:
+            continue
+        human_input = blocker.get("required_human_input")
+        if not ((isinstance(human_input, str) and human_input.strip()) or
+                (isinstance(human_input, (list, dict)) and human_input)):
+            continue
+        try:
+            blocker_mtime = blocker_path.stat().st_mtime
+        except OSError:
+            continue
+        rounds = family_dir / "rounds"
+        if rounds.is_dir() and any(
+                round_verdict_token(verdict_path.parent, family_id, family_doc)
+                and verdict_path.stat().st_mtime > blocker_mtime
+                for verdict_path in rounds.glob("*/verdict.json")):
+            continue
+        incident_id = blocker.get("incident_id")
+        if not isinstance(incident_id, str) or not incident_id:
+            incident_id = "prelaunch-blocker:%s" % family_id
+        human_input_text = human_input.strip() if isinstance(human_input, str) else \
+            json.dumps(human_input, ensure_ascii=False, sort_keys=True)
+        open_incidents.append({
+            "incident_id": incident_id,
+            "kind": "prelaunch_execution_blocker",
+            "family_id": family_id,
+            "why": "prelaunch execution blocker remains BLOCKED_BEFORE_ROUND_FREEZE; "
+                   "required human input: %s" % human_input_text[:240],
+        })
     return open_incidents
 
 
@@ -653,8 +694,8 @@ def write_family_json(results_root, cand):
 def append_one(results_root, cand, args, res, existing=None):
     """Register once, then launch/retry this SAME family until real evidence is published."""
     if args.dry_run:
-        res.action = "would_append"
-        res.outcome = "advanced"
+        res.action = "would_retry" if existing else "would_append"
+        res.outcome = "running" if existing else "advanced"
         res.reason = "all runtime gates pass; would %s family %s" % (
             "retry" if existing else "advance", cand["family_id"])
         res.family_id = cand["family_id"]
@@ -685,11 +726,17 @@ def append_one(results_root, cand, args, res, existing=None):
     if why:
         return res.finding("agent_launch_failed", "%s; same family remains retryable" % why,
                            attempted_family=cand["family_id"])
-    res.action = "appended"
-    res.outcome = "advanced"
     res.detail["agent_pid"] = pid
-    res.reason = ("family %s registered (%s) and default Hermes worker launched (pid=%s)"
-                  % (cand["family_id"], path, pid))
+    if existing:
+        res.action = "retried"
+        res.outcome = "running"
+        res.reason = "registered family %s retried; default Hermes worker launched (pid=%s)" \
+            % (cand["family_id"], pid)
+    else:
+        res.action = "appended"
+        res.outcome = "advanced"
+        res.reason = ("family %s registered (%s) and default Hermes worker launched (pid=%s)"
+                      % (cand["family_id"], path, pid))
     return res
 
 def _round_once(args):
@@ -853,7 +900,7 @@ def main():
         previous = last_finding_key(args.results_root)
         append_log(args.results_root, record, args.dry_run)
         emit = args.dry_run or res.finding_key != previous
-    elif res.action == "appended":
+    elif res.action in ("appended", "retried"):
         append_log(args.results_root, record, args.dry_run)
 
     if args.json:

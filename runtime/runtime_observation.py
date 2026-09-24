@@ -124,9 +124,9 @@ def terminal_round(results_root, family_id, family_doc, token):
 def last_advance(results_root):
     """(record, reason) - newest real pipeline advance, from the handoff's own append-only ledger.
 
-    Rule: the newest line whose `outcome` is `advanced` and whose `action` is `appended` (a real
-    registration - a dry-run `would_append` is not an advance). That line is what the handoff itself
-    writes when it advances.
+    The first non-dry `appended` / `advanced` row for each family is its registration; return the
+    newest such family registration. This also makes old duplicate retry rows harmless without
+    rewriting the append-only ledger. A dry-run `would_append` is not an advance.
     ponytail: the ledger is read whole (append-only, hundreds of lines); if it ever grows to where a
     whole read hurts the tick, take a bounded tail and keep the same record shape.
     """
@@ -137,16 +137,22 @@ def last_advance(results_root):
         lines = path.read_text(errors="replace").splitlines()
     except OSError as exc:
         return None, "handoff ledger unreadable: %s" % exc
-    for line in reversed(lines):
+    first_by_family = {}
+    for index, line in enumerate(lines):
         try:
             record = json.loads(line)
         except ValueError:
             continue
         if isinstance(record, dict) and record.get("outcome") == "advanced" \
                 and record.get("action") == "appended" and not record.get("dry_run"):
-            return {"at_utc": record.get("ran_at_utc"), "family_id": record.get("family_id"),
-                    "outcome": record.get("outcome")}, None
-    return None, "no advance record in the handoff ledger"
+            family_id = record.get("family_id")
+            key = family_id if isinstance(family_id, str) and family_id else ("unidentified", index)
+            first_by_family.setdefault(key, (index, record))
+    if not first_by_family:
+        return None, "no advance record in the handoff ledger"
+    _index, record = max(first_by_family.values(), key=lambda item: item[0])
+    return {"at_utc": record.get("ran_at_utc"), "family_id": record.get("family_id"),
+            "outcome": record.get("outcome")}, None
 
 
 def pool_projection(results_root):

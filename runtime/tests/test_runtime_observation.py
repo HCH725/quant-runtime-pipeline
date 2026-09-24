@@ -385,6 +385,27 @@ class Counts(ObservationHarness):
         self.assertEqual(observation["pool"]["rule"], (payload or {}).get("rule"))
         self.assertEqual(observation["leaderboard"]["top_n"], cs.DASHBOARD_TOP_N)
 
+    def test_last_advance_ignores_historical_same_family_retry_rows(self):
+        first = {"schema": "quant-handoff-log/v1", "ran_at_utc": "2026-09-24T01:00:00Z",
+                 "outcome": "advanced", "action": "appended", "dry_run": False,
+                 "family_id": "fam-a"}
+        duplicate = dict(first, ran_at_utc="2026-09-24T01:15:00Z")
+        ledger(self.root, [first, duplicate])
+
+        advance, reason = ro.last_advance(self.root)
+        self.assertIsNone(reason)
+        assert advance is not None
+        self.assertEqual((advance["at_utc"], advance["family_id"]),
+                         ("2026-09-24T01:00:00Z", "fam-a"))
+
+        new_family = dict(first, ran_at_utc="2026-09-24T01:30:00Z", family_id="fam-b")
+        ledger(self.root, [first, duplicate, new_family])
+        advance, reason = ro.last_advance(self.root)
+        self.assertIsNone(reason)
+        assert advance is not None
+        self.assertEqual((advance["at_utc"], advance["family_id"]),
+                         ("2026-09-24T01:30:00Z", "fam-b"))
+
     def test_counts_follow_the_runtime_state_selection(self):
         self.build()
         observation = self.observe()
@@ -435,6 +456,29 @@ class CanonicalIncidents(ObservationHarness):
         observation = self.observe()
         self.assertEqual(observation["current"]["state"], "terminal")
         self.assertEqual(observation["health"], cs.health_payload())
+
+    def test_active_prelaunch_blocker_overlays_health_without_rewriting_current(self):
+        family(self.root, "fam-blocked", created_minutes_ago=400.0)
+        write(Path(self.root) / "fam-blocked" / "execution-blocker.json", json.dumps({
+            "schema_version": 1,
+            "document_kind": "prelaunch_execution_blocker",
+            "family_id": "fam-blocked",
+            "status": "BLOCKED_BEFORE_ROUND_FREEZE",
+            "required_human_input": "resolve the stated prerequisite question",
+            "round_id": None,
+            "run_id": None,
+            "attempt_launched": False,
+            "qlib_launched": False,
+        }) + "\n")
+
+        observation = self.observe()
+        self.assertEqual(observation["current"]["state"], "idle")
+        self.assertEqual(observation["health"]["status"], "attention")
+        self.assertEqual(observation["health"]["active_count"], 1)
+        blocker = observation["health"]["active"][0]
+        self.assertEqual(blocker["kind"], "prelaunch_execution_blocker")
+        self.assertEqual(blocker["family_id"], "fam-blocked")
+        self.assertIn("human input", blocker["why"])
 
     def test_canonical_incident_adds_to_existing_watchdog_alert(self):
         write(cs.WATCHDOG_STATE, json.dumps({"schema_version": 1,
