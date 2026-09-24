@@ -11,8 +11,10 @@ adapts the reviewed strategy, checks preflight, and starts detached Qlib compute
 attempt's stage/terminal evidence and, when ready for host disposition, starts another detached
 default session. It does not call or read the production Kanban board. Historical task IDs and the
 read-only dashboard's card projection are retained. This branch is not deployed or audited; the
-historical live status below describes the pre-cutover installation. Direct PASS post-survivor index
-ownership and the installed C4 wrapper's `launched` notification remain separate follow-ups.
+historical live status below describes the pre-cutover installation. Direct PASS post-survivor
+index ownership (direct families are indexed by family/round/run identity with no card ids;
+historical card-owned families keep the strict checks) and the installed C4 wrapper's `launched`
+notification are both addressed on this branch and pending independent audit.
 
 Private，versioned **runtime source-of-truth**：Apple Container → Qlib → Quant Runtime 的可重建定義、
 audited implementation contract 與其變化歷史。
@@ -283,10 +285,13 @@ Homepage + Detail → Cloudflare Tunnel + Access → operator
 9. `runtime/n8n_host_action_bridge.py` ＋ `runtime/ai.quant.n8n-host-bridge.plist` — Phase 2C1 最小 n8n→host
    動作橋（固定 request/response 路徑＋單一 allowlist 動作＋WatchPaths 喚醒，fail-closed；見 `N8N_CONTROL_PLANE.md` §7.3）。
 
-**執行環境限制（Contract §9.4，2026-09-13 實測）**：`runtime/reconcile.py` 的唯一變更動作是 `hermes kanban unblock`，
-而 Hermes 會拒絕來自 `HERMES_DELEGATED_CHILD_CONTEXT=1` context（delegate_task 子行程、kanban worker session，
-以及**由該 session 建立／觸發的 cron job**）的 board 變更。所以 apply 必須在無此標記的 host context 執行
-（operator 的一般 shell／由該 shell 建立的 cron 或服務）；`--dry-run` 不受限制，可用來確認「只剩放行這一步」。
+**執行環境限制（Contract §9.4；本 worktree 的 direct 改造見本檔頂端〈Pending local change〉）**：
+歷史（pre-cutover）`runtime/reconcile.py` 的唯一變更動作是 `hermes kanban unblock`，而 Hermes 會拒絕來自
+`HERMES_DELEGATED_CHILD_CONTEXT=1` context（delegate_task 子行程、kanban worker session，以及**由該 session
+建立／觸發的 cron job**）的 board 變更，故當時 apply 必須在無此標記的 host context 執行。**本分支的 C4
+已不再有任何 board 變更**：direct family 只以 detached `hermes -p default ... chat --query-file` 喚醒 default
+做 host-side disposition，board/fence 對新執行路徑零效力（歷史 card-owned family 不由本路徑操作）；
+`--dry-run` 仍全程唯讀。
 
 mount 契約（Contract §3，`[V]`）：
 

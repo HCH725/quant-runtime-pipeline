@@ -100,7 +100,7 @@ def write_json(path, doc):
 def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end="2026-09-10",
                 oos_start="2025-10-01", created="2026-09-13T00:44:48Z", challenger_of=None,
                 task_id="t_test", mutate=None, name_mismatch=False,
-                parameter_contract=None, cutoff_key="data_end"):
+                parameter_contract=None, cutoff_key="data_end", direct=False):
     """One family + one round + one frozen survivor bundle, in throwaway-results-root shape."""
     round_id = round_id or family_id + "-r1"
     run_id = run_id or round_id + "-u1"
@@ -159,17 +159,20 @@ def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end
             "domain_cardinality": {"strategy": 12, "dca": 48, "per_cohort": 576},
         }
     spec_path = write_json(os.path.join(round_dir, "round-spec.json"), spec)
-    write_json(os.path.join(fam_dir, "family.json"), {
+    family_doc = {
         "schema_version": 1, "family_id": family_id,
-        "kanban_task_id": "t_mismatched_family" if name_mismatch else task_id,
         "challenger_of": challenger_of, "created_at_utc": created,
-    })
+    }
+    if direct:
+        family_doc["handoff"] = {"execution": "direct_hermes"}
+    else:
+        family_doc["kanban_task_id"] = "t_mismatched_family" if name_mismatch else task_id
+    write_json(os.path.join(fam_dir, "family.json"), family_doc)
     bundle = {
         "schema_version": 1, "kind": "frozen_survivor_bundle",
         "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v1.5.0",
         "contract_section": "7.3 / 10.8",
         "family_id": family_id, "round_id": round_id, "run_id": run_id,
-        "kanban_task_id": task_id, "kanban_board": "quant-strategy-research",
         "source_attempt_dir": os.path.join(round_dir, "attempts", run_id),
         "survivor_count": len(survivors), "disposition_band": "SURVIVOR_FOUND" if len(survivors) == 1
         else "MULTIPLE_SURVIVORS",
@@ -182,6 +185,9 @@ def make_family(root, family_id, survivors, round_id=None, run_id=None, data_end
         "generator": {"path": "runtime/survivor_bundle.py", "sha256": "sha256:" + "e" * 64},
         "generated_at_utc": "2026-09-13T01:55:50Z",
     }
+    if not direct:
+        bundle["kanban_task_id"] = task_id
+        bundle["kanban_board"] = "quant-strategy-research"
     bundle["bundle_identity_sha256"] = bundle_identity(bundle)
     if mutate:
         bundle = mutate(bundle)
@@ -205,7 +211,7 @@ def bare_slice(entry, data_start, data_end, episodes=50, net_pnl=100.0, sharpe=1
 def make_forward_run(root, entry, slice_fields, run_id="fw-r1-u1", family_id=None,
                      task_id="t_forward_launch", status="DONE", result_family_id=None,
                      result_run_id=None, drop_sentinel=False, extra_result=None,
-                     mutate_result=None, mutate_sentinel=None):
+                     mutate_result=None, mutate_sentinel=None, direct=False):
     """A terminal run whose `result.json` declares the slice: the only admissible source_run.
 
     Mirrors what a real forward launch writes: `<attempt_dir>/result.json` plus the terminal
@@ -215,24 +221,30 @@ def make_forward_run(root, entry, slice_fields, run_id="fw-r1-u1", family_id=Non
     attempt = os.path.join(root, family_id, "rounds", family_id + "-fw-r1", "attempts", run_id)
     result = {"schema_version": 1, "family_id": result_family_id or family_id,
               "round_id": family_id + "-fw-r1", "run_id": result_run_id or run_id,
-              "task_id": task_id, "coverage_complete": True,
-              "forward_slice": dict(slice_fields)}
+              "coverage_complete": True, "forward_slice": dict(slice_fields)}
+    if not direct:
+        result["task_id"] = task_id
     result.update(extra_result or {})
     if mutate_result:
         result = mutate_result(result)
     result_path = write_json(os.path.join(attempt, "result.json"), result)
     sentinel = {"schema_version": 1, "status": status, "family_id": family_id,
-                "round_id": family_id + "-fw-r1", "run_id": run_id, "task_id": task_id,
-                "kanban_board": "quant-strategy-research",
+                "round_id": family_id + "-fw-r1", "run_id": run_id,
                 "created_at_utc": "2026-11-02T00:00:00Z",
                 "artifact_manifest": ["result.json"],
                 "artifact_checksums": {"result.json": si.sha256_file(result_path)}}
+    if not direct:
+        sentinel["task_id"] = task_id
+        sentinel["kanban_board"] = "quant-strategy-research"
     if mutate_sentinel:
         sentinel = mutate_sentinel(sentinel)
     sentinel_path = write_json(os.path.join(attempt, "DONE"), sentinel)
-    return {"attempt_dir": attempt, "run_id": run_id, "kanban_task_id": task_id,
-            "sentinel_sha256": si.sha256_file(sentinel_path),
-            "result_sha256": si.sha256_file(result_path)}
+    source = {"attempt_dir": attempt, "run_id": run_id,
+              "sentinel_sha256": si.sha256_file(sentinel_path),
+              "result_sha256": si.sha256_file(result_path)}
+    if not direct:
+        source["kanban_task_id"] = task_id
+    return source
 
 
 def resign(bundle):
@@ -1289,6 +1301,66 @@ class TestGenericFamilyLeaderboard(Base):
         proc = self.run_cli(INDEX_CLI, "--json")
         self.assertEqual(proc.returncode, 1, proc.stdout)
         self.assertIn("REFUSED", proc.stderr)
+
+
+class TestDirectOwnership(Base):
+    """v2.0 direct (card-free) ownership: family/round/run identity instead of a Kanban id.
+
+    A direct family has no card, so neither its bundle nor its forward source run may carry one;
+    historical card-owned families keep the strict two-sided `kanban_task_id` checks above.
+    """
+
+    def test_direct_family_indexes_and_takes_forward_evidence_without_card_ids(self):
+        make_family(self.root, "direct-fam-1", a_v2_like_bundle(), direct=True)
+        index, problems = si.build(self.root)
+        self.assertEqual(problems, [], problems)
+        self.assertEqual(index["survivor_count"], 2)
+        entries = index["survivors"]
+        for entry in entries:
+            self.assertIsNone(entry["kanban_task_id"])
+            with open(entry["bundle_path"]) as fh:
+                published = json.load(fh)
+            for key in ("kanban_task_id", "kanban_board", "task_id"):
+                self.assertFalse(published.get(key), key)
+        # forward evidence produced by a card-free run appends, and the leaderboard ranks normally
+        entry = [e for e in entries if e["cohort"] == B][0]
+        doc = bare_slice(entry, "2026-09-11", "2026-09-30")
+        doc["source_run"] = make_forward_run(self.root, entry, doc,
+                                             run_id="fw-direct-u1", direct=True)
+        path = self.write_slice("direct-forward.json", doc)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            entry["survivor_id"], "--slice", path, "--json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(json.loads(proc.stdout)["result"], "appended")
+        board, rows, problems = sl.build(self.root)
+        self.assertEqual(problems, [], problems)
+        self.assertEqual(board["survivor_count"], 2)
+        proc = self.run_cli(LEADERBOARD_CLI, "leaderboard", "--json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(os.path.join(self.root, "_survivors", "leaderboard.json")) as fh:
+            doc = json.load(fh)
+        self.assertEqual(doc["entries"][0]["family_id"], "direct-fam-1")
+
+    def test_direct_bundle_with_card_identity_fails_closed(self):
+        make_family(self.root, "direct-fam-2", a_v2_like_bundle(), direct=True,
+                    mutate=lambda b: resign(dict(b, kanban_task_id="t_leaked")))
+        index, problems = si.build(self.root)
+        self.assertIsNone(index)
+        self.assertTrue(any("carries card ownership" in p for p in problems), problems)
+
+    def test_direct_source_run_with_card_identity_is_refused(self):
+        make_family(self.root, "direct-fam-3", a_v2_like_bundle(), direct=True)
+        entry = [e for e in self.entries() if e["cohort"] == B][0]
+        doc = bare_slice(entry, "2026-09-11", "2026-09-30")
+        doc["source_run"] = make_forward_run(self.root, entry, doc,
+                                             run_id="fw-direct-bad-u1", direct=True)
+        doc["source_run"]["kanban_task_id"] = "t_sneaky"
+        path = self.write_slice("direct-carded.json", doc)
+        proc = self.run_cli(LEADERBOARD_CLI, "forward", "--survivor-id",
+                            entry["survivor_id"], "--slice", path)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("card-free direct evidence", proc.stderr)
+        self.assertFalse(os.path.exists(si.forward_path(self.root, entry["survivor_id"])))
 
 
 if __name__ == "__main__":

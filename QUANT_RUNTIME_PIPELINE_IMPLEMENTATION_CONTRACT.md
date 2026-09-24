@@ -869,6 +869,13 @@ family F
 - `[V]` P1–P10 已包成單一腳本 `runtime/preflight.py`（見 §16.4）。`[V]` 實測 2026-09-13：`python3 runtime/preflight.py` → P1–P8 全 PASS（P9/P10 在未給 `--attempt-dir` 時為 `N/A`）；`container exec qlib-run /opt/venv/bin/python -c "import qlib; print(qlib.__version__)"` → `0.9.7`；`container exec qlib-run /usr/local/bin/python -c "import qlib"` → `ModuleNotFoundError: No module named 'qlib'`（此即裸 `python` 誤判的來源）。`container ls` → `qlib-run  qlib:0.9.7-arm64  linux  arm64  running  6 CPU / 4096 MB`；`container --version` → `1.4.1`；`/Volumes/ExpansionDrive/{market-data-raw,qlib-results}` 皆存在。
 - `[C]` P7 可機械修復：`/qlib/work` 可重建（INV-5），因此不屬於 shared-layer freeze 條件。
 - `[V]` preflight 已包成單一腳本：`python3 runtime/preflight.py [--attempt-dir <dir>] [--launch] [--json]`。輸出每個 P# 的 PASS/FAIL/NA 與 `overall`，exit code 0 = 全數 evaluated 檢查 PASS，1 = 有 FAIL，2 = 使用錯誤。`--launch` 必須搭配 `--attempt-dir`（否則 P9/P10 無法評估，直接拒絕執行）。
+- `[C]`（**v2.0 direct override（待審計、未部署）**）direct family（§9.4／§14.4 的
+  `handoff.execution=direct_hermes`）的 P10 另驗 round-spec identity/ownership：
+  `round-spec.json` 必須可讀、`family_id`／`round_id` 與 attempt 目錄路徑一致，且**不得**
+  含 `task_id`／`kanban_task_id`／`kanban_board`（與 §9.4 v2.0 direct C4 的
+  `mapping_problems` 同一規則）。不成立即 P10 `FAIL`，在任何 compute **之前**攔下——
+  避免 Qlib 開跑後才被 C4 以 `mapping_mismatch` incident 攔下。歷史 card-owned
+  family 的 P10 行為不變。
 
 ### 16.3 結果處置
 - `[C]` 全綠 → 允許 launch（新 run_id 或首次 run）。
@@ -1381,6 +1388,7 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 - `[C]` 索引項至少記錄：`survivor_id`、family／round／run／`kanban_task_id`、`cohort`（`symbol`／`timeframe`）、`strategy_params`、`dca_params`、`params_sha256`、`research_data_cutoff`、bundle 路徑／檔案 checksum／公開 identity、`challenger_of`、以及 frozen evidence（historical／oos／full、四個 stress grid 與其 **stress floor** 及產生該 floor 的 grid 名、parameter-neighbourhood）。
 - `[C]` 零 survivor 的 bundle（`verdict=REJECT`）不是錯誤：索引以 `skipped_bundles` 記錄「該 round 沒有 cohort survivor」，不產生任何項目。
 - `[C]` 順序為 `survivor_id` 遞增（deterministic），**不是**排名，且 `--check` 以「移除 `generated_at_utc` 後逐欄相等」判定一致。
+- `[C]`（**v2.0 direct override，待審計、未部署**）card-free direct family（`family.json.handoff.execution=direct_hermes`，§9.4 v2.0）沒有卡片，故**不以 `kanban_task_id` 驗證**：改以 **family/round/run 身分**驗證——上面第 1–3、5 點與目錄身分檢查照舊，另要求 bundle `run_id` 非空字串、`source_attempt_dir` 目錄名等於該 `run_id`（bundle 必須指名產生它的 terminally DONE attempt），且 family／bundle **任一方帶出非空 `kanban_task_id`／`kanban_board`／`task_id` 一律 fail-closed**（洩漏即 foreign owner）。歷史 card-owned family 維持上面第 4 點的嚴格雙側 non-empty-string 檢查；`survivor_bundle.py` 對 direct run 不寫入 card keys（歷史 run 的鍵與內容不變）。
 
 ### 27.3 Forward evidence（`forward/<survivor_id>.jsonl`）
 
@@ -1394,6 +1402,7 @@ family close-vs-sma-mean-reversion-long-flat-v2   round r1 / run u1
 - `[C]` forward computation 必須重用現行 strategy／Qlib execution semantics；slice 以 `execution_semantics` 具名該語意，本版只建立 **artifact contract ＋ deterministic ingestion/aggregation path**。
 - `[C]` ingestion CLI（`runtime/survivor_leaderboard.py forward`）寫入後必須**讀回**（read-back）最後一行並與寫入內容比對，不符即回報失敗；不存在的 survivor_id、或既有 jsonl 已有不合規 slice 時一律 fail-closed（先修檔案再 append）。
 - `[C]` aggregation 必須是明文、可重算且 deterministic：`episodes` 相加、`net_pnl`／`return_pct` 相加（slices 為**互不重疊**的窗口，共用同一 base capital；未 compound）、`sharpe` 以 episode 數加權平均、`max_dd_pct` 取**最差**（最小）值、`first_data_start`／`last_data_end` 取極值。
+- `[C]`（**v2.0 direct override，待審計、未部署**）index 項為 card-free（`kanban_task_id` 缺漏／null）時，其 `source_run` **不得**帶非空 `kanban_task_id`，DONE sentinel **不得**帶非空 `task_id`／`kanban_board`／`kanban_task_id`（任一非空即拒收），其餘出處驗證（目錄名、DONE、checksums、`forward_slice` 逐欄比對、post-freeze／不重疊／params 不變）全部照舊；歷史帶卡項目的 `kanban_task_id` non-empty-string 與 `sentinel.task_id` 比對維持不變。
 
 ### 27.4 Challenger rule
 

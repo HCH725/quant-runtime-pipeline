@@ -464,25 +464,51 @@ def entries_for_bundle(bundle_path, problems):
             if family.get("family_id") != family_id:
                 problems.append("%s: family.json family_id %r disagrees with the directory name"
                                 % (label, family.get("family_id")))
-            # Contract 27.2 item 4 / 22 A28(3): ownership must be present, a non-empty string and
-            # equal on both sides.  Comparing only when BOTH sides are truthy fails open on a
-            # bundle that carries no `kanban_task_id` at all (audit finding F3), which is exactly
-            # the shape an unverifiable source takes - and a non-string id (number/bool/list) that
-            # happens to match on both sides is not provenance either: the pipeline's ownership id
-            # is a Kanban card id, so anything but a non-empty string is source inconsistency.
-            family_task = family.get("kanban_task_id")
-            bundle_task = bundle.get("kanban_task_id")
-            if not (isinstance(family_task, str) and family_task.strip()
-                    and isinstance(bundle_task, str) and bundle_task.strip()):
-                problems.append("%s: source ownership is incomplete - kanban_task_id is not a "
-                                "non-empty string on both sides (family.json %r, bundle %r); a "
-                                "missing, empty, numeric, boolean, list or null ownership id is "
-                                "source inconsistency and is never indexed, even when both sides "
-                                "carry the very same JSON value (contract 27.2 item 4 / 22 A28)"
-                                % (label, family_task, bundle_task))
-            elif family_task != bundle_task:
-                problems.append("%s: kanban_task_id mismatch: family.json %r != bundle %r"
-                                % (label, family_task, bundle_task))
+            direct = (isinstance(family.get("handoff"), dict)
+                      and family["handoff"].get("execution") == "direct_hermes")
+            if direct:
+                # v2.0 direct ownership (contract 27.2 v-next): a card-free family is validated
+                # by family/round/run identity - the directory checks above plus this bundle's own
+                # run/attempt tie - and neither side may carry ANY card identity (a leaked non-null
+                # id would claim a foreign owner).  Historical card-owned families keep the strict
+                # two-sided non-empty-string check below.
+                leaked = sorted({k for doc in (family, bundle)
+                                 for k in ("kanban_task_id", "kanban_board", "task_id")
+                                 if doc.get(k)})
+                if leaked:
+                    problems.append("%s: direct family/bundle carries card ownership %r: a "
+                                    "card-free direct family is owned by family/round/run "
+                                    "identity only and is never indexed with a card id "
+                                    "(contract 27.2 v-next)" % (label, leaked))
+                attempt_dir = bundle.get("source_attempt_dir")
+                if not (isinstance(bundle.get("run_id"), str) and bundle.get("run_id")
+                        and isinstance(attempt_dir, str)
+                        and os.path.basename(attempt_dir.rstrip(os.sep)) == bundle.get("run_id")):
+                    problems.append("%s: direct bundle lacks run/attempt ownership (run_id %r, "
+                                    "source_attempt_dir %r): the bundle must name the terminally "
+                                    "DONE attempt that produced it (contract 27.2 v-next)"
+                                    % (label, bundle.get("run_id"), attempt_dir))
+            else:
+                # Contract 27.2 item 4 / 22 A28(3): ownership must be present, a non-empty string
+                # and equal on both sides.  Comparing only when BOTH sides are truthy fails open on
+                # a bundle that carries no `kanban_task_id` at all (audit finding F3), which is
+                # exactly the shape an unverifiable source takes - and a non-string id
+                # (number/bool/list) that happens to match on both sides is not provenance either:
+                # the pipeline's ownership id is a Kanban card id, so anything but a non-empty
+                # string is source inconsistency.
+                family_task = family.get("kanban_task_id")
+                bundle_task = bundle.get("kanban_task_id")
+                if not (isinstance(family_task, str) and family_task.strip()
+                        and isinstance(bundle_task, str) and bundle_task.strip()):
+                    problems.append("%s: source ownership is incomplete - kanban_task_id is not a "
+                                    "non-empty string on both sides (family.json %r, bundle %r); a "
+                                    "missing, empty, numeric, boolean, list or null ownership id is "
+                                    "source inconsistency and is never indexed, even when both "
+                                    "sides carry the very same JSON value (contract 27.2 item 4 / "
+                                    "22 A28)" % (label, family_task, bundle_task))
+                elif family_task != bundle_task:
+                    problems.append("%s: kanban_task_id mismatch: family.json %r != bundle %r"
+                                    % (label, family_task, bundle_task))
         else:
             problems.append("%s: family.json is not an object" % label)
 

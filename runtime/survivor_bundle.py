@@ -258,6 +258,12 @@ def build(attempt_dir, attempts_root=None):
     if problems:
         return None, problems
 
+    # Historical card-owned runs publish their Kanban ownership; a direct (card-free) run has
+    # none, so the keys are omitted instead of being written as null - the index validates a
+    # direct bundle by family/round/run identity only (contract 27.2 v-next).
+    ownership = ({"kanban_task_id": run_spec.get("task_id"),
+                  "kanban_board": run_spec.get("kanban_board")}
+                 if run_spec.get("task_id") else {})
     bundle = {
         "schema_version": SCHEMA_VERSION,
         "kind": KIND,
@@ -266,8 +272,7 @@ def build(attempt_dir, attempts_root=None):
         "family_id": run_spec["family_id"],
         "round_id": run_spec["round_id"],
         "run_id": run_spec["run_id"],
-        "kanban_task_id": run_spec.get("task_id"),
-        "kanban_board": run_spec.get("kanban_board"),
+        **ownership,
         "selector_version": result.get("selector_version") or run_spec.get("selector_version"),
         "disposition_version": result.get("disposition_version") or run_spec.get("disposition_version"),
         "source_attempt_dir": os.path.abspath(attempt_dir),

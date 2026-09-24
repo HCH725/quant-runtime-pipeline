@@ -224,10 +224,25 @@ def source_run_problems(slice_doc, entry, results_root):
                 "match that run's result.json - a self-declared slice is never rankable evidence "
                 "(contract 27.3)"]
     problems = []
-    for key in ("attempt_dir", "run_id", "kanban_task_id"):
+    # v2.0 direct ownership (contract 27.3 v-next): a card-free entry (no kanban_task_id in the
+    # durable index) is validated by family/round/run identity, so its source run must carry NO
+    # card identity at all; historical card-owned entries keep the strict task-id requirement.
+    direct_entry = not (isinstance(entry.get("kanban_task_id"), str)
+                        and entry["kanban_task_id"].strip())
+    for key in ("attempt_dir", "run_id"):
         value = source.get(key)
         if not (isinstance(value, str) and value.strip()):
             problems.append("source_run.%s is missing or not a non-empty string (%r)" % (key, value))
+    if direct_entry:
+        if source.get("kanban_task_id"):
+            problems.append("source_run.kanban_task_id %r must not be carried at all: this entry "
+                            "is card-free direct evidence, owned by family/round/run identity only "
+                            "(contract 27.3 v-next)" % (source.get("kanban_task_id"),))
+    else:
+        value = source.get("kanban_task_id")
+        if not (isinstance(value, str) and value.strip()):
+            problems.append("source_run.%s is missing or not a non-empty string (%r)"
+                            % ("kanban_task_id", value))
     for key in ("sentinel_sha256", "result_sha256"):
         if not is_checksum(source.get(key)):
             problems.append("source_run.%s is not a sha256:<64 hex> checksum (%r)"
@@ -287,8 +302,16 @@ def source_run_problems(slice_doc, entry, results_root):
     if sentinel.get("status") != SOURCE_RUN_SENTINEL_NAME:
         problems.append("the source run is not terminally DONE (status %r): a FAILED/INCOMPLETE "
                         "run never produces evidence" % sentinel.get("status"))
-    for key, want in (("run_id", source["run_id"]), ("task_id", source["kanban_task_id"]),
-                      ("family_id", entry["family_id"])):
+    checks = [("run_id", source["run_id"]), ("family_id", entry["family_id"])]
+    if direct_entry:
+        for key in ("task_id", "kanban_board", "kanban_task_id"):
+            if sentinel.get(key):
+                problems.append("the source run's sentinel records card identity %s=%r: a direct "
+                                "run's DONE sentinel never carries a card (contract 27.3 v-next)"
+                                % (key, sentinel.get(key)))
+    else:
+        checks.append(("task_id", source["kanban_task_id"]))
+    for key, want in checks:
         if sentinel.get(key) != want:
             problems.append("the source run's sentinel records %s %r, not %r"
                             % (key, sentinel.get(key), want))

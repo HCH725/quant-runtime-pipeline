@@ -351,6 +351,33 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
                    any(k in spec for k in ("task_id", "kanban_board", "kanban_task_id"))):
         check(checks, "P10", "FAIL", "card-local", "direct family/run identity mismatch")
         return
+    if direct:
+        # The frozen round-spec is part of the launch gate too: a direct family must carry its own
+        # family/round identity and no Kanban ownership, otherwise Qlib would start on evidence that
+        # C4 later rejects as mapping_mismatch (same ownership rule as reconcile.mapping_problems).
+        round_path = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(attempt_dir))), "round-spec.json")
+        try:
+            with open(round_path) as fh:
+                round_spec = json.load(fh)
+        except (OSError, ValueError):
+            round_spec = None
+        problems = []
+        if not isinstance(round_spec, dict):
+            problems.append("round-spec.json missing or unreadable")
+        else:
+            if round_spec.get("family_id") != family.get("family_id"):
+                problems.append("round-spec family_id mismatch")
+            if round_spec.get("round_id") != Path(attempt_dir).resolve().parents[1].name:
+                problems.append("round-spec round_id mismatch")
+            owned = [k for k in ("task_id", "kanban_task_id", "kanban_board")
+                     if k in round_spec]
+            if owned:
+                problems.append("direct round-spec has Kanban ownership %s" % owned)
+        if problems:
+            check(checks, "P10", "FAIL", "card-local",
+                  "direct round-spec identity mismatch: %s" % "; ".join(problems))
+            return
     script = spec.get("script") or {}
     sha = script.get("sha256")
     path = script.get("path")

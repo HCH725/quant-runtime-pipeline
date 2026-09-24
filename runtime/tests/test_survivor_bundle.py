@@ -75,14 +75,16 @@ def survivor(label):
 
 def make_attempt(root, survivors, count=None, coverage_complete=True, disposition=None,
                  verdict_recommendation=None, claimable=None, sentinel="DONE",
-                 assertions=None, extra_cohorts=None):
+                 assertions=None, extra_cohorts=None, direct=False):
     attempt = os.path.join(root, "rounds", "fam-r1", "attempts", "fam-r1-u1")
     os.makedirs(os.path.join(attempt, "artifacts"), exist_ok=True)
     n = len(survivors) if count is None else count
     labels = [s["cohort"] for s in survivors]
     run_spec = {"schema_version": 1, "family_id": "fam", "round_id": "fam-r1", "run_id": "fam-r1-u1",
-                "task_id": "t_test", "kanban_board": "quant-strategy-research",
                 "selector_version": "cohort-selector-v1", "disposition_version": "cohort-disposition-v1"}
+    if not direct:  # a card-free direct run-spec carries no card fields at all (v2.0)
+        run_spec["task_id"] = "t_test"
+        run_spec["kanban_board"] = "quant-strategy-research"
     result = {"schema_version": 1, "family_id": "fam", "round_id": "fam-r1", "run_id": "fam-r1-u1",
               "selector_version": "cohort-selector-v1", "disposition_version": "cohort-disposition-v1",
               "cohort_survivors": labels, "cohort_survivor_count": n,
@@ -134,6 +136,23 @@ class TestSurvivorBundle(unittest.TestCase):
         self.assertEqual(problems, [])
         self.assertEqual(bundle["disposition_band"], "SURVIVOR_FOUND")
         self.assertEqual(bundle["verdict"], "PASS")
+
+    def test_direct_run_freezes_a_bundle_without_any_card_keys(self):
+        # v2.0 direct (contract 27.2 v-next): a card-free run-spec freezes a bundle that carries
+        # NO card keys at all - not null - so the index can validate it by family/round/run
+        # identity while a leaked non-null card id would still fail closed there.
+        bundle, problems = sb.build(make_attempt(self.root, [survivor(A)], direct=True))
+        self.assertEqual(problems, [], problems)
+        self.assertNotIn("kanban_task_id", bundle)
+        self.assertNotIn("kanban_board", bundle)
+        self.assertEqual(bundle["run_id"], "fam-r1-u1")
+
+    def test_carded_run_still_publishes_both_card_keys(self):
+        # Historical pin: the direct branch must not leak into card-owned runs.
+        bundle, problems = sb.build(make_attempt(self.root, [survivor(A)]))
+        self.assertEqual(problems, [], problems)
+        self.assertEqual(bundle["kanban_task_id"], "t_test")
+        self.assertEqual(bundle["kanban_board"], "quant-strategy-research")
 
     def test_zero_survivor_attempt_is_refused_and_freezes_nothing(self):
         # Card t_e86b05a8: a round with no cohort survivor has no frozen survivor bundle.  The

@@ -9,6 +9,7 @@ reconcile (runpy.run_path) is never invoked.
 
 Run: python3 runtime/tests/test_reconcile_wrapper.py   (stdlib unittest, no container)
 """
+import io
 import json
 import subprocess
 import sys
@@ -118,6 +119,37 @@ class WrapperMainLevelRegression(unittest.TestCase):
             rc = wrapper.main()
         self.assertEqual(rc, 0)
         mock_run_path.assert_not_called()
+
+    def test_direct_launch_is_announced_without_kanban_language(self):
+        """v2.0: a successful direct launch prints `launched`, never `unblocked`/`task=`."""
+        report = {"ran_at_utc": "2026-09-24T12:00:00Z",
+                  "results": [{"action": "launched", "attempt_dir": "/r/fam-a/rounds/fam-a-r1",
+                               "family_id": "fam-a", "round_id": "fam-a-r1",
+                               "run_id": "fam-a-r1-u1", "dry_run": False}],
+                  "launched": ["fam-a-r1-u1"], "incidents": 0}
+        argv = ["quant_runtime_reconcile.py", "--no-recovery", "--dry-run"]
+        old_argv, old_stdout = sys.argv, sys.stdout
+        captured = io.StringIO()
+        try:
+            sys.argv = argv
+            sys.stdout = captured
+
+            def fake_run_path(*args, **kwargs):
+                print(json.dumps(report))
+
+            with patch.object(wrapper.subprocess, "run") as gate, \
+                    patch.object(wrapper.runpy, "run_path",
+                                 side_effect=fake_run_path, return_value=None):
+                rc = wrapper.main()
+        finally:
+            sys.argv, sys.stdout = old_argv, old_stdout
+        self.assertEqual(rc, 0, captured.getvalue())
+        gate.assert_not_called()  # --no-recovery: the gate is skipped, the core still runs
+        out = captured.getvalue()
+        self.assertIn("launched default disposition for fam-a-r1-u1", out)
+        self.assertNotIn("unblocked", out)
+        self.assertNotIn("kanban", out.lower())
+        self.assertNotIn("task=", out)
 
 
 if __name__ == "__main__":

@@ -74,13 +74,32 @@ class DirectExecution(unittest.TestCase):
         script.write_text("print('verified')\n")
         digest = "sha256:" + hashlib.sha256(script.read_bytes()).hexdigest()
         template = RUNTIME / "templates" / "strategy_b_v2_round_spec.template.json"
-        (self.attempt.parents[1] / "round-spec.json").write_bytes(template.read_bytes())
+        round_spec = json.loads(template.read_text())
+        round_spec["family_id"], round_spec["round_id"] = "fam-a", "fam-a-r1"
+        round_spec["parameter_contract"]["family_id"] = round_spec["family_id"]
+        round_spec.pop("kanban_task_id")
+        round_spec.pop("kanban_board")
+        round_path = self.attempt.parents[1] / "round-spec.json"
+        round_path.write_text(json.dumps(round_spec))
         spec = {"schema_version": 1, "family_id": "fam-a", "round_id": "fam-a-r1",
                 "run_id": "fam-a-r1-u1", "script": {"path": "/scripts/strategy.py", "sha256": digest}}
         (self.attempt / "run-spec.json").write_text(json.dumps(spec))
         checks = []
         preflight.p9_p10(checks, str(self.attempt), str(scripts))
         self.assertEqual({c["id"]: c["status"] for c in checks}, {"P9": "PASS", "P10": "PASS"})
+        round_spec["kanban_task_id"] = "t_unwanted"
+        round_path.write_text(json.dumps(round_spec))
+        checks = []
+        preflight.p9_p10(checks, str(self.attempt), str(scripts))
+        self.assertEqual(checks[-1]["status"], "FAIL")
+        self.assertIn("round-spec", checks[-1]["detail"])
+        round_spec.pop("kanban_task_id")
+        round_spec["round_id"] = "foreign-r1"
+        round_path.write_text(json.dumps(round_spec))
+        checks = []
+        preflight.p9_p10(checks, str(self.attempt), str(scripts))
+        self.assertEqual(checks[-1]["status"], "FAIL")
+        self.assertIn("round-spec", checks[-1]["detail"])
         spec["task_id"] = "t_unwanted"
         (self.attempt / "run-spec.json").write_text(json.dumps(spec))
         checks = []
