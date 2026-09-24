@@ -412,18 +412,41 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
 
+    def test_manual_decision_required_does_not_gate_registered_family_retry(self):
+        mofe = "mofe-v1"
+        next_family = "fam-next-v1"
+        self._write_pool([candidate(family=mofe, fingerprint_input="mofe|registered"),
+                          candidate(family=next_family, fingerprint_input="next|registered")])
+        self.assertEqual(self.run_round().family_id, mofe)
+        family_path = self.root / mofe / "family.json"
+        registered = family_path.read_bytes()
+        self._write_incident({"schema_version": 1, "incident_id": "inc-184f01fd0e16db99",
+                              "kind": "manual_decision_required", "family_id": mofe,
+                              "round_id": mofe + "-r1", "run_id": mofe + "-r1-u1"})
+        ledger = self.root / h.INCIDENT_DIRNAME / h.INCIDENT_FILENAME
+        original_line = ledger.read_bytes()
+        again = self.run_round()
+        self.assertEqual((again.action, again.outcome, again.family_id),
+                         ("appended", "advanced", mofe))
+        self.assertEqual([call[1] for call in self.fake.launches()], [mofe, mofe])
+        self.assertEqual(family_path.read_bytes(), registered)
+        self.assertEqual(ledger.read_bytes(), original_line)
+        self.assertFalse((self.root / next_family).exists())
+
     def test_unresolved_incident_blocks_the_advance(self):
-        # Fail-closed on canonical evidence: the incident's family has no terminal verdict and its
-        # attempt carries no clean terminal, so the pipeline does not advance.
+        # Known safety incidents and unknown kinds remain fail-closed.
         self._write_family(BLOCKED, with_attempt=True, attempt_age_minutes=360)
-        self._write_incident({"schema_version": 1, "incident_id": "inc-1",
-                              "kind": "sentinel_ambiguous", "family_id": BLOCKED,
-                              "round_id": BLOCKED + "-r1",
-                              "detected_at_utc": "2026-09-13T00:00:00Z"})
-        res = self.run_round()
-        self.assertEqual((res.action, res.outcome, res.finding_key),
-                         ("finding", "incident", "unresolved_incident"))
-        self.assertEqual(self.fake.calls, [])
+        for kind in ("sentinel_ambiguous", "disposition_launch_failed", "future_unknown_kind"):
+            with self.subTest(kind=kind):
+                self._write_incident({"schema_version": 1, "incident_id": "inc-1",
+                                      "kind": kind, "family_id": BLOCKED,
+                                      "round_id": BLOCKED + "-r1",
+                                      "detected_at_utc": "2026-09-13T00:00:00Z"})
+                res = self.run_round()
+                self.assertEqual((res.action, res.outcome, res.finding_key),
+                                 ("finding", "incident", "unresolved_incident"))
+                self.assertEqual(self.fake.calls, [])
+                self.assertFalse((self.root / FAMILY_B).exists())
 
     def test_incident_resolves_on_terminal_evidence(self):
         self._write_family(BLOCKED, with_attempt=True, attempt_age_minutes=360,
@@ -435,10 +458,21 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
 
-    def test_incident_without_family_identity_fails_closed(self):
-        self._write_incident({"schema_version": 1, "incident_id": "inc-2", "kind": "mapping_mismatch"})
+    def test_incident_resolves_on_clean_attempt_terminal_without_verdict(self):
+        self._write_family(BLOCKED, with_attempt=True, attempt_age_minutes=360, terminal="INCOMPLETE")
+        self._write_incident({"schema_version": 1, "incident_id": "inc-terminal",
+                              "kind": "disposition_launch_failed", "family_id": BLOCKED,
+                              "round_id": BLOCKED + "-r1", "run_id": BLOCKED + "-r1-u1"})
         res = self.run_round()
-        self.assertEqual(res.finding_key, "unresolved_incident")
+        self.assertEqual((res.action, res.family_id), ("appended", FAMILY_B))
+
+    def test_incident_without_family_identity_fails_closed(self):
+        for kind in ("mapping_mismatch", "manual_decision_required"):
+            with self.subTest(kind=kind):
+                self._write_incident({"schema_version": 1, "incident_id": "inc-2", "kind": kind})
+                res = self.run_round()
+                self.assertEqual(res.finding_key, "unresolved_incident")
+                self.assertEqual(self.fake.calls, [])
 
     def test_unparsable_incident_line_fails_closed(self):
         d = Path(self.root) / h.INCIDENT_DIRNAME

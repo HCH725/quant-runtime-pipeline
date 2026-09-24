@@ -367,7 +367,8 @@ def unresolved_incidents(results_root, families, now=None):
     is resolved once its own subject - the family (contract-terminal verdict) or the referenced
     attempt (clean terminal sentinel) - has reached terminal evidence. A line without family identity,
     an unparsable line, or a subject that still owes terminal evidence stays open (fail-closed), so a
-    real results/reconciliation safety incident still gates the pipeline.
+    real results/reconciliation safety incident still gates the pipeline. The non-contract
+    manual_decision_required advisory is non-gating; all other kinds, including unknown ones, gate.
     """
     path = Path(results_root) / INCIDENT_DIRNAME / INCIDENT_FILENAME
     if not path.is_file():
@@ -392,6 +393,8 @@ def unresolved_incidents(results_root, families, now=None):
             subject["why"] = "no family identity in incident line"
             open_incidents.append(subject)
             continue
+        if rec.get("kind") == "manual_decision_required":
+            continue  # non-contract advisory; preserve the append-only ledger, not the pipeline gate
         doc = families.get(family_id)
         if doc is None:
             doc = _load_json(Path(results_root) / family_id / "family.json")
