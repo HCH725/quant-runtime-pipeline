@@ -856,14 +856,14 @@
       "main": [
         [
           {
-            "node": "Candidate→Qlib→Leaderboard — dashboard projection (read-only)",
+            "node": "Runtime Observation — canonical runtime evidence (read-only)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Candidate→Qlib→Leaderboard — dashboard projection (read-only)": {
+    "Runtime Observation — canonical runtime evidence (read-only)": {
       "main": [
         [
           {

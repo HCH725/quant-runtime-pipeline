@@ -99,6 +99,20 @@ class ShadowWorkflowContract(unittest.TestCase):
             LIFECYCLE_NODE,
         )
 
+    def test_connection_names_reference_existing_nodes(self):
+        node_names = set(self.by_name)
+        connections = self.workflow["connections"]
+        for source, outputs in connections.items():
+            self.assertIn(source, node_names, f"unknown connection source: {source}")
+            for branches in outputs.values():
+                for branch in branches:
+                    for connection in branch:
+                        self.assertIn(
+                            connection["node"],
+                            node_names,
+                            f"{source} targets unknown node: {connection['node']}",
+                        )
+
     def test_runtime_truth_never_comes_from_the_dashboard_projection(self):
         for node in self.nodes:
             serialized = json.dumps(node)
