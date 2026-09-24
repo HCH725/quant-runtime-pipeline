@@ -89,7 +89,7 @@ Lifecycle canvas 固定呈現：Strategy Research → GitHub Pool → Intake →
 
 Full Canvas 已完成 live import／publish 與安全重啟驗證：published `shadowQuantCp1` 為 `Quant Control Plane — End-to-End`、active、32 nodes／17 lifecycle indicators，live `nodes + positions + parameters + connections + settings` 與 canonical repo 逐鍵語意相等。一次真實手動 execution 成功，canonical snapshot 寫出成功，且依當下 current-family 的 blocked／not-launched／gate-unmatched 證據只路由至 `Lifecycle 17 — Attention / Unresolved`；`shadow_check.py --require-fresh` PASS。production workflow `productionHandoffManualC2` 的 deploy 前後 export hash 完全相同，未受本輪變更影響。
 
-上述 live 等價是先前版本的歷史驗證；本次 5m／canonical incident 修補僅在 repo worktree，尚未 import／publish 到 live n8n，也尚未實測連續 5 分鐘拍點。
+2026-09-25 live cutover 已完成：`824aecb` fast-forward 到 `main` 後完成 canonical workflow import／publish 與 stopped-only SQLite backup＋WAL checkpoint／integrity check 的 safe restart；healthz=`ok`、readiness=200、三個 production workflows 皆 active。CatDesk browser 直接觀測 End-to-End 在 **00:55:25／01:00:25／01:05:25 Asia/Taipei** 連續三個 5 分鐘自動拍點皆 `Success`；live export 讀回 `Schedule — 5m observation`／`minutesInterval=5`，故 ≤5 分鐘展示 freshness 已由 live evidence 驗證。
 
 ---
 
@@ -395,7 +395,7 @@ n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑
 
 ## 8. 取樣節奏與儲存成本（實測）
 
-卡片允許「60s for observation **if safe**」。實測結果如下，因此 shadow-1 採 **900s（15 分鐘）**：
+本節下表保留 **shadow-1 初始 900s（15 分鐘）** 的儲存成本實測，作為歷史 sizing evidence；**現行 live End-to-End observation 已於 2026-09-25 改為 5 分鐘**。原始實測如下：
 
 | 設定 | 每筆 execution 儲存量（實測） | 每日 exec 數 | 每日 DB 增量 | 14 天保留窗 |
 |---|---|---|---|---|
@@ -407,11 +407,11 @@ n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑
 
 三項對策：(a) 來源節點只輸出**投影後**欄位（原本 `cat` 進 payload 的 intake state 210 KB／gate 86 KB／parking 107 KB 不再進入 execution data）；
 (b) 開啟成功執行的資料儲存（`all`），使 execution 正確 finalize；
-(c) 取樣 **15 分鐘**（`scheduleTrigger` 的 `rule.interval[0] = {field: "minutes", minutesInterval: 15}`，cron-backed），與 pipeline 既有的 15 分鐘 reconciler／watchdog 節奏一致（`dashboard.json` 投影本身由 cron `3d2e54e178ff` 每 5 分鐘重算）。
+(c) 歷史版本取樣為 **15 分鐘**；現行 live `scheduleTrigger` 為 `rule.interval[0] = {field: "minutes", minutesInterval: 5}`。Runtime truth 已不再依賴 `dashboard.json` 投影，而是每拍透過既有 host bridge 做 on-demand canonical runtime observation；C3/C4 cadence 仍維持各自既有排程，未因觀測頻率變更而改動。
 **實測教訓**：本版 n8n（2.39.9）對 `field: "seconds", secondsInterval: 900` 實測仍**每 60 秒**觸發（DB 內已是 900 卻在 14:37:00／14:38:00 連續觸發），因此改用 minutes 單位；
 改節奏只需改這一個欄位，但需先接受上表成本或設定 execution 修剪。
 註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除。
-**Phase 2（§9.G）追加／本次修正**：runtime 真值不再來自 5 分鐘投影檔，而是每次 refresh 由既有 host bridge 執行一次 on-demand observation。先前「來源即時即可保證 ≤5 分鐘展示」的主張有誤：canvas 仍只每 15 分鐘寫快照。本次 repo 排程改為 `minutesInterval: 5`，仍不加 daemon／watcher；**live 未部署，≤5 分鐘展示尚待部署後連續拍點驗證**。原先 15 分鐘節奏的儲存實測值保留於上表，5 分鐘節奏的 DB 成本不可直接稱為實測。原本節點 5 `cat` 的 dashboard.json 為 6.6 KB，現在同一位置換成 observation envelope（real root 57 families 實測 **7.4 KB**），皆在 n8n execution data 內。
+**Phase 2（§9.G）追加／2026-09-25 live close-out**：runtime 真值不再來自 5 分鐘投影檔，而是每次 refresh 由既有 host bridge 執行一次 on-demand observation。先前「來源即時即可保證 ≤5 分鐘展示」的主張有誤，因為舊 canvas 仍每 15 分鐘寫快照；`824aecb` 已把 repo 與 live 排程改為 `minutesInterval: 5`，且不加 daemon／watcher。部署後 CatDesk browser 親眼確認 **00:55:25 → 01:00:25 → 01:05:25** 三個連續自動拍點皆成功，故目前正確表述為 **authoritative live read + ≤5-minute display freshness**。原先 15 分鐘節奏的儲存實測值保留於上表作歷史 sizing evidence；原本節點 5 `cat` 的 dashboard.json 為 6.6 KB，現在同一位置換成 observation envelope（real root 57 families 實測 **7.4 KB**），皆在 n8n execution data 內。
 
 execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫一次**；本節先前另寫一份（12–15），與 §9.B（12–19）及 A2 表（exec 20）三方漂移，已收斂。
 
@@ -476,13 +476,13 @@ execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫�
 | `error` | 1 | 2（早期 CLI） |
 | `success` | 39 | 9・11（CLI 手動驗證）、12–13（60 s 節奏）、14–15（`minutes/15` 切換後首批 900 s）、16–46（修復後 900 s 排程拍點）、47（§9.E CLI 驗證）、48（§9.E 排程拍點） |
 
-此表隨每 15 分鐘拍點前進；取當下值一律用 §7.1 的唯讀探針
+此表是 2026-09-21 的 **15 分鐘歷史 execution evidence**；現行 live 已改為 5 分鐘。取當下值一律用 §7.1 的唯讀探針
 （`container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`），**不在 host 端開 live DB**。
 §8 與本節 C2／C3 只指向本段，不各自複寫 id 區間（先前三方各寫一份而漂移，見 §8 註）。
 
 **C1 — 節點名稱對齊 live／repo**：`n8n export:workflow --id=shadowQuantCp1`（重啟後）與 repo 匯出在 `id`（`shadowQuantCp1`）／`name`／`active`（`true`）／`connections` 上**逐鍵相同**；
 `nodes` 與 `settings` **不同**（皆為 n8n import／儲存時的正規化，非部署漂移）——**語意等價**才是可重現的敘述：10 個節點的 `type` 全同，除正規化鍵外每個節點的參數逐位元相同
-（5 個來源／投影指令與 Code `jsCode` 的 sha256 兩側一致）。完整差異清單、取證指令與實跑值見 **§9.D**。節點名 `Schedule — 15m observation`，參數 `{field: minutes, minutesInterval: 15}`。
+（5 個來源／投影指令與 Code `jsCode` 的 sha256 兩側一致）。完整差異清單、取證指令與實跑值見 **§9.D**。**現行 2026-09-25 live export** 的節點名為 `Schedule — 5m observation`，參數 `{field: minutes, minutesInterval: 5}`；本段其餘數值仍是 2026-09-21 的歷史取證。
 
 **C2／C3**：§8 的 26,416 B 已改為 **26,815 B**（並註明 exec 11 為 26,416 B）；幽靈 `running` 列敘述更新為「已由 n8n 自身 pruning 清除、`running = 0`」，
 id 區間以本節〈execution 現況〉**單一權威段落**為準（此處先前寫 12–19、§8 寫 12–15、A2 表寫到 exec 20 → review round-2 A2 指出的三方漂移）。
@@ -766,7 +766,7 @@ PY
 
 **F8 — 成本（§8 追加）**：同模式對照 exec 49（改動前排程拍點）= 28,823 B → exec 51（改動後排程拍點）= 28,794 B；CLI 對照 exec 47（改動前）= 28,425 B → exec 50（改動後）= 28,396 B（量測方式：容器內對 DB 複本讀 `length(execution_data.data)`，不碰 live 檔）。96 拍／日 ≈ 2.7 MB、14 天 ≈ 38 MB，量級不變。
 
-### 9.G 第七輪：Phase 2 — authoritative runtime Current／counts（卡片 `t_35951c0c`；2026-09-24 實跑；**worktree only，未 deploy**）
+### 9.G 第七輪：Phase 2 — authoritative runtime Current／counts（卡片 `t_35951c0c`；2026-09-24 實跑；**2026-09-25 live close-out verified**）
 
 **問題（已驗證）**：runtime 相關欄位（Current、families／workload／leaderboard／candidate pool）來自 `/host/quant-dashboard-data/dashboard.json`（cron `3d2e54e178ff` 每 5 分鐘產生），canvas 每 15 分鐘取樣 → 間接且可能落後。Phase-1 cutover 後的具體錯配：direct family 已註冊、direct Hermes worker 正在跑，但 dashboard Current 仍顯示 idle（該 family 尚無 Qlib attempt）。
 
@@ -788,7 +788,7 @@ PY
 3. **測試**：runtime `discover -s runtime/tests -t runtime/tests` → **528/528 OK**（含新 16）；`n8n/test_shadow_workflow.py` **19/19**；`n8n/test_production_handoff_workflow.py` **4/4**；`n8n/test_runtime_reconciler_workflow.py` **4/4**；`shadow_check.py --selftest` PASS。
 4. **唯讀性**：模組無寫入／無 subprocess（測試斷言）；fixture root 前後 tree 逐項不變；`candidate_snapshot.card_status`／`board_counts` 被替換為硬失敗後 observation 仍完成（Kanban 不參與）；靜態掃描全 workflow 節點無 `dashboard.json`／`quant-dashboard-data`／`dashboard_meta`。
 
-**殘留風險／未做（交 auditor 與 operator 判定）**：Phase 2 **尚未 deploy**（bridge 未重啟、workflow 未 import、wrapper 目標模組在 main 尚未存在）；`preflight` 涵蓋「attempt 目錄已存在但尚無 `state.json`」是依實測（real root 9 個無 `state.json` 的 attempt ＋ live family）反推，非新語意；stage 非三者之一時 canvas 仍走 `Attention / Unresolved`（不臆測）；prerequisite-gated round 的 progress 分母仍是 `unavailable`（canonical 語意未改）；observation 一次約 7 秒（57 families／386 grid artifacts），在 15 分鐘拍點與 600 s bridge timeout 內。
+**Live close-out／殘留注意事項**：Phase 2 已 deploy；bridge／wrapper／workflow 與 `main` 已對齊，`824aecb` 的 5m observation 與 canonical incident projection 已完成 independent audit、import／publish、safe restart 與 CatDesk browser 連續拍點驗證。`preflight` 涵蓋「attempt 目錄已存在但尚無 `state.json`」是依實測（real root 9 個無 `state.json` 的 attempt ＋ live family）反推，非新語意；stage 非三者之一時 canvas 仍走 `Attention / Unresolved`（不臆測）；prerequisite-gated round 的 progress 分母仍是 `unavailable`（canonical 語意未改）。目前沒有 active production incident，因此 incident→`Attention / Unresolved` 的 **live positive path** 不人工造 incident 驗證；該路徑已有 RED→GREEN regression 與 independent auditor PASS，留待下一次自然 incident 做 regression confirmation。
 
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
