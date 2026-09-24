@@ -174,7 +174,8 @@ class LifecycleStates(ObservationHarness):
         family(self.root, "fam-preflight", created_minutes_ago=2.0)
         write(Path(self.root) / "fam-preflight" / "agent-task.md", "frozen direct prompt\n")
         age(write(Path(self.root) / "fam-preflight" / "agent.log", "adapting\n"), 1.0)
-        current = self.observe()["current"]
+        observation = self.observe()
+        current = observation["current"]
         self.assertEqual(current["state"], "preflight")
         self.assertEqual(current["family_id"], "fam-preflight")
         self.assertIsNone(current["attempt"])
@@ -185,6 +186,33 @@ class LifecycleStates(ObservationHarness):
         self.assertTrue(current["agent"]["agent_log"].endswith("fam-preflight/agent.log"))
         self.assertIn("launch grace", current["why"])
         self.assertEqual(current["age_minutes"], None)
+        self.assertEqual(observation["counts"]["families_in_flight"], 1)
+
+    def test_direct_family_outside_grace_with_recent_log_is_preflight(self):
+        family(self.root, "fam-preflight", created_minutes_ago=ph.LAUNCH_GRACE_MINUTES + 30)
+        log = age(write(Path(self.root) / "fam-preflight" / ph.AGENT_LOG,
+                        "direct worker is adapting\n"), 1.0)
+        self.assertFalse(ph.runtime_state(self.root, "fam-preflight",
+                                          ph.read_families(self.root)["fam-preflight"],
+                                          now=NOW)["in_flight"])
+        observation = self.observe()
+        current = observation["current"]
+        self.assertEqual((current["state"], current["family_id"]), ("preflight", "fam-preflight"))
+        self.assertIsNone(current["attempt"])
+        self.assertEqual(current["last_activity_utc"], cs.iso_utc(log.stat().st_mtime))
+        self.assertEqual(current["age_minutes"], 1.0)
+        self.assertIn("recent direct-Hermes agent.log activity", current["why"])
+        self.assertNotIn("launch grace", current["why"])
+        self.assertEqual(observation["counts"]["families_in_flight"], 1)
+
+    def test_direct_family_outside_grace_with_stale_log_is_idle(self):
+        family(self.root, "fam-stale", created_minutes_ago=ph.LAUNCH_GRACE_MINUTES + 30)
+        write(Path(self.root) / "fam-stale" / "agent-task.md", "recent frozen prompt\n")
+        age(write(Path(self.root) / "fam-stale" / ph.AGENT_LOG, "old worker activity\n"),
+            ph.ACTIVE_WINDOW_MINUTES + 1)
+        observation = self.observe()
+        self.assertEqual(observation["current"]["state"], "idle")
+        self.assertEqual(observation["counts"]["families_in_flight"], 0)
 
     def test_attempt_without_a_published_stage_is_still_preflight(self):
         """The live Phase-1 shape: the direct worker holds the attempt, Qlib has published no stage."""

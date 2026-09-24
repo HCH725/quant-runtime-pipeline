@@ -15,8 +15,9 @@ must not answer itself:
     evaluations, survivors/leaderboard, candidate pool queued/consumed, last pipeline advance) plus
     the quant watchdog's own health pass-through.
 
-Semantics are never re-derived here: `production_handoff.runtime_state` (contract 14.4 selection and
-the per-round verdict release rule) decides in-flight/terminal, `candidate_snapshot`'s own helpers
+Runtime guards remain `production_handoff.runtime_state` (contract 14.4 selection and the per-round
+verdict release rule); observation additionally recognizes recent direct-Hermes agent.log activity
+for a no-attempt family beyond launch grace. `candidate_snapshot`'s own helpers
 provide progress / cohort / backtested / workload / leaderboard / top-N, and health is
 `candidate_snapshot.health_payload` (the watchdog's verdict passed through). This module only selects,
 projects and labels with provenance; anything it cannot prove stays null and is listed in `gaps`.
@@ -34,6 +35,7 @@ import argparse
 import datetime
 import json
 import os
+import stat
 import sys
 import time
 from pathlib import Path
@@ -51,7 +53,9 @@ DEFAULT_RESULTS = ph.DEFAULT_RESULTS  # one source for the production root
 CURRENT_RULE = ("production_handoff.runtime_state (contract 14.4): the family whose newest attempt is "
                 "real runtime work inside the %d-minute active window - no terminal sentinel yet, or "
                 "its own round's verdict still missing - else a registered family inside the %d-minute "
-                "launch grace" % (ph.ACTIVE_WINDOW_MINUTES, ph.LAUNCH_GRACE_MINUTES))
+                "launch grace; observation-only: a no-attempt direct-Hermes family with recent "
+                "agent.log activity inside the %d-minute active window"
+                % (ph.ACTIVE_WINDOW_MINUTES, ph.LAUNCH_GRACE_MINUTES, ph.ACTIVE_WINDOW_MINUTES))
 
 
 def _gap(gaps, field, reason):
@@ -252,8 +256,9 @@ def live_current(results_root, family_doc, family_id, state, now):
         note = "family.json unreadable: fail-closed, the runtime holds the pipeline until it is resolved"
     elif attempt is None:
         classification = "preflight"
-        note = ("registered and inside the %d-minute launch grace: the direct Hermes worker is "
-                "adapting/preflighting this family (no attempt directory yet)" % ph.LAUNCH_GRACE_MINUTES)
+        if state.get("activity") is None:
+            note = ("registered and inside the %d-minute launch grace: the direct Hermes worker is "
+                    "adapting/preflighting this family (no attempt directory yet)" % ph.LAUNCH_GRACE_MINUTES)
     else:
         terminals = [terminal for terminal in TERMINALS if (attempt / terminal).is_file()]
         stage = _stage_of(attempt)
@@ -340,8 +345,26 @@ def observe(results_root=None, now=None):
     if not root_present:
         _gap(gaps, "results_root", "results root not readable: %s" % results_root)
     families = ph.read_families(results_root) if root_present else {}
-    states = [(family_id, doc, ph.runtime_state(results_root, family_id, doc, now=now))
-              for family_id, doc in sorted(families.items())]
+    states = []
+    for family_id, doc in sorted(families.items()):
+        state = ph.runtime_state(results_root, family_id, doc, now=now)
+        if (not state["in_flight"] and not state["attempt"] and not state["verdict"]
+                and isinstance(doc.get("handoff"), dict)
+                and doc["handoff"].get("execution") == ph.DIRECT_MODE):
+            log = Path(results_root) / family_id / ph.AGENT_LOG
+            try:
+                log_stat = log.lstat()
+            except OSError:
+                pass
+            else:
+                age = now - log_stat.st_mtime
+                if (stat.S_ISREG(log_stat.st_mode) and log_stat.st_size > 0
+                        and 0 <= age <= ph.ACTIVE_WINDOW_MINUTES * 60):
+                    # Observation only: recent log bytes are evidence, not proof of a live lease.
+                    state.update(in_flight=True, activity=log_stat.st_mtime,
+                                 why=("preflight supported by recent direct-Hermes agent.log activity "
+                                      "(last write %.1f min ago); worker lease not checked" % (age / 60)))
+        states.append((family_id, doc, state))
     in_flight = [item for item in states if item[2]["in_flight"]]
     if not root_present:
         # Fail-closed: an unreadable results root proves nothing, so no lifecycle state is claimed.
@@ -420,7 +443,8 @@ def observe(results_root=None, now=None):
             {"id": "runtime_results_root", "kind": "canonical runtime artifacts (read-only)",
              "path": results_root, "readable": root_present},
             {"id": "runtime_state_selection", "kind": "canonical selection semantics",
-             "path": "runtime/production_handoff.py:runtime_state + runtime/candidate_snapshot.py",
+             "path": ("runtime/production_handoff.py:runtime_state + "
+                      "runtime/runtime_observation.py:observe + runtime/candidate_snapshot.py"),
              "readable": root_present, "note": CURRENT_RULE},
             {"id": "runtime_watchdog_state", "kind": "watchdog state pass-through (read-only)",
              "path": str(cs.WATCHDOG_STATE), "readable": None},
