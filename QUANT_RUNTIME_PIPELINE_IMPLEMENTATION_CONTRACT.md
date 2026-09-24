@@ -1,5 +1,11 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
+文件狀態：**v2.0.0 PROPOSED / AWAITING INDEPENDENT AUDIT；NOT LIVE**（2026-09-24，
+remediation `t_54a7af2e`）。依 §26，completion bridge/信任邊界變更升 major 版。此版在
+§9.4 與 §14.4 末尾追加 direct-Hermes override；下方 v1.11.0 `AUDITED PASS / LIVE`
+及更早的 Kanban `create`/`unblock` 條文僅描述已部署歷史，**不授權**新 family 用
+Kanban 派工。原 live n8n workflow/bridge、cron、Qlib、frozen artifacts 均未修改或切換。
+
 文件狀態：**AUDITED PASS / LIVE**（v1.11.0；2026-09-23；既有 C3 implementation commit `68b338c` 已完成獨立 auditor PASS；C3.1 commits `9832b07`＋`fc44eb0` 另由 auditor run 445 PASS，並已完成 15 分鐘 live scheduled cutover 驗證）。
 [C3 current state] n8n workflow `productionHandoffManualC2` 已完成 C3.1 live activation，live cadence 為 `5,20,35,50 * * * *`（`:05/:20/:35/:50`），狀態 **AUDITED PASS / LIVE**。2026-09-23 23:05 Asia/Taipei execution 112 為 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦成功；Hermes cron `624d0be5b23c` 保持 **paused**、只作 rollback。n8n 不取代 Hermes default、Kanban、Qlib 或 `runtime/production_handoff.py`，只透過既有 audited host bridge 編排。
 [C3 fail-closed] Hermes／Kanban read-back unavailable 時，canonical `production_handoff` 回報 finding、**不建卡、不寫 family.json**；該 cadence 轉為 **HOLD**，下一個 cadence 自然重試。不得新增 `PAUSED` state、health daemon、retry queue、watcher 或 preflight node；active-family gate 既有防重複語意不變。
@@ -387,6 +393,16 @@ family F
 - `[V]` v1.9.0 cron 現況（2026-09-15，`hermes cron list --all` 讀回）：handoff job `624d0be5b23c`（「Quant production handoff (A→B→C)」）＝ **active**、排程 **`5,35 * * * *`**（由 ChatGPT 改；v1.2.0 交付時為 `5 * * * *`）、no-agent、deliver `discord:1519163199117721650`、last run 2026-09-15T16:05 ok；reconciler job `f6b9aa5e9034`（「Quant runtime reconciler (completion bridge, paused until audit PASS)」）＝ **paused**（`every 15m`），俟本版 audit PASS 後**由 ChatGPT/operator resume**。**（2026-09-16 更正：v1.9.0 audit PASS 後本 job 已 resume；同日 `hermes cron list --all` 讀回 handoff `624d0be5b23c`／reconciler `f6b9aa5e9034`／watchdog `c5314d86cdfe` 皆 active。上列 paused 為 2026-09-15 交付當日讀回，逐字保留。）**
 - `[C]`（v1.9.0）**reconciler cron 的復活時機與 worker 邊界**：`f6b9aa5e9034` 在本修補 audit PASS 前**不得** resume（本版只交付修補與證據，不啟停任何 cron）；worker 卡內**不得**操作 cron（不得 `hermes cron run`／`edit`／`enable`／`resume`），cron 的啟停一律由 ChatGPT/operator 決定。
 
+- `[C]` **v2.0 direct C4 override（待審計、未部署）**：固定 n8n C4 action 仍呼叫
+  `runtime/reconcile.py`；它只處理 `family.json.handoff.execution=direct_hermes`，歷史
+  card-owned family 不改動。每 round 只讓 `(created_at_utc, uN)` 最新、identity 合法的
+  attempt 驅動：較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
+  fail-closed 並記 canonical incident。`state.json.stage` 為 `ARTIFACT_READY`／
+  `FAILED_SCRIPT` 且無 sentinel，或有合法 terminal 但該 round 無 verdict 時，僅以
+  family-scoped lease 啟動 detached Hermes default 一次做 host-side disposition；它不自動
+  判 PASS、不寫 sentinel/verdict、不建卡、不 `unblock`。有該 round verdict 時即 consumed。
+  `--dry-run` 只回報 `would_launch`，不取得 lease、不寫檔、不啟動 agent。
+
 ### 9.5 為何不用 HTTP / webhook / Redis / Celery / queue
 - `[C]` 這些都需要常駐服務或網路信任面，會引入：新 daemon、新 failure mode、新 secret、新 port、新 restart 邏輯；而本 pipeline 的 completion 訊號本質是一個「至少一次、可重讀」的檔案事件。
 - `[C]` 檔案 + 冪等 unblock 已滿足需求，且符合最小設計原則。任何以此為由的擴張提案都應被駁回。
@@ -773,7 +789,23 @@ family F
 
   `[C]` 這條 loop 由三段**既有**機制拼成（container compute／no-agent reconciler／no-agent handoff），**不**新增任何 service／daemon／queue／manager；reconciler 不判 verdict、不改 `/results`、handoff 不建 auditor 卡、default 不長 turn 等 Qlib（§1.2/§25）。
 
-- `[C]`（**文件對齊；卡片 `t_86d04b09`，2026-09-16；僅文字修正，無 runtime／gate／stage 變更**）**candidate 的 producer 就是 Research Intake Review 的同一決策**：每一個 `PASS`／`PASS-WITH-CAVEAT` 在同一次 review decision 產生兩個 **sibling outputs**——① Wiki Brain knowledge record（research-only 保存）；② 本節 production candidate pool 中的**恰一筆** candidate（`/results/_handoff/candidates.json`，並以 `/results/*/family.json` 推導消費狀態）。因此：Wiki Brain 是知識保存、**不是** candidate eligibility 的第二道 gate；`REMEDIATE`／`REJECT` 不進 pool；**不存在**「Wiki 之後再做 crypto/runnable suitability screening」的階段。candidate eligibility 就在 Intake Review 這一次決定，`PASS`／`PASS-WITH-CAVEAT` 必須足以 candidateize；body 的產生是 **format/canonicalization**（frozen GitHub artifact ＋ 該次 review 的正規化內容／crypto portability／caveat），仍須滿足上方 **v1.3.0 candidate card requirements**（含 `DCA PARAMETER DOMAIN` 與 `COHORT SURVIVOR SEMANTICS`），source 未明示的必要 execution 細節可標 `research-defined` 但不得改變核心 hypothesis；缺 prerequisite（本機無該資料／市場）**不是**拒絕 candidate 的新 gate——candidate 仍入 pool、body 忠實註冊 required data/market，未來的執行卡再依 §13 technical failure semantics 終結。append 為 idempotent（同 `reviewed_source`／`family_id`／fingerprint 已存在即 no-op）。本節其餘條文（append 演算法、fingerprint 規則、fail-closed findings、「同一輪最多 1 張」、auditor 非 production stage）與 §14.1–§14.3 皆**不變**；**不新增**任何 stage／service／daemon／queue／cron／manager／檔案型 framework。本條只作文字對齊，**未**變更 `runtime/production_handoff.py`、`runtime/reconcile.py` 或任何 production cron。
+- `[C]`（**文件對齊；卡片 `t_86d04b09`，2026-09-16；僅文字修正，無 runtime／gate／stage 變更**）**candidate 的 producer 就是 Research Intake Review 的同一決策**：每一個 `PASS`／`PASS-WITH-CAVEAT` 在同一次 review decision 產生兩個 **sibling outputs**——① Wiki Brain knowledge record（research-only 保存）；② 本節 production candidate pool 中的**恰一筆** candidate（`/results/_handoff/candidates.json`，並以 `/results/*/family.json` 推導消費狀態）。因此：Wiki Brain 是知識保存、**不是** candidate eligibility 的第二道 gate；`REMEDIATE`／`REJECT` 不進 pool；**不存在**「Wiki 之後再做 crypto/runnable suitability screening」的階段。candidate eligibility 就在 Intake Review 這一次決定，`PASS`／`PASS-WITH-CAVEAT` 必須足以 candidateize；body 的產生是 **format/canonicalization**（frozen GitHub artifact ＋ 該次 review 的正規化內容／crypto portability／caveat），仍須滿足上方 **v1.3.0 candidate card requirements**（含 `DCA PARAMETER DOMAIN` 與 `COHORT SURVIVOR SEMANTICS`），source 未明示的必要 execution 細節可標 `research-defined` 但不得改變核心 hypothesis；缺 prerequisite（本機無該資料／市場）**不是**拒絕 candidate 的新 gate——candidate 仍入 pool、body 忠實註冊 required data/market，未來的執行卡再依 §13 technical failure semantics 終結。append 為 idempotent（同 `reviewed_source`／`family_id`／fingerprint 已存在即 no-op）。本節其餘條文（append 演算法、fingerprint 規則、fail-closed findings、「同一輪最多 1 張」、auditor 非 production stage）與 §14.1–§14.3 皆**不變**；**不新增**任何 stage／service／daemon／queue／cron／manager。本條只作文字對齊，**未**變更 `runtime/production_handoff.py`、`runtime/reconcile.py` 或任何 production cron。
+
+- `[C]` **v2.0 direct C3 override（待審計、未部署）**：同一個固定 host bridge 的
+  `production_handoff_once` 一次只選 reviewed pool 的一個 family；runtime evidence、
+  latest attempt 自己 round 的 terminal verdict 與 unresolved incident 仍是 advance gate，
+  Kanban board/card/status/dispatcher **不是** gate，也不是 transport。選中候選的
+  assignee 必須是 default、workspace 必須是存在的絕對目錄；不讓未輪到的候選 workspace
+  擋住當前候選。以 `O_EXCL` 註冊 immutable `family.json`（`handoff.execution=direct_hermes`，
+  無 `kanban_task_id`），在同一輪從 reviewed body＋固定 lifecycle footer 凍結 prompt，
+  用 `hermes -p default --cli --accept-hooks chat --query-file <prompt> --in <workspace>`
+  detached 啟動 default；可用既有 skills，無卡、無 `kanban create`。agent 根據 frozen
+  body 適配策略、建立 round/run spec、P1–P10、`container exec -d qlib-run` 後退出；
+  n8n bridge 不等 Qlib。家族 lease 隨 agent 生命週期釋放；失敗的已註冊 direct family
+  優先以同一 body/fingerprint 重試，**不消費下一候選**；attempt 一旦出現，沿用 active
+  attempt／per-round verdict guard 防重。歷史 family/round/run/task IDs 保持原封不動。
+  `[T]` PASS 後的 post-survivor index/evidence 仍只支援 card-owned provenance；直接
+  family 需獨立的 schema/negative-control 審計，不能憑 null task ID 假裝已可索引。
 
 ## 15. Family Yield / Anti-Starvation Policy
 
@@ -1612,6 +1644,7 @@ survivors/<survivor_id>/aggregate.csv            # same condition
 
 | 版本 | 日期 | 變更 | 理由 |
 |---|---|---|---|
+| v2.0.0（PROPOSED） | 2026-09-24 | §9.4、§14.4 direct-Hermes execution/completion bridge override；§16 P10／terminal host publication 容許無卡 direct family，historical card-owned 要求不變 | auditor `t_b894242c` 對 `t_6c6a3286` 的 execution-transport FAIL；隔離 direct/legacy、故障同 family 重試與 lease 防重測試，runtime/n8n 全套、真實 results 唯讀 dry-run；audit/cutover 待辦 |
 | v1.0 | 2026-09-12 | 初版定版（本卡 t_5b5b38d6） | ChatGPT 規劃；新增 Family Yield（§15）與 Execution Preflight（§16）兩條正式護欄 |
 | v1.0.1 | 2026-09-12 | **B1**：廢除 task-level metadata 作為 durable state，ownership/lineage/verdict 改落 `/results`（新增 §10.6 `family.json`、§10.7 `verdict.json`；改寫 §9.4 reconciler 入口、§14、§18.1、INV-4/9/10/17）。**B2**：新增 §12.6 conflict/incident 流程（`scheduled` 不得直接 block），統一 §6.3/§7.1/§12.3/§12.4/§12.5。**B3**：`/qlib/work` 單一 volume 故障一律 card-local，統一 §12.5/§13/§16 | auditor t_a3dc355d 三個 blocking findings 的最小 remediation（本卡 t_bcedaf65） |
 | v1.1.0 | 2026-09-13 | **A 語意校正**：§1.2 改寫（Nautilus 為 future/out-of-scope/non-blocking，非 authoritative gate）；新增 §7.2「全量回測定義與 production 模式」；§9.6 移除「未有下游 acceptance 只能 research-only」的降級條款；§17 全面改寫為 out-of-scope 備忘（不得反向改寫 verdict、不得當 gate）；§21.2 新增 blocker/deferred 分級；§22 新增 A19/A20、改寫 A13；§24.5 標 future；§25 新增兩條硬規則；附錄 B 新增「第一張 production card」分級欄；§16.2 P2 語意校正（raw 唯讀判定改以 **container 內寫入探針**為準：host 使用者擁有該 export，host 端 `test -w` 必然為真而會誤判，故明文禁用；此校正僅記載於本表與 `evidence/`）。**B 修正**：§16.2 P8 與等價檢查一律改用 `/opt/venv/bin/python`（`/usr/local/bin/python` 無 qlib；登入 shell 會還原 PATH）；`container/scripts/verify_final.sh` 兩處 `container exec … python` 同步改為 venv 絕對路徑。**C 最小 readiness**：新增 `runtime/preflight.py`（§16.4 的 P1–P10 單一腳本）、`runtime/reconcile.py`（§9.4 no-agent reconciler，含 §12.6 incident 寫入）、`runtime/terminal_evidence.py`（§10.3/§10.4 sentinel + checksum 產生器，host 端 orphan `INCOMPLETE` 補寫用）；§3/§9.4/§10.4/§21.1 的 `[T]` 對應轉為 `[V]` | ChatGPT（GPT-5.6 Sol）卡片 t_ec039d5f：修正契約語意與第一張正式 strategy card 前的最小 runtime 缺口的 remediation；不新增任何 Manager/Service/Factory/Registry/Orchestrator、daemon、queue 或第二套 runtime |

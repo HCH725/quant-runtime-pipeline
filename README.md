@@ -1,5 +1,19 @@
 # quant-runtime-pipeline
 
+## Pending local change (independent audit and cutover required)
+
+The worktree's C3/C4 runtime now proposes direct Hermes default sessions instead of Kanban as its
+production work-order transport. Existing n8n schedules and the fixed host bridge remain unchanged.
+C3 registers an immutable direct family and launches `hermes -p default --cli --accept-hooks chat
+--query-file <frozen task> --in <candidate workspace>` detached; a family-scoped live lease and
+durable results evidence retry a failed launch on the same family, not the next candidate. The agent
+adapts the reviewed strategy, checks preflight, and starts detached Qlib compute. C4 reads the latest
+attempt's stage/terminal evidence and, when ready for host disposition, starts another detached
+default session. It does not call or read the production Kanban board. Historical task IDs and the
+read-only dashboard's card projection are retained. This branch is not deployed or audited; the
+historical live status below describes the pre-cutover installation. Direct PASS post-survivor index
+ownership and the installed C4 wrapper's `launched` notification remain separate follow-ups.
+
 Private，versioned **runtime source-of-truth**：Apple Container → Qlib → Quant Runtime 的可重建定義、
 audited implementation contract 與其變化歷史。
 

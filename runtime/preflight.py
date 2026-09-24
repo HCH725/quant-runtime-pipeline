@@ -19,6 +19,7 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -327,10 +328,28 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     except ValueError as exc:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json not valid JSON: %s" % exc)
         return
-    missing = [k for k in ("schema_version", "family_id", "round_id", "run_id", "task_id", "kanban_board", "script")
-               if k not in spec]
+    # A direct family is owned by its immutable family/round/run path, not a Kanban card.
+    family_path = Path(attempt_dir).resolve().parents[3] / "family.json"
+    try:
+        with open(family_path) as fh:
+            family = json.load(fh)
+    except (OSError, ValueError):
+        family = {}
+    direct = isinstance(family, dict) and isinstance(family.get("handoff"), dict) and \
+        family["handoff"].get("execution") == "direct_hermes"
+    required = ("schema_version", "family_id", "round_id", "run_id", "script")
+    if not direct:
+        required += ("task_id", "kanban_board")  # grandfathered frozen attempts
+    missing = [k for k in required if k not in spec]
     if missing:
         check(checks, "P10", "FAIL", "card-local", "run-spec.json missing keys: %s" % missing)
+        return
+    if direct and (family.get("family_id") != spec.get("family_id") or
+                   family.get("family_id") != Path(attempt_dir).resolve().parents[3].name or
+                   spec.get("round_id") != Path(attempt_dir).resolve().parents[1].name or
+                   spec.get("run_id") != Path(attempt_dir).resolve().name or
+                   any(k in spec for k in ("task_id", "kanban_board", "kanban_task_id"))):
+        check(checks, "P10", "FAIL", "card-local", "direct family/run identity mismatch")
         return
     script = spec.get("script") or {}
     sha = script.get("sha256")

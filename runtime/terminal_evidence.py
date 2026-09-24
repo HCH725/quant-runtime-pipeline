@@ -75,6 +75,27 @@ def cmd_publish(args):
     if not os.path.isdir(attempt_dir):
         sys.stderr.write("usage error: not a directory: %s\n" % attempt_dir)
         return 2
+    # New families have no card owner. Never silently publish a card-owned sentinel into one.
+    family_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+        attempt_dir)))), "family.json")
+    try:
+        with open(family_path) as fh:
+            family = json.load(fh)
+    except (OSError, ValueError):
+        sys.stderr.write("refused: family.json missing or unreadable: %s\n" % family_path)
+        return 1
+    if not isinstance(family, dict):
+        sys.stderr.write("refused: family.json is not an object\n")
+        return 1
+    direct = isinstance(family, dict) and isinstance(family.get("handoff"), dict) and \
+        family["handoff"].get("execution") == "direct_hermes"
+    if (family.get("family_id") != args.family_id or
+            args.round_id != os.path.basename(os.path.dirname(os.path.dirname(attempt_dir))) or
+            args.run_id != os.path.basename(attempt_dir) or
+            (direct and (args.task_id or args.board)) or
+            (not direct and not args.task_id)):
+        sys.stderr.write("refused: family/run identity or execution ownership mismatch\n")
+        return 1
     # Never overwrite terminal evidence (INV-15 / contract 8).
     present = existing_terminals(attempt_dir)
     if present:
@@ -104,8 +125,7 @@ def cmd_publish(args):
         "family_id": args.family_id,
         "round_id": args.round_id,
         "run_id": args.run_id,
-        "task_id": args.task_id,
-        "kanban_board": args.board,
+
         "created_at_utc": now_utc(),
         "host_boot_id": host_boot_id(),
         "container_id": args.container_id,
@@ -121,6 +141,13 @@ def cmd_publish(args):
         "artifact_checksums": checksums,
         "runtime_seconds": args.runtime_seconds,
     }
+    if args.task_id:
+        # Historical Kanban-owned attempts keep their exact frozen identity schema.
+        sentinel["task_id"] = args.task_id
+        sentinel["kanban_board"] = args.board or "quant-strategy-research"
+    elif args.board:
+        sys.stderr.write("usage error: --board without --task-id is not a direct family\n")
+        return 2
     target = os.path.join(attempt_dir, args.status)
     atomic_write_json(target, sentinel)
     print(json.dumps({"published": target, "sentinel": sentinel}, indent=2, ensure_ascii=False))
@@ -188,8 +215,8 @@ def main():
     p.add_argument("--family-id", required=True)
     p.add_argument("--round-id", required=True)
     p.add_argument("--run-id", required=True)
-    p.add_argument("--task-id", required=True)
-    p.add_argument("--board", default=os.environ.get("HERMES_KANBAN_BOARD", "quant-strategy-research"))
+    p.add_argument("--task-id", default=None, help="historical Kanban attempts only; omit for direct")
+    p.add_argument("--board", default=None, help="historical Kanban board only")
     p.add_argument("--manifest", action="append", default=[],
                    help="required artifact, path relative to --attempt-dir (repeatable, comma separated ok)")
     p.add_argument("--failure-layer", default="null", choices=LAYERS)

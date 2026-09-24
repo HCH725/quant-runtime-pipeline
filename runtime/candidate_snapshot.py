@@ -31,14 +31,14 @@ import datetime
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from production_handoff import (ACTIVE_WINDOW_MINUTES, read_families,  # noqa: E402
                                 runtime_state)
-from reconcile import (DEFAULT_RESULTS, attempt_metadata, card_status, discover_rounds,  # noqa: E402
-                       select_authoritative, sh)
+from reconcile import DEFAULT_RESULTS, Attempt, discover_rounds, select_authoritative  # noqa: E402
 from terminal_evidence import TERMINALS  # noqa: E402
 
 # `kanban list` is fence-blocked inside a worker child context (the fence guards mutation); every
@@ -46,6 +46,29 @@ from terminal_evidence import TERMINALS  # noqa: E402
 os.environ.pop("HERMES_DELEGATED_CHILD_CONTEXT", None)
 
 DEFAULT_BOARD = "quant-strategy-research"
+
+def attempt_metadata(path, family_id, round_id, _run_id):
+    """Read-only selection shared with C4; historical paths remain visible to the dashboard."""
+    return Attempt(path, family_id, round_id, require_timestamp=False)
+
+def sh(cmd):
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return p.returncode, p.stdout or "", p.stderr or ""
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return 1, "", str(exc)
+
+def card_status(board, task_id):
+    """Historical card read-back is display-only, never a C3/C4 execution gate."""
+    rc, out, err = sh(["hermes", "kanban", "--board", board, "show", task_id, "--json"])
+    if rc:
+        return None, (err or out)[:200]
+    try:
+        task = json.loads(out[out.index("{"):]).get("task") or {}
+        return task.get("status"), "card read-back"
+    except (IndexError, ValueError):
+        return None, "card read-back unparsable"
+
 TOP_N = 5
 DASHBOARD_TOP_N = 10
 BAR_CELLS = 10

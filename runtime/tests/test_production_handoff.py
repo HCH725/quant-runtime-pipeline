@@ -64,46 +64,39 @@ V13_BODY = ("## DCA PARAMETER DOMAIN\n"
             "robustness / neighbourhood evidence (contract 7.3)\n")
 
 
-class FakeKanban(object):
-    """Fake `hermes kanban create`: records every call so the suite can prove no read ever happens."""
+class FakeLaunch(object):
+    """Record direct Hermes launches without invoking a model or touching a board."""
 
-    def __init__(self, create_rc=0, create_out=None):
-        self.create_rc = create_rc
-        self.create_out = create_out
+    def __init__(self, error=None, busy=False):
+        self.error = error
+        self.busy = busy
         self.calls = []
-        self.keys = {}
 
-    def __call__(self, cmd, timeout=0):
-        self.calls.append(cmd)
-        if cmd[4] != "create":
-            raise AssertionError("production handoff must never call `hermes kanban %s`" % cmd[4])
-        if self.create_rc != 0:
-            return self.create_rc, "", "delegate_task child contexts cannot mutate Kanban tasks"
-        if self.create_out is not None:
-            return 0, self.create_out, ""
-        key = cmd[cmd.index("--idempotency-key") + 1]
-        tid = self.keys.setdefault(key, "t_" + key[:12])
-        return 0, json.dumps({"id": tid, "status": "ready"}), ""
+    def __call__(self, results_root, family_id, name, prompt, skills=(), workspace=h.DEFAULT_WORKSPACE):
+        self.calls.append((results_root, family_id, name, prompt, skills, workspace))
+        return None if self.error or self.busy else 12345, self.error, self.busy
 
-    def creates(self):
-        return [c for c in self.calls if c[4] == "create"]
+    def launches(self):
+        return self.calls
 
     def body(self):
-        cmd = self.creates()[-1]
-        return cmd[cmd.index("--body") + 1]
+        return self.calls[-1][3]
 
 
 class Base(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp(prefix="qrp-handoff-test-"))
-        self.fake = FakeKanban()
+        self.fake = FakeLaunch()
+        self._real_launch = h.launch_agent
         self._real_sh = h.sh
-        h.sh = self.fake
+        h.launch_agent = self.fake
+        h.sh = lambda *_a, **_k: self.fail("production must not call any CLI/board reader")
         self._write_family(FAMILY_A, "t_A")
         self._write_pool([candidate()])
 
     def tearDown(self):
         h.sh = self._real_sh
+        h.launch_agent = self._real_launch
         shutil.rmtree(self.root, ignore_errors=True)
 
     # --- fixture helpers -------------------------------------------------
@@ -195,19 +188,19 @@ class TestAdvance(Base):
         self.assertEqual(res.family_id, FAMILY_B)
         doc = json.loads((self.root / FAMILY_B / "family.json").read_text())
         self.assertEqual(doc["family_id"], FAMILY_B)
-        self.assertEqual(doc["kanban_task_id"], res.task_id)
+        self.assertNotIn("kanban_task_id", doc)
+        self.assertIsNone(res.task_id)
+        self.assertEqual(doc["handoff"]["execution"], "direct_hermes")
         self.assertEqual(doc["handoff"]["decision_evidence"], "results_root_only")
-        self.assertEqual(len(self.fake.creates()), 1)
+        self.assertEqual(len(self.fake.launches()), 1)
         self.assertEqual(res.detail["semantic_fingerprint"], doc["semantic_fingerprint"])
 
     def test_kanban_is_never_read(self):
         # The point of contract 14.4 v-next: no list/show/status read exists, so no board state
         # (blocked, stale, unreadable) can participate in the advance decision.
         self.run_round()
-        self.assertEqual([c[4] for c in self.fake.calls], ["create"])
-        cmd = self.fake.creates()[0]
-        self.assertNotIn("--parent", cmd)
-        self.assertEqual(cmd[cmd.index("--idempotency-key") + 1], FAMILY_B)
+        self.assertEqual([c[1] for c in self.fake.calls], [FAMILY_B])
+        self.assertEqual(self.fake.calls[0][2], "agent-task.md")
 
     def test_blocked_board_card_cannot_freeze_the_advance(self):
         # Reproduction of the production freeze: a family whose card sits in `blocked` with no verdict
@@ -336,19 +329,17 @@ class TestAdvance(Base):
         res = self.run_round()
         self.assertEqual((res.action, res.outcome), ("noop", "running"))
 
-    def test_create_is_idempotent_by_family_id(self):
+    def test_registered_without_attempt_retries_same_family(self):
         self.run_round()
-        self.assertEqual(len(self.fake.creates()), 1)
-        # a second dispatch of the same family converges on the same card
-        task_id, why = h.dispatch_work_order(BOARD, candidate(), self.args())
-        self.assertIsNone(why)
-        self.assertEqual(task_id, "t_" + FAMILY_B[:12])
-        self.assertEqual(len(self.fake.keys), 1)
+        self.assertEqual(len(self.fake.launches()), 1)
+        again = self.run_round()
+        self.assertEqual((again.family_id, again.outcome), (FAMILY_B, "advanced"))
+        self.assertEqual([c[1] for c in self.fake.launches()], [FAMILY_B, FAMILY_B])
 
     def test_created_body_keeps_candidate_bytes_and_carries_the_lifecycle_footer(self):
         self.run_round()
         body = self.fake.body()
-        self.assertTrue(body.startswith(V13_BODY), body[:200])
+        self.assertIn(V13_BODY, body)
         self.assertIn(h.LIFECYCLE_FOOTER.strip(), body)
         self.assertIn("TECHNICAL_INCOMPLETE", body)
 
@@ -356,20 +347,27 @@ class TestAdvance(Base):
         self.assertIn("TECHNICAL_INCOMPLETE", h.LIFECYCLE_FOOTER)
         self.assertIn("prerequisite", h.LIFECYCLE_FOOTER)
 
-    def test_work_order_failure_is_reported_but_does_not_rewind_the_advance(self):
-        # The advance is the family.json registration; the card is the agent-lane vehicle. A dispatch
-        # failure is a finding for the operator, never a freeze and never a silent rollback.
-        h.sh = FakeKanban(create_rc=1)
+    def test_launch_failure_stays_retryable_and_never_advances_next_candidate(self):
+        self.fake.error = "simulated launcher failure"
+        self._write_pool([candidate(), candidate(family="fam-next-v1",
+                                               fingerprint_input="unique-next")])
         res = self.run_round()
         self.assertEqual((res.action, res.outcome, res.finding_key),
-                         ("finding", "finding", "work_order_failed"))
+                         ("finding", "finding", "agent_launch_failed"))
         self.assertTrue((self.root / FAMILY_B / "family.json").is_file())
-        self.assertIn("operator action needed", res.reason)
+        self.assertEqual(self.run_round().family_id, FAMILY_B)
+        self.assertFalse((self.root / "fam-next-v1").exists())
+        self.fake.error = None
+        self.assertEqual(self.run_round().family_id, FAMILY_B)
+        self.assertFalse((self.root / "fam-next-v1").exists())
+        self._write_verdict(FAMILY_B, "TECHNICAL_INCOMPLETE")
+        self.assertEqual(self.run_round().family_id, "fam-next-v1")
 
-    def test_unparsable_create_output_is_a_finding(self):
-        h.sh = FakeKanban(create_out="not json")
+    def test_registered_candidate_mutation_is_fail_closed(self):
+        self.run_round()
+        self._write_pool([candidate(body=V13_BODY + "modified")])
         res = self.run_round()
-        self.assertEqual(res.finding_key, "work_order_failed")
+        self.assertEqual(res.finding_key, "registered_candidate_changed")
         self.assertTrue((self.root / FAMILY_B / "family.json").is_file())
 
 
@@ -552,15 +550,16 @@ class TestPoolOrdering(Base):
         self.assertEqual(advanced, self.order[1:])
         last = self.run_round()
         self.assertEqual((last.action, last.outcome), ("noop", "idle"))
-        keys = [c[c.index("--idempotency-key") + 1] for c in self.fake.creates()]
+        keys = [c[1] for c in self.fake.launches()]
         self.assertEqual(keys, self.order[1:])
         self.assertNotIn(self.order[0], keys)
 
-    def test_no_advance_while_the_new_family_is_unfinished(self):
+    def test_unfinished_direct_family_retries_itself_not_next(self):
         self.assertEqual(self.run_round().family_id, self.order[1])
         again = self.run_round()
-        self.assertEqual((again.action, again.outcome), ("noop", "running"))
-        self.assertEqual(len(self.fake.creates()), 1)
+        self.assertEqual((again.action, again.outcome, again.family_id),
+                         ("appended", "advanced", self.order[1]))
+        self.assertEqual([c[1] for c in self.fake.launches()], [self.order[1]] * 2)
 
     def test_consumed_b_v1_is_never_recreated(self):
         res = self.run_round()
@@ -569,6 +568,22 @@ class TestPoolOrdering(Base):
         doc = json.loads((self.root / self.order[0] / "family.json").read_text())
         self.assertEqual(doc["family_id"], self.order[0])
         self.assertEqual(doc["kanban_task_id"], "t_B1")
+
+    def test_selected_workspace_is_preserved_future_invalid_workspace_does_not_gate(self):
+        with tempfile.TemporaryDirectory(prefix="qrp-candidate-workspace-") as workspace:
+            self._write_pool([
+                candidate(family=self.order[1], fingerprint_input="workspace-a",
+                          workspace_path=workspace),
+                candidate(family=self.order[2], fingerprint_input="workspace-b",
+                          workspace_path="/missing/future/candidate"),
+            ])
+            res = self.run_round()
+            self.assertEqual((res.action, res.family_id), ("appended", self.order[1]))
+            self.assertEqual(self.fake.launches()[0][5], workspace)
+            self._write_verdict(self.order[1], "TECHNICAL_INCOMPLETE")
+            next_tick = self.run_round()
+            self.assertEqual(next_tick.finding_key, "unsupported_execution_target")
+            self.assertFalse((self.root / self.order[2] / "family.json").exists())
 
 
 if __name__ == "__main__":

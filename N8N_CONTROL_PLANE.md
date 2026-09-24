@@ -1,5 +1,38 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
+## Pending local remediation — direct Hermes transport (not live, not audited)
+
+The sections below record the existing live C3/C4 deployment and its historical Kanban work-order
+transport. This branch replaces only the execution transport, pending independent audit and an
+explicit cutover; do not read the old `hermes kanban create`/`unblock` paragraphs as instructions for
+new families. The stable n8n schedules, workflow IDs, fixed request schema and allowlisted host bridge
+remain unchanged. No valid production request was sent during this remediation.
+
+Proposed C3: the bridge calls `runtime/production_handoff.py` once. It reads `/results` and the
+reviewed pool, registers at most one immutable direct `family.json`, and launches the existing Hermes
+default CLI as a detached one-shot session (`hermes -p default --cli --accept-hooks chat --query-file
+<frozen agent-task.md> --in <candidate workspace> --max-turns 500 --run-budget 7200`). There is no
+Kanban create, board status, dispatcher or task ID. The candidate body, optional skills and
+system lifecycle footer still reach the worker. A file lease held until the agent exits and the
+registered family/artifact read-back make a failed launch retry the *same* family before the next
+candidate. Once an attempt exists, the existing active-attempt/per-round-verdict guard stays in force.
+The worker uses preflight P1–P10, creates the run spec and starts Qlib with detached `container exec`;
+the bridge never waits for that computation. The candidate workspace is validated only when selected,
+so a future unsupported pool entry cannot freeze earlier valid candidates.
+
+Proposed C4: the same fixed `runtime_reconcile_once` bridge invokes the repo reconciler. It ignores
+historical card-owned families and selects only the newest valid attempt in each direct round. A
+verified `ARTIFACT_READY`/`FAILED_SCRIPT` stage (or a valid terminal sentinel still missing its own
+round verdict) starts another detached default CLI disposition session, not a Kanban unblock. That
+agent checks artifacts and publishes host-side terminal/verdict as appropriate; `ARTIFACT_READY` alone
+never means PASS. Missing/conflicting evidence remains fail-closed. `--dry-run` launches nothing.
+The installed wrapper currently prints only `unblocked`, so it will not announce a successful direct
+`launched` action in its usual cron output; this observability mismatch needs cutover review.
+
+Scope boundary: archived family/sentinel task IDs remain readable; historical records are not
+rewritten. The post-survivor index/evidence tooling still enforces historical `kanban_task_id` and
+needs a separately audited direct-ownership schema before direct PASS bundles can be indexed.
+
 狀態：**Full Canvas AUDITED PASS / LIVE**；**C3 production handoff C3.1 AUDITED PASS / LIVE**。
 Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 commits `9832b07`＋`fc44eb0` 已由 auditor run 445 PASS，並完成 live import／publish；2026-09-23 23:05 Asia/Taipei C3 execution 112 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦 `success`。
 

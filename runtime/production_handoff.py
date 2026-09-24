@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automatic production handoff (contract section 14.4) - ONE round per run, Kanban-free decision.
+"""Automatic production handoff (contract section 14.4) - ONE family per run.
 
 Every decision input is a read-only file contract under the results root:
   * `/results/*/family.json`              = the existing family set (ownership + fingerprint, 10.6)
@@ -9,15 +9,13 @@ Every decision input is a read-only file contract under the results root:
   * `/results/_incidents/...`             = fail-closed incident ledger (contract 12.6)
   * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/finding decisions
 
-Hermes/Kanban is neither consulted nor required for any advance/freeze decision: this file contains
-no board read (`list`/`show`/status) and no board read-back. A blocked, stale, missing or unreadable
-card therefore has zero power over the pipeline (contract 14.4 runtime-evidence gate). The created
-work-order card is only the existing execution vehicle for the agent lane
-(dispatcher -> default worker -> `qlib-run`); its state is never an input here.
+The reviewed candidate is handed directly to a detached Hermes default CLI session; no Kanban
+board, dispatcher, card status or task id participates. A file lock held by the agent process
+prevents duplicate pre-attempt launches; an unjudged direct family is retried before another
+candidate can be registered. Qlib itself remains detached from the host-bridge request.
 
-Legal action: advance at most ONE new family per round - land its `family.json` and dispatch its
-work-order card in the same round. Duplicate / ambiguous / ineligible / incident / active-runtime
--> fail-closed: no card, ONE finding line, no retry storm.
+Legal action: register and directly launch at most ONE new family per round; registration without
+a successful launch stays retryable for that SAME family on the next tick. Findings are deduplicated.
 
 Runtime guards (all objective, all from results-root artifacts):
   * the family's NEWEST attempt holds the pipeline while it is inside ACTIVE_WINDOW_MINUTES and either
@@ -40,9 +38,11 @@ JSON record (`--json`) and on one stderr line, so C3 can tell invocation success
 """
 import argparse
 import datetime
+import fcntl
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -53,6 +53,10 @@ from terminal_evidence import TERMINALS  # noqa: E402
 
 DEFAULT_RESULTS = "/Volumes/ExpansionDrive/qlib-results"
 DEFAULT_WORKSPACE = "/Users/hong/workspace/quant-runtime-pipeline"
+AGENT_LOG = "agent.log"
+AGENT_LOCK = ".agent.lock"
+DIRECT_MODE = "direct_hermes"
+FAMILY_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,199}\Z")
 HANDOFF_DIRNAME = "_handoff"
 POOL_FILENAME = "candidates.json"
 LOG_FILENAME = "handoff_log.jsonl"
@@ -87,15 +91,15 @@ LIFECYCLE_FOOTER = (
     "證實，並依 contract 寫出 immutable `round-spec.json` ＋ `verdict.json`。\n"
     "- 若 candidate 文字中的 source-market exact-match／不得縮減 universe 條款與上述 local-universe"
     "規則衝突，以本 system-owned lifecycle rule 為執行準則；candidate bytes 與 fingerprint 仍不改寫。\n"
-    "- `kanban_block` 仍只保留給 shared-layer failure（§12.5）或 contract 尚未決定、"
-    "確實需要 human decision 的情況（§12.6）。\n"
+    "- shared-layer failure（§12.5）或確實需要 human decision（§12.6）時，"
+    "在 canonical incident evidence 明確記載並停止；不得臆造 verdict。\n"
     "- prerequisite 證據有界（Phase 2B）：唯一 canonical 來源是 Common Data Pack 的 "
     "`/data/raw/_meta/CONFIG.json` dataset IDs 與 `/data/raw/_meta/SCHEMA.md` field/layout 宣告，"
     "不建第二套 data registry；評估只讀這兩個 catalog/schema 檔，必要時再對 canonical raw 做"
     "小範圍直接 sample／path 讀取，不掃描無關 host 目錄或整個檔案系統。"
     "CONFIG／SCHEMA 明確表示核心 signal 所必需的 data type／field 不存在（clear-absence）時，"
     "記載 requirement-vs-available 實測事實的 immutable `round-spec.json` ＋ `verdict.json` "
-    "即為 card-local TECHNICAL_INCOMPLETE 的充分 terminal evidence，不得 launch 任何 full backtest。\n"
+    "即為此 family 的 TECHNICAL_INCOMPLETE 充分 terminal evidence，不得 launch 任何 full backtest。\n"
     "- 明確禁止為證明顯然不存在的資料能力而新增 candidate-specific prerequisite checker"
     "（`runtime/*_prerequisite_check.py`）、repo-wide prerequisite evidence blob、host-wide 掃描、"
     "synthetic fixtures、tamper batteries 或 bespoke validation framework；既有 legacy checker／"
@@ -181,6 +185,8 @@ def _terminal_verdict_token(doc, family_id, owner):
     if not isinstance(doc, dict) or doc.get("family_id") != family_id:
         return None
     verdict_owner = doc.get("kanban_task_id")
+    if owner is None and any(key in doc for key in ("kanban_task_id", "kanban_board", "task_id")):
+        return None  # a direct family cannot be closed by card-owned evidence
     if owner and verdict_owner and verdict_owner != owner:
         return None
     return doc.get("verdict") if doc.get("verdict") in TERMINAL_VERDICTS else None
@@ -440,6 +446,104 @@ def body_with_footer(cand):
     """
     return (cand.get("_body") or cand.get("card_body") or "") + LIFECYCLE_FOOTER
 
+def direct_family(doc):
+    return isinstance(doc, dict) and isinstance(doc.get("handoff"), dict) and \
+        doc["handoff"].get("execution") == DIRECT_MODE
+
+def _lock(path):
+    """A kernel lease, not a queue/state store. None means another process still owns it."""
+    fd = os.open(str(path), os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    return fd
+
+def agent_prompt(cand, results_root):
+    """Full reviewed specification, with an explicit non-Kanban execution/stop boundary."""
+    return (
+        "Quant production family %s — %s\n\n" % (cand["family_id"], cand["title"])
+        + "Canonical results root: %s; family path: %s/%s. "
+          % (results_root, results_root, cand["family_id"])
+        + "You are the Hermes DEFAULT execution worker in the fixed repo workspace. There is NO "
+          "Kanban task, board or dispatcher. Never call hermes kanban or kanban_*; do not invent a "
+          "task id. Read the immutable family.json and this frozen reviewed body before acting. "
+          "Adapt/implement the strategy only when necessary, preserve the registered hypothesis and "
+          "candidate bytes, verify the local eligible universe and required data against the canonical "
+          "raw catalog, and freeze the round/run specifications BEFORE compute. The existing strategy "
+          "scripts are examples, not licenses to reuse historical task IDs or query the board DB. "
+          "For a direct family omit kanban_task_id/kanban_board/task_id from new specs and evidence; "
+          "use family_id+round_id+run_id for ownership. Run tests and P1–P10 preflight before "
+          "launching Qlib. If required core data is objectively absent, write a legitimate "
+          "TECHNICAL_INCOMPLETE round verdict with measured bounded evidence instead of a backtest. "
+          "Otherwise launch Qlib with existing `container exec -d qlib-run` semantics and then EXIT "
+          "this one-shot session; do not wait for the long computation. The existing n8n C4 cadence "
+          "will resume host-side disposition after compute finishes. If you cannot safely proceed, "
+          "record the exact gap; never manufacture a PASS or consume another family.\n\n"
+        + "--- REVIEWED CANDIDATE BODY (verbatim, followed by system lifecycle rules) ---\n"
+        + body_with_footer(cand)
+    )
+
+def disposition_prompt(family_id, round_id, run_id, results_root):
+    return (
+        "Hermes DEFAULT host-side disposition for direct quant family %s, round %s, attempt %s. "
+        "Canonical results root: %s. "
+        "No Kanban task/board exists; NEVER use hermes kanban or kanban_*. In the fixed repo, "
+        "read family.json, frozen round/run specs, attempt state, engine artifacts and the frozen "
+        "agent-task.md. Verify the authoritative attempt identity and actual compute completion. "
+        "For ARTIFACT_READY/FAILED_SCRIPT, publish the host-side DONE/FAILED/INCOMPLETE sentinel "
+        "with runtime/terminal_evidence.py only after the appropriate checks; do not equate "
+        "ARTIFACT_READY with success. If terminal exists, verify its manifest and do not republish. "
+        "Then write the contract-terminal verdict for THIS round (or safely retry within the same "
+        "family/round if warranted). Never rerun a terminal attempt, never call the board, and "
+        "never advance another candidate. If evidence is ambiguous, document it and stop. "
+        "Once this round is terminal and verdict is durable, EXIT.\n"
+        % (family_id, round_id, run_id, results_root)
+    )
+
+def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
+    """(pid, error, busy): detached Hermes CLI owns the family lease until it exits.
+
+    The lock fd is inherited through exec; n8n's bridge may close/timeout without killing this
+    independent session. A crashed/failed session releases the lease, so the next cadence retries
+    against the SAME family's durable artifacts. No PID file or new manager is needed.
+    """
+    family = Path(results_root) / family_id
+    fd = _lock(family / AGENT_LOCK)
+    if fd is None:
+        return None, None, True
+    try:
+        task = family / name
+        data = prompt.encode("utf-8")
+        try:
+            out = os.open(str(task), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            if task.read_bytes() != data:
+                return None, "frozen agent prompt differs on retry: %s" % task, False
+        else:
+            try:
+                os.write(out, data)
+                os.fsync(out)
+            finally:
+                os.close(out)
+        cmd = ["hermes", "-p", "default", "--cli", "--accept-hooks"]
+        for skill in skills:
+            cmd += ["--skills", skill]
+        cmd += ["chat", "--query-file", str(task), "--in", workspace,
+                "--max-turns", "500", "--run-budget", "7200", "--source", "quant-production"]
+        env = {"HOME": "/Users/hong", "PATH": "/Users/hong/.local/bin:/opt/homebrew/bin:/usr/bin:/bin",
+               "LANG": "en_US.UTF-8"}
+        with open(family / AGENT_LOG, "ab") as log:
+            proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdin=subprocess.DEVNULL,
+                                    stdout=log, stderr=subprocess.STDOUT, pass_fds=(fd,),
+                                    start_new_session=True)
+        return proc.pid, None, False
+    except (OSError, ValueError) as exc:
+        return None, "direct Hermes launch failed: %s" % exc, False
+    finally:
+        os.close(fd)
+
 
 class Round(object):
     def __init__(self):
@@ -513,23 +617,18 @@ def last_finding_key(results_root):
     return key
 
 
-def write_family_json(results_root, cand, task_id, board):
-    """Contract 10.6 immutable ownership record, O_EXCL, fsynced, then read back and verified.
-
-    `kanban_task_id` stays for artifact compatibility (reconcile/validate and the survivor tools read
-    it); it is the work-order id of the dispatch below, never an input to any decision here.
-    """
+def write_family_json(results_root, cand):
+    """Immutable family identity; new families have no Kanban ownership fields."""
     doc = {
         "schema_version": 1,
         "family_id": cand["family_id"],
-        "kanban_task_id": task_id,
-        "kanban_board": board,
         "semantic_fingerprint": fingerprint(cand["fingerprint_input"]),
         "fingerprint_input": cand["fingerprint_input"],
         "parent_family": cand.get("parent_family"),
         "lineage_note": cand.get("lineage_note") or "",
         "created_at_utc": now_utc(),
         "handoff": {"source": "production_handoff", "contract_section": "14.4",
+                    "execution": DIRECT_MODE, "body_sha256": fingerprint(body_with_footer(cand)),
                     "decision_evidence": "results_root_only",
                     "pool_fingerprint_source": cand.get("provenance", {}).get("reviewed_source")},
     }
@@ -547,82 +646,49 @@ def write_family_json(results_root, cand, task_id, board):
     return doc, str(path)
 
 
-def dispatch_work_order(board, cand, args):
-    """(task_id, error). The existing agent-lane vehicle: one `hermes kanban create`, no read-back.
-
-    Best effort by design: the canonical advance is the `family.json` registration above, so a
-    dispatch failure is reported as a finding and never freezes or rewinds the pipeline. No
-    `--parent` edge is used: a parent edge would let a blocked/stale card gate the dispatcher, which
-    is exactly the Kanban dependency contract 14.4 removes; sequencing is enforced by the runtime
-    guards instead. `--idempotency-key <family_id>` still makes a re-run converge on one card.
-    """
-    cmd = ["hermes", "kanban", "--board", board, "create",
-           "--assignee", cand.get("assignee") or "default",
-           "--priority", str(cand.get("priority", 100)),
-           "--idempotency-key", cand["family_id"],
-           "--workspace", "dir:" + (cand.get("workspace_path") or DEFAULT_WORKSPACE),
-           "--completion-contract", "local-only",
-           "--created-by", "production-handoff",
-           "--body", body_with_footer(cand),
-           "--json"]
-    if cand.get("goal_mode", True):
-        cmd += ["--goal", "--goal-max-turns", str(cand.get("goal_max_turns", 20))]
-    for skill in cand.get("skills") or []:
-        cmd += ["--skill", skill]
-    cmd.append(cand["title"])
-    rc, out, err = sh(cmd, timeout=300)
-    if rc != 0:
-        return None, "hermes kanban create rc=%d: %s" % (rc, (err or out).strip()[:300])
-    doc = _first_json(out)
-    task_id = doc.get("id") if isinstance(doc, dict) else None
-    if not task_id:
-        return None, "kanban create returned no task id: %s" % (out or "")[:200]
-    return task_id, None
-
-
-def append_one(results_root, board, cand, args, res):
-    """Advance one family: dispatch the work-order card, then land family.json (contract 14.2).
-
-    The dispatch is best effort and the canonical advance is the registration below, so a Kanban
-    failure can never freeze or rewind the pipeline: `family.json` lands either way and the work-order
-    id is recorded whenever it is known. `hermes kanban create` is idempotent by
-    `--idempotency-key <family_id>`, so a later round converges on the same card.
-    """
+def append_one(results_root, cand, args, res, existing=None):
+    """Register once, then launch/retry this SAME family until real evidence is published."""
     if args.dry_run:
         res.action = "would_append"
         res.outcome = "advanced"
-        res.reason = "all runtime gates pass; would advance family %s" % cand["family_id"]
+        res.reason = "all runtime gates pass; would %s family %s" % (
+            "retry" if existing else "advance", cand["family_id"])
         res.family_id = cand["family_id"]
         return res
 
     res.family_id = cand["family_id"]
-    task_id, why = dispatch_work_order(board, cand, args)
-    res.task_id = task_id
-    try:
-        doc, path = write_family_json(results_root, cand, task_id, board)
-    except (OSError, ValueError) as exc:
-        res.finding("family_json_failed",
-                    "%s (candidate not consumed; the work order is idempotent by family_id, so the "
-                    "next round converges on it)" % exc, attempted_family=cand["family_id"])
-        return res
+    if existing:
+        doc = existing
+        path = str(Path(results_root) / cand["family_id"] / "family.json")
+        if doc.get("semantic_fingerprint") != fingerprint(cand["fingerprint_input"]) or \
+                (doc.get("handoff") or {}).get("body_sha256") != fingerprint(body_with_footer(cand)):
+            return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                               attempted_family=cand["family_id"])
+    else:
+        try:
+            doc, path = write_family_json(results_root, cand)
+        except (OSError, ValueError) as exc:
+            return res.finding("family_json_failed", str(exc), attempted_family=cand["family_id"])
 
     res.detail["semantic_fingerprint"] = doc["semantic_fingerprint"]
     res.detail["family_json"] = path
+    pid, why, busy = launch_agent(results_root, cand["family_id"], "agent-task.md",
+                                  agent_prompt(cand, results_root), cand.get("skills") or (),
+                                  cand.get("workspace_path") or DEFAULT_WORKSPACE)
+    if busy:
+        return res.waiting("direct Hermes worker still owns family %s; next candidate waits"
+                           % cand["family_id"], active_family=cand["family_id"])
     if why:
-        res.action = "finding"
-        res.outcome = "finding"
-        res.finding_key = "work_order_failed"
-        res.reason = ("work_order_failed: family %s is registered (%s) but the work-order card was "
-                      "not created: %s - operator action needed" % (cand["family_id"], path, why))
-        return res
+        return res.finding("agent_launch_failed", "%s; same family remains retryable" % why,
+                           attempted_family=cand["family_id"])
     res.action = "appended"
     res.outcome = "advanced"
-    res.reason = ("family %s advanced (family.json=%s) and work order %s dispatched"
-                  % (cand["family_id"], path, task_id))
+    res.detail["agent_pid"] = pid
+    res.reason = ("family %s registered (%s) and default Hermes worker launched (pid=%s)"
+                  % (cand["family_id"], path, pid))
     return res
 
-
-def round_once(args):
+def _round_once(args):
     res = Round()
     root = Path(args.results_root)
     if not root.is_dir():
@@ -633,8 +699,12 @@ def round_once(args):
     res.detail["families_scanned"] = len(families)
     states = [runtime_state(args.results_root, family_id, doc)
               for family_id, doc in sorted(families.items())]
+    by_family = {s["family_id"]: s for s in states}
     res.detail["families_in_flight"] = sum(1 for s in states if s["in_flight"])
-    active = [s for s in states if s["in_flight"]]
+    # Registration alone cannot conceal a failed direct launch for 90 minutes. The family lease
+    # below decides whether its worker is still alive; if not, retry it at THIS cadence.
+    active = [s for s in states if s["in_flight"] and
+              (s["attempt"] is not None or not direct_family(families[s["family_id"]]))]
     if active:
         return res.waiting(
             "active runtime evidence (%s: %s); next candidate waits"
@@ -659,14 +729,44 @@ def round_once(args):
                if isinstance(c, dict) and c.get("semantic_fingerprint")}
     pool_ids, pool_fps = set(), set()
     for cand in cands:
+        if not isinstance(cand, dict):
+            return res.finding("pool_invalid", "candidate must be an object")
         fid, fin = cand.get("family_id"), cand.get("fingerprint_input")
-        if not fid or not fin or not cand.get("title") or not card_body(pool_path, cand):
+        if not isinstance(fid, str) or not FAMILY_ID.fullmatch(fid) or \
+                not isinstance(fin, str) or not fin or not isinstance(cand.get("title"), str) or \
+                not isinstance(card_body(pool_path, cand), str) or not card_body(pool_path, cand) or \
+                not isinstance(cand.get("skills") or [], list) or \
+                any(not isinstance(s, str) or not s for s in cand.get("skills") or []):
             return res.finding("pool_invalid", "candidate missing family_id/fingerprint_input/"
-                               "card_body(_file)/title: %s" % json.dumps(cand.get("family_id")))
+                               "card_body(_file)/title or unsupported execution target: %s"
+                               % json.dumps(cand.get("family_id")))
         if fid in pool_ids or fingerprint(fin) in pool_fps:
             return res.finding("ambiguous_pool", "pool repeats candidate %s / fingerprint" % fid)
         pool_ids.add(fid)
         pool_fps.add(fingerprint(fin))
+
+    pending = [(fid, doc) for fid, doc in sorted(families.items()) if direct_family(doc) and
+               not (by_family[fid]["round_verdict"] if by_family[fid]["attempt"]
+                    else by_family[fid]["verdict"])]
+    if pending:
+        fid, doc = pending[0]
+        if by_family[fid]["attempt"]:
+            return res.waiting("direct family %s has an undecided attempt; C4 must dispose of it "
+                               "before next candidate" % fid, active_family=fid)
+        cand = next((c for c in cands if c["family_id"] == fid), None)
+        if cand is None:
+            return res.finding("registered_candidate_missing", "direct family %s absent from pool" % fid)
+        chosen = dict(cand)
+        chosen["_body"] = card_body(pool_path, chosen)
+        workspace = chosen.get("workspace_path") or DEFAULT_WORKSPACE
+        if chosen.get("assignee", "default") != "default" or \
+                not isinstance(workspace, str) or not os.path.isabs(workspace) or \
+                not os.path.isdir(workspace):
+            return res.finding("unsupported_execution_target", "registered candidate %s has no "
+                               "usable default-worker workspace" % fid)
+        if any(m not in chosen["_body"].upper() for m in CANDIDATE_BODY_MARKERS):
+            return res.finding("candidate_body_not_v13", "registered candidate lost v1.3 body: %s" % fid)
+        return append_one(args.results_root, chosen, args, res, existing=doc)
 
     eligible = [c for c in cands
                 if c["family_id"] not in seen_ids
@@ -677,6 +777,12 @@ def round_once(args):
                         % (pool_path, len(cands)), pool=str(pool_path))
     chosen = dict(eligible[0])
     chosen["_body"] = card_body(pool_path, chosen)
+    workspace = chosen.get("workspace_path") or DEFAULT_WORKSPACE
+    if chosen.get("assignee", "default") != "default" or \
+            not isinstance(workspace, str) or not os.path.isabs(workspace) or \
+            not os.path.isdir(workspace):
+        return res.finding("unsupported_execution_target", "candidate %s has no usable "
+                           "default-worker workspace" % chosen["family_id"])
     body = (chosen["_body"] or "").upper()
     missing = [m for m in CANDIDATE_BODY_MARKERS if m not in body]
     if missing:
@@ -685,18 +791,35 @@ def round_once(args):
                            "(contract 14.4 requires the DCA parameter domain and the cohort "
                            "survivor rules in every appended card)" % (chosen["family_id"], missing),
                            pool_entry=chosen["family_id"], missing=missing)
-    return append_one(args.results_root, args.board, chosen, args, res)
+    return append_one(args.results_root, chosen, args, res)
+
+def round_once(args):
+    """Serialize concurrent C3 requests without holding the bridge during agent work."""
+    root = Path(args.results_root)
+    if args.dry_run or not root.is_dir():
+        return _round_once(args)
+    try:
+        lock_dir = root / HANDOFF_DIRNAME
+        lock_dir.mkdir(exist_ok=True)
+        fd = _lock(lock_dir / ".advance.lock")
+    except OSError as exc:
+        return Round().finding("advance_lock_failed", str(exc))
+    if fd is None:
+        return Round().waiting("another C3 advance is in progress")
+    try:
+        return _round_once(args)
+    finally:
+        os.close(fd)
 
 
 def main():
     ap = argparse.ArgumentParser(description="contract 14.4 automatic production handoff (one round)")
     ap.add_argument("--results-root", default=os.environ.get("QLIB_RESULTS_ROOT", DEFAULT_RESULTS))
-    ap.add_argument("--board", default=os.environ.get("HERMES_KANBAN_BOARD", "quant-strategy-research"),
-                    help="board the work-order card is dispatched to (never read back)")
+    ap.add_argument("--board", default=None, help="ignored legacy argument (no board consulted)")
     ap.add_argument("--pool", default=None, help="candidate pool JSON (default <results>/_handoff/%s)"
                     % POOL_FILENAME)
     ap.add_argument("--detector", default="handoff", choices=["handoff", "default", "operator"])
-    ap.add_argument("--dry-run", action="store_true", help="read-only: no card, no file, no log line")
+    ap.add_argument("--dry-run", action="store_true", help="read-only: no agent, no file, no log line")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--quiet-noop", action="store_true", default=True,
                     help="print nothing on stdout for a normal no-op round (cron default)")
@@ -712,7 +835,7 @@ def main():
         "detector": args.detector,
         "contract_section": "14.4",
         "ran_at_utc": now_utc(),
-        "board": args.board,
+
         "results_root": args.results_root,
         "dry_run": args.dry_run,
         "decision_evidence": "results_root_only",
