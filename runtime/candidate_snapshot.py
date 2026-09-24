@@ -535,6 +535,94 @@ def last_activity_utc(attempt, family):
     return (family or {}).get("created_at_utc") or None
 
 
+def top_entries(entries, limit=DASHBOARD_TOP_N):
+    """The machine-readable leaderboard projection for the first `limit` entries (display-only).
+
+    One source for the top-N projection: the dashboard JSON and the on-demand runtime observation
+    (`runtime/runtime_observation.py`) both call this, so the two can never disagree about which
+    fields of an entry are published. Values are read verbatim; nothing is ranked or re-derived here.
+    """
+    top = []
+    for entry in entries[:limit]:
+        full = entry.get("full") or {}
+        top.append({"rank": entry.get("rank"),
+                    "cohort": entry.get("cohort") or entry.get("survivor_id"),
+                    "sharpe": full.get("sharpe"),
+                    "annualized_return": full.get("annualized_return"),
+                    "avg_trades_per_year": full.get("avg_trades_per_year"),
+                    "max_dd_pct": full.get("max_dd_pct"),
+                    "evidence_state": entry.get("evidence_state"),
+                    "summary": "夏普 %s · 年化 %s · 最大回撤 %s · 年均交易 %s" % (
+                        _num(full.get("sharpe")),
+                        _num(full.get("annualized_return") * 100.0, digits=2, suffix="%")
+                        if isinstance(full.get("annualized_return"), (int, float)) else "—",
+                        _num(full.get("max_dd_pct") * 100.0, digits=2, suffix="%")
+                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—",
+                        _num(full.get("avg_trades_per_year"), digits=1, suffix=" 次/年")
+                        if isinstance(full.get("avg_trades_per_year"), (int, float)) else "—")})
+    return top
+
+
+def health_payload():
+    """Runtime health = `quant_runtime_watchdog.py`'s own verdict, passed through (never re-derived).
+
+    `status` is "attention" exactly when the watchdog itself holds an active signature and "unknown"
+    when its state cannot be read. The dashboard JSON and the on-demand runtime observation call this
+    same function, so both show the watchdog's verdict and not a second opinion.
+    """
+    watchdog = watchdog_health()
+    if watchdog is None:
+        return {"available": False, "status": "unknown", "source": "quant_runtime_watchdog",
+                "state_path": str(WATCHDOG_STATE), "active": [], "active_count": None,
+                "last_check_at_utc": None, "last_healthy_at_utc": None,
+                "summary": "unknown: watchdog state unreadable (%s)" % WATCHDOG_STATE}
+    labels = [item["label"] for item in watchdog["active"]]
+    return {"available": True, "status": "attention" if labels else "ok",
+            "source": "quant_runtime_watchdog", "state_path": watchdog["state_path"],
+            "active": watchdog["active"], "active_count": watchdog["active_count"],
+            "last_check_at_utc": watchdog["last_check_at_utc"],
+            "last_healthy_at_utc": watchdog["last_healthy_at_utc"],
+            "summary": ("attention: %s" % "; ".join(
+                labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else [])))
+            if labels else "ok"}
+
+
+def funnel_view(results_root, now=None):
+    """The canonical funnel (workload / wiki_brain / backtested) as one computation.
+
+    Every reader of these three numbers - the dashboard JSON, the Discord text and the on-demand
+    runtime observation - calls this same function, so they cannot disagree about the funnel.
+    """
+    root_present = Path(results_root).is_dir()
+    reviewed, ingested, delta = research_counts(now=now)
+    wiki = bool(reviewed) and ingested is not None
+    backtested, registered = backtested_counts(results_root) if root_present else (None, None)
+    workload_evaluations, workload_artifacts = (
+        cumulative_backtest_workload(results_root) if root_present else (None, None))
+    return {
+        "workload": {"available": workload_evaluations is not None,
+                     "evaluations": workload_evaluations,
+                     "grid_artifacts": workload_artifacts,
+                     "unit": "streamed_grid_rows",
+                     "summary": ("%s cumulative executed evaluations across %s grid artifacts" %
+                                 ("{:,}".format(workload_evaluations), workload_artifacts)
+                                 if workload_evaluations is not None else "unavailable")},
+        "wiki_brain": {"available": wiki, "reviewed": reviewed if wiki else None,
+                       "ingested": ingested if wiki else None,
+                       "share_pct": round(100.0 * ingested / reviewed, 1) if wiki else None,
+                       "delta_24h": delta, "delta_available": delta is not None,
+                       "summary": ("%s / %s reviewed \u00b7 %s" % (
+                           ingested, reviewed,
+                           "+%d/24h" % delta if delta is not None else "delta unavailable")
+                           if wiki else "unavailable")},
+        "backtested": {"available": bool(registered), "families": backtested or None,
+                       "registered": registered or None,
+                       "share_pct": round(100.0 * backtested / registered, 1) if registered else None,
+                       "summary": ("%d / %d registered families" % (backtested, registered)
+                                   if registered else "unavailable")},
+    }
+
+
 def dashboard_payload(results_root, now=None):
     """Machine-readable twin of render(): the same sources, selections and numbers, as JSON.
 
@@ -574,72 +662,14 @@ def dashboard_payload(results_root, now=None):
     entries = leaderboard_entries(results_root) if root_present else []
     leaderboard_path = Path(results_root) / "_survivors" / "leaderboard.json"
     leaderboard_as_of = mtime_utc(leaderboard_path) if root_present else None
-    top = []
-    for entry in entries[:DASHBOARD_TOP_N]:
-        full = entry.get("full") or {}
-        top.append({"rank": entry.get("rank"),
-                    "cohort": entry.get("cohort") or entry.get("survivor_id"),
-                    "sharpe": full.get("sharpe"),
-                    "annualized_return": full.get("annualized_return"),
-                    "avg_trades_per_year": full.get("avg_trades_per_year"),
-                    "max_dd_pct": full.get("max_dd_pct"),
-                    "evidence_state": entry.get("evidence_state"),
-                    "summary": "夏普 %s · 年化 %s · 最大回撤 %s · 年均交易 %s" % (
-                        _num(full.get("sharpe")),
-                        _num(full.get("annualized_return") * 100.0, digits=2, suffix="%")
-                        if isinstance(full.get("annualized_return"), (int, float)) else "—",
-                        _num(full.get("max_dd_pct") * 100.0, digits=2, suffix="%")
-                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—",
-                        _num(full.get("avg_trades_per_year"), digits=1, suffix=" 次/年")
-                        if isinstance(full.get("avg_trades_per_year"), (int, float)) else "—")})
+    top = top_entries(entries)
 
-    reviewed, ingested, delta = research_counts(now=local_now)
-    wiki = bool(reviewed) and ingested is not None
-    backtested, registered = backtested_counts(results_root) if root_present else (None, None)
-    workload_evaluations, workload_artifacts = (
-        cumulative_backtest_workload(results_root) if root_present else (None, None))
-    funnel = {
-        "workload": {"available": workload_evaluations is not None,
-                     "evaluations": workload_evaluations,
-                     "grid_artifacts": workload_artifacts,
-                     "unit": "streamed_grid_rows",
-                     "summary": ("%s cumulative executed evaluations across %s grid artifacts" %
-                                 ("{:,}".format(workload_evaluations), workload_artifacts)
-                                 if workload_evaluations is not None else "unavailable")},
-        "wiki_brain": {"available": wiki, "reviewed": reviewed if wiki else None,
-                       "ingested": ingested if wiki else None,
-                       "share_pct": round(100.0 * ingested / reviewed, 1) if wiki else None,
-                       "delta_24h": delta, "delta_available": delta is not None,
-                       "summary": ("%s / %s reviewed \u00b7 %s" % (
-                           ingested, reviewed,
-                           "+%d/24h" % delta if delta is not None else "delta unavailable")
-                           if wiki else "unavailable")},
-        "backtested": {"available": bool(registered), "families": backtested or None,
-                       "registered": registered or None,
-                       "share_pct": round(100.0 * backtested / registered, 1) if registered else None,
-                       "summary": ("%d / %d registered families" % (backtested, registered)
-                                   if registered else "unavailable")},
-    }
+    funnel = funnel_view(results_root, now=local_now)
 
     running, blocked = board_counts(board)
     # Runtime health is the watchdog's verdict, not this file's: `status` is "attention" exactly when
     # the watchdog itself holds an active signature, and "unknown" when its state cannot be read.
-    watchdog = watchdog_health()
-    if watchdog is None:
-        health = {"available": False, "status": "unknown", "source": "quant_runtime_watchdog",
-                  "state_path": str(WATCHDOG_STATE), "active": [], "active_count": None,
-                  "last_check_at_utc": None, "last_healthy_at_utc": None,
-                  "summary": "unknown: watchdog state unreadable (%s)" % WATCHDOG_STATE}
-    else:
-        labels = [item["label"] for item in watchdog["active"]]
-        health = {"available": True, "status": "attention" if labels else "ok",
-                  "source": "quant_runtime_watchdog", "state_path": watchdog["state_path"],
-                  "active": watchdog["active"], "active_count": watchdog["active_count"],
-                  "last_check_at_utc": watchdog["last_check_at_utc"],
-                  "last_healthy_at_utc": watchdog["last_healthy_at_utc"],
-                  "summary": ("attention: %s" % "; ".join(
-                      labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else [])))
-                  if labels else "ok"}
+    health = health_payload()
 
     return {
         "schema_version": DASHBOARD_SCHEMA_VERSION,

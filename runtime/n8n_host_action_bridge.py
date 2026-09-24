@@ -1,11 +1,18 @@
 #!/opt/homebrew/bin/python3
 """Minimal n8n -> host action bridge (Phase 2C1, card t_e886543c).
 
-One fixed request file, one fixed response file, TWO allowlisted actions.
+One fixed request file, one fixed response file, THREE allowlisted actions.
 Claim `production_handoff.request.json` by same-filesystem rename (so a
 duplicate launchd wake cannot double-run the same request), and ONLY if the
 tiny allowlisted payload validates, invoke one of the EXISTING scheduler
 wrappers. No handoff or reconciler logic is duplicated here.
+
+The third action - `runtime_observe_once` (Phase 2, card t_35951c0c) - is the
+read-only one: it runs `runtime/runtime_observation.py` through the same thin
+wrapper pattern and returns that module's on-demand projection of the canonical
+runtime artifacts. It reads nothing else, writes nothing, and exists so the
+n8n canvas never has to re-implement runtime semantics in JavaScript nor read a
+stale projection file.
 
 Fail closed: unknown / malformed / oversize / wrong-field-set payloads write
 a rejection response and invoke NOTHING. Both paths are module constants -
@@ -15,11 +22,12 @@ leak into the action.
 
 Response is a NON-AUTHORITATIVE read-back only (temp+rename): schema,
 request_id, action, started_at_utc, finished_at_utc, exit_code, status,
-stdout/stderr (byte-bounded). Correlate a response with its request by
-`request_id`; a stale response may persist between requests. No queue, no
-second state store, no daemon - launchd `ai.quant.n8n-host-bridge` wakes this
-script via WatchPaths on the request file (runtime/ai.quant.n8n-host-bridge.plist;
-semantics + evidence: N8N_CONTROL_PLANE.md section 7.3).
+stdout/stderr (byte-bounded per action - see OUTPUT_CAP_BYTES). Correlate a
+response with its request by `request_id`; a stale response may persist
+between requests. No queue, no second state store, no daemon - launchd
+`ai.quant.n8n-host-bridge` wakes this script via WatchPaths on the request file
+(runtime/ai.quant.n8n-host-bridge.plist; semantics + evidence:
+N8N_CONTROL_PLANE.md section 7.3).
 
 Exit codes: 0 = no-op (no request) or action finished with rc 0; 1 = rejected
 request, action failure, action timeout, or internal error (fail closed).
@@ -49,19 +57,24 @@ SCHEMA = "quant-control-action/v1"
 RESPONSE_SCHEMA = "quant-control-action-response/v1"
 PRODUCTION_HANDOFF_ACTION = "production_handoff_once"
 RUNTIME_RECONCILE_ACTION = "runtime_reconcile_once"
+# Phase 2 (card t_35951c0c): the read-only observation action. It mutates no pipeline, Kanban,
+# results, leaderboard or GitHub state - it only prints the canonical runtime projection.
+RUNTIME_OBSERVE_ACTION = "runtime_observe_once"
 # Keep the original names as compatibility aliases for the existing C3 path.
 ACTION = PRODUCTION_HANDOFF_ACTION
-ALLOWED_ACTIONS = (PRODUCTION_HANDOFF_ACTION, RUNTIME_RECONCILE_ACTION)
+ALLOWED_ACTIONS = (PRODUCTION_HANDOFF_ACTION, RUNTIME_RECONCILE_ACTION, RUNTIME_OBSERVE_ACTION)
 ALLOWED_KEYS = ("schema", "action", "request_id")
 
 # The ONLY allowed commands: existing thin scheduler wrappers (runpy -> canonical
 # runtime modules). Hardcoded; no field of the request may alter either command.
 WRAPPER = "/Users/hong/.hermes/scripts/quant_production_handoff.py"
 RUNTIME_RECONCILE_WRAPPER = "/Users/hong/.hermes/scripts/quant_runtime_reconcile.py"
+RUNTIME_OBSERVE_WRAPPER = "/Users/hong/.hermes/scripts/quant_runtime_observe.py"
 PYTHON = "/opt/homebrew/bin/python3"
 ACTION_COMMANDS = {
     PRODUCTION_HANDOFF_ACTION: [PYTHON, WRAPPER],
     RUNTIME_RECONCILE_ACTION: [PYTHON, RUNTIME_RECONCILE_WRAPPER],
+    RUNTIME_OBSERVE_ACTION: [PYTHON, RUNTIME_OBSERVE_WRAPPER],
 }
 # Existing C3 tests and callers use ACTION_CMD; retain its exact mapping.
 ACTION_CMD = ACTION_COMMANDS[PRODUCTION_HANDOFF_ACTION]
@@ -76,7 +89,16 @@ ACTION_TIMEOUT_S = 600  # bounded subprocess timeout; the wrapper itself caps ea
 MAX_REQUEST_BYTES = 4096  # oversize requests fail closed before JSON parsing
 MAX_REQUEST_ID = 128  # non-empty bounded string
 MAX_ECHO = 128  # rejected `action` echoed into the response, char-bounded
-MAX_OUTPUT_BYTES = 4096  # stdout/stderr byte cap in the response
+MAX_OUTPUT_BYTES = 4096  # default stdout/stderr byte cap in the response
+# Per-action cap. The two mutating actions keep the audited 4096-byte bound exactly; the read-only
+# observation action returns one JSON document, so it carries its own explicit - still bounded, still
+# request-independent - cap instead of widening the mutating paths.
+MAX_OBSERVATION_BYTES = 65536
+OUTPUT_CAP_BYTES = {
+    PRODUCTION_HANDOFF_ACTION: MAX_OUTPUT_BYTES,
+    RUNTIME_RECONCILE_ACTION: MAX_OUTPUT_BYTES,
+    RUNTIME_OBSERVE_ACTION: MAX_OBSERVATION_BYTES,
+}
 
 
 class _ClaimRejected(Exception):
@@ -240,7 +262,8 @@ def _run_action(cmd, env, timeout):
 
 
 def _dispatch(runner, rid, act, started):
-    """(response_payload, ok). Only the two fixed commands can reach runner."""
+    """(response_payload, ok). Only the fixed commands can reach runner."""
+    cap = OUTPUT_CAP_BYTES.get(act, MAX_OUTPUT_BYTES)
     try:
         cmd = ACTION_COMMANDS[act]
     except KeyError:
@@ -250,14 +273,14 @@ def _dispatch(runner, rid, act, started):
     except subprocess.TimeoutExpired as exc:
         return _response(rid, act, started, None, "action_timeout",
                          _as_text(getattr(exc, "stdout", None)),
-                         _as_text(getattr(exc, "stderr", None))), False
+                         _as_text(getattr(exc, "stderr", None)), cap), False
     except OSError as exc:  # interpreter/wrapper vanished - fail closed, never substitute another command
-        return _response(rid, act, started, None, "error_internal", "", str(exc)), False
+        return _response(rid, act, started, None, "error_internal", "", str(exc), cap), False
     status = "ok" if rc == 0 else "action_failed"
-    return _response(rid, act, started, rc, status, out, err), rc == 0
+    return _response(rid, act, started, rc, status, out, err, cap), rc == 0
 
 
-def _response(rid, act, started, exit_code, status, stdout, stderr):
+def _response(rid, act, started, exit_code, status, stdout, stderr, cap=MAX_OUTPUT_BYTES):
     return {
         "schema": RESPONSE_SCHEMA,
         "request_id": rid,
@@ -266,8 +289,8 @@ def _response(rid, act, started, exit_code, status, stdout, stderr):
         "finished_at_utc": now_utc(),
         "exit_code": exit_code,
         "status": status,
-        "stdout": _clip_bytes(stdout),
-        "stderr": _clip_bytes(stderr),
+        "stdout": _clip_bytes(stdout, cap),
+        "stderr": _clip_bytes(stderr, cap),
     }
 
 
