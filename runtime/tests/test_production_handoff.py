@@ -163,11 +163,18 @@ class Base(unittest.TestCase):
         doc = {"schema_version": 1, "document_kind": "prelaunch_execution_blocker",
                "family_id": family, "status": "BLOCKED_BEFORE_ROUND_FREEZE",
                "required_human_input": "resolve the stated prerequisite question",
+               "detected_at_utc": "2026-09-13T00:00:00Z",
                "round_id": None, "run_id": None,
                "attempt_launched": False, "qlib_launched": False}
         doc.update(over)
         path.write_text(json.dumps(doc) + "\n")
         return path
+
+    def _write_blocker_verdict(self, family, round_id, **over):
+        doc = {"schema_version": 1, "family_id": family, "round_id": round_id,
+               "run_id": round_id + "-u1", "verdict": "TECHNICAL_INCOMPLETE"}
+        doc.update(over)
+        return self._write_verdict(family, doc["verdict"], doc=doc, round_id=round_id)
 
     def args(self, **over):
         base = dict(results_root=str(self.root), board=BOARD, pool=None, detector="handoff",
@@ -514,15 +521,106 @@ class TestFailClosed(Base):
         blocker.write_text("{not json\n")
         self.assertEqual(h.unresolved_incidents(str(self.root), h.read_families(str(self.root))), [])
 
-    def test_only_later_terminal_verdict_resolves_prelaunch_blocker(self):
-        self._write_family(BLOCKED)
-        self._write_verdict(BLOCKED, "TECHNICAL_INCOMPLETE")
-        self._write_execution_blocker(BLOCKED)
-        families = h.read_families(str(self.root))
-        self.assertEqual(len(h.unresolved_incidents(str(self.root), families)), 1)
+    def test_incomplete_verdict_identity_does_not_resolve_prelaunch_blocker(self):
+        cases = (
+            ("missing-round", ("round_id",), {}),
+            ("missing-run", ("run_id",), {}),
+            ("empty-run", (), {"run_id": ""}),
+            ("missing-schema", ("schema_version",), {}),
+            ("wrong-schema", (), {"schema_version": 2}),
+            ("wrong-family", (), {"family_id": "fam-other-v1"}),
+            ("wrong-round", (), {"round_id": "fam-other-r1"}),
+            ("wrong-owner", (), {"kanban_task_id": "t_other"}),
+        )
+        for suffix, remove_keys, overrides in cases:
+            with self.subTest(case=suffix):
+                family = "fam-blocker-identity-" + suffix
+                self._write_family(family)
+                self._write_execution_blocker(family)
+                round_id = family + "-r1"
+                verdict = {"schema_version": 1, "family_id": family,
+                           "round_id": round_id, "run_id": round_id + "-u1",
+                           "verdict": "TECHNICAL_INCOMPLETE",
+                           "decided_at_utc": "2026-09-14T00:00:00Z"}
+                for key in remove_keys:
+                    verdict.pop(key)
+                verdict.update(overrides)
+                self._write_verdict(family, verdict["verdict"], doc=verdict, round_id=round_id)
+                incidents = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+                self.assertIn(family, {item.get("family_id") for item in incidents})
 
-        self._write_verdict(BLOCKED, "TECHNICAL_INCOMPLETE")
-        self.assertEqual(h.unresolved_incidents(str(self.root), families), [])
+    def test_verdict_mtime_change_alone_does_not_resolve_prelaunch_blocker(self):
+        self._write_family(BLOCKED)
+        round_id = BLOCKED + "-r1"
+        verdict_path = self._write_blocker_verdict(
+            BLOCKED, round_id, decided_at_utc="2026-09-12T23:00:00Z")
+        blocker_path = self._write_execution_blocker(BLOCKED)
+        before = verdict_path.read_bytes()
+        later_mtime = max(blocker_path.stat().st_mtime, time.time()) + 60
+        os.utime(str(verdict_path), (later_mtime, later_mtime))
+        self.assertEqual(verdict_path.read_bytes(), before)
+
+        incidents = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+        self.assertIn(BLOCKED, {item.get("family_id") for item in incidents})
+
+    def test_later_distinct_immutable_round_verdict_resolves_prelaunch_blocker(self):
+        self._write_family(BLOCKED)
+        self._write_blocker_verdict(
+            BLOCKED, BLOCKED + "-r1", decided_at_utc="2026-09-12T23:00:00Z")
+        self._write_execution_blocker(BLOCKED)
+        later_round = BLOCKED + "-r2"
+        verdict_path = self._write_blocker_verdict(
+            BLOCKED, later_round, decided_at_utc="2026-09-14T00:00:00Z")
+        verdict_bytes = verdict_path.read_bytes()
+        os.utime(str(verdict_path), (1, 1))
+        self.assertEqual(verdict_path.read_bytes(), verdict_bytes)
+
+        self.assertEqual(h.unresolved_incidents(
+            str(self.root), h.read_families(str(self.root))), [])
+
+    def test_card_free_family_accepts_canonical_later_verdict_for_blocker_resolution(self):
+        family = "fam-direct-blocked-v1"
+        family_dir = self.root / family
+        family_dir.mkdir(parents=True)
+        (family_dir / "family.json").write_text(json.dumps({
+            "schema_version": 1, "family_id": family,
+            "handoff": {"execution": h.DIRECT_MODE},
+        }) + "\n")
+        self._write_execution_blocker(family)
+        self._write_blocker_verdict(
+            family, family + "-r2", decided_at_utc="2026-09-14T00:00:00Z")
+
+        self.assertEqual(h.unresolved_incidents(
+            str(self.root), h.read_families(str(self.root))), [])
+
+    def test_missing_or_malformed_blocker_or_verdict_timestamps_fail_closed(self):
+        cases = (
+            ("missing-detected", "missing", "2026-09-14T00:00:00Z"),
+            ("malformed-detected", "not-a-time", "2026-09-14T00:00:00Z"),
+            ("missing-decided", "2026-09-13T00:00:00Z", None),
+            ("malformed-decided", "2026-09-13T00:00:00Z", "not-a-time"),
+            ("equal-times", "2026-09-13T00:00:00Z", "2026-09-13T00:00:00Z"),
+        )
+        for suffix, detected, decided in cases:
+            with self.subTest(case=suffix):
+                family = "fam-blocker-time-" + suffix
+                self._write_family(family)
+                blocker_path = self._write_execution_blocker(family)
+                blocker_doc = json.loads(blocker_path.read_text())
+                if detected == "missing":
+                    blocker_doc.pop("detected_at_utc")
+                else:
+                    blocker_doc["detected_at_utc"] = detected
+                blocker_path.write_text(json.dumps(blocker_doc) + "\n")
+                round_id = family + "-r1"
+                verdict = {"schema_version": 1, "family_id": family,
+                           "round_id": round_id, "run_id": round_id + "-u1",
+                           "verdict": "TECHNICAL_INCOMPLETE"}
+                if decided is not None:
+                    verdict["decided_at_utc"] = decided
+                self._write_verdict(family, verdict["verdict"], doc=verdict, round_id=round_id)
+                incidents = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+                self.assertIn(family, {item.get("family_id") for item in incidents})
 
     def test_incident_without_family_identity_fails_closed(self):
         self._write_incident({"schema_version": 1, "incident_id": "inc-2", "kind": "mapping_mismatch"})

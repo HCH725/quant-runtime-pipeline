@@ -426,15 +426,27 @@ def unresolved_incidents(results_root, families, now=None):
         if not ((isinstance(human_input, str) and human_input.strip()) or
                 (isinstance(human_input, (list, dict)) and human_input)):
             continue
-        try:
-            blocker_mtime = blocker_path.stat().st_mtime
-        except OSError:
-            continue
+        detected_at = parse_utc(blocker.get("detected_at_utc"))
         rounds = family_dir / "rounds"
-        if rounds.is_dir() and any(
-                round_verdict_token(verdict_path.parent, family_id, family_doc)
-                and verdict_path.stat().st_mtime > blocker_mtime
-                for verdict_path in rounds.glob("*/verdict.json")):
+        owner = family_doc.get("kanban_task_id")
+        resolved = False
+        if detected_at is not None and rounds.is_dir():
+            for verdict_path in rounds.glob("*/verdict.json"):
+                verdict = _load_json(verdict_path)
+                round_id = verdict_path.parent.name
+                run_id = verdict.get("run_id") if isinstance(verdict, dict) else None
+                if not isinstance(verdict, dict) or type(verdict.get("schema_version")) is not int \
+                        or verdict.get("schema_version") != 1 or verdict.get("family_id") != family_id \
+                        or not isinstance(round_id, str) or not round_id.strip() \
+                        or verdict.get("round_id") != round_id \
+                        or not isinstance(run_id, str) or not run_id.strip():
+                    continue
+                token = _terminal_verdict_token(verdict, family_id, owner)
+                decided_at = parse_utc(verdict.get("decided_at_utc"))
+                if token and decided_at is not None and decided_at > detected_at:
+                    resolved = True
+                    break
+        if resolved:
             continue
         incident_id = blocker.get("incident_id")
         if not isinstance(incident_id, str) or not incident_id:
