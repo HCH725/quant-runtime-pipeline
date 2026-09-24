@@ -108,12 +108,12 @@ Full Canvas 已完成 live import／publish 與安全重啟驗證：published `s
 `shadowQuantCp1` 是唯一的 Shadow workflow，stable ID 不變；display name 現為 **Quant Control Plane — End-to-End**。它把同一份已組裝的 `quant-control-plane-shadow/v1` 快照分成兩條清楚的視覺語意：
 
 - **SOURCE / METRICS REFRESH**：Manual + 15m observation、6 個既有唯讀來源、assembler 與唯一 shadow snapshot write。這條線顯示綠色，只代表來源讀取／快照寫出成功，**不代表 lifecycle 活動**。
-- **CURRENT LIFECYCLE**：`Build lifecycle view (derived, read-only)` 只從 assembler 輸入建立衍生 view；`Current Stage Router` 依 current-family/card-scoped token 或 matched current-family gate evidence，只把本次 refresh 送到**一個** stage indicator，另有 `Pipeline Counts Summary (derived, read-only)`。它不讀新來源、不寫狀態、不啟動／重排／續跑任何 runtime。
+- **CURRENT LIFECYCLE**：`Build lifecycle view (derived, read-only)` 只從 assembler 輸入建立衍生 view；`Current Stage Router` 依 **runtime observation 的 lifecycle state**（`preflight`／`qlib_active`／`disposition`／`terminal`／`idle`；Phase 2，§9.G）與其逐字 token，只把本次 refresh 送到**一個** stage indicator；prerequisite-gate record 只作**佐證**（agree／disagree 都顯示，**不路由**），另有 `Pipeline Counts Summary (derived, read-only)`。它不讀新來源、不寫狀態、不啟動／重排／續跑任何 runtime，**也不讀任何 Kanban 卡片狀態**（`current` 不因卡片狀態改變）。
 
 Lifecycle indicator 的固定順序為：
 `Strategy Research / Hermes Scout` → `GitHub Strategy Pool` → `Intake Review` → `Wiki Brain` → `Candidate Queue` → `WAITING_DATA / READY_TO_RESUME Parking` → `Data Readiness / Preflight` → `Qlib Full Backtest (symbols x timeframes x parameter domain x DCA)` → `Historical / OOS` → `Robustness` → `Failure Analysis / Result Validation` → `Result / Verdict` → `REJECT`／`Survivor / PASS` → `Leaderboard` → `Private Survivor Repo Parking`，另有 `Attention / Unresolved`。`REJECT` 與 `Survivor / PASS` 是展示分支；`Leaderboard` → `Private Survivor Repo Parking` 是 promoted display path，不是第二套執行狀態機。
 
-`Pipeline Counts Summary` 沿用 snapshot 既有 counts；WAITING_DATA、READY_TO_RESUME 與 backtest-layer REJECT 沒有 authoritative 值時維持 `null`／reason，不從 leaderboard、intake 或其他全域數字推導。n8n 原生 canvas 不會在每次 refresh 自動改寫 node name／Sticky Note 顯示動態數字，因此即時 counts 留在 node output 與專用 summary node；workflow 不做 self-mutation。
+`Pipeline Counts Summary` 沿用 snapshot 既有 counts；WAITING_DATA、READY_TO_RESUME 與 backtest-layer REJECT 沒有 authoritative 值時維持 `null`／reason，不從 leaderboard、intake 或其他全域數字推導。**Phase 2 起** runtime 相關欄位（`current_*`、families registered／backtested／in-flight／unresolved、cumulative workload、survivors／leaderboard、candidate pool total／consumed／queued、last pipeline advance）改由 on-demand runtime observation 提供（§9.G）；Pool／Intake／Wiki／Parking 仍走各自既有來源。n8n 原生 canvas 不會在每次 refresh 自動改寫 node name／Sticky Note 顯示動態數字，因此即時 counts 留在 node output 與專用 summary node；workflow 不做 self-mutation。
 
 ## 2. Topology：pipeline 階段 ↔ workflow 節點 ↔ 來源
 
@@ -121,7 +121,7 @@ Lifecycle indicator 的固定順序為：
 
 ```
 Manual Trigger ─┐
-                ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Candidate/Qlib/Leaderboard ─→ Parking ─→ Assemble ─┬→ Build lifecycle view ─→ Counts Summary
+                ├─→ Scout cron ─→ Pool ─→ Intake Review ─→ Preflight Gate ─→ Runtime Observation ─→ Parking ─→ Assemble ─┬→ Build lifecycle view ─→ Counts Summary
 Schedule (15m)  ┘                                                                                                               ├→ Current Stage Router ─→ exactly one indicator
                                                                                                                                   └→ Emit snapshot
 ```
@@ -131,14 +131,14 @@ Schedule (15m)  ┘                                                             
 | 1 | `Strategy Research — Hermes Scout cron state (read-only)` | `/host/hermes-cron-ro/jobs.json`（＝ `~/.hermes/cron/jobs.json` 的 **ro** 掛載）：只投影 job `f5c0648122f3` 的**契約白名單**（10 個固定鍵：job_id／name／enabled／state／schedule_display／last_run_at／last_status／last_error／failure_streak／next_run_at，一律存在、來源無值時為 `null`）＋ optional `last_dispatch`（只在來源真有 dispatch 記錄時出現，且只含 scheduled_at／dispatched_at／lateness_seconds／kind 四個子鍵） | Strategy Research → Hermes cron `f5c0648122f3`（`Quant Research Scout`，上游研究產生者） |
 | 2 | `Pool — alpha-strategy-research pool (read-only)` | `/host/workspace-ro/alpha-strategy-research` 的 root `*.md`（canonical 規則：`len(parts)==1 and suffix==".md" and not startswith("README")`，即 `review_state.py:111`）＋ checkout HEAD sha | Strategy Research → GitHub alpha-strategy-research pool |
 | 3 | `Intake Review — canonical intake state (read-only)` | `/host/workspace-ro/alpha-strategy-review-state.json`（current_snapshot buckets、pending_ingestion、deferred_delta、ingested_wiki_records、last_reviewed_*） | Intake Review → Wiki Brain |
-| 4 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/<current_family>-prerequisite-gate-*.json`（僅在與投影 current family **相符**時採用；不符即 unavailable） | Data / Preflight Gate |
-| 5 | `Candidate→Qlib→Leaderboard — dashboard projection (read-only)` | `/host/quant-dashboard-data/dashboard.json`（`runtime/candidate_snapshot.py` 產出的既有投影：health／current／funnel／leaderboard） | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
+| 4 | `Preflight Gate — prerequisite evidence (read-only)` | `<repo>/evidence/*-prerequisite-gate-*.json`：投影**每個 family 最新一筆**（family／round／conclusion／verdict／sha256／bytes），再由 assembler 取用**observation 指名的那個 family** 的 record；沒有就 `null`＋`gaps`，**不臆測**（不再需要投影檔提供 family 提示） | Data / Preflight Gate |
+| 5 | `Runtime Observation — canonical runtime evidence (read-only)` | **不再讀任何投影檔**：對既有 host bridge 發一次固定唯讀 action `runtime_observe_once`（request／response 皆固定路徑，`request_id` 對帳），取回 `runtime/runtime_observation.py` 對 canonical `/Volumes/ExpansionDrive/qlib-results` 的**當下**投影：`current`（lifecycle state＋family／round／attempt／stage／progress／cohort／verdict）、runtime counts、candidate pool、leaderboard、watchdog health | Candidate Queue → Qlib Full Backtest → Result/Verdict → Survivor → Leaderboard |
 | 6 | `Parking — private survivor repo metadata (read-only)` | `/host/workspace-ro/validated-survivor-research`：`survivors/` 目錄數、`leaderboard/leaderboard.json` 的 count／metadata／sha256、mirror HEAD sha（**只有 metadata，不讀 survivor 內容**） | Private Repo Parking |
 | 7 | `Assemble shadow snapshot (read-only)` | 以上 6 個來源的 stdout（純解析；Code node 無 fs／無網路） | 全鏈 |
 | 8 | `Emit snapshot (n8n shadow dir only)` | 寫入唯一輸出路徑（§6） | 觀測輸出 |
 
 節點實作要點：來源節點 1／2／3／4／6 為 `executeCommand`（只做 `readdirSync`／`readFileSync`／`SHA-256` 投影，**唯讀、deterministic**），
-節點 5 為 `cat`（6.6 KB，verbatim）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
+節點 5 亦為 `executeCommand`，但只**發布**一個固定 request 並**讀回**對應 response（不改任何 host 檔案；`action`／路徑皆為硬編碼常數，request 內只有 `request_id`）。沒有 node 會執行 pipeline 腳本、Qlib、backtest 或任何寫入 host 狀態的指令。
 節點 1 的讀取面只有 `jobs.json` 一個檔案；它對 15 分鐘拍點做一次投影，讀不到時輸出 `available: false` ＋ 理由（**不會**讓 execution 失敗，也不以預設值代替）。
 節點 1 投影出的欄位就是 §3 的 stage 1 白名單本身；來源可讀性與檔案時間戳留在 `sources[]`（`hermes_scout_cron_state`），**不進** stage 1。
 
@@ -157,6 +157,18 @@ Vocabulary 只**顯示**，不驅動任何動作。可驗證來源者以來源 t
 | `PASS` | promoted survivor | 由 leaderboard projection count 推得（contract §28.1：leaderboard entry 即 promotion 觸發點），標示為 shadow mapping |
 | `RUNNING_QLIB` / `ARTIFACT_READY` / `FAILED_SCRIPT` | 既有 runtime stage，照實顯示 | 直接取投影 `current.stage` 逐字（落在這三者之一才給 token，否則 `null`） |
 
+**Phase 2：`current` 的 lifecycle state（runtime observation，§9.G）。** 這五個值由 canonical runtime artifacts 判定，**沒有任何一個來自 Kanban**：
+
+| state | 判定依據（canonical artifacts） | canvas 顯示的 current stage |
+|---|---|---|
+| `preflight` | family 已註冊且在 90 分鐘 launch grace 內、尚無 attempt 目錄；**或** attempt 目錄已存在但 Qlib 尚未發佈 `state.json`（＝ direct Hermes worker 正在 adapt／preflight） | `Data Readiness / Preflight` |
+| `qlib_active` | 最新 attempt 在 90 分鐘窗內、無 terminal sentinel、且已發佈 runtime stage | stage 為 `RUNNING_QLIB` → `Qlib Full Backtest`；其他 stage token 不臆測 → `Attention / Unresolved` |
+| `disposition` | 最新 attempt 已發佈 terminal sentinel，但**該 attempt 自己所屬 round** 尚無 verdict | `ARTIFACT_READY` → `Result / Verdict`；`FAILED_SCRIPT` → `Failure Analysis / Result Validation` |
+| `terminal` | 該 round／family 的 terminal verdict 已發佈且是最新證據（90 分鐘窗內） | `PASS` → `Survivor / PASS`；`REJECT` → `REJECT`；其他 terminal token → `Result / Verdict` |
+| `idle` | 無任何 family 持有 live attempt，且最新 terminal 證據在窗外 | `Candidate Queue`（不是 attention alarm） |
+
+state 不可證明時 `current.state = null`＋`gaps`，canvas 走 `Attention / Unresolved`（不猜）。
+
 Intake 分支語意（顯示用，不重判）：`PASS` + 真正完成 ingest 的 `PASS-WITH-CAVEAT` → Wiki Brain（＋ sibling candidate append）；
 `REJECT` → 正常篩選終局；`REMEDIATE` → 尚未接受、**不是**系統錯誤；`Error` → 只保留給真正的系統／讀取／解析失敗，**不得**與 reject／remediate 混用。
 
@@ -171,6 +183,8 @@ Stage 1 `strategy_research` 不是 vocabulary token，而是 Hermes cron job `f5
 ## 4. Counts 與 reconciliation（快照的對帳面）
 
 快照 `counts`（2026-09-21T14:36Z 實跑，逐項可回溯到 `sources[]` 的 path／sha256）：
+
+> **Phase 2（§9.G）後的來源變更**：下表 `wiki_reviewed`／`wiki_ingested`、`families_*`、`workload_evaluations`、`leaderboard_*`、`current_*`、`runtime_health_*` 改由 **on-demand runtime observation** 提供（同一組 `candidate_snapshot` helper，數值語意不變；`current_*` 欄位改為 `current_state`／`current_stage`／`current_round_id`／`current_attempt`／`current_verdict`／`current_why`，**不再有** `current_card_status`／`current_kanban_task_id`）。下表逐字保留 2026-09-21 當次實跑值作為歷史證據。
 
 | 欄位 | 值 | 來源 |
 |---|---|---|
@@ -229,6 +243,8 @@ Shadow-1 的行為：**只顯示、不執行**（`resume_policy.enabled = false`
 cron 只有 `~/.hermes/cron` 以 **ro** 掛入——Apple `container` 不支援單檔 bind mount（實測 `Error: path '…/jobs.json' is not a directory`），
 故以「最小目錄」為掛載單位，而節點只讀其中一個檔案、只投影其中一個 job 的固定欄位。
 所以 shadow workflow 在結構上**不可能**寫到那些地方。唯讀性另有實測（§9）：`touch /host/...` → `Read-only file system`。
+
+**Phase 2（§9.G）沒有新增任何掛載。** runtime 真值改由**既有** host bridge 的一個固定唯讀 action 取得（§7.3）：容器內仍然沒有 `/Volumes/ExpansionDrive/*`（results root 未掛載），observation 在 **host 端**讀 canonical artifacts 後只回傳投影 JSON（一次約 7 KB）。因此上表與「結構上不可能寫到那些地方」的結論完全不變。
 
 **n8n 設定變更（唯一一項，最小化）：** `NODES_EXCLUDE=["n8n-nodes-base.localFileTrigger"]`。
 理由：n8n 2.x 預設停用 `executeCommand` 與 `localFileTrigger`；本 workflow 的 read-only 來源節點需要 `executeCommand` 做目錄列舉／投影，
@@ -352,14 +368,14 @@ Shadow workflow、Homepage、Research Scout。
 
 ### 7.3 Host action bridge：`ai.quant.n8n-host-bridge`（Phase 2C1；2026-09-23 實測）
 
-n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑 → **兩個固定 allowlist 動作** → 既有 scheduler wrapper。
+n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑 → **三個固定 allowlist 動作** → 既有 scheduler wrapper（第三個為 Phase 2 的**唯讀** observation，§9.G）。
 只有這些固定元件（one script ＋ one plist ＋ focused tests），**不是** queue／service／daemon；C3／C4 workflow 都只透過同一個固定 host bridge，不新增另一套 runtime。
 
 | 檔 | 角色 |
 |---|---|
-| `runtime/n8n_host_action_bridge.py` | 短命腳本：只讀固定 `…/n8n/files/control/production_handoff.request.json`、只寫同目錄固定 `production_handoff.response.json`（**路徑永不由 request 資料決定**）。claim 用**同目錄 per-PID `os.rename`**（同一 request 的多個 wake 恰一個贏，其餘 ENOENT no-op；per-PID 讓在途 run 的 claim 不會被下一個 request 摺掉）。request schema 只收 `quant-control-action/v1` ＋ `action ∈ {production_handoff_once, runtime_reconcile_once}` ＋非空 bounded `request_id`（≤128 字元、≤4096 bytes、**恰三鍵**；request_id 必須是合法 Unicode scalar）；malformed／non-object／oversize／多餘鍵／錯 schema／未知 action／壞 request_id 全部 fail-closed：寫 rejection response、**絕不**呼叫 host action；非空 directory request 會在 claim 前拒絕，絕不遞迴刪除其內容。兩個放行命令皆硬編碼：`[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_production_handoff.py]` 或 `[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_runtime_reconcile.py]`（既有 thin wrappers → 各自 runpy canonical runtime module，不複製邏輯），bounded timeout 600s（獨立 session/process group；timeout 會終止整個 group）、stdout/stderr 各 4096 bytes 截斷、子環境**新造**只含 `HOME`+`PATH`（不繼承、零 Hermes secret／fence var）。response 為 **非權威 read-back**（同目錄 exclusive/nofollow temp + rename 原子寫，固定 response 最終必為 regular file）：`schema/request_id/action/started_at_utc/finished_at_utc/exit_code/status/stdout/stderr`；claim 只在 response 寫出後清掉（寫不出 → 留存當證據）。exit：0＝no-op 或 action rc 0、1＝任何 rejection／action 失敗／timeout（fail closed）。 |
+| `runtime/n8n_host_action_bridge.py` | 短命腳本：只讀固定 `…/n8n/files/control/production_handoff.request.json`、只寫同目錄固定 `production_handoff.response.json`（**路徑永不由 request 資料決定**）。claim 用**同目錄 per-PID `os.rename`**（同一 request 的多個 wake 恰一個贏，其餘 ENOENT no-op；per-PID 讓在途 run 的 claim 不會被下一個 request 摺掉）。request schema 只收 `quant-control-action/v1` ＋ `action ∈ {production_handoff_once, runtime_reconcile_once, runtime_observe_once}` ＋非空 bounded `request_id`（≤128 字元、≤4096 bytes、**恰三鍵**；request_id 必須是合法 Unicode scalar）；malformed／non-object／oversize／多餘鍵／錯 schema／未知 action／壞 request_id 全部 fail-closed：寫 rejection response、**絕不**呼叫 host action；非空 directory request 會在 claim 前拒絕，絕不遞迴刪除其內容。三個放行命令皆硬編碼：`[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_production_handoff.py]`、`[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_runtime_reconcile.py]` 或 `[/opt/homebrew/bin/python3, ~/.hermes/scripts/quant_runtime_observe.py]`（thin wrappers → 各自 runpy canonical runtime module，不複製邏輯），bounded timeout 600s（獨立 session/process group；timeout 會終止整個 group）、stdout/stderr **per-action cap**（兩個 mutating action 維持已稽核的 4096 bytes；唯讀 observation 64 KiB，因其回傳一份 JSON 文件）、子環境**新造**只含 `HOME`+`PATH`（不繼承、零 Hermes secret／fence var）。response 為 **非權威 read-back**（同目錄 exclusive/nofollow temp + rename 原子寫，固定 response 最終必為 regular file）：`schema/request_id/action/started_at_utc/finished_at_utc/exit_code/status/stdout/stderr`；claim 只在 response 寫出後清掉（寫不出 → 留存當證據）。exit：0＝no-op 或 action rc 0、1＝任何 rejection／action 失敗／timeout（fail closed）。 |
 | `runtime/ai.quant.n8n-host-bridge.plist` | launchd：**`WatchPaths` 指向精確 request 檔**、`RunAtLoad=false`、**無 `StartInterval`、無 `KeepAlive`**（事件喚醒、跑完即退）、`/opt/homebrew/bin/python3` 啟動；`plutil -lint` 通過後複製到 `~/Library/LaunchAgents/`（tests 全綠後才安裝）。stdout/stderr → `~/quant-dashboard/logs/n8n_host_action_bridge.err.log`。 |
-| `runtime/tests/test_n8n_host_action_bridge.py` | **30 checks**：exact wrapper command（stub runner，真實 wrapper 從未被測試執行）、minimal env、malformed/non-object/oversize/未知 action／錯 schema／多餘鍵／壞 request_id fail-closed、atomic claim（同目錄 per-PID、二度 claim no-op、他 PID orphan 不重讀）、重複 wake 不 double-run、bounded output、temp+rename 原子性 spy／預置 symlink 防護、固定 response regular-file、request symlink/FIFO/non-regular 防護（非空 directory 在 claim 前拒絕且不遞迴刪除）、深巢 JSON／invalid UTF-8、timeout descendant group termination、request 竊路徑被拒、no-request no-op、action rc≠0／timeout 記錄、plist 契約（WatchPaths 精確路徑／RunAtLoad false／無 StartInterval／無 KeepAlive）。 |
+| `runtime/tests/test_n8n_host_action_bridge.py` | **31 checks**：exact wrapper command（stub runner，真實 wrapper 從未被測試執行）、minimal env、malformed/non-object/oversize/未知 action／錯 schema／多餘鍵／壞 request_id fail-closed、atomic claim（同目錄 per-PID、二度 claim no-op、他 PID orphan 不重讀）、重複 wake 不 double-run、bounded output、temp+rename 原子性 spy／預置 symlink 防護、固定 response regular-file、request symlink/FIFO/non-regular 防護（非空 directory 在 claim 前拒絕且不遞迴刪除）、深巢 JSON／invalid UTF-8、timeout descendant group termination、request 竊路徑被拒、no-request no-op、action rc≠0／timeout 記錄、plist 契約（WatchPaths 精確路徑／RunAtLoad false／無 StartInterval／無 KeepAlive）。 |
 
 **Live validation（2026-09-23 10:46–10:48 CST；**4 個 invalid request create/delete 週期**，全程零真實 handoff——board 空、有效 action 可能 append，故只用 invalid action 證喚醒）：**
 
@@ -393,6 +409,8 @@ n8n 控制面接管前的**最小 host 動作橋**：一條固定 request 路徑
 **實測教訓**：本版 n8n（2.39.9）對 `field: "seconds", secondsInterval: 900` 實測仍**每 60 秒**觸發（DB 內已是 900 卻在 14:37:00／14:38:00 連續觸發），因此改用 minutes 單位；
 改節奏只需改這一個欄位，但需先接受上表成本或設定 execution 修剪。
 註：60s 實驗期間產生的 `running` 幽靈列（execution id 3–8、10）為驗證殘留，**未以 SQL 手動改寫 n8n DB**，已由 n8n 自身的 pruning 清除。
+**Phase 2（§9.G）追加**：runtime 真值不再來自 5 分鐘投影檔，而是**每次 refresh 由既有 host bridge 執行一次 on-demand observation**（15 分鐘拍點不變）。observation 不寫任何 snapshot 檔、不快取，讀的是 canonical artifacts 當下的值，因此「≤5 分鐘 observation」由來源本身的即時性保證，**不需要**新增 daemon、watcher 或縮短節奏。成本量級不變：原本節點 5 `cat` 的 dashboard.json 為 6.6 KB，現在同一位置換成 observation envelope（real root 57 families 實測 **7.4 KB**），皆在 n8n execution data 內。
+
 execution 列的 id 區間**只在本文件 §9.B 的〈execution 現況〉寫一次**；本節先前另寫一份（12–15），與 §9.B（12–19）及 A2 表（exec 20）三方漂移，已收斂。
 
 ## 9. 驗證記錄（實跑證據）
@@ -746,6 +764,30 @@ PY
 
 **F8 — 成本（§8 追加）**：同模式對照 exec 49（改動前排程拍點）= 28,823 B → exec 51（改動後排程拍點）= 28,794 B；CLI 對照 exec 47（改動前）= 28,425 B → exec 50（改動後）= 28,396 B（量測方式：容器內對 DB 複本讀 `length(execution_data.data)`，不碰 live 檔）。96 拍／日 ≈ 2.7 MB、14 天 ≈ 38 MB，量級不變。
 
+### 9.G 第七輪：Phase 2 — authoritative runtime Current／counts（卡片 `t_35951c0c`；2026-09-24 實跑；**worktree only，未 deploy**）
+
+**問題（已驗證）**：runtime 相關欄位（Current、families／workload／leaderboard／candidate pool）來自 `/host/quant-dashboard-data/dashboard.json`（cron `3d2e54e178ff` 每 5 分鐘產生），canvas 每 15 分鐘取樣 → 間接且可能落後。Phase-1 cutover 後的具體錯配：direct family 已註冊、direct Hermes worker 正在跑，但 dashboard Current 仍顯示 idle（該 family 尚無 Qlib attempt）。
+
+**選定的最小架構**：**既有 host bridge 上的第三個固定唯讀 action** `runtime_observe_once` → 固定 wrapper `~/.hermes/scripts/quant_runtime_observe.py` → canonical `runtime/runtime_observation.py`（on-demand、**無 snapshot 檔、無 daemon、無新掛載、無新 DB／queue**）。**不採用**「加一個 ro `/Volumes/ExpansionDrive/qlib-results` 掛載」：掛載只搬 bytes，`current` 的選擇（`production_handoff.runtime_state`，contract 14.4）、per-round verdict release、90 分鐘 active／launch window、progress 分母與 streamed rows、cohort、launch grace 都得在 n8n JS 重寫一遍＝第二套 runtime 真值；走既有 bridge 則直接重用 canonical Python 語意，兩者不可能不一致。
+
+| 檔 | 變更 |
+|---|---|
+| `runtime/runtime_observation.py`（新） | `quant-runtime-observation/v1`。`current`＝§3 的五態＋family／round／attempt／stage／progress／cohort／direct-agent 證據／verdict／why；`counts`＝runtime 側計數；`funnel`／`health`／`leaderboard` **直接呼叫 `candidate_snapshot` 既有 helper**（同一計算，不可能分歧）；讀不到的一律 `null`＋`gaps`。不寫檔、不 spawn subprocess、不讀 Kanban。 |
+| `runtime/candidate_snapshot.py` | 只抽出三個共用計算（`top_entries`／`health_payload`／`funnel_view`）；dashboard payload 在 7 個 fixture root 上與 HEAD **byte-identical**。 |
+| `runtime/n8n_host_action_bridge.py` | 第三個 allowlist action ＋ **per-action output cap**（唯讀 64 KiB；兩個 mutating action 維持已稽核的 4096 B）。 |
+| `n8n/quant-control-plane-shadow.workflow.json` | 節點 5 → `Runtime Observation — canonical runtime evidence (read-only)`；節點 4 投影每 family 最新 gate record；assembler 只從 observation 取 runtime counts／current；lifecycle view 改由 observation state 路由（`idle` → `Candidate Queue`）。workflow id／節點數（32）／router 17 輸出／canvas 不變。 |
+| `~/.hermes/scripts/quant_runtime_observe.py`（新，host 非 repo） | thin `runpy` wrapper → canonical repo 模組。**尚未生效**：live bridge allowlist 尚無此 action、canonical main 尚無該模組（現在呼叫只會 fail-closed，見下）。 |
+| 測試 | `runtime/tests/test_runtime_observation.py`（新 16）、`runtime/tests/test_n8n_host_action_bridge.py`（31）、`n8n/test_shadow_workflow.py`（重寫 19）、`n8n/shadow_check.py`（MUST_HOLD 名稱同步）。 |
+
+**實跑證據（全程唯讀；未動 live 容器／workflow／mounts／main）**：
+
+1. **Real root 對照（`/Volumes/ExpansionDrive/qlib-results`，2026-09-24T02:4xZ）**：observation 與獨立讀取逐項相同——`families_registered` **57**（`*/family.json` 去重）、`leaderboard_count` **29**、candidate pool **341／55／286**、last real advance `2026-09-24T02:20:03Z`（`crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01`）、in-flight **1**、workload **2,371,832**（386 grid artifacts）、`gaps` 空。**`current` = `preflight`**（該 family 的 attempt `…-r1-u1` 只有 `run-spec.json`、尚無 `state.json`／terminal sentinel；`agent.log` 最後寫入 7 分鐘前）——正是本卡要修的錯配：舊來源在此只會說 idle。
+2. **Bridge 端到端（scratch mailbox，live `control/` 未動）**：real bridge → 固定命令 → wrapper → canonical module → response：`status=ok`／`exit_code=0`／`request_id` 對帳成功／stdout **7,375 B**（< 64 KiB cap）／stderr 0 B／response 為 regular file／claim 清除。同一 response 內 `status`（invocation outcome）與 `body.current.state`（pipeline outcome）分屬兩個欄位。**Fail-closed 反證**：wrapper 指向的 canonical main 尚無該模組時，bridge 回 `action_failed`／`exit_code=1`／`FileNotFoundError`，**不**假裝成功。
+3. **測試**：runtime `discover -s runtime/tests -t runtime/tests` → **528/528 OK**（含新 16）；`n8n/test_shadow_workflow.py` **19/19**；`n8n/test_production_handoff_workflow.py` **4/4**；`n8n/test_runtime_reconciler_workflow.py` **4/4**；`shadow_check.py --selftest` PASS。
+4. **唯讀性**：模組無寫入／無 subprocess（測試斷言）；fixture root 前後 tree 逐項不變；`candidate_snapshot.card_status`／`board_counts` 被替換為硬失敗後 observation 仍完成（Kanban 不參與）；靜態掃描全 workflow 節點無 `dashboard.json`／`quant-dashboard-data`／`dashboard_meta`。
+
+**殘留風險／未做（交 auditor 與 operator 判定）**：Phase 2 **尚未 deploy**（bridge 未重啟、workflow 未 import、wrapper 目標模組在 main 尚未存在）；`preflight` 涵蓋「attempt 目錄已存在但尚無 `state.json`」是依實測（real root 9 個無 `state.json` 的 attempt ＋ live family）反推，非新語意；stage 非三者之一時 canvas 仍走 `Attention / Unresolved`（不臆測）；prerequisite-gated round 的 progress 分母仍是 `unavailable`（canonical 語意未改）；observation 一次約 7 秒（57 families／386 grid artifacts），在 15 分鐘拍點與 600 s bridge timeout 內。
+
 ## 10. Cutover gates（未來把控制面接上時的前置條件）
 
 此 shadow **不得**在沒有下列明確授權前升級為控制面：
@@ -756,6 +798,7 @@ PY
    不得由 n8n 自建第二套 candidate／leaderboard／狀態儲存。
 4. resume policy（§5）必須由 pipeline 端（reconciler／handoff）實作或明確委派，n8n 只呼叫既有機制，不自帶佇列語意。
 5. 任何新增 mutating path 都必須先通過獨立審計（auditor）。既有 C1 host bridge、C2 manual handoff、C3 cadence trigger／HOLD 語意與本次 C3.1 15 分鐘 cadence 均已完成獨立審計；C3.1 已 live，後續新增 mutating path 仍須先 audit，不得以本次通過作為一般放寬。
+6. **Phase 2 runtime truth feed（卡片 `t_35951c0c`，§9.G）**：獨立 auditor PASS **之後**才可 (a) 把 Phase 2 合併到 main（`~/.hermes/scripts/quant_runtime_observe.py` 指向的 canonical 模組才存在）、(b) 以 repo export 重新 import `shadowQuantCp1`、(c) 以同一 LaunchAgent 驗證一次排程拍點。三者皆不得在 audit 前做；observation 本身唯讀，不構成 mutating path。
 
 ## 11. 刻意不做（避免過度工程）
 

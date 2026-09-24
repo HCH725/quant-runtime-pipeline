@@ -38,7 +38,7 @@ COUNT_KEYS = [
 ]
 MUST_HOLD = {
     "intake buckets total vs wiki reviewed",
-    "ingested_wiki_records vs dashboard wiki ingested",
+    "ingested_wiki_records vs runtime-observation wiki ingested",
     "parking survivor dirs vs parking survivor_count",
 }
 VOCAB = [

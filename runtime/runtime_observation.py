@@ -6,7 +6,8 @@ from artifacts the runtime itself already wrote. It answers exactly the two ques
 must not answer itself:
 
   * `current` - which family owes the pipeline runtime work right now, and in which lifecycle state:
-    `preflight` (registered, direct-Hermes adaptation/preflight in flight, no attempt yet),
+    `preflight` (registered, direct-Hermes adaptation/preflight in flight: no attempt directory yet,
+    or one whose Qlib stage has not been published yet),
     `qlib_active` (the authoritative attempt is running: verbatim stage + progress + cohort),
     `disposition` (the attempt published a terminal sentinel, its own round verdict is still missing),
     `terminal` (the round/family verdict is terminal and that evidence is recent), or `idle`.
@@ -231,14 +232,27 @@ def live_current(results_root, family_doc, family_id, state, now):
                 "adapting/preflighting this family (no attempt directory yet)" % ph.LAUNCH_GRACE_MINUTES)
     else:
         terminals = [terminal for terminal in TERMINALS if (attempt / terminal).is_file()]
-        stage, progress, cohort, extra = _progress_projection(results_root, family_id, attempt)
-        if not terminals:
-            classification = "qlib_active"
+        stage = _stage_of(attempt)
+        if not terminals and stage is None:
+            # An attempt directory with no runtime stage yet is still the direct Hermes worker's own
+            # adaptation/preflight: it writes run-spec.json, and the Qlib attempt is what publishes
+            # state.json. Claiming "Qlib active" here would be exactly the stale-source defect this
+            # observation removes.
+            age = round((now - state["activity"]) / 60.0, 1) if state.get("activity") else None
+            classification = "preflight"
+            note = ("the direct Hermes worker holds attempt %s (%s) and has published no Qlib stage "
+                    "yet: adaptation/preflight is in flight"
+                    % (attempt.name, "last write %s min ago" % age if age is not None
+                       else "no observable write time"))
         else:
-            classification = "disposition"
-            note = "attempt published %s; its own round verdict is still missing" % terminals[0]
-        if extra:
-            note = ("%s; %s" % (note, extra)) if note else extra
+            stage, progress, cohort, extra = _progress_projection(results_root, family_id, attempt)
+            if not terminals:
+                classification = "qlib_active"
+            else:
+                classification = "disposition"
+                note = "attempt published %s; its own round verdict is still missing" % terminals[0]
+            if extra:
+                note = ("%s; %s" % (note, extra)) if note else extra
     return {"state": classification, "family_id": family_id, "round_id": round_id,
             "attempt": Path(state["attempt"]).name if attempt else None,
             "attempt_path": state.get("attempt"), "stage": stage, "verdict": None,
