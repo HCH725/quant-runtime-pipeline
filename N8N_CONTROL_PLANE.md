@@ -23,10 +23,15 @@ so a future unsupported pool entry cannot freeze earlier valid candidates.
 
 Proposed C4: the same fixed `runtime_reconcile_once` bridge invokes the repo reconciler. It ignores
 historical card-owned families and selects only the newest valid attempt in each direct round. A
-verified `ARTIFACT_READY`/`FAILED_SCRIPT` stage (or a valid terminal sentinel still missing its own
-round verdict) starts another detached default CLI disposition session, not a Kanban unblock. That
-agent checks artifacts and publishes host-side terminal/verdict as appropriate; `ARTIFACT_READY` alone
-never means PASS. Missing/conflicting evidence remains fail-closed. `--dry-run` launches nothing.
+verified `ARTIFACT_READY`/`FAILED_SCRIPT` stage, a valid terminal sentinel still missing its own
+round verdict, or an attempt that wrote nothing for longer than the 90-minute stall window without a
+terminal (agent died before Qlib started, or Qlib died mid-run) starts another detached default CLI
+disposition session, not a Kanban unblock. That agent checks artifacts and publishes host-side
+terminal/verdict as appropriate - terminating the round or retrying it, so a dead attempt can never
+hold the pipeline silently; `ARTIFACT_READY` alone never means PASS and a fresh (live) attempt is
+never disturbed. A wake that cannot start is recorded as the fail-closed incident
+`disposition_launch_failed`, which the wrapper reports by `family=`/`run=`, instead of retrying
+invisibly. Missing/conflicting evidence remains fail-closed. `--dry-run` launches nothing.
 The installed wrapper now announces a successful direct `launched` action
 (`reconciler: launched default disposition for ...`) and reports incidents by `family=`/`run=`
 instead of `task=`; a legacy `unblocked` line remains only for a rolled-back board core. Pending

@@ -120,6 +120,42 @@ class WrapperMainLevelRegression(unittest.TestCase):
         self.assertEqual(rc, 0)
         mock_run_path.assert_not_called()
 
+    def test_failed_direct_wake_is_reported_as_an_incident(self):
+        """BF-1: a disposition wake that cannot start must reach the operator, not retry silently."""
+        report = {"ran_at_utc": "2026-09-24T12:00:00Z",
+                  "results": [{"action": "incident",
+                               "attempt_dir": "/r/fam-dead/rounds/fam-dead-r1/attempts/fam-dead-r1-u1",
+                               "family_id": "fam-dead", "round_id": "fam-dead-r1",
+                               "run_id": "fam-dead-r1-u1",
+                               "reason": "disposition_launch_failed (direct Hermes launch failed: EAGAIN)",
+                               "incident": "/r/_incidents/reconciliation_incident.jsonl"}],
+                  "launched": [], "incidents": 1}
+        argv = ["quant_runtime_reconcile.py", "--no-recovery", "--dry-run"]
+        old_argv, old_stdout = sys.argv, sys.stdout
+        captured = io.StringIO()
+        try:
+            sys.argv = argv
+            sys.stdout = captured
+
+            def fake_run_path(*args, **kwargs):
+                print(json.dumps(report))
+
+            with patch.object(wrapper.subprocess, "run") as gate, \
+                    patch.object(wrapper.runpy, "run_path",
+                                 side_effect=fake_run_path, return_value=3):
+                rc = wrapper.main()
+        finally:
+            sys.argv, sys.stdout = old_argv, old_stdout
+        self.assertEqual(rc, 0, captured.getvalue())
+        gate.assert_not_called()
+        out = captured.getvalue()
+        self.assertIn("reconciler incident: disposition_launch_failed", out)
+        self.assertIn("family=fam-dead", out)
+        self.assertIn("run=fam-dead-r1-u1", out)
+        self.assertNotIn("unblocked", out)
+        self.assertNotIn("kanban", out.lower())
+        self.assertNotIn("task=", out)
+
     def test_direct_launch_is_announced_without_kanban_language(self):
         """v2.0: a successful direct launch prints `launched`, never `unblocked`/`task=`."""
         report = {"ran_at_utc": "2026-09-24T12:00:00Z",

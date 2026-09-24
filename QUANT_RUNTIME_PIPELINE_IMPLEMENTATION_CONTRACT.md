@@ -398,9 +398,13 @@ family F
   card-owned family 不改動。每 round 只讓 `(created_at_utc, uN)` 最新、identity 合法的
   attempt 驅動：較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
   fail-closed 並記 canonical incident。`state.json.stage` 為 `ARTIFACT_READY`／
-  `FAILED_SCRIPT` 且無 sentinel，或有合法 terminal 但該 round 無 verdict 時，僅以
-  family-scoped lease 啟動 detached Hermes default 一次做 host-side disposition；它不自動
-  判 PASS、不寫 sentinel/verdict、不建卡、不 `unblock`。有該 round verdict 時即 consumed。
+  `FAILED_SCRIPT` 且無 sentinel、有合法 terminal 但該 round 無 verdict、或 attempt 已超過
+  90 分鐘 stall window（與 handoff／watchdog 同一窗口）未再寫入且仍無 sentinel 與該 round
+  verdict（agent 未啟動 Qlib 即死，或 Qlib 中途死亡）時，僅以 family-scoped lease 啟動
+  detached Hermes default 一次做 host-side disposition；它不自動判 PASS、不寫 sentinel/verdict、
+  不建卡、不 `unblock`。stall window 內的（新鮮）attempt 一律維持描述性 `orphan_candidate`
+  且不喚醒；喚醒失敗改記 fail-closed incident `disposition_launch_failed`（wrapper 以
+  `family=`／`run=` 報出）而非靜默重試。有該 round verdict 時即 consumed。
   `--dry-run` 只回報 `would_launch`，不取得 lease、不寫檔、不啟動 agent。
 
 ### 9.5 為何不用 HTTP / webhook / Redis / Celery / queue
@@ -804,8 +808,11 @@ family F
   n8n bridge 不等 Qlib。家族 lease 隨 agent 生命週期釋放；失敗的已註冊 direct family
   優先以同一 body/fingerprint 重試，**不消費下一候選**；attempt 一旦出現，沿用 active
   attempt／per-round verdict guard 防重。歷史 family/round/run/task IDs 保持原封不動。
-  `[T]` PASS 後的 post-survivor index/evidence 仍只支援 card-owned provenance；直接
-  family 需獨立的 schema/negative-control 審計，不能憑 null task ID 假裝已可索引。
+  `[T]` PASS 後的 post-survivor index/evidence 的 direct（card-free）provenance **以 §27.2／
+  §27.3 的 v2.0 direct override 為準**（以 family/round/run 身分驗證、任一側洩漏非空 card
+  keys 即 fail-closed；歷史 card-owned family 維持原本嚴格 `kanban_task_id` 雙側 non-empty
+  string 檢查），本條不另立「direct family 不可索引」的限制；該 override 仍以獨立
+  schema／negative-control 審計把關，不得憑 null task ID 假裝已可索引。
 
 ## 15. Family Yield / Anti-Starvation Policy
 

@@ -34,6 +34,11 @@ def run(cmd, timeout=60):
         return 127, "", "not found: %s" % cmd[0]
     except subprocess.TimeoutExpired:
         return 124, "", "timeout: %s" % " ".join(cmd)
+    except OSError as exc:
+        # Any other exec failure (EAGAIN/EACCES/injected Popen) is a failed run, never a traceback:
+        # every caller branches on rc, and a host probe that raises would take the sentinel/incident
+        # writer down with it.
+        return 1, "", "exec failed: %s (%s)" % (cmd[0], exc)
 
 
 def host_boot_id():

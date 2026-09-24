@@ -3,6 +3,16 @@
 
 Only the newest valid attempt of a round may wake the default agent. Historical
 Kanban-owned families remain immutable and are not operated by this path.
+
+Two wake conditions, both from results-root evidence only: a compute-finished stage
+(`ARTIFACT_READY` / `FAILED_SCRIPT`) with no terminal sentinel yet, and an attempt that stopped
+writing outside the 90-minute stall window while still carrying no terminal sentinel and no
+verdict of its own round (the agent died before Qlib started, or Qlib died mid-run). The second
+one is what keeps a dead attempt from holding the pipeline silently: inside the window the
+attempt is live compute and stays a descriptive `orphan_candidate`; outside it the same
+disposition agent decides the round - terminate it or retry it - so the family is released
+either way. A failed wake becomes a recorded fail-closed incident instead of retrying
+invisibly; the family lease and the frozen prompt keep cadence after cadence duplicate-free.
 """
 import argparse
 import datetime
@@ -15,7 +25,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from production_handoff import (direct_family, disposition_prompt, launch_agent,  # noqa: E402
+from production_handoff import (ACTIVE_WINDOW_MINUTES, attempt_activity,  # noqa: E402
+                                direct_family, disposition_prompt, launch_agent,
                                 round_verdict_token)
 from terminal_evidence import TERMINALS, host_boot_id, now_utc, sha256_file  # noqa: E402
 
@@ -88,6 +99,34 @@ class Attempt:
         self.created_at = parse_utc(doc.get("created_at_utc"))
         if require_timestamp and self.created_at is None:
             self.problems.append("run-spec.json created_at_utc missing/unparsable")
+
+
+def attempt_metadata(path, family_id, round_id, run_id):
+    """One attempt's durable ordering identity for the installed quant_runtime_watchdog.py.
+
+    The watchdog's W2/W3 lane calls `discover_rounds` -> `attempt_metadata` -> `select_authoritative`
+    and consumes `problems` / `created_at` / `ordinal` / `path` / `run_id`, so this adapter must keep
+    that surface. Identity and ownership are judged by this module's own `Attempt` - one rule per
+    family kind (a direct family's run-spec carries no Kanban ownership, a historical one carries
+    both ids) - and non-empty `problems` still means the round is undecidable. No new state, no
+    second registry.
+    """
+    rec = Attempt(path, family_id, round_id)
+    if rec.run_id != run_id:
+        rec.problems.append("run_id %r does not match attempt dir %r" % (run_id, rec.run_id))
+    return rec
+
+
+def stalled_minutes(attempt):
+    """Minutes since the newest write inside one attempt, or None when it has no readable stamp.
+
+    The same objective liveness signal the handoff guard and the watchdog use: mtime only, nothing
+    executed, no content parsed. `None` (nothing readable) is deliberately not treated as stalled -
+    an attempt tree without readable evidence is the handoff retry path's business, so C4 stays
+    descriptive and can never spawn a second worker from an unreadable tree.
+    """
+    stamp = attempt_activity(attempt)
+    return None if stamp is None else (time.time() - stamp) / 60.0
 
 
 def select_authoritative(records):
@@ -233,6 +272,14 @@ def validate_terminal(res, root, dry_run, detector):
 
 
 def handle(res, results_root, dry_run, detector):
+    """Dispose of one authoritative direct attempt: verify it, then wake default once (or stay still).
+
+    Wake conditions: a valid terminal sentinel still missing its own round verdict, a
+    compute-finished stage (`ARTIFACT_READY` / `FAILED_SCRIPT`), or an attempt that stopped writing
+    outside the 90-minute stall window while still carrying no terminal sentinel - the agent died
+    before Qlib started, or Qlib died mid-run. Everything else, including a fresh (live) attempt,
+    stays a descriptive `orphan_candidate`.
+    """
     attempt = Path(res.attempt_dir)
     family = load(Path(results_root) / res.family_id / "family.json")
     verdict = round_verdict_token(attempt.parents[1], res.family_id, family)
@@ -240,6 +287,7 @@ def handle(res, results_root, dry_run, detector):
         res.action, res.reason = "consumed", "this round has terminal verdict %s" % verdict
         return res  # verdict is durable; ignore old boot/checksum noise on consumed terminals
     terminals = [name for name in TERMINALS if (attempt / name).exists()]
+    state = None
     if terminals:
         problem = validate_terminal(res, results_root, dry_run, detector)
         if problem:
@@ -249,18 +297,27 @@ def handle(res, results_root, dry_run, detector):
         state = load(attempt / "state.json")
         stage = state.get("stage") if isinstance(state, dict) else None
         res.detail["stage"] = stage
-        if stage not in COMPUTE_FINISHED_STAGES:
+        age = stalled_minutes(attempt)
+        res.detail["stalled_minutes"] = None if age is None else round(age)
+        if stage not in COMPUTE_FINISHED_STAGES and not (age and age > ACTIVE_WINDOW_MINUTES):
             res.action, res.reason = "orphan_candidate", "no terminal; stage=%s" % stage
             return res
         problems = mapping_problems(res, results_root)
-        for key, want in (("family_id", res.family_id), ("round_id", res.round_id),
-                          ("run_id", res.run_id)):
-            if state.get(key) != want:
-                problems.append("state.json %s mismatch" % key)
+        if isinstance(state, dict):
+            for key, want in (("family_id", res.family_id), ("round_id", res.round_id),
+                              ("run_id", res.run_id)):
+                if state.get(key) != want:
+                    problems.append("state.json %s mismatch" % key)
         if problems:
             res.detail["mapping_problems"] = problems
             return fail(res, results_root, "mapping_mismatch", detector, dry_run,
                         [str(attempt / "state.json")])
+        if stage not in COMPUTE_FINISHED_STAGES:
+            # Stalled and still undecided: nothing host-side can ever decide this round, so the same
+            # disposition session that handles a compute-finished stage takes it over and terminates
+            # or retries it - the family stops holding the pipeline silently. The branch above is
+            # unreachable inside the window, so live compute is never disturbed.
+            stage = "stalled %s (%.0f min without a write)" % (stage or "no-state", age)
     if dry_run:
         res.action, res.reason = "would_launch", "%s; would wake default for disposition" % stage
         return res
@@ -270,7 +327,12 @@ def handle(res, results_root, dry_run, detector):
     if busy:
         res.action, res.reason = "running", "default worker already owns this family"
     elif why:
-        res.action, res.reason = "launch_failed", why
+        # A failed wake must not retry invisibly: record the fail-closed incident (deduplicated per
+        # attempt + kind, and resolved by the same terminal evidence every other incident needs) so
+        # the wrapper reports it and the operator sees the pipeline cannot progress.
+        res = fail(res, results_root, "disposition_launch_failed", detector, dry_run, [str(attempt)])
+        res.reason = "%s (%s)" % (res.reason, why)
+        return res
     else:
         res.action, res.reason = "launched", "%s; detached default pid=%s" % (stage, pid)
         res.detail["agent_pid"] = pid
@@ -306,7 +368,9 @@ def main():
             res.action, res.reason = "superseded", "newest attempt is %s" % current.run_id
             results.append(res)
         results.append(handle(Result(current), args.results_root, args.dry_run, args.detector))
-    incidents = [r for r in results if r.action in ("incident", "launch_failed")]
+    # A wake that cannot start is recorded as an incident (scan above), never as its own action:
+    # every failed disposition is surfaced, so rc=3 means exactly "incident written".
+    incidents = [r for r in results if r.action == "incident"]
     report = {"schema_version": 1, "kind": "reconcile", "contract_section": "9.4",
               "ran_at_utc": now_utc(), "results_root": args.results_root, "dry_run": args.dry_run,
               "attempts_scanned": len(results),
