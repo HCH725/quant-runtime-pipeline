@@ -16,6 +16,12 @@ index ownership (direct families are indexed by family/round/run identity with n
 historical card-owned families keep the strict checks) and the installed C4 wrapper's `launched`
 notification are both addressed on this branch and pending independent audit.
 
+**Phase 2（卡片 `t_35951c0c`；待獨立審計，未 deploy）**：n8n Full Canvas 的 runtime 真值（Current／runtime counts）
+改由**既有 host bridge 的一個固定唯讀 action** `runtime_observe_once` → `runtime/runtime_observation.py`
+（on-demand 讀 canonical `/Volumes/ExpansionDrive/qlib-results`）提供，取代原本 15 分鐘取樣、5 分鐘產生的
+`dashboard.json` 投影鏈；無新掛載、無 snapshot 檔、無 daemon、無新 DB／queue，且 `current` 完全不讀 Kanban。
+細節與實跑證據見 `N8N_CONTROL_PLANE.md` §9.G。
+
 Private，versioned **runtime source-of-truth**：Apple Container → Qlib → Quant Runtime 的可重建定義、
 audited implementation contract 與其變化歷史。
 

@@ -143,10 +143,10 @@ class BridgeCase(unittest.TestCase):
         self.assertEqual(resp["action"], br.RUNTIME_RECONCILE_ACTION)
         self.assertEqual(resp["status"], "ok")
 
-    def test_allowlist_is_exactly_the_two_fixed_actions(self):
+    def test_allowlist_is_exactly_the_three_fixed_actions(self):
         self.assertEqual(
             br.ALLOWED_ACTIONS,
-            (br.PRODUCTION_HANDOFF_ACTION, br.RUNTIME_RECONCILE_ACTION),
+            (br.PRODUCTION_HANDOFF_ACTION, br.RUNTIME_RECONCILE_ACTION, br.RUNTIME_OBSERVE_ACTION),
         )
         self.assertEqual(
             br.ACTION_COMMANDS,
@@ -159,8 +159,29 @@ class BridgeCase(unittest.TestCase):
                     "/opt/homebrew/bin/python3",
                     "/Users/hong/.hermes/scripts/quant_runtime_reconcile.py",
                 ],
+                br.RUNTIME_OBSERVE_ACTION: [
+                    "/opt/homebrew/bin/python3",
+                    "/Users/hong/.hermes/scripts/quant_runtime_observe.py",
+                ],
             },
         )
+        # The read-only observation action is the only one with the larger cap, and the two mutating
+        # actions keep the audited bound exactly.
+        self.assertEqual(
+            br.OUTPUT_CAP_BYTES,
+            {br.PRODUCTION_HANDOFF_ACTION: br.MAX_OUTPUT_BYTES,
+             br.RUNTIME_RECONCILE_ACTION: br.MAX_OUTPUT_BYTES,
+             br.RUNTIME_OBSERVE_ACTION: br.MAX_OBSERVATION_BYTES},
+        )
+        self.assertGreater(br.MAX_OBSERVATION_BYTES, br.MAX_OUTPUT_BYTES)
+
+    def test_observation_action_needs_no_arguments_and_is_not_a_mutating_wrapper(self):
+        # It must invoke the observation module, never a scheduler/mutating wrapper, and the request
+        # schema stays the same three keys (it can carry nothing that alters the command).
+        self.assertEqual(br.ACTION_COMMANDS[br.RUNTIME_OBSERVE_ACTION][1].rsplit("/", 1)[-1],
+                         "quant_runtime_observe.py")
+        self.assertEqual(br.ALLOWED_KEYS, ("schema", "action", "request_id"))
+        self.assertEqual(br.SCHEMA, "quant-control-action/v1")
 
     def test_action_failure_reports_exit_code_and_fails_closed(self):
         self.runner_result = (7, "partial", "boom")
