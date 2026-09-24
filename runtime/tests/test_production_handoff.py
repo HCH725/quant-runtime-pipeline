@@ -567,13 +567,13 @@ class TestFailClosed(Base):
         self._write_family(BLOCKED)
         self._write_blocker_verdict(
             BLOCKED, BLOCKED + "-r1", decided_at_utc="2026-09-12T23:00:00Z")
-        self._write_execution_blocker(BLOCKED)
         later_round = BLOCKED + "-r2"
         verdict_path = self._write_blocker_verdict(
             BLOCKED, later_round, decided_at_utc="2026-09-14T00:00:00Z")
         verdict_bytes = verdict_path.read_bytes()
-        os.utime(str(verdict_path), (1, 1))
+        blocker_path = self._write_execution_blocker(BLOCKED)
         self.assertEqual(verdict_path.read_bytes(), verdict_bytes)
+        self.assertLess(verdict_path.stat().st_mtime, blocker_path.stat().st_mtime)
 
         self.assertEqual(h.unresolved_incidents(
             str(self.root), h.read_families(str(self.root))), [])
