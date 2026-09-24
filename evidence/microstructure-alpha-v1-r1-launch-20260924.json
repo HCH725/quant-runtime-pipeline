@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "record_kind": "direct_family_launch_record",
+  "family_id": "crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01",
+  "round_id": "crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01-r1",
+  "authoritative_run_id": "crypto-microstructure-alpha-hierarchical-cross-asset-transfer-2026-09-01-r1-u3",
+  "engine": {
+    "repo_script": "container/scripts/190_microstructure_alpha_run.py",
+    "host_deployed": "/Users/hong/workspace/qlib-apple-container/scripts/190_microstructure_alpha_run.py",
+    "sha256": "sha256:b3a4b573e8cff121f2c7feffc89ccbbc4a0ed3c57ca2caa649b22d56ca70d1a8",
+    "self_check": "container/scripts/tests/test_microstructure_alpha_engine.py",
+    "self_check_sha256": "sha256:26c46c81932dff14bd93c4aff0eed8e1666eb7596ea4a9f1368e7046b84aac1a",
+    "engine_version": "microstructure_alpha_v1",
+    "seed": 20260924
+  },
+  "specs": {
+    "round_spec_sha256": "sha256:a80f4bcbfaa672314e44f5a5aaadfb8074e8acf45de97130006bd1af6cd3f464",
+    "run_spec_sha256": "sha256:938103f84da99d7633ec4cbdf3c159bd84db929216902ed76ddc62b28b97732b"
+  },
+  "expected": {
+    "cohorts": 28,
+    "strategy_cases_per_cohort": 4,
+    "dca_configs_per_cohort": 48,
+    "case_evaluations_per_grid": 5376,
+    "grid_count": 10,
+    "case_evaluations_total": 53760
+  },
+  "pre_launch_validation": {
+    "engine_self_check": "PASS on host (/usr/bin/python3, numpy 2.0.2) and in the container (/opt/venv, numpy 2.5.3 / lightgbm 4.7.0 / sklearn 1.9.1 / qlib 0.9.7)",
+    "runtime_suite": "python3 -m unittest discover -s runtime/tests -t runtime/tests -> Ran 511 tests OK",
+    "preflight": "P1-P10 PASS (launch gate evaluated) for u1, u2 and u3; P10 recomputed the deployed /scripts/190_microstructure_alpha_run.py sha256",
+    "smoke_1": "out-of-tree 15-month window (results/_selftest/microstructure-alpha-smoke) - FAILED_SCRIPT twice on frequency-blind row floors (1w rows=65 rejected by an absolute 100-row floor; then a 100-bar cohort floor rejected the 65-bar weekly grid); both floors replaced by frequency-aware completeness guards",
+    "smoke_3": "out-of-tree 30-month window (results/_selftest/microstructure-alpha-smoke3) - ARTIFACT_READY, 28/28 cohorts, 53,760/53,760 case evaluations, 16 survivors, 0/53,760 decomposition violations, 10 grid files x 5,376 rows, histogram identity level_00 == sum(full_episodes) verified on the frozen CSVs",
+    "smoke_bytes_note": "the launched bytes differ from the smoke-3 bytes by one assertion expression only (dca_layer_histogram: the smoke exposed a wrong sum(level) identity; the corrected level_00 identity was then verified against smoke-3's own frozen artifacts: level_00 = 1321318 == sum(full_episodes) = 1321318, depth-cumulative monotone true)"
+  },
+  "attempt_chain": {
+    "u1": "registered, never launched, superseded by the engine fix (script_bug class, same round new run_id per contract 13)",
+    "u2": "registered, never launched, superseded by the assertion fix (same class)",
+    "u3": "authoritative, launched"
+  },
+  "launch": {
+    "semantics": "container exec -d qlib-run (detached)",
+    "launched_at_utc": "2026-09-24T03:27:15Z",
+    "container": "qlib-run",
+    "image": "qlib:0.9.7-arm64",
+    "state_stage_at_readback": "RUNNING_QLIB",
+    "readback": "state.json identity matches the run-spec; the engine process was alive inside the container; the full-window raw->Qlib build completed (all 7 timeframes, weekly aliases=20, 1w rows=245)"
+  },
+  "next_step": "the existing C4 cadence resumes host-side disposition (state.json ARTIFACT_READY -> terminal sentinel -> verdict.json), per the frozen candidate body; this session exits without waiting for the compute",
+  "scope_disclosure": "results are limited to the local Binance USD-M eligible universe (4 symbols x 7 kline intervals); the source's minute-level spot+perpetual venue pair, its hierarchical/SHAP/meta-learning layers and its named 6-coin universe are not reproduced; no adoption or live claim"
+}
