@@ -487,6 +487,61 @@ class TestFailClosed(Base):
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
 
+    def test_duplicate_incidents_reuse_family_verdict_within_one_call(self):
+        terminal = "fam-terminal-duplicate-v1"
+        unresolved = "fam-unresolved-duplicate-v1"
+        distinct = "fam-distinct-unresolved-v1"
+        self._write_family(terminal)
+        self._write_verdict(terminal, "TECHNICAL_INCOMPLETE")
+        self._write_family(unresolved)
+        self._write_family(distinct)
+
+        records = [
+            ("inc-terminal-1", terminal, "run-terminal-1"),
+            ("inc-unresolved-1", unresolved, "run-unresolved-1"),
+            ("inc-terminal-2", terminal, "run-terminal-2"),
+            ("inc-distinct-1", distinct, "run-distinct-1"),
+            ("inc-unresolved-2", unresolved, "run-unresolved-2"),
+        ]
+        incident_path = self.root / h.INCIDENT_DIRNAME / h.INCIDENT_FILENAME
+        incident_path.parent.mkdir(parents=True, exist_ok=True)
+        incident_path.write_text("".join(json.dumps({
+            "schema_version": 1, "incident_id": incident_id,
+            "kind": "sentinel_ambiguous", "family_id": family_id,
+            "round_id": family_id + "-r1", "run_id": run_id,
+        }) + "\n" for incident_id, family_id, run_id in records))
+
+        expected = [
+            {"incident_id": "inc-unresolved-1", "kind": "sentinel_ambiguous",
+             "family_id": unresolved,
+             "why": "family has no terminal verdict and attempt run-unresolved-1 carries no clean terminal"},
+            {"incident_id": "inc-distinct-1", "kind": "sentinel_ambiguous",
+             "family_id": distinct,
+             "why": "family has no terminal verdict and attempt run-distinct-1 carries no clean terminal"},
+            {"incident_id": "inc-unresolved-2", "kind": "sentinel_ambiguous",
+             "family_id": unresolved,
+             "why": "family has no terminal verdict and attempt run-unresolved-2 carries no clean terminal"},
+        ]
+        real_token = h.family_verdict_token
+        calls = []
+
+        def spy(results_root, family_id, family_doc):
+            calls.append(family_id)
+            return real_token(results_root, family_id, family_doc)
+
+        h.family_verdict_token = spy
+        try:
+            first = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+            self.assertEqual(first, expected)
+            self.assertEqual(calls, [terminal, unresolved, distinct])
+
+            calls.clear()
+            second = h.unresolved_incidents(str(self.root), h.read_families(str(self.root)))
+            self.assertEqual(second, expected)
+            self.assertEqual(calls, [terminal, unresolved, distinct])
+        finally:
+            h.family_verdict_token = real_token
+
     def test_active_prelaunch_blocker_is_normalized_and_stops_c3(self):
         self._write_family(BLOCKED, created="2026-09-13T00:00:00Z")
         retry_candidate = candidate(family=BLOCKED, fingerprint_input="blocked-family-v1")

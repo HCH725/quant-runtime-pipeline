@@ -372,6 +372,7 @@ def unresolved_incidents(results_root, families, now=None):
     path = Path(results_root) / INCIDENT_DIRNAME / INCIDENT_FILENAME
     open_incidents = []
     lines = path.read_text().splitlines() if path.is_file() else []
+    family_verdicts = {}
     for line in lines:
         line = line.strip()
         if not line:
@@ -394,8 +395,11 @@ def unresolved_incidents(results_root, families, now=None):
         doc = families.get(family_id)
         if doc is None:
             doc = _load_json(Path(results_root) / family_id / "family.json")
-        if isinstance(doc, dict) and family_verdict_token(results_root, family_id, doc):
-            continue  # family reached a contract-terminal verdict -> incident is a diagnostic
+        if isinstance(doc, dict):
+            if family_id not in family_verdicts:
+                family_verdicts[family_id] = family_verdict_token(results_root, family_id, doc)
+            if family_verdicts[family_id]:
+                continue  # family reached a contract-terminal verdict -> incident is a diagnostic
         round_id, run_id = rec.get("round_id"), rec.get("run_id")
         attempt = None
         if isinstance(round_id, str) and isinstance(run_id, str):
