@@ -97,6 +97,71 @@ class BridgeCase(unittest.TestCase):
         self.assertEqual(self.run_bridge(), 0)  # duplicate launchd wake
         self.assertEqual(len(self.calls), 1, "duplicate wake must not double-run")
 
+    def test_request_arriving_during_action_is_drained_once(self):
+        """One wake drains a valid request published while its first action runs."""
+        self.put_request(VALID)
+        events = []
+        real_claim = br._claim
+        real_write_response = br._write_response
+        real_remove_claim = br._remove_claim
+
+        def tracked_claim():
+            claim = real_claim()
+            events.append(("claim", claim is not None))
+            return claim
+
+        def tracked_write_response(payload):
+            result = real_write_response(payload)
+            events.append(("response", payload["request_id"]))
+            return result
+
+        def tracked_remove_claim(claim_path):
+            result = real_remove_claim(claim_path)
+            events.append(("cleanup", os.path.basename(claim_path)))
+            return result
+
+        def overlapping_runner(cmd, env, timeout):
+            events.append(("action", list(cmd)))
+            if len([event for event in events if event[0] == "action"]) == 1:
+                # Publish into the same fixed single slot while request one is in flight.
+                self.put_request(RUNTIME_VALID)
+                return 0, "first-ok", ""
+            return 0, "second-ok", ""
+
+        with patch.object(br, "_claim", side_effect=tracked_claim), \
+                patch.object(br, "_write_response", side_effect=tracked_write_response), \
+                patch.object(br, "_remove_claim", side_effect=tracked_remove_claim):
+            rc = br.main(runner=overlapping_runner)
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(
+            [event for event in events if event[0] == "action"],
+            [
+                ("action", br.ACTION_COMMANDS[br.PRODUCTION_HANDOFF_ACTION]),
+                ("action", br.ACTION_COMMANDS[br.RUNTIME_RECONCILE_ACTION]),
+            ],
+            "both fixed actions must dispatch exactly once in the same invocation",
+        )
+        claim_name = os.path.basename(br.REQUEST_PATH + (br.CLAIM_SUFFIX % os.getpid()))
+        first_cleanup = events.index(("cleanup", claim_name))
+        claim_indexes = [i for i, event in enumerate(events) if event == ("claim", True)]
+        self.assertEqual(
+            [event for event in events if event[0] == "claim"],
+            [("claim", True), ("claim", True), ("claim", False)],
+            "after the two present requests, one absent-path check ends the invocation",
+        )
+        self.assertLess(events.index(("response", "req-0001")), first_cleanup)
+        self.assertLess(first_cleanup, claim_indexes[1],
+                        "the first claim must be cleaned before draining the pending request")
+        self.assertEqual(
+            self.response()["request_id"], RUNTIME_VALID["request_id"],
+            "the pending request must be handled after the first response is written",
+        )
+        self.assertEqual(self.response()["action"], br.RUNTIME_RECONCILE_ACTION)
+        self.assertEqual(self.response()["stdout"], "second-ok")
+        self.assertFalse(os.path.exists(br.REQUEST_PATH), "no pending request may be orphaned")
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["production_handoff.response.json"])
+
     # --- valid dispatch: EXACT command, minimal env ---
     def test_valid_request_invokes_exact_existing_wrapper_command(self):
         self.put_request(VALID)

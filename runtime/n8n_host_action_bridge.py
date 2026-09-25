@@ -361,42 +361,45 @@ def _remove_claim(claim_path):
 
 def main(runner=None):
     runner = runner or _run_action
-    started = now_utc()
-    try:
-        claim_path = _claim()
-    except _ClaimRejected as exc:
-        _write_response(_response(None, None, started, None, exc.reason, "", ""))
-        return 1
-    if claim_path is None:
-        return 0  # no request = no-op, no response
-    started = now_utc()
-    ok = False
-    written = False
-    try:
+    all_ok = True
+    while True:
+        started = now_utc()
         try:
-            raw, reason = _read_claim(claim_path)
-        except OSError as exc:
-            payload = _response(None, None, started, None, "error_internal", "", str(exc))
-        else:
-            if reason is not None:
-                payload = _response(None, None, started, None, reason, "", "")
+            claim_path = _claim()
+        except _ClaimRejected as exc:
+            _write_response(_response(None, None, started, None, exc.reason, "", ""))
+            return 1
+        if claim_path is None:
+            return 0 if all_ok else 1  # no pending request; do not write a no-op response
+
+        started = now_utc()
+        ok = False
+        written = False
+        try:
+            try:
+                raw, reason = _read_claim(claim_path)
+            except OSError as exc:
+                payload = _response(None, None, started, None, "error_internal", "", str(exc))
             else:
-                reason, rid, act = _validate(raw)
                 if reason is not None:
-                    payload = _response(rid, act, started, None, reason, "", "")
+                    payload = _response(None, None, started, None, reason, "", "")
                 else:
-                    payload, ok = _dispatch(runner, rid, act, started)
-        _write_response(payload)
-        written = True
-    finally:
-        # Clean up the claimed request only after its response was written; on an
-        # unservable write the claim stays on disk as evidence instead of silently
-        # destroying the request. ponytail: a claim orphaned by a killed run is never
-        # read again - at most one stale file per crash can accumulate in control/,
-        # there is deliberately no janitor (ceiling: crash rate; manual `rm` if ever needed).
-        if written:
-            _remove_claim(claim_path)
-    return 0 if ok else 1
+                    reason, rid, act = _validate(raw)
+                    if reason is not None:
+                        payload = _response(rid, act, started, None, reason, "", "")
+                    else:
+                        payload, ok = _dispatch(runner, rid, act, started)
+            _write_response(payload)
+            written = True
+        finally:
+            # Clean up the claimed request only after its response was written; on an
+            # unservable write the claim stays on disk as evidence instead of silently
+            # destroying the request. ponytail: a claim orphaned by a killed run is never
+            # read again - at most one stale file per crash can accumulate in control/,
+            # there is deliberately no janitor (ceiling: crash rate; manual `rm` if ever needed).
+            if written:
+                _remove_claim(claim_path)
+        all_ok = all_ok and ok
 
 
 if __name__ == "__main__":
