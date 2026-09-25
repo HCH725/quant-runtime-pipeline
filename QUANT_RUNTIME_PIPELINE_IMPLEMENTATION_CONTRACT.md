@@ -676,6 +676,7 @@ family F
 - `[C]` 若人工判定確實需要把該卡轉為 `blocked`：必須由 operator/default 在**後續顯式流程**先 `unblock`（`scheduled`→`ready`/`todo`）再 `block`，兩步之間各自留下 DB 讀回證據。**此 two-step 不得包成 reconciler 自動動作**（避免競態與繞過 gate）。
 - `[C]` incident 未結案前：該 family 不得投遞新 run，也不得 append 新 family。
 - `[C]` 這不是新服務/daemon：incident artifact 只是檔案契約，偵測者是既有的 reconciler/default。
+- `[C]` 現行 prelaunch blocker 可由嚴格驗證的零計算 `TECHNICAL_INCOMPLETE` terminal（`run_id=null`，且 round/verdict artifacts 證明零 attempts）依既有語意解決；此例外不放寬一般 attempt-backed verdict identity。
 - `[C]`（v1.7.1）`attempt_selection_ambiguous` 是 §9.4 的 round-level fail-closed kind：同一 round 內較新 attempt 的 identity／ordering metadata 缺失、不可解析或歧義（含同一 `created_at_utc` 且無 `uN` tie-break 可判定、同一 round task ownership 衝突），使 authoritative current attempt 無法判定時使用。處置同本節三步（保持卡片原狀、寫 append-only incident artifact、comment 指向 artifact），且**不得**以同 round 較舊 attempt 的 terminal 放行。
 
 ## 13. Failure taxonomy

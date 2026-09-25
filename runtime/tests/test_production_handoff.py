@@ -176,6 +176,31 @@ class Base(unittest.TestCase):
         doc.update(over)
         return self._write_verdict(family, doc["verdict"], doc=doc, round_id=round_id)
 
+    def _write_no_compute_terminal(self, family, round_id=None, verdict_over=None,
+                                   spec_over=None):
+        round_id = round_id or family + "-r1"
+        round_dir = Path(self.root) / family / "rounds" / round_id
+        round_dir.mkdir(parents=True, exist_ok=True)
+        spec = {"schema_version": 1, "family_id": family, "round_id": round_id,
+                "created_at_utc": "2026-09-13T00:01:00Z",
+                "attempts": {"launched": 0, "run_specs": 0, "terminal_sentinels": 0}}
+        spec.update(spec_over or {})
+        spec_path = round_dir / "round-spec.json"
+        spec_path.write_text(json.dumps(spec) + "\n")
+        verdict = {
+            "schema_version": 1, "family_id": family, "round_id": round_id,
+            "run_id": None, "verdict": "TECHNICAL_INCOMPLETE",
+            "performance_claimable": False, "decided_at_utc": "2026-09-13T00:02:00Z",
+            "attempts": {"launched": 0, "run_specs": 0, "terminal_sentinels": 0,
+                         "run_spec": None, "terminal_sentinel": None, "attempt_dir": None},
+            "failure": {"last_run_id": None}, "evidence_run_ids": [],
+            "coverage": {"cells_computed": 0},
+        }
+        verdict.update(verdict_over or {})
+        verdict_path = round_dir / "verdict.json"
+        verdict_path.write_text(json.dumps(verdict) + "\n")
+        return round_dir, spec_path, verdict_path
+
     def args(self, **over):
         base = dict(results_root=str(self.root), board=BOARD, pool=None, detector="handoff",
                     dry_run=False, json=False, quiet_noop=True)
@@ -592,6 +617,105 @@ class TestFailClosed(Base):
 
         self.assertEqual(h.unresolved_incidents(
             str(self.root), h.read_families(str(self.root))), [])
+
+    def test_no_compute_technical_incomplete_resolves_prelaunch_blocker(self):
+        family = "fam-no-compute-blocked-v1"
+        self._write_family(family)
+        self._write_execution_blocker(family)
+        round_dir, _, _ = self._write_no_compute_terminal(family)
+
+        self.assertFalse((round_dir / "attempts").exists())
+        self.assertEqual(h.unresolved_incidents(
+            str(self.root), h.read_families(str(self.root))), [])
+
+    def test_no_compute_terminal_preserves_direct_family_ownership_rules(self):
+        family = "fam-direct-no-compute-blocked-v1"
+        family_dir = self.root / family
+        family_dir.mkdir(parents=True)
+        (family_dir / "family.json").write_text(json.dumps({
+            "schema_version": 1, "family_id": family,
+            "handoff": {"execution": h.DIRECT_MODE},
+        }) + "\n")
+        self._write_execution_blocker(family)
+        self._write_no_compute_terminal(family)
+
+        self.assertEqual(h.unresolved_incidents(
+            str(self.root), h.read_families(str(self.root))), [])
+
+    def test_no_compute_terminal_negative_controls_fail_closed(self):
+        missing = object()
+        cases = (
+            ("other-verdict", "verdict", "verdict", "PASS"),
+            ("claimable-true", "verdict", "performance_claimable", True),
+            ("claimable-missing", "verdict", "performance_claimable", missing),
+            ("nonzero-launched", "verdict", "attempts.launched", 1),
+            ("nonzero-run-specs", "verdict", "attempts.run_specs", 1),
+            ("nonzero-sentinels", "verdict", "attempts.terminal_sentinels", 1),
+            ("missing-launched", "verdict", "attempts.launched", missing),
+            ("missing-run-specs", "verdict", "attempts.run_specs", missing),
+            ("missing-sentinels", "verdict", "attempts.terminal_sentinels", missing),
+            ("missing-run-spec", "verdict", "attempts.run_spec", missing),
+            ("missing-terminal-sentinel", "verdict", "attempts.terminal_sentinel", missing),
+            ("missing-attempt-dir", "verdict", "attempts.attempt_dir", missing),
+            ("nonempty-evidence-ids", "verdict", "evidence_run_ids", ["run-1"]),
+            ("failure-last-run-nonnull", "verdict", "failure.last_run_id", "run-1"),
+            ("failure-last-run-missing", "verdict", "failure.last_run_id", missing),
+            ("cells-computed-nonzero", "verdict", "coverage.cells_computed", 1),
+            ("cells-computed-missing", "verdict", "coverage.cells_computed", missing),
+            ("run-id-missing", "verdict", "run_id", missing),
+            ("run-id-empty", "verdict", "run_id", ""),
+            ("verdict-time-malformed", "verdict", "decided_at_utc", "not-a-time"),
+            ("verdict-time-missing", "verdict", "decided_at_utc", missing),
+            ("blocker-time-malformed", "blocker", "detected_at_utc", "not-a-time"),
+            ("blocker-time-missing", "blocker", "detected_at_utc", missing),
+            ("foreign-verdict-owner", "verdict", "kanban_task_id", "t_other"),
+            ("round-spec-foreign", "round_spec", "family_id", "fam-other"),
+            ("round-spec-wrong-round", "round_spec", "round_id", "other-r1"),
+            ("round-spec-schema", "round_spec", "schema_version", 2),
+            ("round-spec-time-before-blocker", "round_spec", "created_at_utc",
+             "2026-09-12T23:59:59Z"),
+            ("round-spec-time-after-verdict", "round_spec", "created_at_utc",
+             "2026-09-13T00:02:01Z"),
+            ("round-spec-missing-attempts", "round_spec", "attempts", missing),
+            ("spec-nonzero-launched", "round_spec", "attempts.launched", 1),
+            ("spec-nonzero-run-specs", "round_spec", "attempts.run_specs", 1),
+            ("spec-nonzero-sentinels", "round_spec", "attempts.terminal_sentinels", 1),
+            ("spec-missing-launched", "round_spec", "attempts.launched", missing),
+            ("spec-missing-run-specs", "round_spec", "attempts.run_specs", missing),
+            ("spec-missing-sentinels", "round_spec", "attempts.terminal_sentinels", missing),
+            ("round-spec-missing", "remove_round_spec", None, None),
+            ("round-spec-malformed", "malformed_round_spec", None, None),
+            ("attempt-child-exists", "attempt_child", None, None),
+        )
+        for label, target, key, value in cases:
+            with self.subTest(case=label):
+                family = "fam-no-compute-negative-" + label
+                self._write_family(family)
+                blocker_path = self._write_execution_blocker(family)
+                round_dir, spec_path, verdict_path = self._write_no_compute_terminal(family)
+                if target == "attempt_child":
+                    (round_dir / "attempts" / "attempt-u1").mkdir(parents=True)
+                elif target in ("remove_round_spec", "malformed_round_spec"):
+                    if target == "remove_round_spec":
+                        spec_path.unlink()
+                    else:
+                        spec_path.write_text("{not json\n")
+                else:
+                    path = {"blocker": blocker_path, "round_spec": spec_path,
+                            "verdict": verdict_path}[target]
+                    doc = json.loads(path.read_text())
+                    parts = (key or "").split(".")
+                    parent = doc
+                    for part in parts[:-1]:
+                        parent = parent[part]
+                    if value is missing:
+                        parent.pop(parts[-1], None)
+                    else:
+                        parent[parts[-1]] = value
+                    path.write_text(json.dumps(doc) + "\n")
+                incidents = h.unresolved_incidents(
+                    str(self.root), h.read_families(str(self.root)))
+                self.assertIn(family, {item.get("family_id") for item in incidents})
 
     def test_missing_or_malformed_blocker_or_verdict_timestamps_fail_closed(self):
         cases = (

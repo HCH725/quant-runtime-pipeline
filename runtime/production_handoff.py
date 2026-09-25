@@ -407,6 +407,63 @@ def unresolved_incidents(results_root, families, now=None):
                           % (run_id or "(unidentified)"))
         open_incidents.append(subject)
 
+    def valid_no_compute_terminal(doc, round_dir, family_id, owner, detected_at):
+        """Validate the prelaunch-only run_id=null terminal shape from immutable artifacts."""
+        round_id = round_dir.name
+        if not isinstance(doc, dict) or type(doc.get("schema_version")) is not int \
+                or doc.get("schema_version") != 1 or doc.get("family_id") != family_id \
+                or not isinstance(round_id, str) or not round_id.strip() \
+                or doc.get("round_id") != round_id or "run_id" not in doc \
+                or doc.get("run_id") is not None or doc.get("verdict") != "TECHNICAL_INCOMPLETE" \
+                or doc.get("performance_claimable") is not False \
+                or _terminal_verdict_token(doc, family_id, owner) != "TECHNICAL_INCOMPLETE":
+            return False
+        decided_at = parse_utc(doc.get("decided_at_utc"))
+        if decided_at is None or decided_at <= detected_at:
+            return False
+        attempts = doc.get("attempts")
+        counters = ("launched", "run_specs", "terminal_sentinels")
+        null_fields = ("run_spec", "terminal_sentinel", "attempt_dir")
+        if not isinstance(attempts, dict) or any(
+                type(attempts.get(key)) is not int or attempts[key] != 0 for key in counters) \
+                or any(key not in attempts or attempts[key] is not None for key in null_fields):
+            return False
+        failure = doc.get("failure")
+        evidence_run_ids = doc.get("evidence_run_ids")
+        if not isinstance(failure, dict) or "last_run_id" not in failure \
+                or failure.get("last_run_id") is not None \
+                or not isinstance(evidence_run_ids, list) or evidence_run_ids:
+            return False
+        coverage = doc.get("coverage")
+        if not isinstance(coverage, dict) or type(coverage.get("cells_computed")) is not int \
+                or coverage.get("cells_computed") != 0:
+            return False
+
+        round_spec = _load_json(round_dir / "round-spec.json")
+        spec_attempts = round_spec.get("attempts") if isinstance(round_spec, dict) else None
+        created_at = parse_utc(round_spec.get("created_at_utc")) \
+            if isinstance(round_spec, dict) else None
+        if not isinstance(round_spec, dict) \
+                or type(round_spec.get("schema_version")) is not int \
+                or round_spec.get("schema_version") != 1 \
+                or round_spec.get("family_id") != family_id \
+                or round_spec.get("round_id") != round_id \
+                or created_at is None or created_at < detected_at or created_at > decided_at \
+                or not isinstance(spec_attempts, dict) or any(
+                    type(spec_attempts.get(key)) is not int or spec_attempts[key] != 0
+                    for key in counters):
+            return False
+
+        attempts_dir = round_dir / "attempts"
+        try:
+            if os.path.lexists(str(attempts_dir)) and (
+                    attempts_dir.is_symlink() or not attempts_dir.is_dir() or
+                    next(attempts_dir.iterdir(), None) is not None):
+                return False
+        except OSError:
+            return False
+        return True
+
     root = Path(results_root)
     for family_id, family_doc in families.items():
         if not isinstance(family_id, str) or not family_id or not isinstance(family_doc, dict) \
@@ -439,11 +496,16 @@ def unresolved_incidents(results_root, families, now=None):
                         or verdict.get("schema_version") != 1 or verdict.get("family_id") != family_id \
                         or not isinstance(round_id, str) or not round_id.strip() \
                         or verdict.get("round_id") != round_id \
-                        or not isinstance(run_id, str) or not run_id.strip():
+                        or (run_id is not None and (not isinstance(run_id, str) or not run_id.strip())):
                     continue
-                token = _terminal_verdict_token(verdict, family_id, owner)
-                decided_at = parse_utc(verdict.get("decided_at_utc"))
-                if token and decided_at is not None and decided_at > detected_at:
+                if isinstance(run_id, str):
+                    token = _terminal_verdict_token(verdict, family_id, owner)
+                    decided_at = parse_utc(verdict.get("decided_at_utc"))
+                    if token and decided_at is not None and decided_at > detected_at:
+                        resolved = True
+                        break
+                elif "run_id" in verdict and valid_no_compute_terminal(
+                        verdict, verdict_path.parent, family_id, owner, detected_at):
                     resolved = True
                     break
         if resolved:
