@@ -116,6 +116,8 @@ LIFECYCLE_FOOTER = (
     "field／capability 真正 ambiguous 時 fail closed，只對該 canonical dataset 做有界直接 read-back，"
     "不自動擴大 scope；human input 只留給未解 ambiguity，不用於 clear-absence。\n"
 )
+REVIEWED_CANDIDATE_MARKER = "--- REVIEWED CANDIDATE BODY (verbatim, followed by system lifecycle rules) ---\n"
+LIFECYCLE_FOOTER_BOUNDARY = "\n\n---\nLIFECYCLE FOOTER（system-owned"
 
 
 def sh(cmd, timeout=180):
@@ -574,6 +576,29 @@ def body_with_footer(cand):
     """
     return (cand.get("_body") or cand.get("card_body") or "") + LIFECYCLE_FOOTER
 
+
+def frozen_retry_prompt(task_path, cand, family_doc):
+    """Return the registered frozen prompt only when its immutable candidate identity still matches."""
+    try:
+        prompt = Path(task_path).read_bytes()
+    except OSError:
+        return None
+    marker = REVIEWED_CANDIDATE_MARKER.encode("utf-8")
+    if prompt.count(marker) != 1:
+        return None
+    body = prompt.split(marker, 1)[1]
+    handoff = family_doc.get("handoff")
+    body_sha = "sha256:" + hashlib.sha256(body).hexdigest()
+    candidate_body = (cand.get("_body") or cand.get("card_body") or "").encode("utf-8")
+    if not isinstance(handoff, dict) or handoff.get("body_sha256") != body_sha or \
+            not body.startswith(candidate_body + LIFECYCLE_FOOTER_BOUNDARY.encode("utf-8")):
+        return None
+    try:
+        return prompt.decode("utf-8")
+    except UnicodeError:
+        return None
+
+
 def direct_family(doc):
     return isinstance(doc, dict) and isinstance(doc.get("handoff"), dict) and \
         doc["handoff"].get("execution") == DIRECT_MODE
@@ -610,7 +635,7 @@ def agent_prompt(cand, results_root):
           "this one-shot session; do not wait for the long computation. The existing n8n C4 cadence "
           "will resume host-side disposition after compute finishes. If you cannot safely proceed, "
           "record the exact gap; never manufacture a PASS or consume another family.\n\n"
-        + "--- REVIEWED CANDIDATE BODY (verbatim, followed by system lifecycle rules) ---\n"
+        + REVIEWED_CANDIDATE_MARKER
         + body_with_footer(cand)
     )
 
@@ -792,20 +817,31 @@ def append_one(results_root, cand, args, res, existing=None):
     if existing:
         doc = existing
         path = str(Path(results_root) / cand["family_id"] / "family.json")
-        if doc.get("semantic_fingerprint") != fingerprint(cand["fingerprint_input"]) or \
-                (doc.get("handoff") or {}).get("body_sha256") != fingerprint(body_with_footer(cand)):
+        if doc.get("semantic_fingerprint") != fingerprint(cand["fingerprint_input"]):
             return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
                                attempted_family=cand["family_id"])
+        task_path = Path(results_root) / cand["family_id"] / "agent-task.md"
+        if os.path.lexists(str(task_path)):
+            prompt = frozen_retry_prompt(task_path, cand, doc)
+            if prompt is None:
+                return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                                   attempted_family=cand["family_id"])
+        else:
+            if (doc.get("handoff") or {}).get("body_sha256") != fingerprint(body_with_footer(cand)):
+                return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                                   attempted_family=cand["family_id"])
+            prompt = agent_prompt(cand, results_root)
     else:
         try:
             doc, path = write_family_json(results_root, cand)
         except (OSError, ValueError) as exc:
             return res.finding("family_json_failed", str(exc), attempted_family=cand["family_id"])
+        prompt = agent_prompt(cand, results_root)
 
     res.detail["semantic_fingerprint"] = doc["semantic_fingerprint"]
     res.detail["family_json"] = path
     pid, why, busy = launch_agent(results_root, cand["family_id"], "agent-task.md",
-                                  agent_prompt(cand, results_root), cand.get("skills") or (),
+                                  prompt, cand.get("skills") or (),
                                   cand.get("workspace_path") or DEFAULT_WORKSPACE)
     if busy:
         return res.waiting("direct Hermes worker still owns family %s; next candidate waits"

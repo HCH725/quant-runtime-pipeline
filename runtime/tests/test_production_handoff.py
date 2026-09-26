@@ -225,6 +225,27 @@ class Base(unittest.TestCase):
 
 
 class TestAdvance(Base):
+    def _install_legacy_frozen_prompt(self, create_task=True):
+        self.assertEqual(self.run_round().action, "appended")
+        cand = candidate()
+        cand["_body"] = V13_BODY
+        current_footer = h.LIFECYCLE_FOOTER
+        legacy_footer = "\n\n---\nLIFECYCLE FOOTER（system-owned；pre-change）\n- legacy rule.\n"
+        try:
+            h.LIFECYCLE_FOOTER = legacy_footer
+            prompt = h.agent_prompt(cand, str(self.root))
+        finally:
+            h.LIFECYCLE_FOOTER = current_footer
+
+        family_path = self.root / FAMILY_B / "family.json"
+        doc = json.loads(family_path.read_text())
+        doc["handoff"]["body_sha256"] = h.fingerprint(V13_BODY + legacy_footer)
+        family_path.write_text(json.dumps(doc) + "\n")
+        task_path = self.root / FAMILY_B / "agent-task.md"
+        if create_task:
+            task_path.write_bytes(prompt.encode("utf-8"))
+        return prompt, task_path
+
     def test_advance_lands_family_json_and_dispatches_one_work_order(self):
         res = self.run_round()
         self.assertEqual(res.action, "appended", res.reason)
@@ -440,6 +461,58 @@ class TestAdvance(Base):
         res = self.run_round()
         self.assertEqual(res.finding_key, "registered_candidate_changed")
         self.assertTrue((self.root / FAMILY_B / "family.json").is_file())
+
+    def test_pre_change_frozen_prompt_retries_after_footer_evolution(self):
+        frozen_prompt, task_path = self._install_legacy_frozen_prompt()
+        self.assertNotEqual(frozen_prompt, h.agent_prompt(candidate(), str(self.root)))
+        frozen_bytes = task_path.read_bytes()
+        family_path = self.root / FAMILY_B / "family.json"
+        family_bytes = family_path.read_bytes()
+
+        res = self.run_round()
+
+        self.assertEqual((res.action, res.outcome), ("retried", "running"))
+        self.assertEqual(self.fake.body(), frozen_prompt)
+        self.assertEqual(task_path.read_bytes(), frozen_bytes)
+        self.assertEqual(family_path.read_bytes(), family_bytes)
+
+    def test_legacy_frozen_prompt_rejects_changed_semantic_fingerprint(self):
+        self._install_legacy_frozen_prompt()
+        changed = candidate(fingerprint_input="changed fingerprint input")
+        self._write_pool([changed])
+
+        res = self.run_round()
+
+        self.assertEqual(res.finding_key, "registered_candidate_changed")
+        self.assertEqual(len(self.fake.calls), 1)
+
+    def test_legacy_frozen_prompt_rejects_changed_candidate_body(self):
+        _, task_path = self._install_legacy_frozen_prompt()
+        self._write_pool([candidate(body=V13_BODY + "changed")])
+
+        res = self.run_round()
+
+        self.assertEqual(res.finding_key, "registered_candidate_changed")
+        self.assertEqual(len(self.fake.calls), 1)
+        self.assertTrue(task_path.is_file())
+
+    def test_legacy_frozen_prompt_rejects_hash_corruption(self):
+        _, task_path = self._install_legacy_frozen_prompt()
+        task_path.write_bytes(task_path.read_bytes() + b"corruption")
+
+        res = self.run_round()
+
+        self.assertEqual(res.finding_key, "registered_candidate_changed")
+        self.assertEqual(len(self.fake.calls), 1)
+
+    def test_missing_frozen_prompt_keeps_current_body_hash_check(self):
+        _, task_path = self._install_legacy_frozen_prompt(create_task=False)
+
+        res = self.run_round()
+
+        self.assertEqual(res.finding_key, "registered_candidate_changed")
+        self.assertEqual(len(self.fake.calls), 1)
+        self.assertFalse(task_path.exists())
 
 
 class TestFailClosed(Base):
