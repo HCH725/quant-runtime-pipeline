@@ -389,15 +389,34 @@ class TestAdvance(Base):
         self.assertEqual(len(self.fake.launches()), 1)
 
     def test_created_body_keeps_candidate_bytes_and_carries_the_lifecycle_footer(self):
+        body = (V13_BODY + "## Execution costs\n"
+                "Funding 0.01% per 8h, fees 0.04% per side, and slippage 5 bps.\n")
+        self._write_pool([candidate(body=body)])
         self.run_round()
-        body = self.fake.body()
-        self.assertIn(V13_BODY, body)
-        self.assertIn(h.LIFECYCLE_FOOTER.strip(), body)
-        self.assertIn("TECHNICAL_INCOMPLETE", body)
+        prompt = self.fake.body()
+        marker = "--- REVIEWED CANDIDATE BODY (verbatim, followed by system lifecycle rules) ---\n"
+        self.assertLess(prompt.index(marker), prompt.index(body))
+        self.assertTrue(prompt.endswith(body + h.LIFECYCLE_FOOTER))
 
     def test_footer_carries_the_bounded_prerequisite_evidence_rule(self):
         self.assertIn("TECHNICAL_INCOMPLETE", h.LIFECYCLE_FOOTER)
         self.assertIn("prerequisite", h.LIFECYCLE_FOOTER)
+        self.assertIn(
+            "只有核心 signal 所必需的 data type／field 在本機完全不存在",
+            h.LIFECYCLE_FOOTER,
+        )
+        self.assertIn(
+            "funding、fee、slippage 若僅作 execution-cost／accounting inputs，而非 registered core "
+            "signal/mechanism 的必要內容，則不是 core-signal prerequisites；"
+            "execution fees／slippage 依 registered cost assumptions 及 canonical instrument metadata 處理；"
+            "derivative funding cost 只使用 canonical official observations，缺少 official "
+            "observation 時該 interval 的 funding "
+            "cost 為 zero，並須揭露 observation coverage，絕不可用 modeled rows 替代。單獨的 "
+            "execution-cost coverage gaps 不得作為 prelaunch TECHNICAL_INCOMPLETE 理由。反之，若 "
+            "funding、fee、slippage 本身是 registered core signal/mechanism 的一部分，仍屬 core data，"
+            "適用既有 core prerequisite 規則。",
+            h.LIFECYCLE_FOOTER,
+        )
 
     def test_launch_failure_stays_retryable_and_never_advances_next_candidate(self):
         self.fake.error = "simulated launcher failure"
