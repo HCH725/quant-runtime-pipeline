@@ -2,18 +2,25 @@
   "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
   "family_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02",
   "round_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1",
-  "run_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1",
+  "run_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u2",
   "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
-  "created_at_utc": "2026-09-27T15:52:14Z",
+  "created_at_utc": "2026-09-27T16:02:25Z",
   "frozen_specs": {
     "round_spec": "/Volumes/ExpansionDrive/qlib-results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/round-spec.json",
     "round_spec_sha256": "1dbb72a3a4d7ab2732c17e74314d2d5f241de50023bff520d8dd64817885501c",
-    "run_spec": "/Volumes/ExpansionDrive/qlib-results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1/run-spec.json",
-    "run_spec_sha256": "3ba54e52355e827f00e296e503d4bb64a2cb0ed8e690e018605cbc3a1fbbe9fd",
+    "round_spec_untouched_by_remediation": true,
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u2/run-spec.json",
+    "run_spec_sha256": "daf4b5bcc9ebf62166f0a9f5b02f31d42e4779c12401bb9b3cc966cf28ef8d08",
+    "superseded_run_spec": {
+      "run_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1",
+      "run_spec": ".../attempts/...-r1-u1/run-spec.json",
+      "run_spec_sha256": "3ba54e52355e827f00e296e503d4bb64a2cb0ed8e690e018605cbc3a1fbbe9fd",
+      "frozen_before_compute": true
+    },
     "frozen_before_compute": true,
     "validators": [
-      "runtime.parameter_contract.validate_round_spec_contract -> OK",
-      "container/scripts/250_bayesian_ppp_run.py::validate_spec(run_spec) -> OK (against /Volumes/ExpansionDrive/market-data-raw/_meta/CONFIG.json)",
+      "runtime.parameter_contract.validate_round_spec_contract -> OK (unchanged after remediation)",
+      "container/scripts/250_bayesian_ppp_run.py::validate_spec(run_spec) -> OK for both u1 and u2",
       "no kanban_task_id / kanban_board / task_id key anywhere in round-spec or run-spec (recursive key scan)"
     ]
   },
@@ -21,22 +28,31 @@
     "script": "/scripts/250_bayesian_ppp_run.py",
     "repo_path": "container/scripts/250_bayesian_ppp_run.py",
     "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/250_bayesian_ppp_run.py",
-    "sha256": "sha256:c52288cc0296a604bc2475ecd5f42498180237bc55b3d7d0b034b88d5942cdc7",
+    "sha256": "sha256:3ee2766ecc69be4005aebedcb18c4ba958e46a6369a0ed9fe870064241563046",
+    "sha256_launch_u1": "sha256:c52288cc0296a604bc2475ecd5f42498180237bc55b3d7d0b034b88d5942cdc7",
     "both_copies_identical": true,
     "self_check": "container/scripts/tests/test_bayesian_ppp_engine.py",
     "self_check_sha256": "sha256:eb57b49ae8271e91bfbf5ffcbfa4eaeb9ac5457b6f1f7f22f057b66a99d7c051",
-    "self_check_result": "in-container self-check on the final bytes: 10/10 PASS (exit 0)"
+    "self_check_result": "in-container self-check on BOTH byte sets (pre- and post-fix): 10/10 PASS, exit 0",
+    "round_spec_staleness_disclosure": "round-spec.implementation.script_sha256 still records the u1 byte set c52288cc..., because the round-spec was frozen before compute and is immutable. The one-line fix changed only quarter_bar_range's upper-bound month rollover; hypothesis, parameter domain, data window/split, DCA rail, gates, selector/disposition and the falsification battery are byte-identical, so no round-spec re-freeze was performed and none is required."
   },
   "verification": {
     "self_check_scope": "cross-sectional standardization (mean 0 / unit variance), causal estimator (future-perturbation invariance of the frozen weights), plug-in normal equations, Bayesian regularization + prior-scale monotonicity, Var(theta|D_t) PSD/symmetric, singular plug-in branch, per-fill gross-fees-funding==net decomposition with two negative controls, layer histogram invariants, run-spec round-trip through validate_spec, frozen 3-test battery + direct-family kanban-key rejection",
-    "static_name_scan": "AST undefined-name scan over 250_bayesian_ppp_run.py -> UNDEFINED_NONE (no leftover sibling identifiers)",
-    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <attempt> -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P10 recomputed script sha match",
-    "out_of_tree_smoke": {
-      "what": "pre-freeze build_qlib path only, writing to a throwaway in-container directory; never to the results tree",
-      "window": "full canonical raw 2022-01-01..2026-09-11",
-      "result": "47.2 s, SMOKE_OK; raw -> CSV -> dump_bin -> qlib.data.D read-back over all 28 datasets; bars per symbol 5m=493920, 15m=164640, 30m=82320, 1h=41160, 4h=10290, 1d=1715, 1w=245; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]"
+    "static_name_scan": "AST undefined-name scan over 250_bayesian_ppp_run.py -> UNDEFINED_NONE",
+    "preflight_u1": "python3 runtime/preflight.py --launch --attempt-dir <u1> -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated)",
+    "preflight_u2": "python3 runtime/preflight.py --launch --attempt-dir <u2> -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P10 recomputed script sha 3ee2766e... match",
+    "build_smoke": "pre-freeze build_qlib path to a throwaway in-container dir: 47.2 s, SMOKE_OK, all 28 datasets, bars per symbol 5m=493920 / 15m=164640 / 30m=82320 / 1h=41160 / 4h=10290 / 1d=1715 / 1w=245",
+    "remediation_smoke": {
+      "stage": "after the u1 quarter-rollover fix, before the u2 launch; descriptive only, never a gate, never read back by any selector",
+      "ran": "full falsification_battery over the real canonical raw (build 39.1 s + battery 43.4 s) plus select_cohort and write_grid on a synthetic single-cohort grid -> BAT_OK, 192 rows + header written",
+      "statuses": {
+        "oos_sharpe_and_turnover": "FAIL (mean_bayes_sharpe -2.9067 vs mean_plugin_sharpe -1.3670; mean_bayes_turnover 12,308,117 vs mean_plugin_turnover 112,398,049 USDT -> turnover condition met, Sharpe condition not met)",
+        "crisis_tail_risk_compression": "PASS (aggregate stress max drawdown 151,172.87 vs 487,941.85 USDT, observed ratio 0.3098 <= 0.80)",
+        "prior_sensitivity": "FAIL (realised returns [-0.0500, -0.5288, -1.9812, -1.5873] over sigma_0^2 [0.01, 0.1, 1.0, 10.0], variation 0.9748 > 0.40)"
+      },
+      "note": "these numbers are a pre-launch engineering smoke on identical code and identical data; the official run recomputes the battery from scratch inside the attempt. Under the registered failure policy, FAIL in any record test culls every cohort, so the operator should expect 0 survivors / family REJECT unless the official run differs. No parameter, gate or threshold was changed in response."
     },
-    "no_full_backtest_smoke_run": "the long backtest itself was not rehearsed; launch is exact-once and disposition is left to the existing n8n C4 cadence"
+    "no_full_backtest_rehearsal": "the 53,760-cell grid was not rehearsed end-to-end by this worker; the inherited grid/selector/disposition tail is the same code path that produced the sibling path-signature family's 53,760-row ARTIFACT_READY run"
   },
   "prerequisite_readback_phase_2b": {
     "sources": ["/data/raw/_meta/CONFIG.json (market-data-raw config/v2)", "/data/raw/_meta/SCHEMA.md"],
@@ -71,18 +87,35 @@
     ],
     "unchanged": "core hypothesis, eligible universe, data window/split, DCA four-axis domain, selector/disposition versions, gates (min_episodes_is=10 / min_episodes_oos=3 / 0.6 neighbourhood), robustness grids, record falsification battery"
   },
+  "remediation_history": [
+    {
+      "attempt": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1",
+      "launched_at_utc": "2026-09-27T15:52:14Z",
+      "script_sha256": "sha256:c52288cc0296a604bc2475ecd5f42498180237bc55b3d7d0b034b88d5942cdc7",
+      "outcome": "FAILED_SCRIPT",
+      "error": "ValueError: month must be in 1..12 (utc_ms called from quarter_bar_range; exclusive upper bound of a Q4 stress quarter was built as last_month + 1 = 13 with no year rollover)",
+      "failure_class": "infrastructure / script bug (contract 13), not a scientific failure",
+      "reached": "validate_spec ok -> Qlib 0.9.7 build -> qlib init -> falsification test 1 completed for all 7 timeframes (all evaluable) -> crash on entering test 2 stress-quarter bar ranges",
+      "fix": "one character in quarter_bar_range: `if last_month > 12` -> `if last_month >= 12` (commit 0354c97)",
+      "reused_same_run_id": false,
+      "remediation": "same-round new run_id r1-u2 (contract 15); hypothesis, parameter domain, data window/split, DCA rail, gates and falsification battery unchanged; round-spec left byte-identical",
+      "max_rounds_budget": "1 of max_rounds=3 used; no-progress rounds 0 of 2"
+    }
+  ],
   "launch": {
-    "command": "container exec -d qlib-run sh -c \"/opt/venv/bin/python /scripts/250_bayesian_ppp_run.py --run-spec /results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1/run-spec.json > .../logs/run.log 2>&1\"",
+    "command": "container exec -d qlib-run sh -c \"/opt/venv/bin/python /scripts/250_bayesian_ppp_run.py --run-spec /results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u2/run-spec.json > .../logs/run.log 2>&1\"",
     "container_id": "qlib-run",
     "image_id": "qlib:0.9.7-arm64",
     "seed": 20260927,
-    "started_at_utc": "2026-09-27T15:52:14Z",
+    "started_at_utc": "2026-09-27T16:02:25Z",
     "detached": true,
-    "state_readback": "state.json stage=RUNNING_QLIB; run.log line 1 'validate_spec ok; Qlib 0.9.7 multi-timeframe build starting for 4 x [5m,15m,30m,1h,4h,1d,1w]'; exactly one live runner (pid 2001 /opt/venv/bin/python /scripts/250_bayesian_ppp_run.py under its own sh -c wrapper pid 2000; the scanning shell itself excluded); P9 clean before launch",
-    "early_log_readback_2026-09-27T15:52:59Z": [
-      "qlib.Initialization succeeded with data_path /qlib/work/bayesian-ppp-v1/qlib-data",
-      "falsification oos 5m bayes_sharpe=-0.3169 plugin_sharpe=-0.1692 evaluable=True",
-      "falsification oos 15m bayes_sharpe=-0.5362 plugin_sharpe=-0.2710 evaluable=True"
+    "state_readback": "state.json stage=RUNNING_QLIB with run_id ...-r1-u2; run.log line 1 'validate_spec ok; Qlib 0.9.7 multi-timeframe build starting for 4 x [5m,15m,30m,1h,4h,1d,1w]'; exactly one live runner (pid 2372 /opt/venv/bin/python /scripts/250_bayesian_ppp_run.py under its own sh -c wrapper pid 2371; the scanning shell itself excluded); P9 clean before launch",
+    "early_log_readback_2026-09-27T16:03:53Z": [
+      "falsification stress quarters evaluated for all 7 timeframes (the remediated path)",
+      "falsification battery oos_sharpe_and_turnover=FAIL",
+      "falsification battery crisis_tail_risk_compression=PASS",
+      "falsification battery prior_sensitivity=FAIL",
+      "battery finished at 16:03:51Z, 86 s after launch; grid stage next"
     ],
     "worker_exited_after_launch": true,
     "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation"
