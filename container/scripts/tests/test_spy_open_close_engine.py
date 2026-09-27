@@ -288,6 +288,30 @@ class TestSpecAndCoverage(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.neighbourhood(winner, [dict(winner, grid="oos")])
 
+    def test_neighbourhood_never_builds_an_unregistered_case_tau_pair(self):
+        # Regression for r1-u1 KeyError: case_code and tau_pct are ONE registered
+        # composite axis (round-spec parameter_contract research_axes_ordered[0] =
+        # model_threshold_case, 9 registered pairs), so a face neighbour may never
+        # mix case_code 0 with tau_pct 0.5 - that cell does not exist in the grid.
+        self.assertNotIn((0, 0.5), [(c["case_code"], c["tau_pct"]) for c in mod.CASES])
+        dca = {"spacing_pct": 0.04, "size_multiplier": 1.0,
+               "breakeven_tp_pct": 0.02, "invalidation_pct": 0.05}
+        rows = [dict({"symbol": "BNBUSDT", "timeframe": "1d", "case_code": c["case_code"],
+                      "tau_pct": c["tau_pct"], **dict(d), "grid": "historical",
+                      "net_pnl": 1.0, "sharpe": 1.0, "episodes": 10})
+                for c in mod.CASES for d in mod.DCA_GRID]
+        self.assertEqual(len(rows), 432)
+        winner = next(r for r in rows if r["case_code"] == 1 and
+                      all(r[k] == v for k, v in dca.items()))
+        # Exactly one legal neighbour is negative: case_code 2 / tau 1.0, same DCA cell.
+        next(r for r in rows if r["case_code"] == 2 and
+             all(r[k] == v for k, v in dca.items()))["net_pnl"] = -1.0
+        # case +-, spacing 0.04 -> 0.03 only, size 1.0 -> 1.1 only,
+        # breakeven 0.02 -> 0.01/0.03, invalidation 0.05 -> 0.10 = 7 legal neighbours.
+        self.assertEqual(mod.neighbourhood(winner, rows),
+                         {"neighbours": 7, "agreeing": 6, "same_sign_fraction": 6 / 7,
+                          "passed": True})
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

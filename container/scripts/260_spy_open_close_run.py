@@ -762,17 +762,24 @@ def neighbourhood(winner, historical):
     if winner["grid"] != "historical" or any(r["grid"] != "historical" for r in historical):
         raise ValueError("selector may only read historical rows")
     found = {cell_key(r): r for r in historical}
-    axes = {"case_code": STRATEGY_AXES["case_code"], "tau_pct": STRATEGY_AXES["tau_pct"], **DCA_AXES}
+    # The frozen round-spec parameter_contract registers ONE composite axis
+    # (model_threshold_case = case_code + tau_pct, nine registered pairs) plus the
+    # four atomic DCA axes. Face neighbours are walked in that joint space, so the
+    # pair moves together and an unregistered (case_code, tau_pct) mix is never built.
+    steps = [((2, 3), [(c["case_code"], float(c["tau_pct"])) for c in CASES])]
+    steps += [((pos,), list(domain)) for pos, domain in enumerate(DCA_AXES.values(), start=4)]
     agrees = count = 0
     key = list(cell_key(winner))
-    for pos, (name, domain) in enumerate(axes.items(), 2):
-        if name not in winner:
-            continue
-        ix = domain.index(winner[name])
+    for positions, domain in steps:
+        single = len(positions) == 1
+        probe = key[positions[0]] if single else tuple(key[p] for p in positions)
+        ix = domain.index(probe)
         for delta in (-1, 1):
             if 0 <= ix + delta < len(domain):
+                values = (domain[ix + delta],) if single else domain[ix + delta]
                 candidate = key.copy()
-                candidate[pos] = domain[ix + delta]
+                for pos, value in zip(positions, values):
+                    candidate[pos] = value
                 row = found[tuple(candidate)]
                 count += 1
                 agrees += float(row["net_pnl"]) > 0

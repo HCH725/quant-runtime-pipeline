@@ -2,19 +2,28 @@
   "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
   "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
   "round_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1",
-  "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1",
+  "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2",
   "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
   "created_at_utc": "2026-09-27T19:44:10Z",
+  "updated_at_utc": "2026-09-27T20:04:35Z",
   "frozen_specs": {
     "round_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/round-spec.json",
     "round_spec_sha256": "95380df0c42ef5e6c7e8f43fe40a9d5aa379fb5d677d4fbab94959a42de0ccbf",
-    "run_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1/run-spec.json",
-    "run_spec_sha256": "3cff91b52a1e775b07a3be3db256e961b0e04b86db96b6ef42ac5d2e5f97827a",
+    "round_spec_untouched_by_remediation": true,
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2/run-spec.json",
+    "run_spec_sha256": "753219d78fea494d8643c5e8591c84eb9a896cd49ef80cbfbfa63bc9248bc879",
+    "superseded_run_spec": {
+      "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1",
+      "run_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1/run-spec.json",
+      "run_spec_sha256": "3cff91b52a1e775b07a3be3db256e961b0e04b86db96b6ef42ac5d2e5f97827a",
+      "frozen_before_compute": true,
+      "terminal": "FAILED sentinel published by runtime/terminal_evidence.py at 2026-09-27T19:59:59Z (file sha256:681acc97157896481af2fe0058552b6f8234d142d9bb280117a9f817c2e95740), re-read by `terminal_evidence.py check` -> ok=true, problems=[]; INV-15: this attempt is terminal and is never re-run"
+    },
     "frozen_before_compute": true,
     "frozen_by": "runtime/instantiate_spy_open_close.py (O_EXCL publish; refuses overwrite)",
     "validators": [
-      "runtime.parameter_contract.validate_round_spec_contract -> OK (empty problem list)",
-      "container/scripts/260_spy_open_close_run.py::validate_spec(run_spec) -> OK (self-check test_run_spec_rejects_frozen_domain_changes)",
+      "runtime.parameter_contract.validate_round_spec_contract -> OK (u2 regeneration from the frozen round template is byte-identical; round-spec sha unchanged)",
+      "container/scripts/260_spy_open_close_run.py::validate_spec(run_spec) -> OK in-container for the u2 run-spec (returns the registered 17,280 evaluations; self-check test_run_spec_rejects_frozen_domain_changes)",
       "recursive key scan: no task_id / kanban_task_id / kanban_board anywhere in round-spec or run-spec"
     ]
   },
@@ -22,33 +31,41 @@
     "script": "/scripts/260_spy_open_close_run.py",
     "repo_path": "container/scripts/260_spy_open_close_run.py",
     "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/260_spy_open_close_run.py",
-    "sha256": "sha256:ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7",
+    "sha256": "sha256:b7a14609c191dd1dff5ce7c3948e048b5dbd3169a0913938b7c46c55c5a792c2",
+    "sha256_launch_u1": "sha256:ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7",
     "both_copies_identical": true,
     "self_check": "container/scripts/tests/test_spy_open_close_engine.py",
-    "self_check_sha256": "sha256:b6a36f2208c310e8d85db070bd8faa4985f417dfed97506740978f9f4b191147",
-    "self_check_result": "in-container self-check in qlib-run (/opt/venv/bin/python): 18/18 PASS, exit 0",
-    "self_check_scope": "expanding walk-forward causality (train rows strictly before day t), source percent tau grid with mixed-unit negative control, all-tau-shared-fit-path, per-fill gross-fees-funding==net decomposition plus negative control, official-funding-only charging, hand-computed fast-path ledger, detailed-path single-settlement funding + TP, window-boundary rejection, raw shard-month selection + full-window coverage regression, frozen template round-trip through parameter_contract and validate_spec (frozen domain tampering and direct-family kanban keys rejected), registered product counts"
+    "self_check_sha256": "sha256:003d00936f2c453f5041178b83d520d4847d2368a78013c168b79b3321d7c342",
+    "self_check_sha256_launch_u1": "sha256:b6a36f2208c310e8d85db070bd8faa4985f417dfed97506740978f9f4b191147",
+    "self_check_result": "in-container self-check in qlib-run (/opt/venv/bin/python): 19/19 PASS, exit 0 (the 18 u1-era tests plus the new neighbourhood regression test); RED first: the new test against the u1 byte set reproduced the production KeyError",
+    "self_check_scope": "expanding walk-forward causality (train rows strictly before day t), source percent tau grid with mixed-unit negative control, all-tau-shared-fit-path, per-fill gross-fees-funding==net decomposition plus negative control, official-funding-only charging, hand-computed fast-path ledger, detailed-path single-settlement funding + TP, window-boundary rejection, raw shard-month selection + full-window coverage regression, frozen template round-trip through parameter_contract and validate_spec (frozen domain tampering and direct-family kanban keys rejected), registered product counts, composite-axis neighbourhood regression",
+    "round_spec_sha_disclosure": "the frozen round-spec carries no implementation/script_sha256 block, so the u1->u2 script fix introduces no round-spec staleness: round-spec sha256:95380df0... is byte-identical before and after the remediation"
   },
   "verification": {
-    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <attempt> --json -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P10 recomputed script sha ba72b384... match; round-spec parameter_contract gate OK",
+    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <u1> --json -> overall PASS (evaluated=10 failed=0); evidence/260_spy_open_close-r1-preflight-20260927.json",
+    "preflight_u2": "python3 runtime/preflight.py --launch --attempt-dir <u2> --json -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P9 no terminal sentinel in u2, P10 recomputed script sha b7a14609... match; evidence/260_spy_open_close-r1-u2-preflight-20260927.json",
+    "terminal_evidence": "runtime/terminal_evidence.py publish --attempt-dir <u1> --status FAILED --failure-layer card-local --failure-class script_bug --verdict-hint INCOMPLETE --manifest run-spec.json --manifest artifacts/progress.json --manifest artifacts/raw_build.json --manifest artifacts/funding_coverage.json, then `check` -> ok=true problems=[]; an immediate second publish was refused (INV-15)",
+    "self_check_red_green": "RED (u1 byte set + new test): Ran 19 tests, 1 error, KeyError ('BNBUSDT','1d',0,0.5,0.04,1.0,0.01,0.05) from neighbourhood() at 260_spy_open_close_run.py:776; GREEN (post-fix byte set): Ran 19 tests, OK, exit 0",
+    "remediation_smoke": "post-fix pre-launch in-container probe against the real engine (descriptive only, never a gate, never read by any selector): synthetic single cohort of 432 cells across all 10 grids through the real select_cohort + write_grid -> SMOKE_OK; all-positive neighbours -> neighbours=7 agreeing=7 same_sign_fraction=1.0 passed=True and the cohort SURVIVES; legal neighbours set negative -> cull_reasons=['parameter_neighbourhood'] (the 0.6 gate is not vacuous); write_grid wrote 432 rows",
+    "static_check": "py_compile of container/scripts/260_spy_open_close_run.py -> ok",
     "build_smoke": "pre-freeze in-container smoke over the real canonical raw (throwaway /tmp/smoke_spy qlib dir): SMOKE_OK in 44.6 s; Qlib 0.9.7 dump_bin + D.features readback matched the raw panels; 1d=1715 rows and 5m=493920 rows = 1715x288 per symbol",
     "grid_smoke": "one historical cell (BNBUSDT, case rf_tau_0p000, spacing 0.01/size 1.0/tp 0.01/invalidation 0.05) -> 0.078 s, 532 episodes, decomposition_ok=true; projected 17,280-cell grid ~0.4-1 h plus ~3 min of walk-forward fits (4 symbols x 2 model kinds, refit every 5 days) + seeded shuffled-open rerun",
     "live_readback": {
-      "state_json": "stage=RUNNING_QLIB for run ...-r1-u1 at 2026-09-27T19:40:50Z",
-      "log": "run.log/console.log first line 'fitting BNBUSDT regression walk-forward' 2026-09-27T19:40:37Z; by 19:41:18Z had advanced to 'fitting BTCUSDT regression walk-forward'",
-      "progress": "artifacts/progress.json case_evaluations=0 (fit stage), runtime_seconds=46.8, expected_case_evaluations=17280",
+      "state_json": "stage=RUNNING_QLIB for run ...-r1-u2 at 2026-09-27T20:04:4xZ",
+      "log": "run.log line 1 'fitting BNBUSDT regression walk-forward' 2026-09-27T20:04:42Z; console.log shows qlib 0.9.7 initialized on /qlib/work/spy-open-close-v1/qlib-data",
+      "progress": "artifacts/progress.json stage=RUNNING_QLIB, case_evaluations=0 (fit stage), runtime_seconds=45.323, expected_case_evaluations=17280, updated_at_utc 2026-09-27T20:05:21Z",
       "artifacts_written": ["artifacts/raw_build.json", "artifacts/funding_coverage.json", "artifacts/progress.json"],
-      "live_process": "container /proc scan matched exactly one /opt/venv/bin/python /scripts/260_spy_open_close_run.py under its sh -c wrapper"
+      "live_process": "container /proc scan matched exactly one /opt/venv/bin/python /scripts/260_spy_open_close_run.py (pid 3461) under its own sh -c wrapper (pid 3460)"
     },
-    "no_full_backtest_rehearsal": "the 17,280-cell grid was not rehearsed end-to-end; the fast/detailed episode paths and the selector/disposition/grid tail are covered by the in-container self-check plus the pre-freeze cell smoke on real data"
+    "no_full_backtest_rehearsal": "the 17,280-cell grid was not rehearsed end-to-end; the tail that actually failed in u1 (select_cohort -> neighbourhood) is now covered by the in-container regression test plus the select_cohort/write_grid remediation smoke"
   },
   "prerequisite_readback_phase_2b": {
     "sources": ["/data/raw/_meta/CONFIG.json", "/data/raw/_meta/SCHEMA.md"],
     "core_signal_requirement": "daily (UTC) open and close per symbol for the expanding walk-forward 5-feature vector [O(t-2), C(t-2), O(t-1), C(t-1), O(t)] with target close(t)",
-    "available": "market_type=usdm_perp; venue=BINANCE; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]; intervals [1d,1w,15m,30m,4h,5m,1h]; datasets include klines and funding; SCHEMA klines = open_time_ms/close_time_ms/open/high/low/close/volume (decimal strings, 'No gaps are silently filled', monthly shards); funding carries truth_status official/modeled with 'Consumers that need exchange truth must filter on truth_status == \"official\"'; instruments dataset carries price_increment + fees",
+    "available": "market_type=usdm_perp; venue=BINANCE; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]; intervals [1d,1w,5m,15m,30m,1h,4h]; datasets include klines and funding; SCHEMA klines = open_time_ms/close_time_ms/open/high/low/close/volume (decimal strings, 'No gaps are silently filled', monthly shards); funding carries truth_status official/modeled with 'Consumers that need exchange truth must filter on truth_status == \\\"official\\\"'; instruments dataset carries price_increment + fees",
     "measured_scan": "registered window 2022-01-01..2026-09-11: 1d=1715 rows and 5m=493920 rows (=1715x288) per symbol, zero gaps/unsorted bars, zero non-finite or non-positive price fields; 20 zero-volume 5m bars per symbol on 2022-05-01 UTC are genuine no-trade intervals with valid prices and are kept",
     "funding_rule_applied": "official observations only, timestamped at their own funding_time_ms and mark price; modeled rows are never charged; intervals without an official observation cost zero and the coverage gap is disclosed: official=3140 events, modeled_ignored=2005, days_with_official=1047 of 1715 per symbol",
-    "verdict": "PRESENT -> the registered signal computes on the complete local eligible universe (4 symbols x 1d signal / 5m execution); NOT a prerequisite-missing TECHNICAL_INCOMPLETE case, so the full backtest was launched",
+    "verdict": "PRESENT (unchanged by the remediation) -> the registered signal computes on the complete local eligible universe (4 symbols x 1d signal / 5m execution); NOT a prerequisite-missing TECHNICAL_INCOMPLETE case, so the full backtest was relaunched",
     "scope": "conclusions are explicitly limited to this local 4-name USD-M perpetual universe; no SPY or U.S. equity result is claimed"
   },
   "adaptation_disclosure": {
@@ -83,17 +100,33 @@
       "Qlib dump_bin stores float32, so the read-back gate was tightened from an impossible 1e-9 absolute match to exact float32 round-trip with a relative 1e-6 fallback (same gate as the sibling runner)"
     ]
   },
+  "remediation_history": [
+    {
+      "attempt": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1",
+      "launched_at_utc": "2026-09-27T19:40:30Z",
+      "script_sha256": "sha256:ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7",
+      "outcome": "FAILED_SCRIPT (attempt state.json stage=FAILED_SCRIPT at 2026-09-27T19:46:05Z)",
+      "error": "KeyError: ('BNBUSDT', '1d', 0, 0.5, 0.04, 1.0, 0.01, 0.05) raised from neighbourhood() at 260_spy_open_close_run.py:776, called by select_cohort",
+      "failure_class": "infrastructure / script bug (contract 13), not a scientific failure",
+      "reached": "validate_spec ok -> Qlib 0.9.7 build (raw_build.json) -> qlib init -> all eight walk-forward fits (4 symbols x regression/logistic) -> 4320/17280 case evaluations = the complete BNBUSDT cohort over all 10 grids -> crashed in select_cohort(BNBUSDT) while enumerating parameter neighbours",
+      "root_cause": "neighbourhood() walked case_code and tau_pct as two INDEPENDENT axes, so moving case_code while holding tau_pct built cells the registered domain does not contain (case_code 0 with tau_pct 0.5). The frozen round-spec parameter_contract registers research_axes_ordered[0] = model_threshold_case, a COMPOSITE axis of the nine registered (case_code, tau_pct) pairs, so the legal joint space is 9 x 4 x 2 x 3 x 2 = 432 cells per cohort and a face neighbour must move the pair together. STRATEGY_AXES['tau_pct'] also repeats 0.0 (regression tau 0 and the logistic case), which makes domain.index() ambiguous.",
+      "fix": "neighbourhood() now walks the five registered axes of the joint space: one composite step over the nine CASES pairs at key positions 2/3, plus the four atomic DCA axes at positions 4..7, so every candidate key is a registered cell; the independent-axis STRATEGY_AXES lookup was removed from that path. Added test_neighbourhood_never_builds_an_unregistered_case_tau_pair (432-cell synthetic cohort, 7 legal face neighbours, deterministic agreeing=6/7, survivor vs parameter_neighbourhood cull). Hypothesis, parameter domain, data window/split, DCA rail, gates, selector/disposition versions and the falsification battery are unchanged.",
+      "reused_same_run_id": false,
+      "remediation": "host-side terminalisation of u1 first (FAILED, contract 10.3/INV-15), then same-round new run_id r1-u2 (contract 13 script_bug / 15); round-spec left byte-identical at sha256:95380df0...",
+      "max_rounds_budget": "1 of max_rounds=3 rounds used; no-progress rounds 0 of 2 (a script-bug fix is not progress by contract 15.3)"
+    }
+  ],
   "launch": {
-    "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/260_spy_open_close_run.py --run-spec /results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1/run-spec.json --attempt-dir /results/.../attempts/...-r1-u1 > /results/.../attempts/...-r1-u1/logs/console.log 2>&1\"",
+    "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/260_spy_open_close_run.py --run-spec /results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2/run-spec.json --attempt-dir /results/.../attempts/...-r1-u2 > /results/.../attempts/...-r1-u2/logs/console.log 2>&1\"",
     "container_id": "qlib-run",
     "image_id": "qlib:0.9.7-arm64",
     "seed": 260928,
-    "started_at_utc": "2026-09-27T19:40:30Z",
+    "started_at_utc": "2026-09-27T20:04:35Z",
     "detached": true,
     "stdout_target": "logs/console.log (the engine owns logs/run.log itself, opened 'w' at start, so stdout is not redirected onto it)",
-    "state_readback": "state.json stage=RUNNING_QLIB with run_id same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1; run.log line 1 'fitting BNBUSDT regression walk-forward' at 19:40:37Z; qlib 0.9.7 initialized on /qlib/work/spy-open-close-v1/qlib-data; exactly one live runner under its own sh -c wrapper; P9 clean before launch (no terminal sentinel)",
+    "state_readback": "state.json stage=RUNNING_QLIB with run_id same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2; run.log line 1 'fitting BNBUSDT regression walk-forward' at 2026-09-27T20:04:42Z; qlib 0.9.7 initialized on /qlib/work/spy-open-close-v1/qlib-data; exactly one live runner (pid 3461) under its own sh -c wrapper (pid 3460); P9 clean before launch (no terminal sentinel in u2)",
     "worker_exited_after_launch": true,
-    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation"
+    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation. The round is NOT terminal: no round verdict.json was written, because contract 13 maps a first script_bug to a same-round remediation attempt and verdict.json is immutable once written (INV-4); the frozen survivor bundle is therefore also not produced yet."
   },
   "registered_expectations": {
     "cohorts": 4,
