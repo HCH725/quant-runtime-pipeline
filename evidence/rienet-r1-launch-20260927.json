@@ -1,0 +1,74 @@
+{
+  "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "family_id": "neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02",
+  "round_id": "neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1",
+  "run_id": "neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1-u1",
+  "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
+  "created_at_utc": "2026-09-27T03:05:00Z",
+  "frozen_specs": {
+    "round_spec": "/Volumes/ExpansionDrive/qlib-results/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02/rounds/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1/round-spec.json",
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02/rounds/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1/attempts/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1-u1/run-spec.json",
+    "frozen_before_compute": true,
+    "validators": [
+      "runtime.parameter_contract.validate_round_spec_contract -> OK",
+      "runtime.parameter_contract.validate_contract -> OK",
+      "round-spec vs run-spec provenance_class / user_fixed_invariants / expected / split / costs identical"
+    ]
+  },
+  "engine": {
+    "script": "/scripts/220_rienet_run.py",
+    "repo_path": "container/scripts/220_rienet_run.py",
+    "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/220_rienet_run.py",
+    "sha256": "sha256:368b200a370a2d4616f796e9613380f5e44aa6392b96e3efdb236bf7e3908f22",
+    "both_copies_identical": true,
+    "self_check": "container/scripts/tests/test_rienet_engine.py",
+    "self_check_sha256": "sha256:b81aefedb5a84085f9bdcd2a621ab9be6f9cbf42a70576efcb127ad85f42df20",
+    "self_check_result": "RIEnet engine self-check: PASS (exit 0, pre-launch on final bytes)"
+  },
+  "verification": {
+    "runtime_suite": "python3 -m unittest discover -s runtime/tests -t runtime/tests -> 561 tests OK",
+    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <attempt> -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated), P10 recomputed script sha match",
+    "out_of_tree_smoke": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/_selftest/rienet-smoke/r1/attempts/r1-u1",
+      "window": "2022-01-01..2023-06-30 (18 months; historical 2022-01-01..2023-03-31, oos 2023-04-01..2023-06-30)",
+      "ran": "2026-09-27T02:52:54Z -> 03:03:09Z (616 s), ARTIFACT_READY",
+      "result": "28/28 cohorts, 53760/53760 case evaluations, coverage_complete=true, ALL 12 assertions true (pnl_decomposition, gross_net_independent, causal_signal, qlib_readback, funding_loaded, parameter_contract_complete, dca_layer_histogram, stress_grids_effective, instrument_metadata, all_28_cohorts_present, all_10_grids_present, coverage_complete)",
+      "descriptive_only": "9 survivors / 19 culled on the shortened smoke window; NOT a scientific result and never used for any gate",
+      "bytes_note": "the smoke process loaded script sha 04cfb943...; the only later diff is the signal_layer entry_rule diagnostic STRING (final sha 368b200a...) - self-check PASS on the final bytes, behavior identical"
+    }
+  },
+  "prerequisite_readback_phase_2b": {
+    "sources": ["/data/raw/_meta/CONFIG.json (market-data-raw/config/v2)", "/data/raw/_meta/SCHEMA.md"],
+    "core_signal_requirement": "multi-asset price panel -> close-to-close returns, binary observation mask M_ti, pairwise overlap T_ij, cross-sectional long-only GMV panel",
+    "available": "dataset klines = Binance USD-M perpetual klines; venue BINANCE; market_type usdm_perp; symbols [BNBUSDT,BTCUSDT,ETHUSDT,SOLUSDT]; intervals [1d,1w,15m,30m,4h,5m,1h] = 28 datasets (gap audit VERIFY_GAPS.txt PASS); SCHEMA: open_time_ms + OHLCV decimal strings, 'No gaps are silently filled: a missing bar is absent, not zero-filled'; funding dataset with truth_status official/modeled; instruments with price_increment/taker_fee",
+    "verdict": "PRESENT -> core signal computable on the complete local eligible universe (4 symbols x 7 intervals = 28 cohorts); NOT a prerequisite-missing TECHNICAL_INCOMPLETE case",
+    "absent_but_non_core": "equity-side point-in-time fields (market-cap rank, shares outstanding, split/dividend adjusted closes, closing-auction feed) absent from the canonical raw; under the system lifecycle rule these are not core-signal prerequisites and are registered as research_exclusions; conclusion scope limited to the local universe"
+  },
+  "adaptation_disclosure": {
+    "change": "layer_from_weights entry mapping",
+    "before": "tranche-1 event only on a 0 -> positive target-weight transition (fires exactly once per cohort: long-only GMV weights stay positive)",
+    "after": "tranche-1 opportunity at every registered rebalance where the rounded GMV target weight is positive; the DCA rail opens an episode only while FLAT (an event at or before the last exit is skipped), so re-entry requires a later qualified signal and there is never an add into an open or flat gap",
+    "why": "the frozen candidate body registers recurring qualified signals ('FLAT... 在下一筆合格訊號前不得 add') and selector min_episodes_is; the transition rule made that floor structurally unreachable and left the 48-cell DCA grid vacuous (first smoke: 28/28 cohorts culled insufficient_trades). Fixed before the round/run specs were frozen.",
+    "unchanged": "core hypothesis, eligible universe, data window/split, DCA four-axis domain, selector/disposition versions, gates (min_episodes_is=30 / min_episodes_oos=10 / 0.6 neighbourhood), robustness grids, record falsification battery"
+  },
+  "launch": {
+    "command": "container exec -d qlib-run sh -c \"/opt/venv/bin/python /scripts/220_rienet_run.py --run-spec /results/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02/rounds/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1/attempts/neural-shrinkage-indefinite-pairwise-correlation-matrix-2026-09-02-r1-u1/run-spec.json > .../logs/run.log 2>&1\"",
+    "container_id": "qlib-run",
+    "image_id": "qlib:0.9.7-arm64",
+    "seed": 20260927,
+    "started_at_utc": "2026-09-27T03:04:59Z",
+    "state_readback": "state.json stage=RUNNING_QLIB; exactly one live runner (one launch, P9 clean pre-launch)",
+    "detached": true,
+    "worker_exited_after_launch": true,
+    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7)"
+  },
+  "registered_expectations": {
+    "cohorts": 28,
+    "strategy_cases_per_cohort": 4,
+    "dca_configs_per_cohort": 48,
+    "case_evaluations_per_grid": 5376,
+    "grid_count": 10,
+    "case_evaluations_total": 53760
+  },
+  "kanban": null
+}
