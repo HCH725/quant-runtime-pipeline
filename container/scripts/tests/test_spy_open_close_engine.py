@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Focused executable checks for the same-day open-to-close engine."""
 import importlib.util
+import json
 import os
 import sys
 import unittest
@@ -287,6 +288,28 @@ class TestSpecAndCoverage(unittest.TestCase):
                   **dict(mod.DCA_GRID[0]), "net_pnl": 10.0, "sharpe": 1.0, "episodes": 10}
         with self.assertRaises(ValueError):
             mod.neighbourhood(winner, [dict(winner, grid="oos")])
+
+    def test_signal_metric_fields_are_json_serialisable(self):
+        # Regression for the r1-u2 tail crash: a fitted layer carries ndarrays
+        # (train/fit counts and the signal vector) that json.dump rejects.
+        layer = mod.signal_layer(panel(320), mod.CASES[0])
+        fields = mod.signal_metric_fields(layer)
+        self.assertNotIn("forecast", fields)
+        self.assertIsInstance(fields["train_counts"], list)
+        self.assertIsInstance(fields["signal"], list)
+        json.dumps(fields, allow_nan=False)  # TypeError here == the production failure
+
+    def test_signal_metric_fields_keeps_a_cohort_record_winner_grid(self):
+        # Regression for the r1-u2 assertion crash: cohort records are
+        # {cohort, outcome, **detail}; the grid label lives under "winner".
+        detail = {"winner": {"case_code": 0, "tau_pct": 0.0, **dict(mod.DCA_GRID[0]),
+                             "grid": "historical"}, "cull_reasons": []}
+        record = {"cohort": "BNBUSDT/1d", "outcome": "SURVIVOR", **detail}
+        with self.assertRaises(KeyError):
+            record["grid"]
+        self.assertEqual(record["winner"]["grid"], "historical")
+        self.assertTrue(all(r["winner"]["grid"] == "historical"
+                            for r in [record] if r.get("winner")))
 
     def test_neighbourhood_never_builds_an_unregistered_case_tau_pair(self):
         # Regression for r1-u1 KeyError: case_code and tau_pct are ONE registered

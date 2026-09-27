@@ -5,7 +5,7 @@
   "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2",
   "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
   "created_at_utc": "2026-09-27T19:44:10Z",
-  "updated_at_utc": "2026-09-27T20:04:35Z",
+  "updated_at_utc": "2026-09-27T20:58:00Z",
   "frozen_specs": {
     "round_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/round-spec.json",
     "round_spec_sha256": "95380df0c42ef5e6c7e8f43fe40a9d5aa379fb5d677d4fbab94959a42de0ccbf",
@@ -114,6 +114,20 @@
       "reused_same_run_id": false,
       "remediation": "host-side terminalisation of u1 first (FAILED, contract 10.3/INV-15), then same-round new run_id r1-u2 (contract 13 script_bug / 15); round-spec left byte-identical at sha256:95380df0...",
       "max_rounds_budget": "1 of max_rounds=3 rounds used; no-progress rounds 0 of 2 (a script-bug fix is not progress by contract 15.3)"
+    },
+    {
+      "attempt": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2",
+      "launched_at_utc": "2026-09-27T20:04:35Z",
+      "script_sha256": "sha256:b7a14609c191dd1dff5ce7c3948e048b5dbd3169a0913938b7c46c55c5a792c2",
+      "outcome": "FAILED_SCRIPT (attempt state.json stage=FAILED_SCRIPT at 2026-09-27T20:18:43Z; host-side FAILED sentinel published by runtime/terminal_evidence.py at 2026-09-27T20:27:36Z, check ok, republish refused INV-15)",
+      "error": "two tail defects in sequence: KeyError: 'grid' at 260_spy_open_close_run.py:1048 (selector_winner_is_historical_row read r['grid'] off a cohort record whose grid label lives at record['winner']), then TypeError: Object of type ndarray is not JSON serializable while writing artifacts/signal_metrics.json (train_counts/fit_counts/signal vectors)",
+      "failure_class": "infrastructure / script bug (contract 13), not a scientific failure",
+      "reached": "all eight walk-forward fits -> 17280/17280 case evaluations -> all four cohort selections (BNBUSDT CULLED) -> crashed while building the assertions dict, so no result.json or grid CSVs existed",
+      "fix": "the assertion now reads x['winner']['grid'] with a comment naming the cohort-record shape, and the signal_metrics item is built by the new module-level signal_metric_fields() which drops the forecast and converts ndarrays to JSON lists; tests test_signal_metric_fields_keeps_a_cohort_record_winner_grid and test_signal_metric_fields_are_json_serialisable added (21/21 PASS in qlib-run)",
+      "reused_same_run_id": false,
+      "remediation": "terminalise u2 (FAILED) first, then same-round new run_id r1-u3; before u3 was launched the entire post-cohort tail of run() was rehearsed end-to-end in-container against a scratch results root, which reproduced the signal_metrics crash (RED) and then passed (GREEN) - the reason u3 needed no fourth blind run; round-spec left byte-identical at sha256:95380df0...",
+      "max_rounds_budget": "1 of max_rounds=3 rounds used; no-progress rounds 0 of 2 (a script-bug fix is not progress by contract 15.3)",
+      "followed_by": "same-round r1-u3, which reached ARTIFACT_READY with 17280/17280 evaluations and 10/10 assertions and is the round's authoritative DONE attempt - see evidence/260_spy_open_close-r1-u3-disposition-20260927.json"
     }
   ],
   "launch": {
@@ -126,7 +140,7 @@
     "stdout_target": "logs/console.log (the engine owns logs/run.log itself, opened 'w' at start, so stdout is not redirected onto it)",
     "state_readback": "state.json stage=RUNNING_QLIB with run_id same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u2; run.log line 1 'fitting BNBUSDT regression walk-forward' at 2026-09-27T20:04:42Z; qlib 0.9.7 initialized on /qlib/work/spy-open-close-v1/qlib-data; exactly one live runner (pid 3461) under its own sh -c wrapper (pid 3460); P9 clean before launch (no terminal sentinel in u2)",
     "worker_exited_after_launch": true,
-    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation. The round is NOT terminal: no round verdict.json was written, because contract 13 maps a first script_bug to a same-round remediation attempt and verdict.json is immutable once written (INV-4); the frozen survivor bundle is therefore also not produced yet."
+    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation. At launch the round was NOT terminal: no round verdict.json existed, because contract 13 maps a script_bug to a same-round remediation attempt and verdict.json is immutable once written (INV-4). RESOLVED 2026-09-27T20:54:03Z: u2 also died in the post-cohort tail (FAILED sentinel published), u3 launched after a full end-to-end rehearsal of the run() tail, finished ARTIFACT_READY with 17280/17280 evaluations and 10/10 assertions, was published DONE, survivor_bundle.py refused (0 survivors), and the round verdict REJECT / NO_SURVIVOR was written - see evidence/260_spy_open_close-r1-u3-disposition-20260927.json."
   },
   "registered_expectations": {
     "cohorts": 4,

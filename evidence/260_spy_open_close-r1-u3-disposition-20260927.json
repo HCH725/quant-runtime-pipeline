@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "kind": "attempt_disposition",
+  "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "contract_sections": ["9.4", "10.3", "10.7", "13", "15"],
+  "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+  "round_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1",
+  "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u3",
+  "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
+  "created_at_utc": "2026-09-27T20:56:00Z",
+  "host_boot_id": "boot-1790441600",
+  "container_id": "qlib-run",
+  "image_id": "qlib:0.9.7-arm64",
+
+  "preflight": {
+    "command": "python3 runtime/preflight.py --launch --attempt-dir <u3> --json",
+    "run_at_utc": "2026-09-27T20:27:5xZ (immediately before launch)",
+    "overall": "PASS",
+    "evaluated": 10,
+    "failed": 0,
+    "note": "all printed check ids P1..P10 reported status=PASS; P9 (no terminal sentinel yet) was evaluated while the attempt was still fresh, and P10 recomputed the engine byte identity against the run-spec pin",
+    "identity_facts_read_back": {
+      "u3_run_spec_sha256": "sha256:b69737d23ef89326e642648a7f36e69ec26c1c0cf5ac44ae461b867a521de0d2",
+      "u3_script_sha256": "sha256:3c14e00c6a98a14b3e27d85181213d453d1d1e1b2eb72a180da5150057c0e343",
+      "u3_self_check_sha256": "sha256:c729c112d8c7dc1c8709cde469e53fa927940596abd2e10575734d1fd81343a2",
+      "round_spec_sha256": "sha256:95380df0c42ef5e6c7e8f43fe40a9d5aa379fb5d677d4fbab94959a42de0ccbf",
+      "round_spec_unchanged_since_u2_launch": true,
+      "kanban_keys_in_specs": []
+    }
+  },
+
+  "launch": {
+    "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/260_spy_open_close_run.py --run-spec /results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u3/run-spec.json --attempt-dir /results/.../attempts/...-r1-u3 > /results/.../attempts/...-r1-u3/logs/console.log 2>&1\"",
+    "started_at_utc": "2026-09-27T20:27:57Z",
+    "detached": true,
+    "seed": 260928,
+    "exact_once": "instantiated O_EXCL by runtime/instantiate_spy_open_close.py (refuses overwrite); launch done only after u2 carried its own FAILED terminal (never re-run)",
+    "state_readback_25s": "state.json stage=RUNNING_QLIB; artifacts/progress.json stage=RUNNING_QLIB case_evaluations=0 expected=17280 runtime_seconds=46.498; run.log line 1 'fitting BNBUSDT regression walk-forward' 2026-09-27T20:28:04Z",
+    "live_process": "container /proc scan matched exactly one /opt/venv/bin/python /scripts/260_spy_open_close_run.py (pid 3617) under its own sh -c wrapper (pid 3616); the scan pattern must be unquoted-unbracketed because the engine's own cmdline contains 260_spy"
+  },
+
+  "run_lifecycle": {
+    "cohorts": [
+      "2026-09-27T20:33:34Z cohort BNBUSDT/1d outcome=CULLED cull=oos_economic,full_economic,robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks",
+      "2026-09-27T20:36:41Z cohort BTCUSDT/1d outcome=CULLED cull=oos_economic,full_economic,robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks,parameter_neighbourhood",
+      "2026-09-27T20:39:20Z cohort ETHUSDT/1d outcome=CULLED cull=oos_economic,full_economic,robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks,parameter_neighbourhood",
+      "2026-09-27T20:41:55Z cohort SOLUSDT/1d outcome=CULLED cull=oos_economic,full_economic,robustness_economic:fee_2x,funding_2x,entry_delay_1_bar,slippage_2ticks,parameter_neighbourhood"
+    ],
+    "evaluations": "progress.json 17280/17280 at 2026-09-27T20:41:55Z",
+    "final_marker": "[2026-09-27T20:44:27.255145+00:00] ARTIFACT_READY cohorts=4 survivors=0 rows=17280 assertions=all_true",
+    "runtime_seconds": 988.659499581001,
+    "tail_bugs_it_passed": "u2 died in the same post-cohort tail; u3 cleared both former crash sites (selector assertion, signal_metrics.json write) and produced result.json plus all 19 artifacts"
+  },
+
+  "same_round_remediation": {
+    "u1_failure": {
+      "terminal": "FAILED",
+      "class": "script_bug",
+      "detail": "KeyError from neighbourhood() walking case_code and tau_pct as independent axes over a composite registered axis; reached 4320/17280 (complete BNBUSDT cohort)",
+      "remediation": "neighbourhood() walks the five registered axes of the joint 432-cell space; regression test test_neighbourhood_never_builds_an_unregistered_case_tau_pair"
+    },
+    "u2_failure": {
+      "terminal": "FAILED",
+      "class": "script_bug",
+      "detail": "two tail defects found in sequence: (a) KeyError 'grid' at 260_spy_open_close_run.py:1048, selector_winner_is_historical_row read r['grid'] off a cohort record whose grid label lives at record['winner']; (b) TypeError: Object of type ndarray is not JSON serializable while writing artifacts/signal_metrics.json (train_counts/fit_counts/signal vectors). u2 reached 17280/17280 and all four cohort selections before (a), so no result.json or grid CSVs existed",
+      "remediation": "(a) assertion now reads x['winner']['grid'] with a comment naming the record shape; (b) new module-level signal_metric_fields() converts ndarrays to lists and drops the forecast; both covered by unit tests test_signal_metric_fields_keeps_a_cohort_record_winner_grid and test_signal_metric_fields_are_json_serialisable (21/21 PASS in qlib-run)"
+    },
+    "why_u3_was_trusted_to_finish": "before launching, the never-executed tail of run() was rehearsed end-to-end in-container against a scratch results root (/qlib/work/spy-rehearsal-results, later removed): the real data load, funding, exec cache, signal derivation, select_cohort/neighbourhood, coverage, assertions, artifact writes, falsification_report and result build all ran for real, with only build_qlib / walk_forward / simulate swapped for type-faithful fakes. Rehearsal run 1 reproduced the signal_metrics ndarray crash (RED); after fix (b) rehearsal run 2 exited 0 with state=ARTIFACT_READY, 17280 rows across 10 grids, 10/10 assertions and 4 survivors on synthetic data (GREEN). Descriptive engineering smoke only: never a gate, never read by any selector, and its synthetic output never entered /results",
+    "unchanged": "hypothesis, parameter domain, data window/split, DCA rail, gates, robustness grids, selector/disposition versions, falsification battery, round-spec bytes"
+  },
+
+  "verification": {
+    "host_verifier": "standalone read-back script in the scratch workspace: identity across round-spec/run-spec/state/progress/result, script + self-check shas vs deployed bytes, absence of kanban keys, state/progress/result agreement, 10/10 assertions, every grid CSV re-parsed and compared to the registered Cartesian product (4 symbols x 9 (case_code,tau) x 48 DCA = 1728 unique cells per grid, grid column labelled correctly), survivor derivation vs result.json and cohort_survivors.json, run.log final marker, 14 artifact checksums",
+    "host_verifier_result": "ok=true, problems=[], exit 0",
+    "no_live_runner": "post-ARTIFACT_READY container /proc scan matched only the scanner itself",
+    "terminal_evidence": "runtime/terminal_evidence.py publish --status DONE --verdict-hint CANDIDATE_REJECT with a 25-entry manifest (run-spec, state, result, 19 artifacts, logs/run.log, logs/console.log) -> published; `check` -> ok=true, host_boot_id matched, problems=[]; an immediate repeat publish was refused: 'INV-15 forbids re-run'",
+    "sentinels_rechecked": "u1 FAILED check ok, u2 FAILED check ok, u3 DONE check ok (all three published by runtime/terminal_evidence.py, none republished)"
+  },
+
+  "bundle": {
+    "command": "python3 runtime/survivor_bundle.py --attempt-dir <u3> --json",
+    "exit_code": 1,
+    "output": "REFUSED: 0 survivors: this attempt records no cohort survivor, so there is no frozen survivor bundle to write (contract 7.3/10.8 freezes the round's survivors for the post-survivor lifecycle)",
+    "survivor_bundle_json_written": false,
+    "post_survivor_index_entry": null
+  },
+
+  "verdict": {
+    "path": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/verdict.json",
+    "sha256": "sha256:1b0e6417198fec98e5c46f67c9fa8d3c6cc33e9ec4b3646a7080e27a8a420542",
+    "written_at_utc": "2026-09-27T20:54:03Z",
+    "verdict": "REJECT",
+    "disposition": "REJECT / NO_SURVIVOR",
+    "performance_claimable": false,
+    "yield": "rounds_used 1/3, no_progress_rounds 0/2, yield_decision STOP_REJECT",
+    "falsification_statuses": {
+      "oos_horizon_accuracy_below_52_5": "FAIL",
+      "shuffled_open": "FAIL",
+      "cross_sectional_50_stock_median_auc": "INDETERMINATE",
+      "execution_delay_accuracy_decay": "INDETERMINATE"
+    },
+    "written_once": "atomic tmp+rename, then re-read and invariant-checked (verdict=REJECT, 0 survivors, performance_claimable=false, STOP_REJECT, bundle null); INV-4: immutable from here on",
+    "authoritative_attempt": "u3 (only DONE attempt in the round; u1/u2 terminal FAILED and never re-run)"
+  },
+
+  "kanban": null,
+  "note": "direct family: no card ids anywhere; no kanban CLI subcommand or kanban_* tool was called, and no other candidate was advanced."
+}

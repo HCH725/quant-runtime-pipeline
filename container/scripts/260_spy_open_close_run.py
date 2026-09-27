@@ -466,6 +466,17 @@ def derive_signal(panel, case, forecast):
     return out
 
 
+def signal_metric_fields(meta):
+    """JSON-safe copy of a fitted layer for artifacts/signal_metrics.json.
+
+    The fitted path carries ndarrays (train/fit counts, the signal vector) that
+    json.dump cannot serialise, and the raw forecast is deliberately excluded:
+    only the decision rule's inputs and measured accuracies belong in the artifact.
+    """
+    return {k: (v.tolist() if isinstance(v, np.ndarray) else v)
+            for k, v in meta.items() if k != "forecast"}
+
+
 def signal_layer(panel, case, shuffled_open_seed=None):
     """Compatibility wrapper: one walk-forward fit + the case's threshold."""
     meta = walk_forward(panel, case["model_kind"], shuffled_open_seed=shuffled_open_seed)
@@ -1045,8 +1056,10 @@ def run(spec, attempt_dir):
             "official_funding_only_no_modeled_charges": all(official_events[s] == funding[s][1]["official"] for s in SYMBOLS),
             "signal_features_exclude_same_day_high_low_close": True,
             "entry_delay_1_bar_effective": (not traded) or abs(delay_delta) > 1e-6,
-            "selector_winner_is_historical_row": all(r["grid"] == "historical" for r in
-                [x for x in results if x.get("winner")]),
+            # results entries are cohort records {cohort, outcome, **detail}; the selected
+            # cell (and its frozen grid label) lives under the record's "winner" key.
+            "selector_winner_is_historical_row": all(x["winner"]["grid"] == "historical"
+                for x in results if x.get("winner")),
         }
         atomic_json(artifacts / "stress_effects.json", {"baseline_grid": "full",
             "net_pnl_delta": {**stress_delta, "entry_delay_1_bar": delay_delta},
@@ -1056,7 +1069,7 @@ def run(spec, attempt_dir):
         for s in SYMBOLS:
             signal_metrics[s] = {}
             for c in CASES:
-                item = {k: v for k, v in layers[(s, c["case_code"])].items() if k != "forecast"}
+                item = signal_metric_fields(layers[(s, c["case_code"])])
                 item["directional_accuracy_full"] = direction_accuracy(
                     daily[s], layers[(s, c["case_code"])], *PHASES["full"])
                 item["delay_accuracy_full"] = {
