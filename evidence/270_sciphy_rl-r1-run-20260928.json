@@ -1,0 +1,632 @@
+{
+ "schema_version": 1,
+ "kind": "run",
+ "contract_section": "14.4 / 16 / 15",
+ "family_id": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02",
+ "round_id": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "written_at_utc": "2026-09-27T22:19:40Z",
+ "recorded_by": "Hermes default worker (one-shot production handoff execution)",
+ "specs_frozen_before_compute": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02/rounds/sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1/round-spec.json",
+   "sha256": "sha256:7b626ef765ab6c9f3aa7815c762a7d4078f293179a5b7630288adc6de27f8c67",
+   "note": "immutable; parameter_contract validated (problems=[]) before the first launch and never rewritten after compute"
+  },
+  "run_spec_u1": {
+   "run_id": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u1",
+   "sha256": "sha256:7c4ab1208fbe8a16aed56b6cfa928b27a02038e2fa96528b5a3c21a1d1238ea9"
+  },
+  "run_spec_u2": {
+   "run_id": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u2",
+   "sha256": "sha256:a8cce393da1f0a33800f0783bde3926177d6708c90957f054ca96fb67a0377eb",
+   "contains_remediation_block": true
+  }
+ },
+ "prerequisite_gate_phase_2b": {
+  "catalog_only": [
+   "_meta/CONFIG.json",
+   "_meta/SCHEMA.md"
+  ],
+  "conclusion": "core signal inputs present on the complete local eligible universe: 1715 contiguous daily OHLCV bars per symbol 2022-01-01..2026-09-11, official funding observations, canonical fee/tick metadata. Market capitalization is absent from SCHEMA.md but is not an input to the registered signal, control mapping or cost model, so no core prerequisite is missing -> not a TECHNICAL_INCOMPLETE case.",
+  "funding_coverage": {
+   "BNBUSDT": {
+    "official": 3140,
+    "charged_events": 3140,
+    "modeled_ignored": 2005,
+    "other_ignored": 0,
+    "days_with_official": 1047,
+    "days_total": 1715,
+    "first_official_utc": "2023-10-31T08:00:00Z",
+    "last_official_utc": "2026-09-11T16:00:00Z",
+    "missing_intervals_are_zero_not_modeled": true
+   },
+   "BTCUSDT": {
+    "official": 3140,
+    "charged_events": 3140,
+    "modeled_ignored": 2005,
+    "other_ignored": 0,
+    "days_with_official": 1047,
+    "days_total": 1715,
+    "first_official_utc": "2023-10-31T08:00:00Z",
+    "last_official_utc": "2026-09-11T16:00:00Z",
+    "missing_intervals_are_zero_not_modeled": true
+   },
+   "ETHUSDT": {
+    "official": 3140,
+    "charged_events": 3140,
+    "modeled_ignored": 2005,
+    "other_ignored": 0,
+    "days_with_official": 1047,
+    "days_total": 1715,
+    "first_official_utc": "2023-10-31T08:00:00Z",
+    "last_official_utc": "2026-09-11T16:00:00Z",
+    "missing_intervals_are_zero_not_modeled": true
+   },
+   "SOLUSDT": {
+    "official": 3140,
+    "charged_events": 3140,
+    "modeled_ignored": 2080,
+    "other_ignored": 0,
+    "days_with_official": 1047,
+    "days_total": 1715,
+    "first_official_utc": "2023-10-31T08:00:00Z",
+    "last_official_utc": "2026-09-11T16:00:00Z",
+    "missing_intervals_are_zero_not_modeled": true
+   }
+  },
+  "no_new_checker": "bounded read of the two canonical catalog files plus small direct sample reads; no candidate-specific prerequisite checker, no host-wide scan, no synthetic fixture"
+ },
+ "engine": {
+  "path": "/scripts/270_sciphy_rl_run.py",
+  "sha256_u1": "sha256:9302e9421cf59aadf433be16b2f1911931df4507bc14eb28bc0388f5339fcc26",
+  "sha256_u2": "sha256:22e047efb563665a88f9b4541d079aeb8439e0208c681e7f1248379f13a70163",
+  "self_check": "/scripts/tests/test_sciphy_rl_engine.py",
+  "self_check_u2_sha256": "sha256:0125e38ad9b359f5f8996d3aa2afb0544a4d002ce2e4e3f1d512e5d059e3ce2d",
+  "self_check_result": "10/10 passed inside qlib-run (production image) before each launch",
+  "repo_host_sha_match": "repo and /Users/hong/workspace/qlib-apple-container/scripts copies sha256-identical for engine and self-check"
+ },
+ "preflight": {
+  "u1": {
+   "command": "python3 runtime/preflight.py --launch --attempt-dir <u1> --json",
+   "result": "overall PASS, evaluated=10 failed=0 launch_gate=evaluated; P10 recomputed script sha 9302e942... match",
+   "evidence": "evidence/270_sciphy_rl-r1-preflight-20260928.json"
+  },
+  "u2": {
+   "command": "python3 runtime/preflight.py --launch --attempt-dir <u2> --json",
+   "result": "overall PASS, evaluated=10 failed=0 launch_gate=evaluated; P9 no terminal sentinel in u2; P10 recomputed script sha 22e047ef... match",
+   "evidence": "evidence/270_sciphy_rl-r1-u2-preflight-20260928.json"
+  }
+ },
+ "launches": [
+  {
+   "attempt": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u1",
+   "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/270_sciphy_rl_run.py --run-spec <u1>/run-spec.json --attempt-dir <u1> > <u1>/logs/console.log 2>&1\"",
+   "exact_once": "single container exec -d; one process, no second launch for this run_id",
+   "outcome": "ARTIFACT_READY in 11.6s; coverage_complete=true (3840/3840) but assertions_all_true=false -> verdict_recommendation=TECHNICAL_INCOMPLETE",
+   "failed_assertion": [
+    "microstructure_fields_computed"
+   ]
+  },
+  {
+   "attempt": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u2",
+   "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/270_sciphy_rl_run.py --run-spec <u2>/run-spec.json --attempt-dir <u2> > <u2>/logs/console.log 2>&1\"",
+   "exact_once": "single container exec -d; one process, no second launch for this run_id",
+   "outcome": "ARTIFACT_READY in 11.5s; coverage_complete=true (3840/3840), assertions_all_true=true, verdict_recommendation=PASS"
+  }
+ ],
+ "remediation": {
+  "attempt": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u2",
+  "class": "infrastructure failure (script gate defect), contract 13/15",
+  "root_cause": "u1 gated the descriptive Corwin-Schultz field on an unvalidated 0.5-of-sessions coverage floor; the published alpha is positive iff beta > gamma, which holds on 0.32-0.36 of sessions in this universe, so the floor could never be met even though the formula is correct",
+  "fix": "floor replaced by the exact identity it stood in for (defined-day count == independent beta > gamma count, |diff| <= 1) plus non-zero ADV count; the measured share is reported instead of gated",
+  "invariance_proof": "all ten grid_*.csv files are byte-identical between u1 and u2 (sha256 comparison), i.e. the remediation changed no scientific result, survivor, cull or falsification outcome",
+  "unchanged": [
+   "hypothesis",
+   "signal constants",
+   "eligible universe",
+   "data window",
+   "IS/OOS split",
+   "parameter domain (2 x 48)",
+   "DCA rail",
+   "cost model",
+   "selector",
+   "disposition",
+   "falsification battery",
+   "grids",
+   "simulate() code path",
+   "round-spec.json"
+  ],
+  "attempt_budget": "2 of max_rounds=3",
+  "precedent": "same pattern as git history: 'docs(evidence): record BPPP r1-u1 script failure, same-round remediation and r1-u2 launch'"
+ },
+ "result_summary": {
+  "attempt": "sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u2",
+  "status": "ARTIFACT_READY",
+  "coverage": {
+   "complete": true,
+   "cells": 3840,
+   "expected": 3840,
+   "grids": [
+    "cost_attrition_40bps",
+    "entry_delay_1_bar",
+    "fee_2x",
+    "full",
+    "funding_2x",
+    "historical",
+    "no_funding",
+    "no_funding_full",
+    "oos",
+    "slippage_2ticks"
+   ],
+   "cohorts": 4
+  },
+  "assertions": {
+   "all_true": true,
+   "failures": [],
+   "detail": {
+    "qlib_readback_0_9_7": true,
+    "coverage_complete": true,
+    "case_evaluations_total_exact": true,
+    "independent_gross_net_decomposition": true,
+    "dca_histogram_reconciles": true,
+    "cost_stress_effective": true,
+    "funding_2x_effective": true,
+    "entry_delay_1_bar_effective": true,
+    "official_funding_only_no_modeled_charges": true,
+    "signal_constants_match_source_publication": true,
+    "signal_oracle_disclosure_present": true,
+    "pit_status_fail_disclosed": true,
+    "microstructure_fields_computed": true,
+    "selector_winner_is_historical_row": true
+   }
+  },
+  "disposition_band": {
+   "disposition": "MULTIPLE_SURVIVORS",
+   "verdict_recommendation": "PASS",
+   "mapping": "v1.4.0",
+   "note": "suggestion only; the final verdict goes to verdict.json under contract 10.7"
+  },
+  "survivors": [
+   {
+    "cohort": "BNBUSDT/1d",
+    "outcome": "SURVIVOR",
+    "winner": {
+     "episode_days": 63,
+     "spacing_pct": 0.02,
+     "size_multiplier": 1.0,
+     "breakeven_tp_pct": 0.02,
+     "invalidation_pct": 0.1
+    },
+    "full_window": {
+     "net_pnl": 190431.2221496571,
+     "annualized_return": 0.5287672013048101,
+     "sharpe": 2.9854056453868374,
+     "max_dd_pct": 34.06000323633268,
+     "max_dd_usdt": 18125.743791754816,
+     "ending_equity": 220431.22214965717,
+     "gross_pnl": 213624.7217447081,
+     "fees": 22971.709741774543,
+     "funding": 221.7898532763841,
+     "turnover_usdt": 45943419.48354904,
+     "episodes": 1330,
+     "fills": 3628,
+     "adds": 968,
+     "max_effective_leverage": 1.7053021153975054,
+     "capital_utilization": 0.17053021153975054,
+     "tp_hits": 927,
+     "stop_hits": 21,
+     "rebalance_exits": 372,
+     "terminal_exits": 10,
+     "margin_calls": 0
+    },
+    "historical": {
+     "net_pnl": 158120.66526653437,
+     "sharpe": 3.1194340237449834,
+     "episodes": 1064
+    },
+    "oos": {
+     "net_pnl": 32361.75667470534,
+     "sharpe": 3.002137037079713,
+     "episodes": 263
+    },
+    "robustness": {
+     "fee_2x": {
+      "net_pnl": 167459.5124078826,
+      "sharpe": 2.701132316384578,
+      "max_dd_pct": 35.678596366395915
+     },
+     "funding_2x": {
+      "net_pnl": 190209.43229638066,
+      "sharpe": 2.983562647025284,
+      "max_dd_pct": 34.06000323633268
+     },
+     "entry_delay_1_bar": {
+      "net_pnl": 149144.90613691165,
+      "sharpe": 2.444989870461816,
+      "max_dd_pct": 25.324763293086317
+     },
+     "slippage_2ticks": {
+      "net_pnl": 189940.87540140352,
+      "sharpe": 2.9777378539760635,
+      "max_dd_pct": 34.112699944525524
+     }
+    },
+    "neighbourhood": {
+     "neighbours": 7,
+     "agreeing": 7,
+     "same_sign_fraction": 1.0,
+     "passed": true
+    },
+    "cull_reasons": [],
+    "falsification_battery": "NOT_FALSIFIED_WITH_INDETERMINATE"
+   },
+   {
+    "cohort": "BTCUSDT/1d",
+    "outcome": "SURVIVOR",
+    "winner": {
+     "episode_days": 31,
+     "spacing_pct": 0.01,
+     "size_multiplier": 1.0,
+     "breakeven_tp_pct": 0.01,
+     "invalidation_pct": 0.1
+    },
+    "full_window": {
+     "net_pnl": 268438.3283053558,
+     "annualized_return": 0.6305930258370396,
+     "sharpe": 7.185188392339665,
+     "max_dd_pct": 9.367857976349695,
+     "max_dd_usdt": 10442.661844762566,
+     "ending_equity": 298438.3283053557,
+     "gross_pnl": 305087.4821055537,
+     "fees": 36549.68204094737,
+     "funding": 99.47175925080666,
+     "turnover_usdt": 73099364.08189496,
+     "episodes": 1568,
+     "fills": 5223,
+     "adds": 2087,
+     "max_effective_leverage": 2.7438144589784303,
+     "capital_utilization": 0.274381445897843,
+     "tp_hits": 1437,
+     "stop_hits": 6,
+     "rebalance_exits": 119,
+     "terminal_exits": 6,
+     "margin_calls": 0
+    },
+    "historical": {
+     "net_pnl": 215254.21396378535,
+     "sharpe": 7.425539724579532,
+     "episodes": 1250
+    },
+    "oos": {
+     "net_pnl": 52987.989957732265,
+     "sharpe": 16.729391715148406,
+     "episodes": 317
+    },
+    "robustness": {
+     "fee_2x": {
+      "net_pnl": 231888.64626440866,
+      "sharpe": 6.418946121459604,
+      "max_dd_pct": 10.552391585521846
+     },
+     "funding_2x": {
+      "net_pnl": 268338.8565461052,
+      "sharpe": 7.181980240943072,
+      "max_dd_pct": 9.367857976349695
+     },
+     "entry_delay_1_bar": {
+      "net_pnl": 216479.3986344901,
+      "sharpe": 2.2730075138059487,
+      "max_dd_pct": 31.398076556353928
+     },
+     "slippage_2ticks": {
+      "net_pnl": 268352.73595597065,
+      "sharpe": 7.183132578500928,
+      "max_dd_pct": 9.373073115683278
+     }
+    },
+    "neighbourhood": {
+     "neighbours": 5,
+     "agreeing": 5,
+     "same_sign_fraction": 1.0,
+     "passed": true
+    },
+    "cull_reasons": [],
+    "falsification_battery": "NOT_FALSIFIED_WITH_INDETERMINATE"
+   },
+   {
+    "cohort": "ETHUSDT/1d",
+    "outcome": "SURVIVOR",
+    "winner": {
+     "episode_days": 63,
+     "spacing_pct": 0.04,
+     "size_multiplier": 1.0,
+     "breakeven_tp_pct": 0.02,
+     "invalidation_pct": 0.1
+    },
+    "full_window": {
+     "net_pnl": 154254.52450489017,
+     "annualized_return": 0.47153855327348193,
+     "sharpe": 3.5312849814833878,
+     "max_dd_pct": 15.24599352120069,
+     "max_dd_usdt": 4923.09471494118,
+     "ending_equity": 184254.52450488994,
+     "gross_pnl": 171832.9408041553,
+     "fees": 17570.355968920598,
+     "funding": 8.060330344447966,
+     "turnover_usdt": 35140711.93784123,
+     "episodes": 1367,
+     "fills": 3124,
+     "adds": 390,
+     "max_effective_leverage": 1.1838357774156492,
+     "capital_utilization": 0.11838357774156492,
+     "tp_hits": 1011,
+     "stop_hits": 26,
+     "rebalance_exits": 321,
+     "terminal_exits": 9,
+     "margin_calls": 0
+    },
+    "historical": {
+     "net_pnl": 120432.64186317056,
+     "sharpe": 3.548658980676395,
+     "episodes": 1090
+    },
+    "oos": {
+     "net_pnl": 33832.09479548749,
+     "sharpe": 6.561671924447264,
+     "episodes": 276
+    },
+    "robustness": {
+     "fee_2x": {
+      "net_pnl": 136684.1685359699,
+      "sharpe": 3.219493784378331,
+      "max_dd_pct": 15.484132737231207
+     },
+     "funding_2x": {
+      "net_pnl": 154246.4641745457,
+      "sharpe": 3.5314376454862497,
+      "max_dd_pct": 15.24599352120069
+     },
+     "entry_delay_1_bar": {
+      "net_pnl": 116186.216091764,
+      "sharpe": 2.7950121663428975,
+      "max_dd_pct": 13.493342980953429
+     },
+     "slippage_2ticks": {
+      "net_pnl": 154153.10629493187,
+      "sharpe": 3.529454494488614,
+      "max_dd_pct": 15.247224622765973
+     }
+    },
+    "neighbourhood": {
+     "neighbours": 6,
+     "agreeing": 5,
+     "same_sign_fraction": 0.8333333333333334,
+     "passed": true
+    },
+    "cull_reasons": [],
+    "falsification_battery": "NOT_FALSIFIED_WITH_INDETERMINATE"
+   },
+   {
+    "cohort": "SOLUSDT/1d",
+    "outcome": "SURVIVOR",
+    "winner": {
+     "episode_days": 31,
+     "spacing_pct": 0.02,
+     "size_multiplier": 1.0,
+     "breakeven_tp_pct": 0.03,
+     "invalidation_pct": 0.1
+    },
+    "full_window": {
+     "net_pnl": 381843.81220767327,
+     "annualized_return": 0.7462866039659946,
+     "sharpe": 3.1955586015276722,
+     "max_dd_pct": 28.380946829198955,
+     "max_dd_usdt": 23521.966027291826,
+     "ending_equity": 411843.8122076723,
+     "gross_pnl": 415243.7766647295,
+     "fees": 33340.6678866864,
+     "funding": 59.29657036977115,
+     "turnover_usdt": 66681335.773372866,
+     "episodes": 1460,
+     "fills": 4790,
+     "adds": 1870,
+     "max_effective_leverage": 1.5463542065504405,
+     "capital_utilization": 0.15463542065504404,
+     "tp_hits": 1120,
+     "stop_hits": 75,
+     "rebalance_exits": 250,
+     "terminal_exits": 15,
+     "margin_calls": 0
+    },
+    "historical": {
+     "net_pnl": 317177.12039370683,
+     "sharpe": 3.3701073562849992,
+     "episodes": 1182
+    },
+    "oos": {
+     "net_pnl": 65778.95765972455,
+     "sharpe": 4.451142527661579,
+     "episodes": 278
+    },
+    "robustness": {
+     "fee_2x": {
+      "net_pnl": 348503.14432098716,
+      "sharpe": 2.952354689455265,
+      "max_dd_pct": 30.440186266450368
+     },
+     "funding_2x": {
+      "net_pnl": 381784.5156373022,
+      "sharpe": 3.195320940943385,
+      "max_dd_pct": 28.380946829198955
+     },
+     "entry_delay_1_bar": {
+      "net_pnl": 237586.23166475445,
+      "sharpe": 1.5679320375475823,
+      "max_dd_pct": 55.52404479428302
+     },
+     "slippage_2ticks": {
+      "net_pnl": 372916.6394174598,
+      "sharpe": 3.1050934476136596,
+      "max_dd_pct": 28.846023891029287
+     }
+    },
+    "neighbourhood": {
+     "neighbours": 6,
+     "agreeing": 5,
+     "same_sign_fraction": 0.8333333333333334,
+     "passed": true
+    },
+    "cull_reasons": [],
+    "falsification_battery": "NOT_FALSIFIED_WITH_INDETERMINATE"
+   }
+  ],
+  "dca_layer_histogram": {
+   "level_00": 419073,
+   "level_01": 245471,
+   "level_02": 97574,
+   "level_03": 38457,
+   "level_04": 15699,
+   "level_05": 13125,
+   "level_06": 3372,
+   "level_07": 1944,
+   "level_08": 1103,
+   "level_09": 635,
+   "level_10": 1514,
+   "level_11": 179
+  },
+  "episode_horizon_terminal_exits": {
+   "31": 3204,
+   "63": 1338
+  },
+  "equal_weight_baseline": {
+   "definition": "daily rebalanced 1/N over the four-symbol local universe",
+   "sharpe": {
+    "historical": 0.6150100612724443,
+    "oos": -0.6307736965928364,
+    "full": 0.3932935170570692
+   },
+   "annualized": {
+    "historical": 0.20644654186573863,
+    "oos": -0.3835715789911083,
+    "full": 0.0535929724697235
+   }
+  },
+  "signal_diagnostics": {
+   "BNBUSDT": {
+    "oracle_r2_full": 0.025211443095061393,
+    "oracle_r2_oos": 0.02377335486997065,
+    "signal_lag1_autocorr": 0.0007569234542544987,
+    "pit_status": "FAIL_LOOKAHEAD_BY_SOURCE_DESIGN"
+   },
+   "BTCUSDT": {
+    "oracle_r2_full": 0.03335992029433403,
+    "oracle_r2_oos": 0.02686961647855342,
+    "signal_lag1_autocorr": -0.025941118592704735,
+    "pit_status": "FAIL_LOOKAHEAD_BY_SOURCE_DESIGN"
+   },
+   "ETHUSDT": {
+    "oracle_r2_full": 0.027150992905576883,
+    "oracle_r2_oos": 0.0721366127916648,
+    "signal_lag1_autocorr": -0.014630988918271325,
+    "pit_status": "FAIL_LOOKAHEAD_BY_SOURCE_DESIGN"
+   },
+   "SOLUSDT": {
+    "oracle_r2_full": 0.021965789632765877,
+    "oracle_r2_oos": 0.00923562780482463,
+    "signal_lag1_autocorr": -0.039904496081120615,
+    "pit_status": "FAIL_LOOKAHEAD_BY_SOURCE_DESIGN"
+   }
+  },
+  "microstructure": {
+   "BNBUSDT": {
+    "corwin_schultz_defined_days": 619,
+    "corwin_schultz_defined_share": 0.360932944606414,
+    "corwin_schultz_mean": 0.02054673146675014,
+    "corwin_schultz_median": 0.015133573789769296,
+    "beta_gt_gamma_sessions": 619,
+    "beta_gt_gamma_share": 0.36114352392065346,
+    "adv_days_defined": 1695,
+    "adv_mean_volume": 1182821.8568501475,
+    "note": "registered microstructure fields derived from local daily H/L and volume; the frozen cost model stays canonical fee + adverse tick slippage + official funding (candidate body)"
+   },
+   "BTCUSDT": {
+    "corwin_schultz_defined_days": 552,
+    "corwin_schultz_defined_share": 0.321865889212828,
+    "corwin_schultz_mean": 0.017412767264442665,
+    "corwin_schultz_median": 0.012566963281245454,
+    "beta_gt_gamma_sessions": 552,
+    "beta_gt_gamma_share": 0.3220536756126021,
+    "adv_days_defined": 1695,
+    "adv_mean_volume": 312508.0472280826,
+    "note": "registered microstructure fields derived from local daily H/L and volume; the frozen cost model stays canonical fee + adverse tick slippage + official funding (candidate body)"
+   },
+   "ETHUSDT": {
+    "corwin_schultz_defined_days": 575,
+    "corwin_schultz_defined_share": 0.33527696793002915,
+    "corwin_schultz_mean": 0.024474873924266196,
+    "corwin_schultz_median": 0.01749497162443987,
+    "beta_gt_gamma_sessions": 575,
+    "beta_gt_gamma_share": 0.3354725787631272,
+    "adv_days_defined": 1695,
+    "adv_mean_volume": 4014840.3975683777,
+    "note": "registered microstructure fields derived from local daily H/L and volume; the frozen cost model stays canonical fee + adverse tick slippage + official funding (candidate body)"
+   },
+   "SOLUSDT": {
+    "corwin_schultz_defined_days": 623,
+    "corwin_schultz_defined_share": 0.363265306122449,
+    "corwin_schultz_mean": 0.03387309746932523,
+    "corwin_schultz_median": 0.023783586900632415,
+    "beta_gt_gamma_sessions": 623,
+    "beta_gt_gamma_share": 0.3634772462077013,
+    "adv_days_defined": 1695,
+    "adv_mean_volume": 26159274.884886436,
+    "note": "registered microstructure fields derived from local daily H/L and volume; the frozen cost model stays canonical fee + adverse tick slippage + official funding (candidate body)"
+   }
+  },
+  "falsification": {
+   "battery_status": "NOT_FALSIFIED_WITH_INDETERMINATE",
+   "hits": [],
+   "indeterminate": [
+    "hjb_regularization_ablation"
+   ],
+   "items": {
+    "hjb_regularization_ablation": "INDETERMINATE",
+    "signal_decay_stress": "NOT_FALSIFIED",
+    "transaction_cost_10_to_35bps": "NOT_FALSIFIED",
+    "window_overlap_significance": "NOT_FALSIFIED"
+   }
+  },
+  "funding_events_charged": {
+   "BNBUSDT": 3140,
+   "BTCUSDT": 3140,
+   "ETHUSDT": 3140,
+   "SOLUSDT": 3140
+  },
+  "runtime_seconds": 11.460900505000609,
+  "result_sha256": "sha256:dd2c5ebcbd61c291605f218e37004226ead2ba9f500b3f1dc89a85d6eaa3169f"
+ },
+ "claimability_evidence": {
+  "pit_status": "FAIL_LOOKAHEAD_BY_SOURCE_DESIGN",
+  "basis": "performance_claimable is decided in verdict.json under contract 9.6, not in result.json; this record carries the evidence, not a recommendation",
+  "missing_conditions": [
+   "point-in-time: the registered signal embeds the record's engineered oracle term rtilde_{t+1}, so the baseline decision at di's open uses day di's own return (look-ahead by source design; disclosed in artifacts/signal_metrics.json) - contract 9.6 PIT fails"
+  ],
+  "pit_clean_grid": "entry_delay_1_bar evaluates the identical signal one bar later and is reported in every grid",
+  "warning": "the baseline decision embeds one day of look-ahead by source design (the record's engineered oracle term rtilde_{t+1}); survivor PnL/Sharpe must not be read as an implementable edge"
+ },
+ "falsification_advice": {
+  "rule": "record falsification battery hit => cull or family REJECT (body FAILURE TAXONOMY); verdict_recommendation is the v1.4.0 disposition band only and must not be read as science advice",
+  "battery_status": "NOT_FALSIFIED_WITH_INDETERMINATE",
+  "advice": null
+ },
+ "what_was_not_done": [
+  "no verdict.json written (host-side disposition belongs to the n8n C4 cadence / contract 10.7 default writer)",
+  "no DONE/FAILED terminal sentinel written (terminal evidence is produced by the host-side disposition step)",
+  "no survivor bundle, leaderboard, evidence package or forward-state change",
+  "no Paper/Live touched; raw under /data/raw never written",
+  "no next family appended (contract 14.4)"
+ ],
+ "next_step": "n8n C4 cadence reads attempt sciphy-physics-informed-reinforcement-learning-portfolio-optimization-2026-09-02-r1-u2 (current), writes terminal evidence and verdict.json per contract 9.6/10.7, then the frozen survivor bundle per 10.8"
+}
