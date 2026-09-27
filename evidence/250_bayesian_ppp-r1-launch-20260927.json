@@ -1,0 +1,100 @@
+{
+  "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "family_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02",
+  "round_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1",
+  "run_id": "portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1",
+  "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
+  "created_at_utc": "2026-09-27T15:52:14Z",
+  "frozen_specs": {
+    "round_spec": "/Volumes/ExpansionDrive/qlib-results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/round-spec.json",
+    "round_spec_sha256": "1dbb72a3a4d7ab2732c17e74314d2d5f241de50023bff520d8dd64817885501c",
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1/run-spec.json",
+    "run_spec_sha256": "3ba54e52355e827f00e296e503d4bb64a2cb0ed8e690e018605cbc3a1fbbe9fd",
+    "frozen_before_compute": true,
+    "validators": [
+      "runtime.parameter_contract.validate_round_spec_contract -> OK",
+      "container/scripts/250_bayesian_ppp_run.py::validate_spec(run_spec) -> OK (against /Volumes/ExpansionDrive/market-data-raw/_meta/CONFIG.json)",
+      "no kanban_task_id / kanban_board / task_id key anywhere in round-spec or run-spec (recursive key scan)"
+    ]
+  },
+  "engine": {
+    "script": "/scripts/250_bayesian_ppp_run.py",
+    "repo_path": "container/scripts/250_bayesian_ppp_run.py",
+    "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/250_bayesian_ppp_run.py",
+    "sha256": "sha256:c52288cc0296a604bc2475ecd5f42498180237bc55b3d7d0b034b88d5942cdc7",
+    "both_copies_identical": true,
+    "self_check": "container/scripts/tests/test_bayesian_ppp_engine.py",
+    "self_check_sha256": "sha256:eb57b49ae8271e91bfbf5ffcbfa4eaeb9ac5457b6f1f7f22f057b66a99d7c051",
+    "self_check_result": "in-container self-check on the final bytes: 10/10 PASS (exit 0)"
+  },
+  "verification": {
+    "self_check_scope": "cross-sectional standardization (mean 0 / unit variance), causal estimator (future-perturbation invariance of the frozen weights), plug-in normal equations, Bayesian regularization + prior-scale monotonicity, Var(theta|D_t) PSD/symmetric, singular plug-in branch, per-fill gross-fees-funding==net decomposition with two negative controls, layer histogram invariants, run-spec round-trip through validate_spec, frozen 3-test battery + direct-family kanban-key rejection",
+    "static_name_scan": "AST undefined-name scan over 250_bayesian_ppp_run.py -> UNDEFINED_NONE (no leftover sibling identifiers)",
+    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <attempt> -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P10 recomputed script sha match",
+    "out_of_tree_smoke": {
+      "what": "pre-freeze build_qlib path only, writing to a throwaway in-container directory; never to the results tree",
+      "window": "full canonical raw 2022-01-01..2026-09-11",
+      "result": "47.2 s, SMOKE_OK; raw -> CSV -> dump_bin -> qlib.data.D read-back over all 28 datasets; bars per symbol 5m=493920, 15m=164640, 30m=82320, 1h=41160, 4h=10290, 1d=1715, 1w=245; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]"
+    },
+    "no_full_backtest_smoke_run": "the long backtest itself was not rehearsed; launch is exact-once and disposition is left to the existing n8n C4 cadence"
+  },
+  "prerequisite_readback_phase_2b": {
+    "sources": ["/data/raw/_meta/CONFIG.json (market-data-raw config/v2)", "/data/raw/_meta/SCHEMA.md"],
+    "core_signal_requirement": "cross-sectionally standardized characteristics x (sum_i x = 0, (1/N) sum_i x^2 = 1) + cross-sectional payoff f = (1/N) sum_i x_i r_i -> PPP w_i = wbar_i + (1/N) theta' x_i -> Bayesian objective with (1/gamma) Omega_0^-1 and Var(theta|D_t)",
+    "available": "market_type=usdm_perp; venue BINANCE; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]; intervals [1d,1w,15m,30m,4h,5m,1h] = 28 datasets; datasets include klines and funding; SCHEMA klines = open_time_ms/close_time_ms/open/high/low/close/volume (6 fields) with 'No gaps are silently filled'; instruments carry price_increment + taker_fee; funding carries truth_status official/modeled with 'A modeled rate must never be promoted to an official rate'",
+    "funding_rule_applied": "official observations only, timestamped at their own calc_time and mark price; a missing official observation is zero cost for that interval with coverage disclosed; modeled rows are never charged; execution-cost coverage gaps are not a prelaunch TECHNICAL_INCOMPLETE",
+    "verdict": "PRESENT -> the registered characteristic/payoff layers compute on the complete local eligible universe (4 symbols x 7 intervals = 28 cohorts); NOT a prerequisite-missing TECHNICAL_INCOMPLETE case, so the full backtest was launched",
+    "absent_but_non_core_or_excluded": [
+      "equity accounting fields (book-to-market, operating profitability, investment growth) - absent from the canonical raw",
+      "order book / quote / depth - absent, so bid-ask spread cannot be computed",
+      "quote_volume / trade count / taker-buy splits - documented coverage limit of the klines record; the Amihud denominator is close x base volume (research-defined proxy)",
+      "market-cap - absent, so the record's value-weighted benchmark is replaced by equal weight 1/N (research-defined)",
+      "6-1m momentum and idiosyncratic skewness - excluded because K would exceed N = 4 and leave theta unidentified on this cross-section"
+    ],
+    "scope": "conclusions are explicitly limited to this local 4-name x 7-interval universe"
+  },
+  "adaptation_disclosure": {
+    "registered_mechanism_unchanged": "cross-sectional standardization, the PPP weight parameterization, the Bayesian objective and theta* = (Sigma_f + (1/gamma) Omega_0^-1 + Var(theta|D_t))^-1 ((1/gamma) mu_f - sigma_mf), the plug-in PPP comparator, the three falsification tests with their thresholds, the 48-cell DCA domain, the gates and the selector/disposition versions are all verbatim from the frozen candidate body",
+    "research_defined_execution": [
+      "K = 4 characteristics at the N = 4 identification limit (momentum_12_1m, short_term_reversal_1m, realized_volatility, amihud_illiquidity)",
+      "estimation returns are divided by the causal trailing standard deviation of the market return over the same window, so the record's prior range sigma_0^2 in [0.01, 10.0] carries the same meaning on all seven local clocks",
+      "Var(theta|D_t) is the causal sandwich/asymptotic covariance of the PPP estimating equation evaluated at the plug-in solution (large-sample posterior under a flat prior); the proper prior enters through its own registered (1/gamma) Omega_0^-1 term",
+      "rebalance clock = 4 hours of each cohort's own bar grid (max(1 bar)), from the record's crypto portability section",
+      "strategy axes gamma in {0.5, 1.0} x est_window in {30, 90} rebalances = 4 cases per cohort",
+      "prior scale sigma_0^2 = 1.0 (registered constant, inside the record's own [0.01, 10.0] range)",
+      "benchmark weights = equal weight 1/N; min qualified |active tilt| = 0.002; slippage 1 tick adverse (2 ticks in the slippage_2ticks grid)"
+    ],
+    "falsification_operationalizations": [
+      "test 1: unweighted mean over the local timeframes where BOTH policies produced >= 1 OOS episode; BPPP net Sharpe >= 1.15 x plug-in net Sharpe AND BPPP turnover <= 0.75 x plug-in turnover; 0.0005 taker per fill = 10 bps round trip, official funding not charged, 1 tick adverse slippage; fewer than one evaluable timeframe -> INDETERMINATE",
+      "test 2: stress periods = the 4 worst calendar quarters by equal-weight market return of the local 1d grid over the full window (research-defined local analogue of the record's example crisis quarters); aggregate stress max drawdown summed over evaluable timeframes; PASS requires BPPP <= 0.80 x plug-in",
+      "test 3: sigma_0^2 grid [0.01, 0.1, 1.0, 10.0] inside the record's [0.01, 10.0]; realized return = sum over local timeframes of full-window sleeve net_pnl / starting_equity at gamma=1.0, est_window=90 and the registered fixed DCA cell; variation = (max-min)/max(|max|,|min|), FAIL when > 0.40; all four numerically zero -> INDETERMINATE"
+    ],
+    "unchanged": "core hypothesis, eligible universe, data window/split, DCA four-axis domain, selector/disposition versions, gates (min_episodes_is=10 / min_episodes_oos=3 / 0.6 neighbourhood), robustness grids, record falsification battery"
+  },
+  "launch": {
+    "command": "container exec -d qlib-run sh -c \"/opt/venv/bin/python /scripts/250_bayesian_ppp_run.py --run-spec /results/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02/rounds/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1/attempts/portfolio-bayesian-parametric-policies-policy-risk-regularization-2026-09-02-r1-u1/run-spec.json > .../logs/run.log 2>&1\"",
+    "container_id": "qlib-run",
+    "image_id": "qlib:0.9.7-arm64",
+    "seed": 20260927,
+    "started_at_utc": "2026-09-27T15:52:14Z",
+    "detached": true,
+    "state_readback": "state.json stage=RUNNING_QLIB; run.log line 1 'validate_spec ok; Qlib 0.9.7 multi-timeframe build starting for 4 x [5m,15m,30m,1h,4h,1d,1w]'; exactly one live runner (pid 2001 /opt/venv/bin/python /scripts/250_bayesian_ppp_run.py under its own sh -c wrapper pid 2000; the scanning shell itself excluded); P9 clean before launch",
+    "early_log_readback_2026-09-27T15:52:59Z": [
+      "qlib.Initialization succeeded with data_path /qlib/work/bayesian-ppp-v1/qlib-data",
+      "falsification oos 5m bayes_sharpe=-0.3169 plugin_sharpe=-0.1692 evaluable=True",
+      "falsification oos 15m bayes_sharpe=-0.5362 plugin_sharpe=-0.2710 evaluable=True"
+    ],
+    "worker_exited_after_launch": true,
+    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation"
+  },
+  "registered_expectations": {
+    "cohorts": 28,
+    "strategy_cases_per_cohort": 4,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 192,
+    "case_evaluations_per_grid": 5376,
+    "grid_count": 10,
+    "case_evaluations_total": 53760
+  },
+  "kanban": null
+}
