@@ -1273,7 +1273,7 @@ def quarter_bar_range(open_ms, quarter):
     first_month = (q - 1) * 3 + 1
     lo_ms = utc_ms("%04d-%02d-01" % (year, first_month))
     last_month = first_month + 2
-    hi_year, hi_month = (year + 1, 1) if last_month > 12 else (year, last_month + 1)
+    hi_year, hi_month = (year + 1, 1) if last_month >= 12 else (year, last_month + 1)
     hi_ms = utc_ms("%04d-%02d-01" % (hi_year, hi_month))
     lo = int(np.searchsorted(open_ms, lo_ms, side="left"))
     hi = int(np.searchsorted(open_ms, hi_ms, side="left"))
