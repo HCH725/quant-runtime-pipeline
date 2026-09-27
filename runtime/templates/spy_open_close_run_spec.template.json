@@ -1,0 +1,689 @@
+{
+  "schema_version": 1,
+  "document_kind": "run_spec",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+  "round_id": "{{round_id}}",
+  "run_id": "{{run_id}}",
+  "semantic_fingerprint": "sha256:fb7217c5f6bd0599ebd1d8e026cb262a1d75c75f7634dba82a73e2535e7fb039",
+  "status": "registered",
+  "created_at_utc": "{{created_at_utc}}",
+  "container_id": "qlib-run",
+  "image_id": "qlib:0.9.7-arm64",
+  "script": {
+    "path": "/scripts/260_spy_open_close_run.py",
+    "sha256": "{{script_sha256}}",
+    "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/260_spy_open_close_run.py"
+  },
+  "engine": {
+    "name": "spy_open_close_qlib_v1",
+    "script": "container/scripts/260_spy_open_close_run.py",
+    "container": "qlib-run",
+    "qlib_version": "0.9.7",
+    "seed": 260928,
+    "self_check": "container/scripts/tests/test_spy_open_close_engine.py",
+    "self_check_sha256": "{{engine_selfcheck_sha256}}"
+  },
+  "data": {
+    "raw_root": "/data/raw/binance/usdm",
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "timezone": "UTC",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "fields": [
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "signal_timeframe": {
+      "raw_interval": "1d",
+      "qlib_freq": "day"
+    },
+    "execution_timeframe": {
+      "raw_interval": "5m",
+      "qlib_freq": "5min",
+      "bars_per_day": 288
+    }
+  },
+  "split": {
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "rule": "chronological; frozen model fit prefix-only; OOS is read-only"
+  },
+  "params": [
+    {
+      "case_code": 0,
+      "model_kind": "regression",
+      "tau_pct": 0.0,
+      "label": "rf_tau_0p0"
+    },
+    {
+      "case_code": 1,
+      "model_kind": "regression",
+      "tau_pct": 0.5,
+      "label": "rf_tau_0p5"
+    },
+    {
+      "case_code": 2,
+      "model_kind": "regression",
+      "tau_pct": 1.0,
+      "label": "rf_tau_1p0"
+    },
+    {
+      "case_code": 3,
+      "model_kind": "regression",
+      "tau_pct": 1.5,
+      "label": "rf_tau_1p5"
+    },
+    {
+      "case_code": 4,
+      "model_kind": "regression",
+      "tau_pct": 2.0,
+      "label": "rf_tau_2p0"
+    },
+    {
+      "case_code": 5,
+      "model_kind": "regression",
+      "tau_pct": 2.5,
+      "label": "rf_tau_2p5"
+    },
+    {
+      "case_code": 6,
+      "model_kind": "regression",
+      "tau_pct": 3.0,
+      "label": "rf_tau_3p0"
+    },
+    {
+      "case_code": 7,
+      "model_kind": "regression",
+      "tau_pct": 3.5,
+      "label": "rf_tau_3p5"
+    },
+    {
+      "case_code": 8,
+      "model_kind": "logistic",
+      "tau_pct": 0.0,
+      "label": "logistic_direct"
+    }
+  ],
+  "dca_domain": {
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "config_count": 48,
+    "base_quote": 1000.0,
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      }
+    ],
+    "max_active_layers": 11,
+    "leverage": 10.0,
+    "base_quote_status": "PROJECT_PRE_REGISTERED_CONSTANT",
+    "spacing_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+    "size_multiplier_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+    "breakeven_tp_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+    "invalidation_pct_status": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN"
+  },
+  "grids": [
+    "historical",
+    "oos",
+    "full",
+    "fee_2x",
+    "funding_2x",
+    "entry_delay_1_bar",
+    "slippage_2ticks",
+    "no_funding",
+    "no_funding_full",
+    "cost_attrition_40bps"
+  ],
+  "selector_version": "cohort-selector-v1",
+  "disposition_version": "cohort-disposition-v1",
+  "expected": {
+    "cohorts": 4,
+    "strategy_cases_per_cohort": 9,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 432,
+    "case_evaluations_per_grid": 1728,
+    "grid_count": 10,
+    "case_evaluations_total": 17280
+  },
+  "parameter_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+    "contract_ref": "same-day open-to-close direct-family frozen round-spec parameter contract",
+    "research_axes_ordered": [
+      {
+        "name": "model_threshold_case",
+        "kind": "composite",
+        "members": [
+          "case_code",
+          "tau_pct"
+        ],
+        "registered_values": [
+          [
+            0,
+            0.0
+          ],
+          [
+            1,
+            0.5
+          ],
+          [
+            2,
+            1.0
+          ],
+          [
+            3,
+            1.5
+          ],
+          [
+            4,
+            2.0
+          ],
+          [
+            5,
+            2.5
+          ],
+          [
+            6,
+            3.0
+          ],
+          [
+            7,
+            3.5
+          ],
+          [
+            8,
+            0.0
+          ]
+        ],
+        "row_fields": [
+          "case_code",
+          "tau_pct"
+        ]
+      },
+      {
+        "name": "spacing_pct",
+        "kind": "atomic",
+        "members": [
+          "spacing_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03,
+          0.04
+        ],
+        "row_fields": [
+          "spacing_pct"
+        ]
+      },
+      {
+        "name": "size_multiplier",
+        "kind": "atomic",
+        "members": [
+          "size_multiplier"
+        ],
+        "registered_values": [
+          1.0,
+          1.1
+        ],
+        "row_fields": [
+          "size_multiplier"
+        ]
+      },
+      {
+        "name": "breakeven_tp_pct",
+        "kind": "atomic",
+        "members": [
+          "breakeven_tp_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03
+        ],
+        "row_fields": [
+          "breakeven_tp_pct"
+        ]
+      },
+      {
+        "name": "invalidation_pct",
+        "kind": "atomic",
+        "members": [
+          "invalidation_pct"
+        ],
+        "registered_values": [
+          0.05,
+          0.1
+        ],
+        "row_fields": [
+          "invalidation_pct"
+        ]
+      }
+    ],
+    "row_fields": [
+      "case_code",
+      "tau_pct",
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "composite_map": {
+      "model_threshold_case": [
+        "case_code",
+        "tau_pct"
+      ]
+    },
+    "strategy_param_fields": [
+      "case_code",
+      "tau_pct"
+    ],
+    "dca_param_fields": [
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "canonical_recipe": {
+      "sort_keys": true,
+      "separators": [
+        ",",
+        ":"
+      ],
+      "ensure_ascii": false,
+      "numeric_rule": "JSON finite number; bool excluded"
+    },
+    "row_match_recipe": {
+      "keys": [
+        "symbol",
+        "timeframe",
+        "case_code",
+        "tau_pct",
+        "spacing_pct",
+        "size_multiplier",
+        "breakeven_tp_pct",
+        "invalidation_pct"
+      ],
+      "equality": "exact numeric / bytewise labels"
+    },
+    "non_params": [
+      "symbol",
+      "timeframe",
+      "case_label",
+      "model_kind",
+      "grid",
+      "metrics",
+      "diagnostics",
+      "timestamps"
+    ],
+    "domain_cardinality": {
+      "strategy": 9,
+      "dca": 48,
+      "per_cohort": 432
+    }
+  },
+  "signal_constants": {
+    "train_warmup": 252,
+    "refit_every": 5,
+    "seed": 260928
+  },
+  "gates": {
+    "min_episodes_is": 10,
+    "min_episodes_oos": 3,
+    "min_neighbour_same_sign_fraction": 0.6,
+    "oos_positive_net_pnl": true,
+    "stress_positive_net_pnl": true
+  },
+  "costs": {
+    "taker_fee": "canonical instrument taker_fee",
+    "slippage_ticks": 1,
+    "slippage_robustness_ticks": 2,
+    "slippage_basis": "instrument price_increment, adverse on every fill",
+    "funding": "official observations only at actual timestamp and mark price; missing intervals zero and disclosed; modeled rows never charged"
+  },
+  "falsification": [
+    "OOS directional accuracy below 52.5% fails the local adapted horizon test",
+    "equity cross-section test is INDETERMINATE until a point-in-time equity universe exists",
+    "source exact minute-delay test is INDETERMINATE; local 5m delay accuracy is measured",
+    "permuted-open directional accuracy statistically equivalent to true-open accuracy falsifies causal gap structure"
+  ],
+  "expected_outputs": [
+    "state.json",
+    "result.json",
+    "logs/run.log",
+    "artifacts/progress.json",
+    "artifacts/raw_build.json",
+    "artifacts/funding_coverage.json",
+    "artifacts/assertions.json",
+    "artifacts/stress_effects.json",
+    "artifacts/signal_metrics.json",
+    "artifacts/falsification.json",
+    "artifacts/dca_layer_histogram.json",
+    "artifacts/cohort_results.json",
+    "artifacts/cohort_survivors.json",
+    "artifacts/grid_historical.csv",
+    "artifacts/grid_oos.csv",
+    "artifacts/grid_full.csv",
+    "artifacts/grid_fee_2x.csv",
+    "artifacts/grid_funding_2x.csv",
+    "artifacts/grid_entry_delay_1_bar.csv",
+    "artifacts/grid_slippage_2ticks.csv",
+    "artifacts/grid_no_funding.csv",
+    "artifacts/grid_no_funding_full.csv",
+    "artifacts/grid_cost_attrition_40bps.csv"
+  ],
+  "notes": "direct family: no task_id, kanban_task_id or kanban_board keys; ownership is family_id+round_id+run_id."
+}

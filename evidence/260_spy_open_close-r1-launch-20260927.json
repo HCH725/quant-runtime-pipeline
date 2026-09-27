@@ -1,0 +1,108 @@
+{
+  "contract_version": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+  "round_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1",
+  "run_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1",
+  "execution_path": "direct_hermes (no Kanban task/board; ownership = family_id+round_id+run_id)",
+  "created_at_utc": "2026-09-27T19:44:10Z",
+  "frozen_specs": {
+    "round_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/round-spec.json",
+    "round_spec_sha256": "95380df0c42ef5e6c7e8f43fe40a9d5aa379fb5d677d4fbab94959a42de0ccbf",
+    "run_spec": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1/run-spec.json",
+    "run_spec_sha256": "3cff91b52a1e775b07a3be3db256e961b0e04b86db96b6ef42ac5d2e5f97827a",
+    "frozen_before_compute": true,
+    "frozen_by": "runtime/instantiate_spy_open_close.py (O_EXCL publish; refuses overwrite)",
+    "validators": [
+      "runtime.parameter_contract.validate_round_spec_contract -> OK (empty problem list)",
+      "container/scripts/260_spy_open_close_run.py::validate_spec(run_spec) -> OK (self-check test_run_spec_rejects_frozen_domain_changes)",
+      "recursive key scan: no task_id / kanban_task_id / kanban_board anywhere in round-spec or run-spec"
+    ]
+  },
+  "engine": {
+    "script": "/scripts/260_spy_open_close_run.py",
+    "repo_path": "container/scripts/260_spy_open_close_run.py",
+    "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/260_spy_open_close_run.py",
+    "sha256": "sha256:ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7",
+    "both_copies_identical": true,
+    "self_check": "container/scripts/tests/test_spy_open_close_engine.py",
+    "self_check_sha256": "sha256:b6a36f2208c310e8d85db070bd8faa4985f417dfed97506740978f9f4b191147",
+    "self_check_result": "in-container self-check in qlib-run (/opt/venv/bin/python): 18/18 PASS, exit 0",
+    "self_check_scope": "expanding walk-forward causality (train rows strictly before day t), source percent tau grid with mixed-unit negative control, all-tau-shared-fit-path, per-fill gross-fees-funding==net decomposition plus negative control, official-funding-only charging, hand-computed fast-path ledger, detailed-path single-settlement funding + TP, window-boundary rejection, raw shard-month selection + full-window coverage regression, frozen template round-trip through parameter_contract and validate_spec (frozen domain tampering and direct-family kanban keys rejected), registered product counts"
+  },
+  "verification": {
+    "preflight": "python3 runtime/preflight.py --launch --attempt-dir <attempt> --json -> overall PASS (evaluated=10 failed=0 launch_gate=evaluated); P10 recomputed script sha ba72b384... match; round-spec parameter_contract gate OK",
+    "build_smoke": "pre-freeze in-container smoke over the real canonical raw (throwaway /tmp/smoke_spy qlib dir): SMOKE_OK in 44.6 s; Qlib 0.9.7 dump_bin + D.features readback matched the raw panels; 1d=1715 rows and 5m=493920 rows = 1715x288 per symbol",
+    "grid_smoke": "one historical cell (BNBUSDT, case rf_tau_0p000, spacing 0.01/size 1.0/tp 0.01/invalidation 0.05) -> 0.078 s, 532 episodes, decomposition_ok=true; projected 17,280-cell grid ~0.4-1 h plus ~3 min of walk-forward fits (4 symbols x 2 model kinds, refit every 5 days) + seeded shuffled-open rerun",
+    "live_readback": {
+      "state_json": "stage=RUNNING_QLIB for run ...-r1-u1 at 2026-09-27T19:40:50Z",
+      "log": "run.log/console.log first line 'fitting BNBUSDT regression walk-forward' 2026-09-27T19:40:37Z; by 19:41:18Z had advanced to 'fitting BTCUSDT regression walk-forward'",
+      "progress": "artifacts/progress.json case_evaluations=0 (fit stage), runtime_seconds=46.8, expected_case_evaluations=17280",
+      "artifacts_written": ["artifacts/raw_build.json", "artifacts/funding_coverage.json", "artifacts/progress.json"],
+      "live_process": "container /proc scan matched exactly one /opt/venv/bin/python /scripts/260_spy_open_close_run.py under its sh -c wrapper"
+    },
+    "no_full_backtest_rehearsal": "the 17,280-cell grid was not rehearsed end-to-end; the fast/detailed episode paths and the selector/disposition/grid tail are covered by the in-container self-check plus the pre-freeze cell smoke on real data"
+  },
+  "prerequisite_readback_phase_2b": {
+    "sources": ["/data/raw/_meta/CONFIG.json", "/data/raw/_meta/SCHEMA.md"],
+    "core_signal_requirement": "daily (UTC) open and close per symbol for the expanding walk-forward 5-feature vector [O(t-2), C(t-2), O(t-1), C(t-1), O(t)] with target close(t)",
+    "available": "market_type=usdm_perp; venue=BINANCE; symbols [BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT]; intervals [1d,1w,15m,30m,4h,5m,1h]; datasets include klines and funding; SCHEMA klines = open_time_ms/close_time_ms/open/high/low/close/volume (decimal strings, 'No gaps are silently filled', monthly shards); funding carries truth_status official/modeled with 'Consumers that need exchange truth must filter on truth_status == \"official\"'; instruments dataset carries price_increment + fees",
+    "measured_scan": "registered window 2022-01-01..2026-09-11: 1d=1715 rows and 5m=493920 rows (=1715x288) per symbol, zero gaps/unsorted bars, zero non-finite or non-positive price fields; 20 zero-volume 5m bars per symbol on 2022-05-01 UTC are genuine no-trade intervals with valid prices and are kept",
+    "funding_rule_applied": "official observations only, timestamped at their own funding_time_ms and mark price; modeled rows are never charged; intervals without an official observation cost zero and the coverage gap is disclosed: official=3140 events, modeled_ignored=2005, days_with_official=1047 of 1715 per symbol",
+    "verdict": "PRESENT -> the registered signal computes on the complete local eligible universe (4 symbols x 1d signal / 5m execution); NOT a prerequisite-missing TECHNICAL_INCOMPLETE case, so the full backtest was launched",
+    "scope": "conclusions are explicitly limited to this local 4-name USD-M perpetual universe; no SPY or U.S. equity result is claimed"
+  },
+  "adaptation_disclosure": {
+    "registered_mechanism_unchanged": "five-feature vector, expanding prefix-only walk-forward (fits use rows strictly before day t), target close(t), direction vs prior close, source tau grid [0,0.5,1,1.5,2,2.5,3,3.5]%, 48-cell DCA domain, cohort-selector-v1/cohort-disposition-v1, gates (min_episodes_is=10 / min_episodes_oos=3 / 0.6 neighbourhood), robustness grids and the four-item record falsification battery are all taken from the frozen candidate body",
+    "research_defined_execution": [
+      "session = UTC day (crypto portability section of the record: no 09:30/16:00 auction, so the session boundary is defined explicitly)",
+      "regression branch = source-authorized Random Forest (100 trees, seed 260928); XGBoost is not installed in the registered image, so no silent booster substitution",
+      "logistic branch = LogisticRegression for the direct-classification case; the eight tau cases are thresholds on ONE shared fitted forecast path per symbol",
+      "refit every 5 days on the expanding prefix (compute schedule)",
+      "execution on the registered 5m grid: entry at the day open + 1 tick adverse, resting adds on the ladder (active levels <= 11), breakeven-anchored TP and resting invalidation against running average cost, reduce-only flatten at the session close",
+      "costs: canonical instrument taker fee per fill, 1 tick adverse slippage baseline (2 ticks in slippage_2ticks), official funding only at timestamp/mark",
+      "source execution-delay test measured on the registered 5m grid with conservative next-bar entry (1/5/15/30 min -> 09:35/09:35/09:45/10:00 bar opens); exact SPY minute prints are absent so that source item is reported INDETERMINATE, never a pass"
+    ],
+    "falsification_operationalizations": [
+      "test 1: local adapted OOS (2025-10-01..2026-09-11) directional accuracy vs the source 52.5% drift baseline; market/window differ from SPY 2024-03-16..2026 and the record text is carried verbatim",
+      "test 2: 50-stock median-AUC equity basket -> INDETERMINATE (equity cross-section absent from the canonical raw); INDETERMINATE is not a pass",
+      "test 3: execution-delay accuracy measured with delayed entry prices on 5m bars; source exact-minute item stays INDETERMINATE",
+      "test 4: seeded shuffled-open rerun of the same walk-forward (day-t open permuted within the lagged feature, lags aligned)"
+    ],
+    "unchanged": "core hypothesis, eligible universe (complete local set, no post-hoc shrink), data window/split, DCA four-axis domain, selector/disposition versions, gates, robustness grids, record falsification battery"
+  },
+  "pre_launch_remediation": {
+    "attempt_consumed": false,
+    "note": "All items below were found and fixed BEFORE the round/run specs were frozen and before any Qlib compute; no attempt was consumed and no registered hypothesis, parameter, gate, split or DCA rail changed.",
+    "findings": [
+      "raw shard-month filter sliced off only '.gz', so the end month compared as '<YYYY-MM>.jsonl' and the last 11 days (2026-09-01..2026-09-11) were silently dropped -> month now taken up to the first dot, plus a fail-closed 'registered window not fully covered' guard in load_rows; regression tests added",
+      "zero-volume 5m bars (20/symbol on 2022-05-01 UTC) were rejected by a strict >0 test -> price fields stay strictly positive, volume may be exactly 0 (legitimate no-trade interval); disclosed in the round-spec data block",
+      "tau units: threshold compared a percent-denominated delta against a fraction-denominated grid (100x looser than the source) -> tau_pct is now the source percent grid [0.0, 0.5, ..., 3.5]",
+      "walk-forward training window included the day-t feature row (day-t close leaked as a training target) -> train rows now cover days 2..t-1 only (train_n = t-2)",
+      "official funding settlements were charged once per bar iterated (up to 288x per episode) -> each settlement is now charged only inside its own timestamped bar",
+      "source execution-delay test was implemented as multi-day signal persistence -> replaced by delayed entry prices on the 5m grid, matching the registered next-bar rule",
+      "Qlib dump_bin stores float32, so the read-back gate was tightened from an impossible 1e-9 absolute match to exact float32 round-trip with a relative 1e-6 fallback (same gate as the sibling runner)"
+    ]
+  },
+  "launch": {
+    "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/260_spy_open_close_run.py --run-spec /results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1/run-spec.json --attempt-dir /results/.../attempts/...-r1-u1 > /results/.../attempts/...-r1-u1/logs/console.log 2>&1\"",
+    "container_id": "qlib-run",
+    "image_id": "qlib:0.9.7-arm64",
+    "seed": 260928,
+    "started_at_utc": "2026-09-27T19:40:30Z",
+    "detached": true,
+    "stdout_target": "logs/console.log (the engine owns logs/run.log itself, opened 'w' at start, so stdout is not redirected onto it)",
+    "state_readback": "state.json stage=RUNNING_QLIB with run_id same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1; run.log line 1 'fitting BNBUSDT regression walk-forward' at 19:40:37Z; qlib 0.9.7 initialized on /qlib/work/spy-open-close-v1/qlib-data; exactly one live runner under its own sh -c wrapper; P9 clean before launch (no terminal sentinel)",
+    "worker_exited_after_launch": true,
+    "disposition": "left to the existing n8n C4 cadence (host-side terminalize / sentinel / verdict per contract 9.4/10.7); this worker did not wait for the long computation"
+  },
+  "registered_expectations": {
+    "cohorts": 4,
+    "strategy_cases_per_cohort": 9,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 432,
+    "case_evaluations_per_grid": 1728,
+    "grid_count": 10,
+    "case_evaluations_total": 17280
+  },
+  "kanban": null
+}

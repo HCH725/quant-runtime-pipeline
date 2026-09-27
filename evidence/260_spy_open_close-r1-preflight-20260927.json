@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "kind": "preflight",
+  "contract_section": "16",
+  "checked_at_utc": "2026-09-27T19:40:02Z",
+  "host_boot_id": "boot-1790441600",
+  "attempt_dir": "/Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1",
+  "launch_gate": "evaluated",
+  "recovery": {
+    "attempted": false,
+    "ok": true,
+    "fail_reason": null,
+    "actions": []
+  },
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "P1",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+    },
+    {
+      "id": "P2",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+    },
+    {
+      "id": "P3",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-76377.tmp"
+    },
+    {
+      "id": "P4",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "container system status=running (rc=0)"
+    },
+    {
+      "id": "P5",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "qlib-run state=running"
+    },
+    {
+      "id": "P6",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+    },
+    {
+      "id": "P7",
+      "status": "PASS",
+      "layer": "card-local",
+      "detail": "/qlib/work writable: work_ok"
+    },
+    {
+      "id": "P8",
+      "status": "PASS",
+      "layer": "shared-layer",
+      "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+    },
+    {
+      "id": "P9",
+      "status": "PASS",
+      "layer": "-",
+      "detail": "no terminal sentinel in /Volumes/ExpansionDrive/qlib-results/same-day-open-to-close-directional-spy-walk-forward-2026-09-02/rounds/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1/attempts/same-day-open-to-close-directional-spy-walk-forward-2026-09-02-r1-u1"
+    },
+    {
+      "id": "P10",
+      "status": "PASS",
+      "layer": "card-local",
+      "detail": "run-spec present; script.sha256=sha256:ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7 recomputed=ba72b384db18ea7659c4bb7c6c089696626885d792d388db91b06acc387547f7 (/Users/hong/workspace/qlib-apple-container/scripts/260_spy_open_close_run.py)"
+    }
+  ]
+}

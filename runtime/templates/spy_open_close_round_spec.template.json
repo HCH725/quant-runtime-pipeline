@@ -1,0 +1,725 @@
+{
+  "schema_version": 1,
+  "document_kind": "round_spec",
+  "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v2.0.0",
+  "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+  "round_id": "{{round_id}}",
+  "semantic_fingerprint": "sha256:fb7217c5f6bd0599ebd1d8e026cb262a1d75c75f7634dba82a73e2535e7fb039",
+  "status": "registered",
+  "provenance": {
+    "source_record": "quant/same-day-open-to-close-directional-spy-walk-forward-2026-09-02.md",
+    "source_url": "https://arxiv.org/abs/2608.26106",
+    "source_as_of": "2026-09-02",
+    "source_status": "research-only / not-implemented / not-approved (intake PASS-WITH-CAVEAT)",
+    "family_handoff_body_sha256": "sha256:f21950edbcbaf5d760feb5cafcc560d23dd3f34a4293baa5aa1435894ccc215f",
+    "implementation_boundary": "local adapted full backtest on the complete canonical USD-M daily universe; no SPY or equity-screen result is claimed"
+  },
+  "universe": {
+    "source_universe": "SPY on NYSE Arca plus a 541-stock U.S. equity cross-section",
+    "symbols": [
+      "BNBUSDT",
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT"
+    ],
+    "signal_timeframe": "1d",
+    "execution_timeframe": "5m",
+    "portability": "adapted/unproven (source-record crypto portability canonicalized)",
+    "selection": "complete local eligible universe: every canonical USD-M symbol with the registered 1d signal and 5m execution bars; no post-hoc shrink"
+  },
+  "data": {
+    "venue": "Binance USD-M perpetual canonical raw archive",
+    "raw_root": "/data/raw/binance/usdm",
+    "start": "2022-01-01",
+    "end": "2026-09-11",
+    "timezone": "UTC",
+    "fields": [
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "signal_timeframe": {
+      "raw_interval": "1d",
+      "qlib_freq": "day"
+    },
+    "execution_timeframe": {
+      "raw_interval": "5m",
+      "qlib_freq": "5min",
+      "bars_per_day": 288
+    },
+    "point_in_time": "expanding prefix fit strictly before day t; day-t open observed, no day-t high/low/close in features",
+    "missing_data": "fail closed on any registered-window gap; no fill or resample",
+    "measured_raw_scan": "registered window 2022-01-01..2026-09-11: 1d=1715 rows and 5m=493920 rows = 1715 x 288 per symbol, zero gaps/unsorted bars, zero non-finite or non-positive price fields",
+    "volume_edge_case": "research-defined data reality: 20 zero-volume 5m bars per symbol on 2022-05-01 UTC are legitimate no-trade intervals with valid prices and are kept; only price fields are required strictly positive"
+  },
+  "signal_registration": {
+    "required_data_verbatim": "- **Instrument:** SPDR S&P 500 ETF Trust (SPY); cross-sectional screen evaluates 541 large/mid-cap U.S. equities.\n- **Venue:** U.S. Equity Cash Market (NYSE Arca for SPY; primary listings on NYSE/NASDAQ for screen stocks).\n- **Timeframe:** Daily bars (Open, High, Low, Close, Volume).\n- **Fields Used in Signal:** Open ($p_1$), Close ($p_2$); High and Low are analyzed as auxiliary forecast targets.\n- **Point-in-Time Integrity:** Expanding-window walk-forward; training set utilizes data strictly prior to day $t$ ($1 \\dots t-1$); prediction made after day-$t$ open is posted.\n- **Timestamp / Timezone:** US Eastern Time (America/New_York). 09:30 open, 16:00 close.\n- **Missing Data Handling:** Standard exchange calendar; non-trading days omitted.",
+    "signal_verbatim": "### Formation timestamp\n\n- **Observation Point:** Exactly at the market open ($t_{\\text{open}} = 09:30$ US Eastern Time). The day-$t$ opening price $p_1^{(t)}$ is observed and immediately appended to the lagged feature vector.\n- **Tradability:** Actionable immediately after the open (e.g., $09:30:05$–$09:31:00$ ET) for execution over the regular cash session.\n- **Horizon:** Intraday hold; exit occurs at or near the official cash close ($t_{\\text{close}} = 16:00$ US Eastern Time).\n\n### Lookback and Feature Construction\n\nFor opening price series $p_1 = \\text{open}$ and target price series $p_2 \\in \\{\\text{high}, \\text{low}, \\text{close}\\}$ (with primary focus on $p_2 = \\text{close}$):\n\nThe feature vector at day $t$ is strictly 5-dimensional:\n$$\\mathbf{x}^{(t)} = \\big[p_1^{(t-2)},\\; p_2^{(t-2)},\\; p_1^{(t-1)},\\; p_2^{(t-1)},\\; p_1^{(t)}\\big]$$\n\n- No day-$t$ high, low, or close is included in $\\mathbf{x}^{(t)}$ (strict look-ahead exclusion by construction).\n- Sampling: 1-day step, expanding historical window up to $t-1$.\n\n### Target and Decision Logic\n\nThe primary target is the same-day close price:\n$$y^{(t)} = p_2^{(t)} = \\text{close}^{(t)}$$\n\n1. **Continuous Price Forecast:** The regression model (XGBoost or Random Forest) generates point estimate $\\hat{y}_t = \\hat{p}_2^{(t)}$.\n2. **Directional Extraction:**\n   $$\\text{Direction}_t = \\begin{cases} +1 \\; (\\text{Up/Long}) & \\text{if } \\hat{y}_t \\ge y_{t-1} \\\\ -1 \\; (\\text{Down/Flat or Short}) & \\text{if } \\hat{y}_t < y_{t-1} \\end{cases}$$\n3. **Threshold-Conditioned Filter:**\n   Calculate predicted absolute percentage move:\n   $$\\delta_t = \\frac{|\\hat{y}_t - y_{t-1}|}{y_{t-1}} \\times 100$$\n   A trade is taken if and only if $\\delta_t \\ge \\tau$, where $\\tau \\in [0.0\\%, 3.5\\%]$.\n4. **Direct Classifier Variant:** Logistic Regression directly predicts the binary outcome $\\mathbb{1}_{[y_t \\ge y_{t-1}]}$ from $\\mathbf{x}^{(t)}$.\n\n### Exit and Holding Period\n\n- **Holding Period:** Exactly one regular trading session (enter on open at $t$, exit on close at $t$).\n- **No-trade Condition:** If $\\delta_t < \\tau$, position remains flat.\n- **Overnight Risk:** Zero overnight inventory carry under the strict open-to-close specification.\n\n### Parameters\n\n- **Baseline XGBoost:** Objective `reg:squarederror`, default tree depth and shrinkage in stock pipeline.\n- **Tuned XGBoost Evaluated:** 100 estimators, learning rate $\\eta = 0.05$, max depth $= 6$, min child weight $= 4$, subsample $= 0.7$, colsample by tree $= 0.7$ (reported in Appendix A.2 as failing to outperform default XGBoost on directional accuracy).\n- **Threshold Grid $\\tau$:** Evaluated at $0.0\\%, 0.5\\%, 1.0\\%, 1.5\\%, 2.0\\%, 2.5\\%, 3.0\\%, 3.5\\%$.\n- **Walk-Forward Split:** Expanding window; test period fixed at final 800 trading days (approximately April 2021 through March 2024).",
+    "mechanism": "opening price plus two lagged open/close pairs forecast same-day close; regression direction and direct logistic classification are registered cases",
+    "features": [
+      "O(t-2)",
+      "C(t-2)",
+      "O(t-1)",
+      "C(t-1)",
+      "O(t)"
+    ],
+    "target": "close(t); regression direction is predicted close(t) >= close(t-1); logistic directly predicts that binary outcome",
+    "pipeline": "expanding walk-forward, fit only through t-1, refit every 5 days (research-defined compute schedule), source-reported Random Forest for regression and source-reported Logistic Regression for classification; XGBoost is not installed in the registered image, so the source's explicitly authorized Random Forest branch is used rather than silently substituting another booster",
+    "formation": "after each UTC daily open",
+    "holding": "flatten in the same UTC session; no overnight inventory",
+    "threshold_conditioning": "regression trade iff predicted absolute percentage move >= tau; source grid [0,0.5,1,1.5,2,2.5,3,3.5]%",
+    "causality": "no feature or fit uses day-t high/low/close; OOS is read-only"
+  },
+  "parameter_domain": {
+    "strategy_axes": [
+      "case_code",
+      "tau_pct"
+    ],
+    "strategy_cases": [
+      {
+        "case_code": 0,
+        "model_kind": "regression",
+        "tau_pct": 0.0,
+        "label": "rf_tau_0p0"
+      },
+      {
+        "case_code": 1,
+        "model_kind": "regression",
+        "tau_pct": 0.5,
+        "label": "rf_tau_0p5"
+      },
+      {
+        "case_code": 2,
+        "model_kind": "regression",
+        "tau_pct": 1.0,
+        "label": "rf_tau_1p0"
+      },
+      {
+        "case_code": 3,
+        "model_kind": "regression",
+        "tau_pct": 1.5,
+        "label": "rf_tau_1p5"
+      },
+      {
+        "case_code": 4,
+        "model_kind": "regression",
+        "tau_pct": 2.0,
+        "label": "rf_tau_2p0"
+      },
+      {
+        "case_code": 5,
+        "model_kind": "regression",
+        "tau_pct": 2.5,
+        "label": "rf_tau_2p5"
+      },
+      {
+        "case_code": 6,
+        "model_kind": "regression",
+        "tau_pct": 3.0,
+        "label": "rf_tau_3p0"
+      },
+      {
+        "case_code": 7,
+        "model_kind": "regression",
+        "tau_pct": 3.5,
+        "label": "rf_tau_3p5"
+      },
+      {
+        "case_code": 8,
+        "model_kind": "logistic",
+        "tau_pct": 0.0,
+        "label": "logistic_direct"
+      }
+    ],
+    "legal_cases_per_cohort": 9,
+    "selection_rule": "cohort-selector-v1 historical-only; frozen winner travels unchanged to OOS/full/robustness/neighborhood"
+  },
+  "dca_domain": {
+    "spacing_pct": [
+      0.01,
+      0.02,
+      0.03,
+      0.04
+    ],
+    "size_multiplier": [
+      1.0,
+      1.1
+    ],
+    "breakeven_tp_pct": [
+      0.01,
+      0.02,
+      0.03
+    ],
+    "invalidation_pct": [
+      0.05,
+      0.1
+    ],
+    "config_count": 48,
+    "base_quote": 1000.0,
+    "grid": [
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.01,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.02,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.03,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.0,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.01,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.02,
+        "invalidation_pct": 0.1
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.05
+      },
+      {
+        "spacing_pct": 0.04,
+        "size_multiplier": 1.1,
+        "breakeven_tp_pct": 0.03,
+        "invalidation_pct": 0.1
+      }
+    ],
+    "max_active_layers": 11,
+    "leverage": 10.0,
+    "provenance_class": {
+      "spacing_pct": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+      "size_multiplier": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+      "breakeven_tp_pct": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+      "invalidation_pct": "PROJECT_PRE_REGISTERED_SEARCH_DOMAIN",
+      "base_quote": "PROJECT_PRE_REGISTERED_CONSTANT"
+    },
+    "user_fixed_invariants": [
+      "starting_equity = 30000 USDT",
+      "USDT sole numeraire",
+      "linear USD-M perpetual",
+      "leverage 10x",
+      "12 tranches",
+      "tranche #12 reserve/buffer, routine active levels max 11",
+      "initial entry plus adverse-price scale-ins",
+      "reduce-only exit",
+      "same-bar multi-level crossing deterministic conservative ordering",
+      "no add after FLAT/kill"
+    ]
+  },
+  "robustness_plan": {
+    "grids": [
+      "historical",
+      "oos",
+      "full",
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks",
+      "no_funding",
+      "no_funding_full",
+      "cost_attrition_40bps"
+    ],
+    "required_stress_grids": [
+      "fee_2x",
+      "funding_2x",
+      "entry_delay_1_bar",
+      "slippage_2ticks"
+    ],
+    "falsification_verbatim": "1. **Out-of-Sample Horizon Test (2024–2026):** Evaluate walk-forward performance on SPY from March 16, 2024 to September 2026. If directional accuracy drops below $52.5\\%$ (the unconditional upward drift baseline), the hypothesis of persistent directional predictability is falsified.\n2. **Cross-Sectional Non-Outlier Test:** Test the identical walk-forward model across a randomly selected 50-stock basket from the S&P 500 median AUC quantile ($330 \\le \\text{AUC} \\le 365$). If average net return after 5 bps friction is non-positive, confirm that the edge is unique to broad index ETF liquidity dynamics rather than a general equity pricing phenomenon.\n3. **Execution Delay Degradation Test:** Introduce simulated execution delays of 1, 5, 15, and 30 minutes after open (sampling price at 09:31, 09:35, 09:45, 10:00). If directional accuracy decays toward 50% within the first 15 minutes, the edge is purely an opening auction artifact rather than full-day drift.\n4. **Permutation / Shuffled Open Test:** Randomly shuffle the day-$t$ opening price $p_1^{(t)}$ relative to lagged vector $[p_1^{(t-2)}, p_2^{(t-2)}, p_1^{(t-1)}, p_2^{(t-1)}]$. If the permuted feature set yields equivalent directional accuracy, falsify the claim that opening gap structure contains causal information.",
+    "execution_delay_mapping": "research-defined: registered 5m bars approximate 1/5/15/30-minute source delays; exact SPY minute prints are absent and the reader stays INDETERMINATE",
+    "baseline": "all nine registered cases evaluated; no post-hoc case removal"
+  },
+  "registered_family_level_falsification": {
+    "note": "The record's four items are preserved verbatim. Three source-specific subtests are disclosed INDETERMINATE rather than silently converted into PASS.",
+    "items": [
+      "OOS horizon: local adapted OOS accuracy vs 52.5%; market/window differs from source SPY 2024-03-16..2026",
+      "50-stock median-AUC basket: INDETERMINATE, equity cross-section absent",
+      "exact 1/5/15/30-minute delay: INDETERMINATE for exact timing, local 5m delay accuracy measured separately",
+      "shuffled-open: measured by a seeded permutation of day-t open within the lagged feature"
+    ]
+  },
+  "gates": {
+    "min_episodes_is": 10,
+    "min_episodes_oos": 3,
+    "min_neighbour_same_sign_fraction": 0.6,
+    "oos_positive_net_pnl": true,
+    "stress_positive_net_pnl": true
+  },
+  "split": {
+    "historical_start": "2022-01-01",
+    "historical_end": "2025-09-30",
+    "oos_start": "2025-10-01",
+    "oos_end": "2026-09-11",
+    "rule": "chronological; frozen before compute; OOS never selects parameters"
+  },
+  "costs": {
+    "taker_fee": "canonical instrument taker_fee",
+    "slippage_ticks": 1,
+    "slippage_robustness_ticks": 2,
+    "slippage_basis": "instrument price_increment, adverse on every fill",
+    "funding": "official observations only at actual timestamp and mark price; missing intervals zero and disclosed; modeled rows never charged"
+  },
+  "expected": {
+    "cohorts": 4,
+    "strategy_cases_per_cohort": 9,
+    "dca_configs_per_cohort": 48,
+    "base_combinations_per_cohort": 432,
+    "case_evaluations_per_grid": 1728,
+    "grid_count": 10,
+    "case_evaluations_total": 17280
+  },
+  "parameter_contract": {
+    "parameter_contract_version": 1,
+    "family_id": "same-day-open-to-close-directional-spy-walk-forward-2026-09-02",
+    "contract_ref": "same-day open-to-close direct-family frozen round-spec parameter contract",
+    "research_axes_ordered": [
+      {
+        "name": "model_threshold_case",
+        "kind": "composite",
+        "members": [
+          "case_code",
+          "tau_pct"
+        ],
+        "registered_values": [
+          [
+            0,
+            0.0
+          ],
+          [
+            1,
+            0.5
+          ],
+          [
+            2,
+            1.0
+          ],
+          [
+            3,
+            1.5
+          ],
+          [
+            4,
+            2.0
+          ],
+          [
+            5,
+            2.5
+          ],
+          [
+            6,
+            3.0
+          ],
+          [
+            7,
+            3.5
+          ],
+          [
+            8,
+            0.0
+          ]
+        ],
+        "row_fields": [
+          "case_code",
+          "tau_pct"
+        ]
+      },
+      {
+        "name": "spacing_pct",
+        "kind": "atomic",
+        "members": [
+          "spacing_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03,
+          0.04
+        ],
+        "row_fields": [
+          "spacing_pct"
+        ]
+      },
+      {
+        "name": "size_multiplier",
+        "kind": "atomic",
+        "members": [
+          "size_multiplier"
+        ],
+        "registered_values": [
+          1.0,
+          1.1
+        ],
+        "row_fields": [
+          "size_multiplier"
+        ]
+      },
+      {
+        "name": "breakeven_tp_pct",
+        "kind": "atomic",
+        "members": [
+          "breakeven_tp_pct"
+        ],
+        "registered_values": [
+          0.01,
+          0.02,
+          0.03
+        ],
+        "row_fields": [
+          "breakeven_tp_pct"
+        ]
+      },
+      {
+        "name": "invalidation_pct",
+        "kind": "atomic",
+        "members": [
+          "invalidation_pct"
+        ],
+        "registered_values": [
+          0.05,
+          0.1
+        ],
+        "row_fields": [
+          "invalidation_pct"
+        ]
+      }
+    ],
+    "row_fields": [
+      "case_code",
+      "tau_pct",
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "composite_map": {
+      "model_threshold_case": [
+        "case_code",
+        "tau_pct"
+      ]
+    },
+    "strategy_param_fields": [
+      "case_code",
+      "tau_pct"
+    ],
+    "dca_param_fields": [
+      "spacing_pct",
+      "size_multiplier",
+      "breakeven_tp_pct",
+      "invalidation_pct"
+    ],
+    "canonical_recipe": {
+      "sort_keys": true,
+      "separators": [
+        ",",
+        ":"
+      ],
+      "ensure_ascii": false,
+      "numeric_rule": "JSON finite number; bool excluded"
+    },
+    "row_match_recipe": {
+      "keys": [
+        "symbol",
+        "timeframe",
+        "case_code",
+        "tau_pct",
+        "spacing_pct",
+        "size_multiplier",
+        "breakeven_tp_pct",
+        "invalidation_pct"
+      ],
+      "equality": "exact numeric / bytewise labels"
+    },
+    "non_params": [
+      "symbol",
+      "timeframe",
+      "case_label",
+      "model_kind",
+      "grid",
+      "metrics",
+      "diagnostics",
+      "timestamps"
+    ],
+    "domain_cardinality": {
+      "strategy": 9,
+      "dca": 48,
+      "per_cohort": 432
+    }
+  },
+  "limitations_verbatim": "- **Single-Instrument Primary Focus:** Primary statistical hypothesis tests are conducted solely on SPY close.\n- **No Realistic Slippage in Primary Results:** Primary benchmark assumes exact fills at open and close prints; opening bar spread and slippage on volatile days can exceed 5–10 bps.\n- **Severe Support Decay:** The reported 90%+ accuracy figures are based on fewer than 20 observations out of 800 days.\n- **Model Fragility:** Small changes in hyperparameters (tuning) degraded performance substantially.\n- **Look-Back Horizon Limitation:** The 5-element feature vector ignores higher-order volatility dynamics, volume, and order-book state.",
+  "research_defined": [
+    "UTC 00:00-24:00 crypto session for the source's 09:30-16:00 cash session",
+    "5m execution bars and 1-bar delay rail in place of source exact minute prints",
+    "model refit cadence every 5 days to bound compute while every fit remains prefix-only",
+    "local long/flat rail; shorting is not registered by the source illustration"
+  ],
+  "falsification": [
+    "OOS directional accuracy below 52.5% fails the local adapted horizon test",
+    "equity cross-section test is INDETERMINATE until a point-in-time equity universe exists",
+    "source exact minute-delay test is INDETERMINATE; local 5m delay accuracy is measured",
+    "permuted-open directional accuracy statistically equivalent to true-open accuracy falsifies causal gap structure"
+  ]
+}
