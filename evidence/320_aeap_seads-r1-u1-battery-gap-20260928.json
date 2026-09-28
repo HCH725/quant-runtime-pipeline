@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "kind": "known_gap",
+  "contract_section": "13 / 15",
+  "family_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03",
+  "round_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1",
+  "run_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1",
+  "ownership_mode": "direct_hermes",
+  "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+  "written_at_utc": "2026-09-28T15:21:14Z",
+  "recorded_by": "Hermes default worker (one-shot production handoff execution); discovered after the exact-once launch of u1",
+  "gap": {
+    "summary": "falsification item 5 (record item 5, LLM vs. random-search ablation) is INDETERMINATE in this attempt because the random formula sampler is invoked before its per-month next-month-return map is populated",
+    "defect": "container/scripts/320_aeap_seads_run.py: random_formula_report() reads the module global _NEXT_RET (used at the `realised = _NEXT_RET.get(month)` line) but run() assigns _NEXT_RET one line AFTER calling random_formula_report()",
+    "mechanism": "the module global starts as {}; every sampled formula therefore sees realised=None, drops every formation month, ends with an empty IC list, and reports formulas_evaluated=0; falsification_report then records llm_vs_random_search_ablation = INDETERMINATE with reason 'missing random-baseline or reference OOS Rank-IC'",
+    "observed_evidence": [
+      "run log: 'factor layer ok: formations=46 random_formulas=0'",
+      "non-registered smoke result: falsification_summary.llm_vs_random_search_ablation = INDETERMINATE while assertions_all_true = true and coverage_complete = true"
+    ],
+    "proven_impact_scope": "_NEXT_RET has exactly four references in the engine (module default, the random sampler, its global declaration, its assignment). It is read by no other code path, so grid cells, selector outcome, survivor list, coverage gate, cost stresses and the other six falsification items are provably unaffected by this defect.",
+    "classification": "script bug (contract 13 infrastructure/technical failure class), NOT a scientific failure and NOT an operator stop"
+  },
+  "recommended_remediation": {
+    "fix": "move `_NEXT_RET, _ = next_month_returns(daily)` above the random_formula_report() call (one-line reorder; no domain, split or semantic change)",
+    "attempt": "new run_id aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u2 inside the same round, only after u1 reaches a terminal state (contract 15: max_rounds=3, max_no_progress_rounds=2)",
+    "unchanged": [
+      "hypothesis",
+      "eligible universe",
+      "signal constants",
+      "data window",
+      "IS/OOS split",
+      "parameter domain",
+      "DCA rail",
+      "cost model",
+      "selector",
+      "disposition",
+      "falsification battery registry",
+      "frozen round-spec bytes"
+    ],
+    "expected_effect": "item 5 becomes computable; all grid cells are expected to be byte-identical (the fix touches no cell input) - to be verified by sha256 comparison of grid_*.csv before any claim",
+    "not_done_by_this_worker": "no remediation was started: u1 was launched exact-once and must reach a terminal state on its own; this worker neither stopped nor re-ran it"
+  },
+  "attempt_state_at_recording": {
+    "state": {
+      "schema_version": 1,
+      "family_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03",
+      "round_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1",
+      "run_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1",
+      "stage": "RUNNING_QLIB"
+    },
+    "progress": {
+      "stage": "RUNNING_QLIB",
+      "cohorts_done": 1,
+      "case_evaluations": 1440,
+      "expected_case_evaluations": 40320,
+      "updated_at_utc": "2026-09-28T15:18:46Z"
+    },
+    "log_lines": [
+      "[2026-09-28T15:16:10.221751+00:00] PIT suffix recheck: checked=4 failed=0",
+      "[2026-09-28T15:16:10.230680+00:00] factor layer ok: formations=46 random_formulas=0"
+    ]
+  },
+  "engine": {
+    "path": "container/scripts/320_aeap_seads_run.py",
+    "sha256": "sha256:3bb7c938a770aa08a2bce2b10585f3a44bcd1eb7d751d369a08dd064ec2bf165",
+    "note": "the deployed copy pinned by run-spec is byte-identical to this sha and was NOT modified after launch"
+  },
+  "related_evidence": [
+    "evidence/320_aeap_seads-r1-preflight-20260928.json",
+    "evidence/320_aeap_seads-r1-run-20260928.json"
+  ],
+  "what_was_not_done": [
+    "no verdict.json written (host-side disposition belongs to the n8n C4 cadence / contract 10.7 default writer)",
+    "no terminal sentinel written",
+    "no PASS/REJECT/TECHNICAL_INCOMPLETE manufactured by this worker",
+    "u1 not stopped and not re-run (INV-15)",
+    "the running process and its pinned script bytes were not touched",
+    "no next family appended (contract 14.4)"
+  ],
+  "next_step": "C4 reads u1's terminal result together with this note and decides between accepting item 5 as INDETERMINATE with the disclosed reason or dispatching the one-line same-round remediation as u2"
+}
