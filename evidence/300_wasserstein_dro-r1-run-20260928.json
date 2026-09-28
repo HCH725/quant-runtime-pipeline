@@ -103,5 +103,43 @@
   "no Paper/Live action, no second engine, no Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
   "no candidate-specific prerequisite checker, no host-wide scan, no synthetic fixtures in production evidence"
  ],
- "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7)."
+ "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7).",
+ "post_launch_readback": {
+  "observed_at_utc": "2026-09-28T09:58:01Z",
+  "note": "single read-back taken after the launch evidence was written (the worker did not block on compute); no verdict, terminal sentinel or disposition artifact was written by this record",
+  "stage": "ARTIFACT_READY",
+  "runtime_seconds": 61.272583403013414,
+  "case_evaluations": "11520 / 11520",
+  "coverage_complete": true,
+  "assertions_all_true": true,
+  "assertions_true_count": "19 / 19",
+  "cohort_survivors": [
+   "BNBUSDT/1d",
+   "BTCUSDT/1d",
+   "ETHUSDT/1d",
+   "SOLUSDT/1d"
+  ],
+  "runner_disposition_suggestion": "MULTIPLE_SURVIVORS",
+  "runner_verdict_recommendation": "PASS",
+  "runner_recommendation_caveat": "band only (v1.4.0); NOT a verdict. verdict.json is written by default at host-side disposition (contract 10.7)",
+  "falsification_summary": {
+   "radius_sweep": "FALSIFIED",
+   "support_boundary_misspecification": "FALSIFIED",
+   "turnover_slippage_hurdle": "NOT_FALSIFIED",
+   "rejection_threshold": "FALSIFIED"
+  },
+  "falsification_hits": [
+   "radius_sweep",
+   "rejection_threshold",
+   "support_boundary_misspecification"
+  ],
+  "falsification_advice": {
+   "rule": "record falsification battery hit => cull or family REJECT (body FAILURE TAXONOMY); verdict_recommendation is the v1.4.0 disposition band only and must not be read as science advice",
+   "battery_status": "FAIL",
+   "advice": "REJECT"
+  },
+  "pit_status": "PASS_NO_LOOKAHEAD",
+  "terminal_sentinels_present": [],
+  "terminal_sentinel_note": "no DONE/FAILED/INCOMPLETE sentinel yet; terminal evidence + checksums are published host-side under contract 9.4/10/11 by the C4 cadence"
+ }
 }
