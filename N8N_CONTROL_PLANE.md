@@ -231,11 +231,11 @@ Shadow-1 的行為：**只顯示、不執行**（`resume_policy.enabled = false`
 
 ## 6. Trust boundaries
 
-**掛載（`container inspect n8n` before/after diff 唯一差異）：**
+**現行掛載（2026-09-27 storage cutover 後）：**
 
-| host path | container path | mode | 用途 |
+| source | container path | mode | 用途 |
 |---|---|---|---|
-| `/Users/hong/workspace/n8n/data` | `/home/node/.n8n` | rw（**原有**，未變） | n8n 自身持久資料（DB／config／storage） |
+| Apple Container named volume `n8n-data`（5 GiB、ext4） | `/home/node/.n8n` | rw | n8n 自身持久資料（DB／config／storage）；SQLite 不再放在 host virtiofs bind mount |
 | `/Users/hong/workspace/n8n/files` | `/home/node/.n8n-files` | rw（**新增**） | 唯一輸出：shadow snapshot（n8n 自身檔案區，非任何 pipeline 狀態） |
 | `/Users/hong/quant-dashboard/data` | `/host/quant-dashboard-data` | **ro** | dashboard projection |
 | `/Users/hong/workspace` | `/host/workspace-ro` | **ro** | intake state、pool checkout、repo `evidence/`、parking mirror |
@@ -260,8 +260,8 @@ cron 只有 `~/.hermes/cron` 以 **ro** 掛入——Apple `container` 不支援�
 ## 7. n8n runtime contract 與 rollback
 
 容器（Apple Container，image `docker.io/n8nio/n8n:latest` arm64，n8n `2.39.9`）：
-host port `127.0.0.1:5678`、持久資料 `/Users/hong/workspace/n8n/data`（未變）、4 CPU／1 GiB、user `node`、`TZ=Asia/Taipei`。
-`container inspect` before/after 比對：`image`／`cpus`／`mem`／`env`／`args`／`user`／`workdir`／`ports`／`networks`／`readOnly`／`runtimeHandler` **全部相同**，唯一差異是 §6 的掛載。
+host port `127.0.0.1:5678`、持久資料為 named volume `n8n-data`（5 GiB、ext4）掛載至 `/home/node/.n8n`、4 CPU／1 GiB、user `node`、`TZ=Asia/Taipei`。
+2026-09-27 storage cutover 僅把 n8n 自身持久資料由 host virtiofs bind mount 移入 named volume；`image`／`cpus`／`mem`／`env`／`args`／`user`／`workdir`／`ports`／`networks` 與其餘 host bridge mounts 均維持原設定。
 
 重建指令（等同當前狀態；`<...>` 內為 §6 的 mount 四行）：
 
@@ -271,7 +271,7 @@ container run -d --name n8n -c 4 -m 1024M -u node \
   -e TZ=Asia/Taipei -e GENERIC_TIMEZONE=Asia/Taipei -e N8N_LISTEN_ADDRESS=0.0.0.0 \
   -e N8N_RELEASE_TYPE=stable -e NPM_CONFIG_UPDATE_NOTIFIER=false -e NODE_PATH=/usr/local/lib/node_modules \
   -e 'NODES_EXCLUDE=["n8n-nodes-base.localFileTrigger"]' \
-  --mount type=bind,source=/Users/hong/workspace/n8n/data,target=/home/node/.n8n \
+  --mount type=volume,source=n8n-data,target=/home/node/.n8n \
   --mount type=bind,source=/Users/hong/workspace/n8n/files,target=/home/node/.n8n-files \
   --mount type=bind,source=/Users/hong/quant-dashboard/data,target=/host/quant-dashboard-data,readonly \
   --mount type=bind,source=/Users/hong/workspace,target=/host/workspace-ro,readonly \
@@ -304,10 +304,11 @@ python3 n8n/shadow_check.py                                            # 驗證�
 3. 下一個 n8n 行程對同一顆 DB 的讀寫即持續失敗（拍點寫入失敗、wait-tracker／pruning 讀取失敗）。
 4. **磁碟上的位元組沒有損壞**：host 與容器兩側對 `database.sqlite`／`-wal`／`-shm` 的 sha256 **完全相同**，`PRAGMA integrity_check` = `ok`
    （容器內對副本讀亦然），且新行程讀「同一組 WAL＋shm 副本」正常 → 壞的是**未關閉的執行期狀態**，不是檔案本身。
-   結論：這**不是**「SQLite 在 virtiofs 上結構性不可用」（容器內另以 WAL ＋ 4 條 reader ＋ 1,500 筆寫入實測通過），
-   而是「不乾淨關機 → 髒 WAL／死 shm → 下一個行程持續 I/O 失敗」。
+   當時結論是「不乾淨關機 → 髒 WAL／死 shm → 下一個行程持續 I/O 失敗」，且短期壓測未能重現 virtiofs 本身的穩定性問題。
 
-**修復程序（本卡實測有效；只動 n8n 自身資料區）：**
+**2026-09-27 後續證據（supersedes 上述 storage 結論）**：在 stopped-state checkpoint／`quick_check`／`integrity_check` 均通過並清除 stale `-wal/-shm` 後，n8n 重新啟動仍幾乎立即復發 `SQLITE_IOERR`；同一容器的 `/home/node/.n8n` 當時為 host **virtiofs** bind mount。故現行 canonical deployment 已把**只有** `/home/node/.n8n` 移至 `n8n-data` named ext4 volume，其餘 host bridge mounts 保持 virtiofs。cutover 後 n8n 持續排程寫入正常、`tick_probe.js` `integrity_check=ok`，且新容器 stdio 無新的 `SQLITE_IOERR`／`SQLITE_CORRUPT`／`SQLITE_NOTADB`。因此不得再把 `/home/node/.n8n` 重建成 host virtiofs bind mount。
+
+**歷史 virtiofs 修復程序（只適用於舊 bind-mount deployment；現行 named-volume deployment 不再直接操作 host SQLite）：**
 
 | # | 指令 | 判讀 |
 |---|---|---|
@@ -319,8 +320,8 @@ python3 n8n/shadow_check.py                                            # 驗證�
 | 6 | `container start n8n` → `curl -s http://127.0.0.1:5678/healthz` | `{"status":"ok"}`，開機 log 無 I/O error |
 
 **鐵律：**
-- 只在容器**停止**時碰 DB；`rm` 只限步驟 5 那兩個檔案，永不刪 `database.sqlite`。修復前先備份 `database.sqlite*`（本卡留於 `/Users/hong/workspace/n8n/backups/`）。
-- **容器在跑時，host 端不得直接開啟 live DB**（含 `sqlite3` 唯讀查詢）：那等於對同一顆 SQLite 引入第二個寫入端。要讀就先在容器內複製一組 `database.sqlite`／`-wal`／`-shm`，再讀**副本**——repo 內的唯讀探針即為此法：
+- **現行 named-volume deployment**：host 不再直接持有 live SQLite；停止／啟動交由 container lifecycle 管理，`recover_gate.py` 偵測到 named volume 時不再對舊 host DB 做 checkpoint。若未來暫時回到 virtiofs fallback，才套用上表 stopped-state checkpoint／integrity／sidecar 清理規則。
+- **容器在跑時不得直接開啟 live DB 做外部診斷**。要讀就先在容器內複製一組 `database.sqlite`／`-wal`／`-shm`，再讀**副本**——repo 內的唯讀探針即為此法：
   `container exec n8n node /host/workspace-ro/quant-runtime-pipeline-n8n/n8n/tick_probe.js`（複製到容器內 `diag/probe/` 後讀副本，永不寫 live 檔）。
 - `import:workflow` 之後必須重新啟用並**重啟**：CLI 明示 `Changes will not take effect if n8n is running. Please restart n8n…`。重啟一律走本節步驟 1–6。
 
@@ -328,7 +329,7 @@ python3 n8n/shadow_check.py                                            # 驗證�
 
 1. 停用觀測：`container exec n8n n8n unpublish:workflow --id=shadowQuantCp1`（或 UI 內把 workflow 關掉）。
 2. 移除 workflow：UI 刪除，或重建容器前先 `container exec n8n n8n export:workflow` 備份後再處理；本 repo 只保留匯出檔。
-3. 回復容器原狀：以上方指令移除 `NODES_EXCLUDE` 與後三行 mount，只留 `/Users/hong/workspace/n8n/data → /home/node/.n8n`，即為本卡前的原始狀態。
+3. 若要回退 shadow/control-plane 顯示功能，只移除對應 workflow／額外 host bridge mounts；**不得**把 `/home/node/.n8n` 回退成 `/Users/hong/workspace/n8n/data` virtiofs bind mount。n8n persistent state 的 canonical storage 維持 `n8n-data` named ext4 volume。
 4. 刪除輸出：`/Users/hong/workspace/n8n/files/quant-control-plane-shadow.json`（n8n 自身檔案區，與 pipeline 狀態無關）。
 
 ### 7.2 Host 復原 gate：`ai.quant.recover-gate`（2026-09-22 實測）
@@ -339,7 +340,7 @@ Shadow workflow、Homepage、Research Scout。
 
 | 檔 | 角色 |
 |---|---|
-| `runtime/recover_gate.py` | 短命腳本，每次四步後退出：① 確保 Apple Container system running（bounded wait 120 s）→ ② 確保**既有** n8n container running（缺失＝fail closed 只記錄、**絕不自動建立／重建**）＋驗 `http://127.0.0.1:5678/healthz/readiness` = 200 → ③ **只讀既有 qlib-run 狀態**（`container ls --all`，不開子程序）：system 本就 running 且 qlib-run running → 記 `qlib=already_running`、**不跑 preflight、不做 P1–P8**（健康 interval 是真 no-op）；只有 **qlib-run stopped** 或 **① 需要復原 container system** 才委派既有 `runtime/preflight.py --recover --json`（ExpansionDrive／system start／container start 與 image、version、raw、results 檢查維持 canonical，不在此重寫）；qlib-run 缺失即 fail closed 且**絕不委派**、絕不建立 → ④ append 一行 log 後退出（rc 0＝健康、1＝任一 gate 失敗）。健康時為 no-op。 |
+| `runtime/recover_gate.py` | 短命腳本，每次四步後退出：① 確保 Apple Container system running（bounded wait 120 s）→ ② 確保**既有** n8n container running（缺失＝fail closed，**絕不自動建立／重建**）；若 n8n 已 running，完全不碰 SQLite；若 stopped，先判讀 `/home/node/.n8n` mount type：現行 named volume 直接由 container lifecycle 啟動，舊 virtiofs fallback 才執行 stopped-state checkpoint／`quick_check`／`integrity_check`／sidecar cleanup，mount 缺失／模糊／未知一律 fail closed；啟動後驗 `http://127.0.0.1:5678/healthz/readiness` = 200 → ③ **只讀既有 qlib-run 狀態**（`container ls --all`，不開子程序）：system 本就 running 且 qlib-run running → 記 `qlib=already_running`、**不跑 preflight、不做 P1–P8**；只有 **qlib-run stopped** 或 **① 需要復原 container system** 才委派既有 `runtime/preflight.py --recover --json`；qlib-run 缺失即 fail closed 且**絕不委派**、絕不建立 → ④ append 一行 log 後退出（rc 0＝健康、1＝任一 gate 失敗）。健康時為 no-op。 |
 | `runtime/ai.quant.recover-gate.plist` | launchd：`RunAtLoad` ＋ `StartInterval 300`（**無常駐程序**）、絕對 PATH、WorkingDirectory 指本 repo；`plutil -lint` 通過後才複製到 `~/Library/LaunchAgents/ai.quant.recover-gate.plist`。 |
 
 - **Log**：`~/quant-dashboard/logs/recover_gate.log`，每次一行 `boot= system= n8n= qlib= rc= problems=`；`qlib=` 的值為 `already_running`（健康 no-op，未跑 preflight）、`preflight:PASS(…)`／`preflight:FAIL(…)`（委派既有 preflight --recover）或 `absent_fail_closed(…)`（fail closed，絕不建立）；超過 1 MiB 整檔截斷（刻意簡化，不做 rotation）。launchd stdout/stderr → `recover_gate.err.log`（平時 0 B）。
