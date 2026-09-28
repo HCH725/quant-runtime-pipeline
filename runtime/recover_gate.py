@@ -26,6 +26,7 @@ workflow/cron, no Qlib semantics change.
 import fcntl
 import json
 import os
+import sqlite3
 import sys
 import time
 import urllib.request
@@ -36,6 +37,7 @@ if HERE not in sys.path:
 import preflight as pf  # noqa: E402  (canonical helpers: run/system_status/container_info/_wait_until)
 
 N8N = "n8n"
+N8N_DB = "/Users/hong/workspace/n8n/data/database.sqlite"
 QLIB = "qlib-run"
 READINESS = "http://127.0.0.1:5678/healthz/readiness"
 LOG = "/Users/hong/quant-dashboard/logs/recover_gate.log"
@@ -83,13 +85,61 @@ def _readiness_ok():
         return False
 
 
+def _prepare_n8n_db():
+    """Only while n8n is stopped: drain/check the existing DB before clearing sidecars."""
+    # mode=rw fails closed if the DB is missing instead of creating an empty one.
+    conn = sqlite3.connect("file:%s?mode=rw" % N8N_DB, uri=True, timeout=5)
+    try:
+        if conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone() != (0, 0, 0):
+            return False
+        if conn.execute("PRAGMA quick_check").fetchall() != [("ok",)]:
+            return False
+        if conn.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+            return False
+    finally:
+        conn.close()
+    for suffix in ("-wal", "-shm"):
+        try:
+            os.remove(N8N_DB + suffix)
+        except FileNotFoundError:
+            pass
+    return True
+
+def _n8n_mount_type(info):
+    config = info.get("configuration")
+    mounts = config.get("mounts") if isinstance(config, dict) else None
+    if not isinstance(mounts, list):
+        return None
+    types = [m.get("type") for m in mounts
+             if isinstance(m, dict) and m.get("destination") == "/home/node/.n8n"]
+    if len(types) != 1 or not isinstance(types[0], dict):
+        return None
+    kind = types[0]
+    if kind.keys() == {"virtiofs"}:
+        return "virtiofs"
+    if kind.keys() == {"volume"}:
+        return "volume"
+    return None
+
 def ensure_n8n(name):
     info, why = pf.container_info(name)
     if info is None:
         # fail closed: never `container run` from an unattended gate (rebuilding needs
         # the exact documented mount/env set; see preflight.recover_execution_plane).
         return "missing_fail_closed(%s)" % (why or "no detail")
-    if _n8n_state(name) != "running":
+    state = info.get("status", {}).get("state")
+    if state != "running":
+        if state != "stopped":
+            return "state_fail_closed(%s)" % state
+        mount_type = _n8n_mount_type(info)
+        if mount_type is None:
+            return "mount_fail_closed(missing_ambiguous_or_unknown)"
+        if mount_type == "virtiofs":
+            try:
+                if not _prepare_n8n_db():
+                    return "sqlite_prep_failed(checkpoint_or_integrity)"
+            except (sqlite3.Error, OSError) as exc:
+                return "sqlite_prep_failed(%s)" % exc
         rc, _out, _err = pf.run(["container", "start", name], timeout=120)
         if not pf._wait_until(lambda: _n8n_state(name) == "running", timeout_s=60, interval_s=5):
             return "start_failed(rc=%d)" % rc
