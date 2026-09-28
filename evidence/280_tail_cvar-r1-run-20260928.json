@@ -99,5 +99,35 @@
   "no Paper/Live action, no second engine, no Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
   "no candidate-specific prerequisite checker, no host-wide scan, no synthetic fixtures in production evidence"
  ],
- "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7)."
+ "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7).",
+ "post_launch_readback": {
+  "observed_at_utc": "2026-09-28T05:49:15Z",
+  "note": "single read-back taken after the launch evidence was written (the worker did not block on compute); no verdict, terminal sentinel or disposition artifact was written by this record",
+  "stage": "ARTIFACT_READY",
+  "runtime_seconds": 70.53603761701379,
+  "case_evaluations": "7680 / 7680",
+  "coverage_complete": true,
+  "assertions_all_true": true,
+  "assertions_true_count": "17 / 17",
+  "cohort_survivors": [
+   "BNBUSDT/1d",
+   "BTCUSDT/1d",
+   "ETHUSDT/1d"
+  ],
+  "runner_disposition_suggestion": "MULTIPLE_SURVIVORS",
+  "runner_verdict_recommendation": "PASS",
+  "runner_recommendation_caveat": "band only (v1.4.0); NOT a verdict. verdict.json is written by default at host-side disposition (contract 10.7)",
+  "falsification_summary": {
+   "gaussian_tail_control": "NOT_FALSIFIED",
+   "concentration_removal": "NOT_FALSIFIED",
+   "turnover_cost_stress": "NOT_FALSIFIED",
+   "subsample_regime_inversion": "FALSIFIED"
+  },
+  "falsification_hits": [
+   "subsample_regime_inversion"
+  ],
+  "pit_status": "PASS_NO_LOOKAHEAD",
+  "terminal_sentinels_present": [],
+  "terminal_sentinel_note": "no DONE/FAILED/INCOMPLETE sentinel yet; terminal evidence + checksums are published host-side under contract 9.4/10/11 by the C4 cadence"
+ }
 }
