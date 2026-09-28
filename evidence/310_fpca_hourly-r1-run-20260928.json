@@ -1,0 +1,94 @@
+{
+ "schema_version": 1,
+ "kind": "run",
+ "contract_section": "14.4 / 16 / 15",
+ "family_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03",
+ "round_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1",
+ "run_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "written_at_utc": "2026-09-28T11:47:32Z",
+ "recorded_by": "Hermes default worker (one-shot production handoff execution)",
+ "specs_frozen_before_compute": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/round-spec.json",
+   "sha256": "sha256:1be0a77d43e7b7c57c60a82dd6cc4f2b5d2df0958413907a79453f72ca763bc8",
+   "created_at_utc": "2026-09-28T11:37:19Z",
+   "parameter_contract_problems": [],
+   "immutable": "written once before any compute and never rewritten",
+   "revalidation": "in-container: runtime/parameter_contract.validate_round_spec_contract(round-spec) -> [] and engine validate_spec(run-spec) -> OK, both re-run against the frozen bytes after the write"
+  },
+  "run_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1/run-spec.json",
+   "sha256": "sha256:d3eef4e20db50966dbc221ddf5a8be6e94b5960544be0b5edea903e869924b70",
+   "created_at_utc": "2026-09-28T11:37:19Z",
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "registered_counts": {
+   "cohorts": 1,
+   "strategy_cases_per_cohort": 9,
+   "dca_configs_per_cohort": 48,
+   "base_combinations_per_cohort": 432,
+   "case_evaluations_per_grid": 432,
+   "grid_count": 10,
+   "case_evaluations_total": 4320
+  },
+  "authoring_incident": "the first authoring attempt opened round-spec.json with os.open() misused as a context manager and left a 0-byte file with no content; before any compute the empty file (verified 0 bytes) was removed and the document written once with mode xb (O_EXCL). No content, spec value or result existed at that path before the freeze."
+ },
+ "prerequisite_gate_phase_2b": {
+  "catalog_only": [
+   "/data/raw/_meta/CONFIG.json",
+   "/data/raw/_meta/SCHEMA.md"
+  ],
+  "config_sha256": "sha256:f55ced5e54fc04f6e57ce49eb509678716903428d23c7368845a50e6f9232220",
+  "schema_sha256": "sha256:fbaf417d7db5725b571d3b1c9ef2538d54010c7950f621e69e1d0807f484c6cd",
+  "conclusion": "requirement PRESENT: BTCUSDT 1h klines shards exist in the canonical pack (open_time_ms/close_time_ms + OHLCV) over the full registered window, so every registered cohort's core signal is computable; funding/fee/slippage are execution-cost inputs only (official funding observations exist and are used as-is, modelled rows ignored, zero where unobserved).",
+  "bounded_scope": "only the two canonical catalog files were read for capability, plus one bounded read-back of the registered symbol's hourly shard; no second data registry, no host-wide scan, no candidate-specific prerequisite checker, no synthetic fixture.",
+  "outcome": "core_signal_data_present -> full backtest proceeds (no TECHNICAL_INCOMPLETE)",
+  "status": "SATISFIED - full backtest launched (not TECHNICAL_INCOMPLETE)"
+ },
+ "engine": {
+  "path": "/scripts/310_fpca_hourly_run.py",
+  "sha256": "sha256:ea377524b222262d29f629c09b91703f6117f6bd83796c424f524378e71e7219",
+  "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/310_fpca_hourly_run.py",
+  "deployed_sha256_matches_repo": true,
+  "repo_path": "container/scripts/310_fpca_hourly_run.py",
+  "self_check": "/scripts/tests/test_fpca_hourly_engine.py",
+  "self_check_sha256": "sha256:7b5b14c4c9af404793e3de5d44f1a0f425b725e80591ff0b00c0e5c8d1a523b8",
+  "self_check_result": "19/19 checks passed inside the qlib-run container",
+  "self_check_command": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_fpca_hourly_engine.py"
+ },
+ "preflight": {
+  "evidence": "evidence/310_fpca_hourly-r1-preflight-20260928.json",
+  "checked_at_utc": "2026-09-28T11:45:48Z",
+  "overall": "PASS",
+  "checks": {
+   "P1": "PASS",
+   "P2": "PASS",
+   "P3": "PASS",
+   "P4": "PASS",
+   "P5": "PASS",
+   "P6": "PASS",
+   "P7": "PASS",
+   "P8": "PASS",
+   "P9": "PASS",
+   "P10": "PASS"
+  }
+ },
+ "launch": {
+  "command": "container exec -d qlib-run sh -c '/opt/venv/bin/python /scripts/310_fpca_hourly_run.py --run-spec /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1/run-spec.json --attempt-dir /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1 > /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1/logs/stdout.log 2>&1'",
+  "semantics": "exact-once, detached (container exec -d); P9 confirmed no terminal sentinel before launch",
+  "started_at_utc": "2026-09-28T11:46:22.432083+00:00",
+  "verification": {
+   "state_json_stage": "RUNNING_QLIB",
+   "qlib_initialized": true,
+   "observed_log": [
+    "[2026-09-28T11:46:22.432083+00:00] loaded 41160 hourly bars, 41159 log returns, splits {'historical': [0, 32856], 'oos': [32856, 41160], 'full': [0, 41160]}",
+    "[2026-09-28T11:46:28.509486+00:00] forecast case w90_j2 done (41045 defined)",
+    "[2026-09-28T11:46:36.057490+00:00] forecast case w90_j4 done (41045 defined)"
+   ],
+   "note": "state.json=RUNNING_QLIB plus the qlib Initialization and hourly-bar load lines were read back immediately after launch; the run is intentionally NOT awaited in this one-shot session - the existing n8n C4 cadence resumes host-side disposition after compute finishes."
+  },
+  "no_verdict_written_by_launch": "verdict.json / survivor-bundle are produced only by the post-compute disposition step; this launch step writes none."
+ }
+}
