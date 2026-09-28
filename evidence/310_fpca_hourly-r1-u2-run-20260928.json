@@ -1,0 +1,150 @@
+{
+ "schema_version": 1,
+ "kind": "run",
+ "contract_section": "14.4 / 16 / 15",
+ "family_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03",
+ "round_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1",
+ "run_id": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u2",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "written_at_utc": "2026-09-28T12:26:27Z",
+ "recorded_by": "Hermes default host-side disposition worker (direct-family remediation run)",
+ "remediation": {
+  "of_attempt": "bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u1",
+  "u1_terminal": "INCOMPLETE",
+  "u1_failure": {
+   "layer": "card-local",
+   "class": "script_bug"
+  },
+  "u1_verdict_hint": "INCOMPLETE",
+  "why_not_rerun_in_place": "contract 8 / INV-15: u1 carries terminal evidence and may never be re-run; remediation is a NEW run_id inside the same round",
+  "gate_changed": "assertions.cost_stress_effective: aggregate sign (stress_delta[g] < 0) -> contract 7.2 materiality via the in-file cell_delta helper (same formulation as 290_vp_macd_run.py)",
+  "unchanged": "hypothesis, signal constants, parameter domain, DCA domain, split, selector/disposition versions, falsification battery, frozen round-spec bytes",
+  "repo_commit": "ac01819",
+  "pushed": "origin/main ac01819 (read back after push)",
+  "script_sha256_before": "sha256:ea377524b222262d29f629c09b91703f6117f6bd83796c424f524378e71e7219",
+  "script_sha256_after": "sha256:b478990fda8767d45efaefcc673c73ae705d14b6d18d507aaa336f2108fee666",
+  "self_check": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_fpca_hourly_engine.py -> 19/19 checks passed",
+  "preflight_evidence": "evidence/310_fpca_hourly-r1-u2-preflight-20260928.json"
+ },
+ "specs_frozen_before_compute": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/round-spec.json",
+   "sha256": "sha256:1be0a77d43e7b7c57c60a82dd6cc4f2b5d2df0958413907a79453f72ca763bc8",
+   "created_at_utc": "2026-09-28T11:37:19Z",
+   "immutable": "byte-identical to the pre-u1 frozen bytes; never rewritten"
+  },
+  "run_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u2/run-spec.json",
+   "sha256": "sha256:836666bcb462b9b02ab013099a4c076dde9b44440d46e4bd016f28c5fda6202f",
+   "created_at_utc": "2026-09-28T12:16:40Z",
+   "immutable": "written once with O_EXCL before compute"
+  },
+  "revalidation": "host: runtime/parameter_contract.validate_round_spec_contract(round-spec) -> [] ; in-container: engine validate_spec(run-spec) -> expected counts 1x9x48=432 per grid, 10 grids, 4320 total"
+ },
+ "registered_counts": {
+  "cohorts": 1,
+  "strategy_cases_per_cohort": 9,
+  "dca_configs_per_cohort": 48,
+  "base_combinations_per_cohort": 432,
+  "case_evaluations_per_grid": 432,
+  "grid_count": 10,
+  "case_evaluations_total": 4320
+ },
+ "engine": {
+  "path": "/scripts/310_fpca_hourly_run.py",
+  "sha256": "sha256:b478990fda8767d45efaefcc673c73ae705d14b6d18d507aaa336f2108fee666",
+  "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/310_fpca_hourly_run.py",
+  "deployed_sha256_matches_repo": true,
+  "repo_path": "container/scripts/310_fpca_hourly_run.py",
+  "self_check": "/scripts/tests/test_fpca_hourly_engine.py",
+  "self_check_sha256": "sha256:7b5b14c4c9af404793e3de5d44f1a0f425b725e80591ff0b00c0e5c8d1a523b8",
+  "self_check_result": "19/19 checks passed inside the qlib-run container"
+ },
+ "preflight": {
+  "evidence": "evidence/310_fpca_hourly-r1-u2-preflight-20260928.json",
+  "checked_at_utc": "2026-09-28T12:18:22Z",
+  "overall": "PASS",
+  "checks": {
+   "P1": "PASS",
+   "P2": "PASS",
+   "P3": "PASS",
+   "P4": "PASS",
+   "P5": "PASS",
+   "P6": "PASS",
+   "P7": "PASS",
+   "P8": "PASS",
+   "P9": "PASS",
+   "P10": "PASS"
+  }
+ },
+ "launch": {
+  "command": "container exec -d qlib-run sh -c '/opt/venv/bin/python /scripts/310_fpca_hourly_run.py --run-spec /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u2/run-spec.json --attempt-dir /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u2 > /results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/attempts/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1-u2/logs/stdout.log 2>&1'",
+  "semantics": "exact-once, detached (container exec -d); P9 confirmed no terminal sentinel in the u2 attempt before launch",
+  "started_at_utc": "2026-09-28T12:18:44.095+00:00",
+  "verification": {
+   "state_json_stage": "RUNNING_QLIB",
+   "qlib_initialized": true,
+   "observed_log": [
+    "[2026-09-28T12:18:44.658110+00:00] loaded 41160 hourly bars, 41159 log returns, splits {'historical': [0, 32856], 'oos': [32856, 41160], 'full': [0, 41160]}",
+    "[2026-09-28T12:18:50.812153+00:00] forecast case w90_j2 done (41045 defined)"
+   ],
+   "completed_at_utc": "2026-09-28T12:22:09.361169+00:00"
+  }
+ },
+ "result": {
+  "status": "ARTIFACT_READY",
+  "runtime_seconds": 207.48461330402642,
+  "coverage_complete": true,
+  "case_evaluations_total": 4320,
+  "expected_case_evaluations": 4320,
+  "assertions_all_true": true,
+  "assertion_failures": [],
+  "cohort_count": 1,
+  "cohort_survivor_count": 0,
+  "disposition": "REJECT / NO_SURVIVOR",
+  "verdict_recommendation": "REJECT",
+  "falsification_hits": [
+   "walk_forward_directional",
+   "benchmark_incremental_value",
+   "cost_aware_trading_translation",
+   "horizon_perturbation"
+  ],
+  "pit_status": "PASS_NO_LOOKAHEAD"
+ },
+ "host_side_verification": [
+  "terminal_evidence.py publish --status DONE with 23 manifest entries (state/result/run-spec + 20 artifacts; logs excluded per contract 10.3)",
+  "terminal_evidence.py check -> ok=true, problems=[], rc=0 for both attempts (u1 INCOMPLETE, u2 DONE)",
+  "each of the 10 grid_*.csv re-read host-side: 432 rows, key set == registered 9x48 product, grid label == file name",
+  "gross_pnl - fees - funding == net_pnl for 4320/4320 cells at 1e-3 (max abs residual 4.8e-9), decomposition_ok=true on every row",
+  "u2 grid bytes AND every science artifact (cohort_results, cohort_survivors, falsification, signal_metrics, dca_layer_histogram, stress_effects, funding_coverage, raw_build) byte-identical to u1 -> remediation changed no scientific outcome",
+  "corrected gate evaluated against u1's frozen measurements: fee_2x / slippage_2ticks / cost_attrition_40bps each differ from full on 432/432 cells (true), while the old sign predicate was false"
+ ],
+ "verdict": {
+  "path": "/Volumes/ExpansionDrive/qlib-results/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03/rounds/bitcoin-rolling-fpca-hourly-return-direction-2026-09-03-r1/verdict.json",
+  "sha256": "sha256:aa3da11579b8f7cbd01b0cd5478f4ff1b5b1729f7b9eb453b9d2df737aad7cdc",
+  "verdict": "REJECT",
+  "performance_claimable": false,
+  "yield_decision": "STOP_REJECT",
+  "decided_at_utc": "2026-09-28T12:25:41Z"
+ },
+ "survivor_bundle": {
+  "written": false,
+  "reason": "0 cohort survivors -> contract 10.8 does not apply"
+ },
+ "terminal_evidence": {
+  "u1": {
+   "status": "INCOMPLETE",
+   "sha256": "sha256:8987adf9882a2321c0335515f2bd157b8a08598edd9e4eac418190aee1e3ae7c",
+   "created_at_utc": "2026-09-28T12:18:03Z"
+  },
+  "u2": {
+   "status": "DONE",
+   "sha256": "sha256:a38276e36c79af43432170aabb6eadf6fcf1762dabd7148b230bbf11b7cc9b57",
+   "verdict_hint": "CANDIDATE_REJECT",
+   "manifest_entries": 23,
+   "created_at_utc": "2026-09-28T12:23:09Z"
+  }
+ },
+ "no_board_no_rerun": "no kanban CLI subcommand or kanban_* tool was called, no terminal attempt was rerun, no other candidate was advanced"
+}
