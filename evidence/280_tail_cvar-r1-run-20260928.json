@@ -1,0 +1,103 @@
+{
+ "schema_version": 1,
+ "kind": "run",
+ "contract_section": "14.4 / 16 / 15",
+ "family_id": "taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02",
+ "round_id": "taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "written_at_utc": "2026-09-28T05:47:23Z",
+ "recorded_by": "Hermes default worker (one-shot production handoff execution)",
+ "specs_frozen_before_compute": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02/rounds/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1/round-spec.json",
+   "sha256": "sha256:b01879b3e6fb664a717a952fbb2a4eaecdbecb3e2b1e70012bd59ea8cce3b6bd",
+   "created_at_utc": "2026-09-28T05:40:53Z",
+   "parameter_contract_problems": [],
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "run_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02/rounds/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1/attempts/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1-u1/run-spec.json",
+   "sha256": "sha256:62cfb5b2a755eb23349be0598483f4c10c2c73d0fa680f06d46e9a13db50b684",
+   "created_at_utc": "2026-09-28T05:40:53Z",
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "registered_counts": {
+   "cohorts": 4,
+   "strategy_cases_per_cohort": 4,
+   "dca_configs_per_cohort": 48,
+   "base_combinations_per_cohort": 192,
+   "case_evaluations_per_grid": 768,
+   "grid_count": 10,
+   "case_evaluations_total": 7680
+  }
+ },
+ "prerequisite_gate_phase_2b": {
+  "catalog_only": [
+   "_meta/CONFIG.json",
+   "_meta/SCHEMA.md"
+  ],
+  "conclusion": "core signal inputs present on the complete local eligible universe: 1715 contiguous daily OHLCV bars per symbol 2022-01-01..2026-09-11 (57 monthly shards each), official FRED DGS3MO risk-free series with 1173 in-window observations and a carry-forward seeded 2021-12-31, canonical instrument metadata (taker_fee 0.0005, per-symbol price_increment), official funding observations from 2023-10-31 with missing intervals charged zero and disclosed",
+  "not_local": "the record's 31 US-listed ETFs and its 2015-2025 calendar are absent from the local raw; per the system lifecycle footer they are provenance/external-validity only and the local universe (BNBUSDT/BTCUSDT/ETHUSDT/SOLUSDT, 1d) is the execution universe, canonicalized through the record's own crypto-portability section - no TECHNICAL_INCOMPLETE, no universe shrink, no second suitability screen",
+  "bounded_scope": "only CONFIG.json/SCHEMA.md as catalogs plus bounded direct reads of the klines/fred/instrument files; no candidate-specific prerequisite checker, no host-wide scan, no second data registry",
+  "status": "SATISFIED - full backtest launched"
+ },
+ "engine": {
+  "path": "/scripts/280_tail_cvar_run.py",
+  "sha256": "sha256:3f7afb0c1ccee4d117d59133d266388217cb71b58f82d7e5a8fd2ab34ee5e74f",
+  "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/280_tail_cvar_run.py",
+  "deployed_sha256_matches_repo": true,
+  "self_check": "/scripts/tests/test_tail_cvar_engine.py",
+  "self_check_sha256": "sha256:1578f262108c8f8b35d5e77b36674971f296a61c8b4e3a27b178171579b17223",
+  "self_check_result": "13/13 passed inside the qlib-run container (frozen domain, spec tamper rejection incl. Kanban-key rejection, GJR-GARCH-t fit + prefix/PIT forecast, Hill formula vs the record, CVaR LP/MVP feasibility + deadband, allocation-layer suffix-perturbation PIT test, per-fill gross/net accounting + negative control, registered stress grids, selector/cull/neighbourhood, grid CSV contract, DGS3MO boundary carry-forward, round-spec parameter_contract cross-check)",
+  "container": "qlib-run",
+  "image": "qlib:0.9.7-arm64",
+  "qlib_version": "0.9.7",
+  "seed": 20260902
+ },
+ "prelaunch_validation": {
+  "kind": "container-local dry run with RESULTS_ROOT/WORK_ROOT patched to /qlib/work/tail-cvar-v1-smoke (no production path touched, scratch removed before launch)",
+  "result": "full pipeline end-to-end in 68.2s: qlib 0.9.7 readback OK, 7680/7680 case evaluations, coverage_complete=true, all 17 assertions true, 4 cohorts processed, falsification battery evaluated (4/4 items)",
+  "purpose": "de-risk the single exact-once launch; it produced no durable artifact and never wrote under /results"
+ },
+ "preflight": {
+  "command": "python3 runtime/preflight.py --attempt-dir <u1> --launch --json",
+  "result": "overall PASS, evaluated=10 failed=0 launch_gate=evaluated; P10 recomputed script sha 3f7afb0c... match; round-spec parameter_contract 0 problems",
+  "evidence": "evidence/280_tail_cvar-r1-preflight-20260928.json",
+  "self_check_command": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_tail_cvar_engine.py",
+  "self_check_result": "13/13 passed"
+ },
+ "launches": [
+  {
+   "attempt": "taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1-u1",
+   "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/280_tail_cvar_run.py --run-spec /results/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02/rounds/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1/attempts/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1-u1/run-spec.json --attempt-dir /results/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02/rounds/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1/attempts/taiwan-semiconductor-etf-asymmetric-volatility-cvar-rachev-ratio-2026-09-02-r1-u1\"",
+   "container": "qlib-run",
+   "detached": true,
+   "launched_at_utc": "2026-09-28T05:47:23Z",
+   "verification": "read-back after launch: attempt state.json stage=RUNNING_QLIB, artifacts/progress.json expected_case_evaluations=7680, raw_build.json + funding_coverage.json + risk_free_coverage.json present (qlib dump finished), logs/run.log created",
+   "exact_once": "P9 confirmed no terminal sentinel before launch; this run_id is launched exactly once (INV-15)"
+  }
+ ],
+ "remediation": [],
+ "result_summary": "pending: compute launched and detached; this one-shot worker exits without waiting (contract 16 execution flow). Host-side disposition resumes on the existing n8n C4 cadence once the attempt reaches a terminal state.",
+ "claimability_evidence": {
+  "basis": "performance_claimable is decided in verdict.json under contract 9.6, not here",
+  "missing_conditions": [],
+  "status": "not evaluated at launch time"
+ },
+ "falsification_advice": {
+  "rule": "record falsification battery hit => cull or family REJECT (body FAILURE TAXONOMY)",
+  "battery_registered_before_compute": true,
+  "items": 4,
+  "status": "registered, evaluated by the run; results read from result.json at disposition"
+ },
+ "what_was_not_done": [
+  "no verdict.json written in this session (final verdict is the host-side disposition step, contract 10.7)",
+  "no Kanban card, board, task id or dispatcher of any kind; no kanban CLI subcommand invoked",
+  "no intake re-review and no second crypto/runnable suitability classification (backfill exactly-once rule)",
+  "no universe shrink or post-hoc cohort removal; no change to the registered hypothesis, DCA domain, split or falsification battery",
+  "no Paper/Live action, no second engine, no Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
+  "no candidate-specific prerequisite checker, no host-wide scan, no synthetic fixtures in production evidence"
+ ],
+ "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7)."
+}
