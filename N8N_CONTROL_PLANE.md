@@ -1,25 +1,19 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-## Pending local remediation — direct Hermes transport (not live, not audited)
+## Prepared-execution cutover — C3 HOLD pending independent audit
 
-The sections below record the existing live C3/C4 deployment and its historical Kanban work-order
-transport. This branch replaces only the execution transport, pending independent audit and an
-explicit cutover; do not read the old `hermes kanban create`/`unblock` paragraphs as instructions for
-new families. The stable n8n schedules, workflow IDs, fixed request schema and allowlisted host bridge
-remain unchanged. No valid production request was sent during this remediation.
+The deployment descriptions below are historical unless explicitly marked current. Live C3 is
+**HOLD pending audit**; this worktree change is not deployed, and this task does not touch live n8n.
+Normal prepared dispatch is deterministic and direct: the bridge invokes
+`runtime/production_handoff.py`, which validates the exact prepared manifest and mirrored staged
+round/run specs, runs existing P1–P10 against the staged attempt, materializes identical canonical
+specs, then invokes the fixed `/usr/local/bin/container exec -d qlib-run ...` command. The manifest
+contains no `argv` or runner path; no Hermes process or shell is used by normal C3. Hermes remains
+only in C4 exception/remediation and the explicit `--legacy-agent-dispatch` rollback path.
 
-Proposed C3: the bridge calls `runtime/production_handoff.py` once. It reads `/results` and the
-reviewed pool, registers at most one immutable direct `family.json`, and launches the existing Hermes
-default CLI as a detached one-shot session (`hermes -p default --cli --accept-hooks chat --query-file
-<frozen agent-task.md> --in <candidate workspace> --max-turns 500 --run-budget 7200`). There is no
-Kanban create, board status, dispatcher or task ID. The candidate body, optional skills and
-system lifecycle footer still reach the worker. A file lease held until the agent exits and the
-registered family/artifact read-back make a failed launch retry the *same* family before the next
-candidate. Once an attempt exists, the existing active-attempt/per-round-verdict guard stays in force.
-The worker uses preflight P1–P10, creates the run spec and starts Qlib with detached `container exec`;
-P10 also refuses a direct round-spec whose family/round identity or card ownership mismatches before
-compute starts. The bridge never waits for that computation. The candidate workspace is validated only when selected,
-so a future unsupported pool entry cannot freeze earlier valid candidates.
+The stable n8n workflow IDs, fixed request schema, allowlisted host bridge, and C4 cadence are not
+changed by this local remediation. The historical direct-Hermes C3 text below must not be used as
+instructions for new families.
 
 Proposed C4: the same fixed `runtime_reconcile_once` bridge invokes the repo reconciler. It ignores
 historical card-owned families and selects only the newest valid attempt in each direct round. A
@@ -42,26 +36,20 @@ rewritten. The post-survivor index/evidence tooling now accepts direct PASS bund
 family/round/run ownership (no card ids; a leaked card id fails closed) while historical
 card-owned families keep the strict `kanban_task_id` checks. Pending independent audit.
 
-狀態：**Full Canvas AUDITED PASS / LIVE**；**C3 production handoff C3.1 AUDITED PASS / LIVE**。
+狀態：**Full Canvas AUDITED PASS / LIVE**；C3.1 的 audited/live 狀態為歷史記錄，**目前 live C3 HOLD pending audit**。
 Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 commits `9832b07`＋`fc44eb0` 已由 auditor run 445 PASS，並完成 live import／publish；2026-09-23 23:05 Asia/Taipei C3 execution 112 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦 `success`。
 
-C3 handoff workflow 仍是獨立、最小的 cadence 編排；C3.1 已完成獨立 auditor PASS 並 live activation，live cadence 為 `:05/:20/:35/:50`，legacy Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback。
+C3 handoff workflow `productionHandoffManualC2` 的 `:05/:20/:35/:50` cadence 與 C3.1 live activation 為歷史記錄；目前 **live C3 HOLD pending audit**，normal prepared dispatch 尚未部署。Hermes handoff cron `624d0be5b23c` 保持 paused，僅作明確 rollback。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
 
-## C3 current state（production handoff cadence）
+## C3 current state（production handoff）
 
-- workflow `productionHandoffManualC2` 保持 stable ID；功能節點恰為 **Manual Trigger + Schedule Trigger + 既有 host-bridge action**。
-  Schedule Trigger 的 live exact cron 是 `5,20,35,50 * * * *`（`:05/:20/:35/:50`）；Manual／Schedule 兩條線都接同一個 `production_handoff_once` request/response action。
-  repo export 維持 `active=false`，因此本卡不會自行啟用 live cadence。
-- C3.1 已完成獨立 audit 與 live activation，現在由 n8n 擁有 `5,20,35,50 * * * *` production handoff cadence；2026-09-23 23:05 Asia/Taipei execution 112 `mode=trigger`／`status=success`。Hermes handoff cron `624d0be5b23c` 保持 **paused**，只作 rollback path。
-  n8n 只呼叫既有 `ai.quant.n8n-host-bridge`，canonical 判定與 mutation 仍由 `runtime/production_handoff.py` 負責；該判定**只讀 `/results` artifacts**（`family.json`／`verdict.json`／attempt terminal 證據／candidate pool／incident ledger），**不讀、也不要求 Hermes／Kanban**。
-- 因此 Hermes／Kanban 的卡片狀態（blocked／stale／無法讀回）**不可能**凍結或改寫 production advance：blocked 卡在本輪沒有任何 gate 效力；advance ＝ `family.json` 落地（與派送同一輪完成），work-order 卡只是既有 agent lane 的執行載具、以 `--idempotency-key <family_id>` 冪等派送，派送失敗只留一筆 finding，不回滾、不 freeze。
-- 真正的 runtime guard 是客觀 artifact 證據：最新 attempt 在 90 分鐘內有新寫入且（尚未發佈 terminal sentinel **或** **該 attempt 自己所屬 round** 尚無 terminal verdict）→ 本輪等待（`verdict.json` 是 per-round，較早輪次的 terminal verdict 不會釋放仍在寫的 follow-up round；釋放判定讀該 attempt 自己的 `rounds/<round>/verdict.json`，並以 `family_id`／`kanban_task_id`／`round_id` ownership ＋ terminal token 重新驗證，malformed／foreign／partial 一律視為不存在、fail-closed）；剛註冊未滿 90 分鐘且尚無 runtime evidence 的 family → launch in flight、本輪等待；未解 incident（其 family／attempt 尚無 terminal 證據）→ fail-closed finding。兩個 90 分鐘窗沿用 watchdog 既有的 stall 窗，沒有新增 state store 或 state machine。
-- 每個 tick 都在 stderr 留一行 bounded outcome token（`outcome=advanced|running|idle|finding|incident` ＋ `action=` ＋ `reason=`），C3／C4 因此能區分「invocation 成功」與「pipeline 結果」，不需新增 mailbox／queue／daemon；下一個 `:05`／`:20`／`:35`／`:50` tick 自然重試。
-- 維護 SOP：先做 HOLD transition；乾淨停止 n8n，checkpoint／integrity check 並保留 known-good DB snapshot；reboot/update 與 login 後，
-  由既有 `ai.quant.recover-gate` ＋ `ai.quant.n8n-host-bridge` LaunchAgent 復原；再做 readiness、Shadow、dry-run smoke，通過後繼續。**不新增 recovery service**。
+- **Live C3: HOLD pending independent audit.** 歷史 C3.1 cadence/activation 記錄不代表目前可 dispatch；repo export 保持 `active=false`，不會自行啟用 live workflow。
+- 經 audit 與明確 cutover 後，normal C3 才可恢復為 direct prepared dispatch：Research/Intake 必須先提供 `<results>/_handoff/prepared/<family_id>/execution.json`、鏡像 round/run specs 與 script identity；`production_handoff.py` 驗證並執行 staged P1–P10，再以固定 container command 啟動 Qlib。缺 artifact 時回 `candidate_preparation_required`，不寫新 family、不呼叫 Hermes。
+- Container rc 非零／timeout 後 canonical attempt 已存在，C3 不盲目重跑；既有 C3/C4 artifact guard 與 C4 exception/remediation 負責後續處置。`family.json.handoff.execution=direct_hermes` 僅為 P10/C4 沿用的 direct-family compatibility token，不表示 prepared C3 啟動 Hermes。
+- C4 保持其既有 runtime-reconciliation/exception 職責；上述程式碼變更不修改 n8n workflow、bridge、排程或 live state。
 
 ## C4 current state（runtime reconciler cadence）
 

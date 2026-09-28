@@ -284,6 +284,11 @@ def script_host_path(path, host_scripts):
     return None
 
 
+def _nonempty_ownership(doc):
+    return [key for key in ("task_id", "kanban_task_id", "kanban_board")
+            if key in doc and doc[key] is not None and doc[key] != ""]
+
+
 def round_spec_contract_problem(attempt_dir):
     """None when the attempt's round-spec carries a valid v1.8 parameter_contract, else why not.
 
@@ -348,7 +353,7 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
                    family.get("family_id") != Path(attempt_dir).resolve().parents[3].name or
                    spec.get("round_id") != Path(attempt_dir).resolve().parents[1].name or
                    spec.get("run_id") != Path(attempt_dir).resolve().name or
-                   any(k in spec for k in ("task_id", "kanban_board", "kanban_task_id"))):
+                   _nonempty_ownership(spec)):
         check(checks, "P10", "FAIL", "card-local", "direct family/run identity mismatch")
         return
     if direct:
@@ -370,8 +375,7 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
                 problems.append("round-spec family_id mismatch")
             if round_spec.get("round_id") != Path(attempt_dir).resolve().parents[1].name:
                 problems.append("round-spec round_id mismatch")
-            owned = [k for k in ("task_id", "kanban_task_id", "kanban_board")
-                     if k in round_spec]
+            owned = _nonempty_ownership(round_spec)
             if owned:
                 problems.append("direct round-spec has Kanban ownership %s" % owned)
         if problems:

@@ -9,13 +9,15 @@ Every decision input is a read-only file contract under the results root:
   * `/results/_incidents/...`             = fail-closed incident ledger (contract 12.6)
   * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/retry/finding decisions
 
-The reviewed candidate is handed directly to a detached Hermes default CLI session; no Kanban
-board, dispatcher, card status or task id participates. A file lock held by the agent process
-prevents duplicate pre-attempt launches; an unjudged direct family is retried before another
-candidate can be registered. Qlib itself remains detached from the host-bridge request.
+Normal C3 validates immutable prepared execution artifacts, runs P1-P10 on the staged attempt,
+then invokes the fixed qlib-run container command directly; no Hermes process or candidate-supplied
+command is involved. Hermes dispatch remains available only through the explicit legacy rollback
+flag. No Kanban board, dispatcher, card status or task id participates.
 
-Legal action: register and directly launch at most ONE new family per round; registration without
-a successful launch stays retryable for that SAME family on the next tick. Findings are deduplicated.
+Legal action: register at most ONE new family per round. Prepared mode registers only after preflight;
+once its canonical attempt is materialized, C3 never relaunches it and holds for C4 disposition.
+Before an attempt exists, a registered prepared family may retry only with the exact frozen identity;
+legacy worker retry remains available only through explicit rollback. Findings are deduplicated.
 
 Runtime guards (all objective, all from results-root artifacts):
   * the family's NEWEST attempt holds the pipeline while it is inside ACTIVE_WINDOW_MINUTES and either
@@ -26,7 +28,7 @@ Runtime guards (all objective, all from results-root artifacts):
     or a malformed / foreign / partial one - never releases a family whose current round still owes the
     pipeline runtime evidence, and counts as missing (fail-closed);
   * a family registered less than LAUNCH_GRACE_MINUTES ago that has produced no runtime evidence
-    yet is a launch in flight (the worker still has to publish its round/run specs) -> wait;
+    yet is a launch in flight -> wait;
   * an unresolved canonical incident (its family/attempt carries no terminal evidence) still gates.
 Both windows reuse the 90-minute stall window the quant runtime watchdog already applies to a run
 that stopped writing `run.log`/artifacts - no new state store, no new state machine.
@@ -43,6 +45,8 @@ import hashlib
 import json
 import os
 import re
+import signal
+import stat
 import subprocess
 import sys
 import time
@@ -56,6 +60,7 @@ DEFAULT_WORKSPACE = "/Users/hong/workspace/quant-runtime-pipeline"
 AGENT_LOG = "agent.log"
 AGENT_LOCK = ".agent.lock"
 DIRECT_MODE = "direct_hermes"
+# Legacy family-ownership token consumed by P10/C4; it does not mean prepared C3 launched Hermes.
 FAMILY_ID = re.compile(r"[a-z0-9][a-z0-9-]{0,199}\Z")
 HANDOFF_DIRNAME = "_handoff"
 POOL_FILENAME = "candidates.json"
@@ -67,6 +72,18 @@ TERMINAL_VERDICTS = ("PASS", "REJECT", "FINALIST", "DEFERRED", "TECHNICAL_INCOMP
 # Runtime-evidence windows, in minutes (results-root artifacts only; never a board read).
 ACTIVE_WINDOW_MINUTES = 90
 LAUNCH_GRACE_MINUTES = 90
+PREPARED_EXECUTION_KIND = "prepared_execution"
+PREPARED_EXECUTION_PYTHON = "/opt/homebrew/bin/python3"
+PREPARED_MANIFEST_MAX_BYTES = 65536
+PREPARED_ROUND_SPEC_MAX_BYTES = 1 << 20
+PREPARED_RUN_SPEC_MAX_BYTES = 512 << 10
+PREPARED_OUTPUT_MAX_BYTES = 65536
+PREPARED_EXECUTION_TIMEOUT_S = 300
+PREPARED_EVIDENCE_TIMEOUT_S = 12
+PREPARED_EVIDENCE_POLL_S = 0.25
+PREPARED_STATE_STAGES = ("RUNNING_QLIB", "ARTIFACT_READY", "FAILED_SCRIPT")
+SAFE_SPEC_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,199}\Z")
+SAFE_SCRIPT_PATH = re.compile(r"/scripts/([A-Za-z0-9][A-Za-z0-9_-]*\.py)\Z")
 # v1.3.0 candidate requirement (contract 14.4 + 7.2/7.3): a card appended by this automation
 # must register the DCA parameter domain and the cohort survivor rules, otherwise it cannot
 # express a v1.3 full backtest. Compared case-insensitively against the resolved card body.
@@ -774,7 +791,7 @@ def last_finding_key(results_root):
     return key
 
 
-def write_family_json(results_root, cand):
+def write_family_json(results_root, cand, prepared_identity=None):
     """Immutable family identity; new families have no Kanban ownership fields."""
     doc = {
         "schema_version": 1,
@@ -789,6 +806,8 @@ def write_family_json(results_root, cand):
                     "decision_evidence": "results_root_only",
                     "pool_fingerprint_source": cand.get("provenance", {}).get("reviewed_source")},
     }
+    if prepared_identity is not None:
+        doc["handoff"]["prepared_execution"] = dict(prepared_identity)
     path = Path(results_root) / cand["family_id"] / "family.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
@@ -803,8 +822,439 @@ def write_family_json(results_root, cand):
     return doc, str(path)
 
 
+def _sha256(raw):
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _read_prepared_file(value, base, max_bytes, expected=None):
+    """Read one bounded regular file without following a final-component symlink."""
+    if not isinstance(value, str) or not value:
+        raise ValueError("prepared file path must be a non-empty string")
+    path = Path(value)
+    if not path.is_absolute() or path.is_symlink():
+        raise ValueError("prepared file path must be absolute and non-symlink")
+    resolved = path.resolve(strict=True)
+    base = Path(base).resolve(strict=True)
+    try:
+        relative = resolved.relative_to(base)
+    except ValueError:
+        raise ValueError("prepared file escapes %s" % base)
+    if not relative.parts:
+        raise ValueError("prepared file path must name a file under %s" % base)
+    if expected is not None and resolved != Path(expected).resolve(strict=True):
+        raise ValueError("prepared file does not match the required mirrored path")
+    current = base
+    for component in relative.parts[:-1]:
+        current = current / component
+        parent_info = os.lstat(str(current))
+        if stat.S_ISLNK(parent_info.st_mode) or not stat.S_ISDIR(parent_info.st_mode):
+            raise ValueError("prepared file parents must be non-symlink directories")
+    info = os.lstat(str(resolved))
+    if stat.S_ISLNK(info.st_mode):
+        raise ValueError("prepared file path must not contain symlinks")
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError("prepared file must be a regular non-symlink file")
+    if info.st_size > max_bytes:
+        raise ValueError("prepared file exceeds %d bytes" % max_bytes)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(str(path), flags)
+    try:
+        opened = os.fstat(fd)
+        if not stat.S_ISREG(opened.st_mode) or \
+                (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino):
+            raise ValueError("prepared file changed to a non-regular file")
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            raw = stream.read(max_bytes + 1)
+    finally:
+        if fd != -1:
+            os.close(fd)
+    if len(raw) > max_bytes:
+        raise ValueError("prepared file exceeds %d bytes" % max_bytes)
+    return resolved, raw
+
+
+def _nonempty_ownership(doc):
+    return [key for key in ("kanban_task_id", "kanban_board", "task_id")
+            if key in doc and doc[key] is not None and doc[key] != ""]
+
+
+def _prepared_identity(prepared):
+    return {
+        "manifest_path": prepared["manifest_path"],
+        "manifest_sha256": prepared["manifest_sha256"],
+        "round_spec_sha256": prepared["round_spec_sha256"],
+        "run_spec_sha256": prepared["run_spec_sha256"],
+        "round_id": prepared["round_id"],
+        "run_id": prepared["run_id"],
+        "script_path": prepared["script_path"],
+        "script_sha256": prepared["script_sha256"],
+    }
+
+
+def _prepared_execution(cand, args):
+    """Validate immutable staged specs and fixed Qlib script identity before canonical mutation."""
+    execution_file = cand.get("execution_file")
+    if not isinstance(execution_file, str) or not execution_file.strip():
+        return None, ("candidate_preparation_required",
+                      "candidate %s has no deterministic execution_file; Research/Intake must "
+                      "prepare frozen execution artifacts first" % cand["family_id"])
+    try:
+        family_id = cand["family_id"]
+        if not FAMILY_ID.fullmatch(family_id):
+            raise ValueError("invalid family_id")
+        results_root = Path(args.results_root).resolve(strict=True)
+        handoff_root = results_root / HANDOFF_DIRNAME
+        prepared_root = handoff_root / "prepared"
+        for directory in (handoff_root, prepared_root):
+            info = os.lstat(str(directory))
+            if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+                raise ValueError("prepared staging parents must be non-symlink directories")
+        family_dir = prepared_root / family_id
+        if family_dir.is_symlink() or not family_dir.is_dir():
+            raise ValueError("prepared family directory must be a regular directory")
+        family_dir = family_dir.resolve(strict=True)
+        manifest_path, manifest_bytes = _read_prepared_file(
+            execution_file, family_dir, PREPARED_MANIFEST_MAX_BYTES)
+        manifest = json.loads(manifest_bytes.decode("utf-8"))
+        required = {"schema_version", "document_kind", "family_id", "semantic_fingerprint",
+                    "round_id", "run_id", "round_spec_file", "round_spec_sha256",
+                    "run_spec_file", "run_spec_sha256"}
+        if not isinstance(manifest, dict) or set(manifest) != required:
+            raise ValueError("manifest must contain exactly %s" % sorted(required))
+        if type(manifest.get("schema_version")) is not int or manifest["schema_version"] != 1 or \
+                manifest.get("document_kind") != PREPARED_EXECUTION_KIND:
+            raise ValueError("manifest schema_version/document_kind mismatch")
+        if manifest.get("family_id") != family_id or \
+                manifest.get("semantic_fingerprint") != fingerprint(cand["fingerprint_input"]):
+            raise ValueError("prepared_execution_mismatch: family/fingerprint mismatch")
+        round_id, run_id = manifest.get("round_id"), manifest.get("run_id")
+        if not isinstance(round_id, str) or not SAFE_SPEC_ID.fullmatch(round_id) or \
+                round_id in (".", "..") or not isinstance(run_id, str) or \
+                not SAFE_SPEC_ID.fullmatch(run_id) or run_id in (".", ".."):
+            raise ValueError("round_id/run_id must be safe path components")
+        round_path = family_dir / "rounds" / round_id / "round-spec.json"
+        run_path = family_dir / "rounds" / round_id / "attempts" / run_id / "run-spec.json"
+        round_file, round_bytes = _read_prepared_file(
+            manifest.get("round_spec_file"), family_dir, PREPARED_ROUND_SPEC_MAX_BYTES,
+            expected=round_path)
+        run_file, run_bytes = _read_prepared_file(
+            manifest.get("run_spec_file"), family_dir, PREPARED_RUN_SPEC_MAX_BYTES,
+            expected=run_path)
+        round_hash, run_hash = _sha256(round_bytes), _sha256(run_bytes)
+        if manifest.get("round_spec_sha256") != round_hash or \
+                manifest.get("run_spec_sha256") != run_hash:
+            raise ValueError("prepared spec SHA256 mismatch")
+        round_spec = json.loads(round_bytes.decode("utf-8"))
+        run_spec = json.loads(run_bytes.decode("utf-8"))
+        if not isinstance(round_spec, dict) or type(round_spec.get("schema_version")) is not int or \
+                round_spec.get("schema_version") != 1 or round_spec.get("family_id") != family_id or \
+                round_spec.get("round_id") != round_id:
+            raise ValueError("round-spec family/round identity mismatch")
+        if not isinstance(run_spec, dict) or type(run_spec.get("schema_version")) is not int or \
+                run_spec.get("schema_version") != 1 or run_spec.get("family_id") != family_id or \
+                run_spec.get("round_id") != round_id or run_spec.get("run_id") != run_id:
+            raise ValueError("run-spec family/round/run identity mismatch")
+        round_ownership, run_ownership = (_nonempty_ownership(round_spec),
+                                          _nonempty_ownership(run_spec))
+        if round_ownership or run_ownership:
+            raise ValueError("prepared specs contain nonempty ownership fields: %s" %
+                             sorted(set(round_ownership + run_ownership)))
+        script = run_spec.get("script")
+        if not isinstance(script, dict):
+            raise ValueError("run-spec.script must contain path and sha256")
+        script_path, script_sha256 = script.get("path"), script.get("sha256")
+        if not isinstance(script_path, str) or not SAFE_SCRIPT_PATH.fullmatch(script_path):
+            raise ValueError("script.path must be an absolute /scripts/<safe filename>.py path")
+        if not isinstance(script_sha256, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", script_sha256):
+            raise ValueError("script.sha256 must be sha256:<64 lowercase hex>")
+        prepared = {
+            "manifest_path": str(manifest_path),
+            "manifest_sha256": _sha256(manifest_bytes),
+            "round_spec_path": str(round_file),
+            "round_spec_sha256": round_hash,
+            "run_spec_path": str(run_file),
+            "run_spec_sha256": run_hash,
+            "round_id": round_id,
+            "run_id": run_id,
+            "script_path": script_path,
+            "script_sha256": script_sha256,
+            "round_spec_bytes": round_bytes,
+            "run_spec_bytes": run_bytes,
+            "prepared_family_dir": str(family_dir),
+            "staged_attempt_dir": str(run_file.parent),
+        }
+        prepared["identity"] = _prepared_identity(prepared)
+        return prepared, None
+    except (OSError, UnicodeError, ValueError, RecursionError, TypeError) as exc:
+        message = str(exc)
+        kind = "prepared_execution_mismatch" if message.startswith("prepared_execution_mismatch:") else \
+            "prepared_execution_invalid"
+        return None, (kind, message)
+
+
+def prepared_execution_hold(cand, args, res, existing=None):
+    """Normal mode requires valid upstream-prepared artifacts; rollback is explicit opt-out."""
+    if not getattr(args, "require_prepared_execution", True):
+        return None
+    prepared, problem = _prepared_execution(cand, args)
+    if problem:
+        key, reason = problem
+        if existing is not None:
+            return res.finding("registered_candidate_changed",
+                               "prepared_execution_mismatch: %s" % reason,
+                               pool_entry=cand["family_id"],
+                               execution_file=cand.get("execution_file"))
+        return res.finding(key, reason, pool_entry=cand["family_id"],
+                           execution_file=cand.get("execution_file"))
+    cand["_prepared_execution"] = prepared
+    return None
+
+
+def _bounded_text(data, limit=PREPARED_OUTPUT_MAX_BYTES):
+    if isinstance(data, str):
+        data = data.encode("utf-8", "replace")
+    data = data or b""
+    return data[:limit].decode("utf-8", "replace")
+
+
+def _run_bounded_process(cmd, cwd, env, timeout=PREPARED_EXECUTION_TIMEOUT_S):
+    """Run a fixed argv in its own process group; timeout kills the whole group."""
+    proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            start_new_session=True)
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            try:
+                os.killpg(proc.pid, sig)
+            except ProcessLookupError:
+                break
+            if sig == signal.SIGTERM:
+                time.sleep(0.2)
+        try:
+            out, err = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+            out, err = proc.communicate()
+        raise subprocess.TimeoutExpired(cmd, timeout, output=_bounded_text(out),
+                                        stderr=_bounded_text(err)) from None
+    return proc.returncode, _bounded_text(out), _bounded_text(err)
+
+
+def _immutable_write(path, raw):
+    """Create a file once, accepting only an exact-byte retry."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(str(path), flags, 0o644)
+    except FileExistsError:
+        info = os.lstat(str(path))
+        if not stat.S_ISREG(info.st_mode) or path.is_symlink() or path.read_bytes() != raw:
+            raise ValueError("immutable prepared artifact differs: %s" % path)
+        return False
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            fd = -1
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+    finally:
+        if fd != -1:
+            os.close(fd)
+    return True
+
+
+def _staged_family_marker(prepared, family_id):
+    """Supply the existing P10 direct-family ownership marker only in the prepared staging tree."""
+    marker = Path(prepared["prepared_family_dir"]) / "family.json"
+    raw = (json.dumps({"schema_version": 1, "family_id": family_id,
+                       "handoff": {"execution": DIRECT_MODE}}, sort_keys=True) + "\n").encode()
+    if os.path.lexists(str(marker)):
+        info = os.lstat(str(marker))
+        if not stat.S_ISREG(info.st_mode) or marker.is_symlink():
+            raise ValueError("staged family.json must be a regular non-symlink file")
+        try:
+            doc = json.loads(marker.read_text())
+        except (OSError, UnicodeError, ValueError) as exc:
+            raise ValueError("staged family.json is invalid: %s" % exc)
+        if not isinstance(doc, dict) or doc.get("family_id") != family_id or \
+                not isinstance(doc.get("handoff"), dict) or \
+                doc["handoff"].get("execution") != DIRECT_MODE:
+            raise ValueError("staged family.json does not identify this direct family")
+        return
+    _immutable_write(marker, raw)
+
+
+def _run_staged_preflight(prepared, family_id):
+    try:
+        _staged_family_marker(prepared, family_id)
+        cmd = [PREPARED_EXECUTION_PYTHON,
+               str(Path(__file__).resolve().parent / "preflight.py"),
+               "--launch", "--attempt-dir", prepared["staged_attempt_dir"], "--json"]
+        env = {"HOME": "/Users/hong",
+               "PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin",
+               "LANG": "en_US.UTF-8"}
+        rc, out, err = _run_bounded_process(cmd, DEFAULT_WORKSPACE, env)
+        report = json.loads(out)
+        checks = {item.get("id"): item.get("status") for item in report.get("checks", [])
+                  if isinstance(item, dict)} if isinstance(report, dict) else {}
+        if rc != 0 or not isinstance(report, dict) or report.get("overall") != "PASS" or \
+                report.get("launch_gate") != "evaluated" or \
+                checks.get("P9") != "PASS" or checks.get("P10") != "PASS":
+            return "P1-P10 preflight failed (rc=%s, overall=%s, launch_gate=%s, P9=%s, P10=%s): %s" % (
+                rc, report.get("overall") if isinstance(report, dict) else "invalid-json",
+                report.get("launch_gate") if isinstance(report, dict) else "unknown",
+                checks.get("P9"), checks.get("P10"), err[-1000:])
+        return None
+    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired) as exc:
+        return "P1-P10 preflight failed: %s" % exc
+
+
+def _materialize_canonical_specs(results_root, family_id, prepared):
+    root = Path(results_root).resolve(strict=True)
+    round_dir = root / family_id / "rounds" / prepared["round_id"]
+    attempt_dir = round_dir / "attempts" / prepared["run_id"]
+    for directory in (root / family_id, root / family_id / "rounds",
+                      round_dir, round_dir / "attempts", attempt_dir):
+        if os.path.lexists(str(directory)):
+            info = os.lstat(str(directory))
+            if not stat.S_ISDIR(info.st_mode) or directory.is_symlink():
+                raise ValueError("canonical attempt path contains a non-directory: %s" % directory)
+        else:
+            directory.mkdir()
+    _immutable_write(round_dir / "round-spec.json", prepared["round_spec_bytes"])
+    _immutable_write(attempt_dir / "run-spec.json", prepared["run_spec_bytes"])
+    return round_dir, attempt_dir
+
+
+def _valid_prepared_state(attempt_dir, family_id, round_id, run_id):
+    path = Path(attempt_dir) / "state.json"
+    try:
+        info = os.lstat(str(path))
+        if not stat.S_ISREG(info.st_mode) or path.is_symlink() or info.st_size > 65536:
+            return False
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(str(path), flags)
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                return False
+            with os.fdopen(fd, "rb") as stream:
+                fd = -1
+                doc = json.loads(stream.read(65537).decode("utf-8"))
+        finally:
+            if fd != -1:
+                os.close(fd)
+    except (OSError, UnicodeError, ValueError, RecursionError):
+        return False
+    return isinstance(doc, dict) and doc.get("family_id") == family_id and \
+        doc.get("round_id") == round_id and doc.get("run_id") == run_id and \
+        doc.get("stage") in PREPARED_STATE_STAGES
+
+
+def _wait_for_prepared_state(attempt_dir, family_id, round_id, run_id):
+    deadline = time.monotonic() + PREPARED_EVIDENCE_TIMEOUT_S
+    while True:
+        if _valid_prepared_state(attempt_dir, family_id, round_id, run_id):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(min(PREPARED_EVIDENCE_POLL_S,
+                       max(0.0, deadline - time.monotonic())))
+
+
+def _run_prepared_execution(cand, args, res, existing=None, family_path=None):
+    prepared = cand.get("_prepared_execution")
+    if not isinstance(prepared, dict):
+        return res.finding("prepared_execution_invalid",
+                           "validated prepared execution manifest/specs missing at dispatch",
+                           attempted_family=cand["family_id"])
+    identity = prepared["identity"]
+    if existing:
+        handoff = existing.get("handoff") if isinstance(existing, dict) else None
+        frozen = handoff.get("prepared_execution") if isinstance(handoff, dict) else None
+        if frozen != identity:
+            return res.finding("registered_candidate_changed",
+                               "prepared_execution_mismatch: manifest/spec/script identity differs "
+                               "from family.json freeze", attempted_family=cand["family_id"])
+        if handoff.get("body_sha256") != fingerprint(body_with_footer(cand)):
+            return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                               attempted_family=cand["family_id"])
+    preflight_problem = _run_staged_preflight(prepared, cand["family_id"])
+    if preflight_problem:
+        return res.finding("prepared_execution_preflight_failed", preflight_problem,
+                           attempted_family=cand["family_id"],
+                           execution_file=prepared["manifest_path"])
+    current, problem = _prepared_execution(cand, args)
+    if problem or current.get("identity") != identity:
+        return res.finding("registered_candidate_changed" if existing else "prepared_execution_mismatch",
+                           "prepared_execution_mismatch: prepared artifacts changed during preflight%s" %
+                           (": %s" % problem[1] if problem else ""),
+                           attempted_family=cand["family_id"])
+    prepared = current
+    if existing:
+        doc, path = existing, family_path
+    else:
+        try:
+            doc, path = write_family_json(args.results_root, cand, identity)
+        except (OSError, ValueError) as exc:
+            return res.finding("family_json_failed", str(exc), attempted_family=cand["family_id"])
+    family_path = path
+    try:
+        _round_dir, attempt_dir = _materialize_canonical_specs(
+            args.results_root, cand["family_id"], prepared)
+    except (OSError, ValueError) as exc:
+        return res.finding("prepared_execution_materialization_failed", str(exc),
+                           attempted_family=cand["family_id"])
+    container_attempt = str(Path("/results") / cand["family_id"] / "rounds" /
+                            prepared["round_id"] / "attempts" / prepared["run_id"])
+    container_run_spec = container_attempt + "/run-spec.json"
+    cmd = ["/usr/local/bin/container", "exec", "-d", "qlib-run", "/opt/venv/bin/python",
+           prepared["script_path"], "--run-spec", container_run_spec,
+           "--attempt-dir", container_attempt]
+    env = {"HOME": "/Users/hong",
+           "PATH": "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin",
+           "LANG": "en_US.UTF-8"}
+    try:
+        rc, out, err = _run_bounded_process(cmd, DEFAULT_WORKSPACE, env)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return res.finding("prepared_execution_failed",
+                           "%s; canonical attempt materialized, C4 must resolve it" % exc,
+                           attempted_family=cand["family_id"],
+                           execution_file=prepared["manifest_path"])
+    if rc != 0:
+        return res.finding("prepared_execution_failed",
+                           "container exec rc=%d stderr=%s; canonical attempt materialized, "
+                           "C4 must resolve it" % (rc, err[-1000:]),
+                           attempted_family=cand["family_id"],
+                           execution_file=prepared["manifest_path"])
+    if not _wait_for_prepared_state(attempt_dir, cand["family_id"],
+                                    prepared["round_id"], prepared["run_id"]):
+        return res.finding("prepared_execution_no_evidence",
+                           "container exec rc=0 but no matching RUNNING_QLIB/ARTIFACT_READY/FAILED_SCRIPT "
+                           "state.json appeared",
+                           attempted_family=cand["family_id"],
+                           execution_file=prepared["manifest_path"])
+    res.detail["semantic_fingerprint"] = doc["semantic_fingerprint"]
+    res.detail["family_json"] = family_path
+    res.detail["execution_file"] = prepared["manifest_path"]
+    if existing:
+        res.action, res.outcome = "retried", "running"
+        res.reason = "registered family %s retried and Qlib launch evidence verified" % cand["family_id"]
+    else:
+        res.action, res.outcome = "appended", "advanced"
+        res.reason = "family %s registered (%s) and fixed Qlib command produced launch evidence" % (
+            cand["family_id"], family_path)
+    return res
+
+
 def append_one(results_root, cand, args, res, existing=None):
-    """Register once, then launch/retry this SAME family until real evidence is published."""
+    """Register once, then run only the frozen prepared launch or explicit legacy rollback."""
     if args.dry_run:
         res.action = "would_retry" if existing else "would_append"
         res.outcome = "running" if existing else "advanced"
@@ -814,29 +1264,38 @@ def append_one(results_root, cand, args, res, existing=None):
         return res
 
     res.family_id = cand["family_id"]
+    prepared_mode = getattr(args, "require_prepared_execution", True)
     if existing:
         doc = existing
         path = str(Path(results_root) / cand["family_id"] / "family.json")
         if doc.get("semantic_fingerprint") != fingerprint(cand["fingerprint_input"]):
             return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
                                attempted_family=cand["family_id"])
-        task_path = Path(results_root) / cand["family_id"] / "agent-task.md"
-        if os.path.lexists(str(task_path)):
-            prompt = frozen_retry_prompt(task_path, cand, doc)
-            if prompt is None:
-                return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
-                                   attempted_family=cand["family_id"])
-        else:
+        if prepared_mode:
             if (doc.get("handoff") or {}).get("body_sha256") != fingerprint(body_with_footer(cand)):
                 return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
                                    attempted_family=cand["family_id"])
-            prompt = agent_prompt(cand, results_root)
+            return _run_prepared_execution(cand, args, res, existing=doc, family_path=path)
+        else:
+            task_path = Path(results_root) / cand["family_id"] / "agent-task.md"
+            if os.path.lexists(str(task_path)):
+                prompt = frozen_retry_prompt(task_path, cand, doc)
+                if prompt is None:
+                    return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                                       attempted_family=cand["family_id"])
+            else:
+                if (doc.get("handoff") or {}).get("body_sha256") != fingerprint(body_with_footer(cand)):
+                    return res.finding("registered_candidate_changed", "frozen candidate differs on retry",
+                                       attempted_family=cand["family_id"])
+                prompt = agent_prompt(cand, results_root)
     else:
+        if prepared_mode:
+            return _run_prepared_execution(cand, args, res)
         try:
             doc, path = write_family_json(results_root, cand)
         except (OSError, ValueError) as exc:
             return res.finding("family_json_failed", str(exc), attempted_family=cand["family_id"])
-        prompt = agent_prompt(cand, results_root)
+        prompt = None if prepared_mode else agent_prompt(cand, results_root)
 
     res.detail["semantic_fingerprint"] = doc["semantic_fingerprint"]
     res.detail["family_json"] = path
@@ -865,6 +1324,7 @@ def append_one(results_root, cand, args, res, existing=None):
 def _round_once(args):
     res = Round()
     root = Path(args.results_root)
+    prepared_mode = getattr(args, "require_prepared_execution", True)
     if not root.is_dir():
         return res.finding("results_root_missing", "results root not found: %s" % args.results_root)
 
@@ -875,9 +1335,16 @@ def _round_once(args):
               for family_id, doc in sorted(families.items())]
     by_family = {s["family_id"]: s for s in states}
     res.detail["families_in_flight"] = sum(1 for s in states if s["in_flight"])
-    # Registration alone cannot conceal a failed direct launch for 90 minutes. The family lease
-    # below decides whether its worker is still alive; if not, retry it at THIS cadence.
-    active = [s for s in states if s["in_flight"] and
+    # A prepared canonical attempt is a one-shot launch boundary: even if stale, C3 leaves its
+    # disposition to C4 instead of duplicating Qlib. Legacy direct families keep the existing window.
+    def prepared_attempt(state):
+        doc = families[state["family_id"]]
+        handoff = doc.get("handoff") if isinstance(doc, dict) else None
+        return isinstance(handoff, dict) and isinstance(handoff.get("prepared_execution"), dict)
+
+    active = [s for s in states if
+              (s["in_flight"] or (s["attempt"] is not None and not s["round_verdict"] and
+                                  prepared_attempt(s))) and
               (s["attempt"] is not None or not direct_family(families[s["family_id"]]))]
     if active:
         return res.waiting(
@@ -933,13 +1400,16 @@ def _round_once(args):
         chosen = dict(cand)
         chosen["_body"] = card_body(pool_path, chosen)
         workspace = chosen.get("workspace_path") or DEFAULT_WORKSPACE
-        if chosen.get("assignee", "default") != "default" or \
-                not isinstance(workspace, str) or not os.path.isabs(workspace) or \
-                not os.path.isdir(workspace):
+        if not prepared_mode and (chosen.get("assignee", "default") != "default" or
+                                  not isinstance(workspace, str) or not os.path.isabs(workspace) or
+                                  not os.path.isdir(workspace)):
             return res.finding("unsupported_execution_target", "registered candidate %s has no "
                                "usable default-worker workspace" % fid)
         if any(m not in chosen["_body"].upper() for m in CANDIDATE_BODY_MARKERS):
             return res.finding("candidate_body_not_v13", "registered candidate lost v1.3 body: %s" % fid)
+        hold = prepared_execution_hold(chosen, args, res, existing=doc)
+        if hold is not None:
+            return hold
         return append_one(args.results_root, chosen, args, res, existing=doc)
 
     eligible = [c for c in cands
@@ -952,9 +1422,9 @@ def _round_once(args):
     chosen = dict(eligible[0])
     chosen["_body"] = card_body(pool_path, chosen)
     workspace = chosen.get("workspace_path") or DEFAULT_WORKSPACE
-    if chosen.get("assignee", "default") != "default" or \
-            not isinstance(workspace, str) or not os.path.isabs(workspace) or \
-            not os.path.isdir(workspace):
+    if not prepared_mode and (chosen.get("assignee", "default") != "default" or
+                              not isinstance(workspace, str) or not os.path.isabs(workspace) or
+                              not os.path.isdir(workspace)):
         return res.finding("unsupported_execution_target", "candidate %s has no usable "
                            "default-worker workspace" % chosen["family_id"])
     body = (chosen["_body"] or "").upper()
@@ -965,6 +1435,9 @@ def _round_once(args):
                            "(contract 14.4 requires the DCA parameter domain and the cohort "
                            "survivor rules in every appended card)" % (chosen["family_id"], missing),
                            pool_entry=chosen["family_id"], missing=missing)
+    hold = prepared_execution_hold(chosen, args, res)
+    if hold is not None:
+        return hold
     return append_one(args.results_root, chosen, args, res)
 
 def round_once(args):
@@ -994,6 +1467,13 @@ def main():
                     % POOL_FILENAME)
     ap.add_argument("--detector", default="handoff", choices=["handoff", "default", "operator"])
     ap.add_argument("--dry-run", action="store_true", help="read-only: no agent, no file, no log line")
+    ap.set_defaults(require_prepared_execution=True)
+    ap.add_argument("--require-prepared-execution", dest="require_prepared_execution",
+                    action="store_true",
+                    help="require an upstream-prepared deterministic execution contract (default)")
+    ap.add_argument("--legacy-agent-dispatch", dest="require_prepared_execution",
+                    action="store_false",
+                    help="rollback only: restore the historical Hermes worker dispatch path")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--quiet-noop", action="store_true", default=True,
                     help="print nothing on stdout for a normal no-op round (cron default)")

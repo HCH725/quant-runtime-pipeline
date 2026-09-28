@@ -24,11 +24,13 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 RUNTIME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RUNTIME))
@@ -202,8 +204,10 @@ class Base(unittest.TestCase):
         return round_dir, spec_path, verdict_path
 
     def args(self, **over):
+        # Historical behavior tests exercise rollback explicitly; prepared-mode tests opt in below.
         base = dict(results_root=str(self.root), board=BOARD, pool=None, detector="handoff",
-                    dry_run=False, json=False, quiet_noop=True)
+                    dry_run=False, json=False, quiet_noop=True,
+                    require_prepared_execution=False)
         base.update(over)
         return argparse.Namespace(**base)
 
@@ -516,6 +520,319 @@ class TestAdvance(Base):
 
 
 class TestFailClosed(Base):
+    def _prepared(self, family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short",
+                  manifest_over=None, round_over=None, run_over=None):
+        family_dir = self.root / h.HANDOFF_DIRNAME / "prepared" / family
+        round_id, run_id = family + "-r1", family + "-r1-u1"
+        attempt = family_dir / "rounds" / round_id / "attempts" / run_id
+        attempt.mkdir(parents=True)
+        round_spec = {"schema_version": 1, "family_id": family, "round_id": round_id}
+        round_spec.update(round_over or {})
+        run_spec = {"schema_version": 1, "family_id": family, "round_id": round_id,
+                    "run_id": run_id,
+                    "script": {"path": "/scripts/strategy.py", "sha256": "sha256:" + "1" * 64}}
+        run_spec.update(run_over or {})
+        round_bytes = json.dumps(round_spec, sort_keys=True, separators=(",", ":")).encode()
+        run_bytes = json.dumps(run_spec, sort_keys=True, separators=(",", ":")).encode()
+        (family_dir / "rounds" / round_id / "round-spec.json").write_bytes(round_bytes)
+        (attempt / "run-spec.json").write_bytes(run_bytes)
+        manifest = {"schema_version": 1, "document_kind": h.PREPARED_EXECUTION_KIND,
+                    "family_id": family,
+                    "semantic_fingerprint": h.fingerprint(fingerprint_input),
+                    "round_id": round_id, "run_id": run_id,
+                    "round_spec_file": str(family_dir / "rounds" / round_id / "round-spec.json"),
+                    "round_spec_sha256": h._sha256(round_bytes),
+                    "run_spec_file": str(attempt / "run-spec.json"),
+                    "run_spec_sha256": h._sha256(run_bytes)}
+        manifest.update(manifest_over or {})
+        execution_file = family_dir / "execution.json"
+        execution_file.write_text(json.dumps(manifest, sort_keys=True))
+        cand = candidate(family=family, fingerprint_input=fingerprint_input,
+                         execution_file=str(execution_file))
+        return cand, execution_file, manifest
+
+    def _process_runner(self, family=FAMILY_B, stage="RUNNING_QLIB", container_rc=0,
+                        state_doc=None, preflight_report=None, before_preflight=None):
+        calls = []
+        report = preflight_report or {"overall": "PASS", "launch_gate": "evaluated",
+                                      "checks": [{"id": "P9", "status": "PASS"},
+                                                 {"id": "P10", "status": "PASS"}]}
+        round_id, run_id = family + "-r1", family + "-r1-u1"
+
+        def run(cmd, cwd, env, timeout=h.PREPARED_EXECUTION_TIMEOUT_S):
+            calls.append((list(cmd), cwd, dict(env), timeout))
+            if cmd[0] == h.PREPARED_EXECUTION_PYTHON:
+                if before_preflight is not None:
+                    before_preflight(cmd, cwd, env)
+                return (0 if report.get("overall") == "PASS" else 1,
+                        json.dumps(report), "preflight fixture")
+            if state_doc is not None or stage:
+                attempt = self.root / family / "rounds" / round_id / "attempts" / run_id
+                attempt.mkdir(parents=True, exist_ok=True)
+                doc = state_doc or {"family_id": family, "round_id": round_id,
+                                    "run_id": run_id, "stage": stage}
+                (attempt / "state.json").write_text(json.dumps(doc))
+            return container_rc, "container output", "container error"
+
+        return calls, run
+
+    def test_prepared_execution_mode_holds_legacy_candidate_without_launch_or_mutation(self):
+        res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "candidate_preparation_required")
+        self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
+        cand, _execution_file, _manifest = self._prepared()
+        self._write_pool([cand])
+        calls, runner = self._process_runner(
+            before_preflight=lambda cmd, cwd, env: self.assertFalse(
+                (self.root / FAMILY_B / "family.json").exists()))
+        with patch.object(h, "_run_bounded_process", side_effect=runner):
+            res = self.run_round(require_prepared_execution=True)
+
+        self.assertEqual((res.action, res.outcome), ("appended", "advanced"))
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0][0][0], h.PREPARED_EXECUTION_PYTHON)
+        self.assertEqual(calls[0][0][2:4], ["--launch", "--attempt-dir"])
+        self.assertEqual(calls[0][2]["PATH"], "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin")
+        attempt = "/results/%s/rounds/%s-r1/attempts/%s-r1-u1" % (FAMILY_B, FAMILY_B, FAMILY_B)
+        self.assertEqual(calls[1][0], [
+            "/usr/local/bin/container", "exec", "-d", "qlib-run", "/opt/venv/bin/python",
+            "/scripts/strategy.py", "--run-spec", attempt + "/run-spec.json",
+            "--attempt-dir", attempt])
+        self.assertEqual(calls[1][2]["PATH"], "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin")
+        self.assertEqual(self.fake.calls, [])
+        family_doc = json.loads((self.root / FAMILY_B / "family.json").read_text())
+        prepared, problem = h._prepared_execution(cand, self.args(require_prepared_execution=True))
+        self.assertIsNone(problem)
+        self.assertEqual(family_doc["handoff"]["prepared_execution"], prepared["identity"])
+        self.assertEqual((self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1") /
+                          "round-spec.json").read_bytes(), Path(prepared["round_spec_path"]).read_bytes())
+        self.assertEqual((self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1") / "attempts" /
+                          (FAMILY_B + "-r1-u1") / "run-spec.json").read_bytes(),
+                         Path(prepared["run_spec_path"]).read_bytes())
+
+    def test_prepared_execution_mismatch_fails_before_family_mutation(self):
+        cand, execution_file, _manifest = self._prepared()
+        doc = json.loads(execution_file.read_text())
+        doc["semantic_fingerprint"] = "sha256:" + "0" * 64
+        execution_file.write_text(json.dumps(doc))
+        self._write_pool([cand])
+        with patch.object(h, "_run_bounded_process") as direct:
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "prepared_execution_mismatch")
+        direct.assert_not_called()
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_manifest_rejects_argv_or_runner_extra_keys(self):
+        for suffix, extra in (("argv", {"argv": ["/bin/sh", "-c", "true"]}),
+                              ("runner", {"runner": "/tmp/runner.py"})):
+            with self.subTest(extra=extra):
+                family = "fam-extra-%s-v1" % suffix
+                cand, execution_file, _manifest = self._prepared(family=family)
+                doc = json.loads(execution_file.read_text())
+                doc.update(extra)
+                execution_file.write_text(json.dumps(doc))
+                self._write_pool([cand])
+                with patch.object(h, "_run_bounded_process") as direct:
+                    res = self.run_round(require_prepared_execution=True)
+                self.assertEqual(res.finding_key, "prepared_execution_invalid")
+                direct.assert_not_called()
+                self.assertFalse((self.root / family).exists())
+
+    def test_spec_path_escape_and_symlink_are_rejected(self):
+        cand, execution_file, _manifest = self._prepared()
+        outside = self.root / "outside-round-spec.json"
+        outside.write_text("{}")
+        doc = json.loads(execution_file.read_text())
+        doc["round_spec_file"] = str(outside)
+        execution_file.write_text(json.dumps(doc))
+        self._write_pool([cand])
+        with patch.object(h, "_run_bounded_process") as direct:
+            escaped = self.run_round(require_prepared_execution=True)
+        self.assertEqual(escaped.finding_key, "prepared_execution_invalid")
+        direct.assert_not_called()
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+        family = "fam-symlink-v1"
+        cand, execution_file, manifest = self._prepared(family=family)
+        round_path = Path(manifest["round_spec_file"])
+        real_path = round_path.with_suffix(".real")
+        real_path.write_bytes(round_path.read_bytes())
+        round_path.unlink()
+        round_path.symlink_to(real_path)
+        self._write_pool([cand])
+        with patch.object(h, "_run_bounded_process") as direct:
+            linked = self.run_round(require_prepared_execution=True)
+        self.assertEqual(linked.finding_key, "prepared_execution_invalid")
+        direct.assert_not_called()
+        self.assertFalse((self.root / family).exists())
+
+    def test_prepared_mode_ignores_legacy_worker_workspace_metadata(self):
+        cand, _execution_file, _manifest = self._prepared()
+        cand["workspace_path"] = str(self.root / "not-a-worker-directory.md")
+        self._write_pool([cand])
+        _calls, runner = self._process_runner()
+        with patch.object(h, "_run_bounded_process", side_effect=runner):
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual((res.action, res.outcome), ("appended", "advanced"))
+        self.assertEqual(self.fake.calls, [])
+
+    def test_empty_attempt_dir_or_missing_state_is_not_success(self):
+        cand, _execution_file, _manifest = self._prepared()
+        self._write_pool([cand])
+        calls, runner = self._process_runner(stage="")
+        with patch.object(h, "PREPARED_EVIDENCE_TIMEOUT_S", 0):
+            with patch.object(h, "_run_bounded_process", side_effect=runner):
+                res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "prepared_execution_no_evidence")
+        attempt = self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1") / "attempts" / (FAMILY_B + "-r1-u1")
+        self.assertTrue(attempt.is_dir())
+        self.assertFalse((attempt / "state.json").exists())
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(self.fake.calls, [])
+
+    def test_container_failure_materializes_attempt_and_blocks_next_candidate(self):
+        cand, _execution_file, _manifest = self._prepared()
+        next_cand = candidate(family="fam-next-v1", fingerprint_input="fam-next|w=3|1h|long")
+        self._write_pool([cand, next_cand])
+        calls, runner = self._process_runner(stage=None, container_rc=7)
+        with patch.object(h, "_run_bounded_process", side_effect=runner):
+            first = self.run_round(require_prepared_execution=True)
+            attempt = (self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1") /
+                       "attempts" / (FAMILY_B + "-r1-u1"))
+            for path in (attempt, attempt / "run-spec.json"):
+                os.utime(path, (1, 1))
+            second = self.run_round(require_prepared_execution=True)
+            self._write_verdict(FAMILY_B, "TECHNICAL_INCOMPLETE")
+            after_c4 = self.run_round(require_prepared_execution=True)
+        self.assertEqual(first.finding_key, "prepared_execution_failed")
+        self.assertEqual((second.action, second.outcome), ("noop", "running"))
+        self.assertEqual(after_c4.finding_key, "candidate_preparation_required")
+        self.assertEqual(len(calls), 2)
+        self.assertFalse((self.root / "fam-next-v1").exists())
+        self.assertEqual(self.fake.calls, [])
+
+    def test_hash_identity_and_ownership_mismatches_fail_before_mutation(self):
+        cases = ("hash", "identity", "ownership")
+        for suffix in cases:
+            with self.subTest(case=suffix):
+                family = "fam-mismatch-%s-v1" % suffix
+                if suffix == "hash":
+                    cand, _execution, _manifest = self._prepared(
+                        family=family, manifest_over={"run_spec_sha256": "sha256:" + "0" * 64})
+                elif suffix == "identity":
+                    cand, _execution, _manifest = self._prepared(
+                        family=family, run_over={"run_id": "foreign-run"})
+                else:
+                    cand, _execution, _manifest = self._prepared(
+                        family=family, run_over={"kanban_task_id": "t_foreign"})
+                self._write_pool([cand])
+                with patch.object(h, "_run_bounded_process") as run:
+                    res = self.run_round(require_prepared_execution=True)
+                self.assertEqual(res.finding_key, "prepared_execution_invalid")
+                run.assert_not_called()
+                self.assertFalse((self.root / family).exists())
+
+    def test_preflight_failure_is_before_family_write(self):
+        cand, _execution, _manifest = self._prepared()
+        self._write_pool([cand])
+        report = {"overall": "FAIL", "launch_gate": "evaluated",
+                  "checks": [{"id": "P9", "status": "PASS"},
+                             {"id": "P10", "status": "FAIL"}]}
+        calls, runner = self._process_runner(
+            preflight_report=report,
+            before_preflight=lambda _cmd, _cwd, _env: self.assertFalse(
+                (self.root / FAMILY_B / "family.json").exists()))
+        with patch.object(h, "_run_bounded_process", side_effect=runner):
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "prepared_execution_preflight_failed")
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][2]["PATH"], "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin")
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_malformed_or_foreign_state_is_not_success(self):
+        cases = (
+            ("stage", {"stage": "ALIEN"}),
+            ("identity", {"family_id": "foreign-family"}),
+        )
+        for suffix, changed in cases:
+            with self.subTest(case=suffix):
+                family = "fam-state-%s-v1" % suffix
+                cand, _execution, _manifest = self._prepared(family=family)
+                self._write_pool([cand])
+                state = {"family_id": family, "round_id": family + "-r1",
+                         "run_id": family + "-r1-u1", "stage": "RUNNING_QLIB"}
+                state.update(changed)
+                calls, runner = self._process_runner(family=family, state_doc=state)
+                with patch.object(h, "PREPARED_EVIDENCE_TIMEOUT_S", 0):
+                    with patch.object(h, "_run_bounded_process", side_effect=runner):
+                        res = self.run_round(require_prepared_execution=True)
+                self.assertEqual(res.finding_key, "prepared_execution_no_evidence")
+                self.assertEqual(len(calls), 2)
+                shutil.rmtree(self.root / family)
+
+    def test_artifact_ready_state_is_valid_launch_evidence(self):
+        family = "fam-state-artifact-v1"
+        cand, _execution, _manifest = self._prepared(family=family)
+        self._write_pool([cand])
+        _calls, runner = self._process_runner(family=family, stage="ARTIFACT_READY")
+        with patch.object(h, "_run_bounded_process", side_effect=runner):
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual((res.action, res.outcome), ("appended", "advanced"))
+
+    def test_registered_retry_rejects_changed_manifest_and_spec_identity(self):
+        for suffix, change in (("manifest", "manifest"), ("spec", "spec")):
+            with self.subTest(change=change):
+                family = "fam-retry-%s-v1" % suffix
+                cand, execution_file, _manifest = self._prepared(family=family)
+                prepared, problem = h._prepared_execution(
+                    cand, self.args(require_prepared_execution=True))
+                self.assertIsNone(problem)
+                h.write_family_json(str(self.root), cand, prepared["identity"])
+                doc = json.loads(execution_file.read_text())
+                if change == "manifest":
+                    execution_file.write_text(json.dumps(doc, indent=2))
+                else:
+                    run_path = Path(doc["run_spec_file"])
+                    run_spec = json.loads(run_path.read_text())
+                    run_spec["script"]["sha256"] = "sha256:" + "2" * 64
+                    run_bytes = json.dumps(run_spec, sort_keys=True, separators=(",", ":")).encode()
+                    run_path.write_bytes(run_bytes)
+                    doc["run_spec_sha256"] = h._sha256(run_bytes)
+                    execution_file.write_text(json.dumps(doc, sort_keys=True))
+                self._write_pool([cand])
+                with patch.object(h, "_run_bounded_process") as run:
+                    res = self.run_round(require_prepared_execution=True)
+                self.assertEqual(res.finding_key, "registered_candidate_changed")
+                self.assertIn("prepared_execution_mismatch", res.reason or "")
+                run.assert_not_called()
+                self._write_verdict(family, "TECHNICAL_INCOMPLETE")
+
+    def test_timeout_helper_kills_process_group(self):
+        proc = Mock()
+        proc.pid = 4321
+        proc.returncode = -9
+        proc.communicate.side_effect = [subprocess.TimeoutExpired(["fixed"], 1), (b"out", b"err")]
+        with patch.object(h.subprocess, "Popen", return_value=proc) as popen:
+            with patch.object(h.os, "killpg") as killpg:
+                with patch.object(h.time, "sleep"):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        h._run_bounded_process(["fixed"], "/", {}, timeout=1)
+        self.assertEqual([call.args for call in killpg.call_args_list],
+                         [(4321, h.signal.SIGTERM), (4321, h.signal.SIGKILL)])
+        self.assertTrue(popen.call_args.kwargs["start_new_session"])
+        self.assertNotIn("shell", popen.call_args.kwargs)
+
+    def test_python_api_missing_prepared_flag_defaults_to_prepared(self):
+        args = self.args()
+        vars(args).pop("require_prepared_execution")
+        res = h.round_once(args)
+        self.assertEqual(res.finding_key, "candidate_preparation_required")
+        self.assertFalse((self.root / FAMILY_B).exists())
+        self.assertEqual(self.fake.calls, [])
+
     def test_missing_results_root_is_a_finding(self):
         res = self.run_round(results_root=str(self.root / "nope"))
         self.assertEqual(res.finding_key, "results_root_missing")
@@ -929,8 +1246,16 @@ class TestDryRunAndReporting(Base):
         self.assertFalse((self.root / FAMILY_B).exists())
         self.assertFalse((self.root / h.HANDOFF_DIRNAME / h.LOG_FILENAME).exists())
 
-    def test_append_is_logged_by_main(self):
+    def test_main_defaults_to_prepared_execution_and_never_launches_legacy_agent(self):
         rc, out, err = self.run_main("--json")
+        self.assertEqual(rc, 0)
+        record = json.loads(out)
+        self.assertEqual(record["finding_key"], "candidate_preparation_required")
+        self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_append_is_logged_by_main(self):
+        rc, out, err = self.run_main("--legacy-agent-dispatch", "--json")
         self.assertEqual(rc, 0)
         record = json.loads(out)
         self.assertEqual((record["action"], record["outcome"]), ("appended", "advanced"))
@@ -939,8 +1264,8 @@ class TestDryRunAndReporting(Base):
         self.assertEqual(json.loads(log[-1])["action"], "appended")
 
     def test_retry_is_logged_as_running_without_claiming_an_advance(self):
-        self.run_main("--json")
-        rc, out, err = self.run_main("--json")
+        self.run_main("--legacy-agent-dispatch", "--json")
+        rc, out, err = self.run_main("--legacy-agent-dispatch", "--json")
         self.assertEqual(rc, 0)
         retry = json.loads(out)
         self.assertEqual((retry["action"], retry["outcome"]), ("retried", "running"))
