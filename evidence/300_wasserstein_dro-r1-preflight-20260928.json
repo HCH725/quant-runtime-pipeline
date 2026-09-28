@@ -1,0 +1,105 @@
+{
+ "schema_version": 1,
+ "kind": "preflight",
+ "contract_section": "16",
+ "checked_at_utc": "2026-09-28T09:55:31Z",
+ "host_boot_id": "boot-1790441600",
+ "family_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02",
+ "round_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1",
+ "run_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "attempt_dir": "/Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1",
+ "launch_gate": "evaluated",
+ "recovery": {
+  "attempted": false,
+  "ok": true,
+  "fail_reason": null,
+  "actions": []
+ },
+ "overall": "PASS",
+ "checks": [
+  {
+   "id": "P1",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "mounted+readable: /Volumes/ExpansionDrive (.DS_Store, .DocumentRevisions-V100, .Media Preferences.plist, .Spotlight-V100)"
+  },
+  {
+   "id": "P2",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "exists+readable=True container_write_probe=READ_ONLY (must be READ_ONLY)"
+  },
+  {
+   "id": "P3",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "results writable: wrote+removed /Volumes/ExpansionDrive/qlib-results/.preflight-probe-57842.tmp"
+  },
+  {
+   "id": "P4",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "container system status=running (rc=0)"
+  },
+  {
+   "id": "P5",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "qlib-run state=running"
+  },
+  {
+   "id": "P6",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "image=qlib:0.9.7-arm64 os=linux arch=arm64 rosetta=False"
+  },
+  {
+   "id": "P7",
+   "status": "PASS",
+   "layer": "card-local",
+   "detail": "/qlib/work writable: work_ok"
+  },
+  {
+   "id": "P8",
+   "status": "PASS",
+   "layer": "shared-layer",
+   "detail": "/opt/venv/bin/python -c 'import qlib' -> exe=/opt/venv/bin/python version=0.9.7 (rc=0)"
+  },
+  {
+   "id": "P9",
+   "status": "PASS",
+   "layer": "-",
+   "detail": "no terminal sentinel in /Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1"
+  },
+  {
+   "id": "P10",
+   "status": "PASS",
+   "layer": "card-local",
+   "detail": "run-spec present; script.sha256=sha256:9f3f351da66fd0f66286d79de3dcb771fdcb9b8b26ab15b139de53d2e2bc1d33 recomputed=9f3f351da66fd0f66286d79de3dcb771fdcb9b8b26ab15b139de53d2e2bc1d33 (/Users/hong/workspace/qlib-apple-container/scripts/300_wasserstein_dro_run.py)"
+  }
+ ],
+ "specs_frozen_before_preflight": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/round-spec.json",
+   "sha256": "sha256:71ec7d6252aa13802bc77e55964a8e907ef6c514e6e35dacc874110b7ea6db91",
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "run_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1/run-spec.json",
+   "sha256": "sha256:e2fee5409c362996412d6130ae23681bf7feffa9597e11f464a5dd6ffd4f6886",
+   "immutable": "written once before any compute and never rewritten"
+  }
+ },
+ "self_check": {
+  "command": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_wasserstein_dro_engine.py",
+  "result": "13/13 passed twice: before freezing (spec tamper battery incl. Kanban-key rejection, mesh certificate + cap fail-closed, Wasserstein LP anchors (eps=0 == SAA epigraph, eps>=eps_bar == maximin, monotone worst-case value), layer point-in-time suffix perturbation, per-fill gross/net accounting + negative control, registered stress grids, selector/cull/tie-break/neighbourhood, grid CSV contract, falsification battery end-to-end, official-only funding carry, parameter_contract kernel) and again after freezing (frozen round-spec parameter_contract verified byte-for-byte)",
+  "self_check_sha256": "sha256:21d6ae6a0aa09a590f2e1eceb083add2de9f9e74e6d1a97848664cfba006fa39"
+ },
+ "prelaunch_validation": {
+  "kind": "container-local dry run with RESULTS_ROOT/WORK_ROOT patched to /qlib/work/wasserstein-dro-smoke (no production path touched, scratch removed after the run)",
+  "result": "full pipeline end-to-end in 60.6s: qlib 0.9.7 readback OK, 11520/11520 case evaluations, coverage_complete=true, all assertions true, 4 cohorts processed, falsification battery evaluated (4/4 items), engine log shows ARTIFACT_READY",
+  "purpose": "de-risk the single exact-once launch; it produced no durable artifact and never wrote under /results"
+ }
+}

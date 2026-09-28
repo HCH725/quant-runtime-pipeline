@@ -1,0 +1,107 @@
+{
+ "schema_version": 1,
+ "kind": "run",
+ "contract_section": "14.4 / 16 / 15",
+ "family_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02",
+ "round_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1",
+ "run_id": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1",
+ "ownership_mode": "direct_hermes",
+ "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+ "written_at_utc": "2026-09-28T09:57:01Z",
+ "recorded_by": "Hermes default worker (one-shot production handoff execution)",
+ "specs_frozen_before_compute": {
+  "round_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/round-spec.json",
+   "sha256": "sha256:71ec7d6252aa13802bc77e55964a8e907ef6c514e6e35dacc874110b7ea6db91",
+   "created_at_utc": "2026-09-28T09:52:10Z",
+   "parameter_contract_problems": [],
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "run_spec": {
+   "path": "/Volumes/ExpansionDrive/qlib-results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1/run-spec.json",
+   "sha256": "sha256:e2fee5409c362996412d6130ae23681bf7feffa9597e11f464a5dd6ffd4f6886",
+   "created_at_utc": "2026-09-28T09:52:10Z",
+   "immutable": "written once before any compute and never rewritten"
+  },
+  "registered_counts": {
+   "cohorts": 4,
+   "strategy_cases_per_cohort": 6,
+   "dca_configs_per_cohort": 48,
+   "base_combinations_per_cohort": 288,
+   "case_evaluations_per_grid": 1152,
+   "grid_count": 10,
+   "case_evaluations_total": 11520
+  }
+ },
+ "prerequisite_gate_phase_2b": {
+  "catalog_only": [
+   "_meta/CONFIG.json",
+   "_meta/SCHEMA.md"
+  ],
+  "conclusion": "core signal inputs present on the complete local eligible universe: 1715 contiguous daily OHLCV bars per symbol 2022-01-01..2026-09-11 (zero gaps, measured), canonical instrument metadata (taker_fee 0.0005, per-symbol price_increment), official funding observations from 2023-10-31 (3144 official rows per symbol in-window; 2005-2080 modeled/other rows ignored; missing intervals carry zero and are disclosed), support bounds computed per rolling window from the same canonical returns",
+  "not_local": "the record's 475-equity + 1-month-Treasury basket and FRED DGS1MO are absent from the local raw; per the system lifecycle footer they are provenance/external-validity only and the local universe (BNBUSDT/BTCUSDT/ETHUSDT/SOLUSDT, 1d) is the execution universe, canonicalized through the record's own crypto-portability section (adapted/unproven) - no TECHNICAL_INCOMPLETE, no universe shrink, no second suitability screen",
+  "bounded_scope": "only CONFIG.json/SCHEMA.md as catalogs plus bounded direct reads of the klines/funding/instrument files named in round-spec prerequisite_evidence_phase_2b; no candidate-specific prerequisite checker, no host-wide scan, no second data registry",
+  "status": "SATISFIED - full backtest launched"
+ },
+ "engine": {
+  "path": "/scripts/300_wasserstein_dro_run.py",
+  "sha256": "sha256:9f3f351da66fd0f66286d79de3dcb771fdcb9b8b26ab15b139de53d2e2bc1d33",
+  "deployed_host_path": "/Users/hong/workspace/qlib-apple-container/scripts/300_wasserstein_dro_run.py",
+  "deployed_sha256_matches_repo": true,
+  "repo_path": "container/scripts/300_wasserstein_dro_run.py",
+  "self_check": "/scripts/tests/test_wasserstein_dro_engine.py",
+  "self_check_sha256": "sha256:21d6ae6a0aa09a590f2e1eceb083add2de9f9e74e6d1a97848664cfba006fa39",
+  "self_check_result": "13/13 passed inside the qlib-run container (frozen domain incl. no-Kanban spec keys, spec tamper battery, record constants + falsification registry, hyperplane mesh certificate + fail-closed caps, Wasserstein LP anchors: eps=0 == independent SAA epigraph, eps>=eps_bar == Theorem 3.13 maximin, worst-case value monotone in eps, layer point-in-time suffix-perturbation, per-fill gross/net decomposition + negative control, registered stress grids all move net, selector culls/tie-break/neighbourhood, grid CSV contract + portfolio helpers, falsification battery end-to-end, official-only funding carry filter, round-spec parameter_contract cross-check)",
+  "container": "qlib-run",
+  "image": "qlib:0.9.7-arm64",
+  "qlib_version": "0.9.7",
+  "seed": 20260902,
+  "engine_version": "wasserstein_hyperplane_dro_qlib_v1"
+ },
+ "prelaunch_validation": {
+  "kind": "container-local dry run with RESULTS_ROOT/WORK_ROOT patched to /qlib/work/wasserstein-dro-smoke (no production path touched, scratch removed before launch)",
+  "result": "full pipeline end-to-end in 60.6s: qlib 0.9.7 readback OK, 11520/11520 case evaluations, coverage_complete=true, all assertions true, 4 cohorts processed, falsification battery evaluated (4/4 items), ARTIFACT_READY",
+  "purpose": "de-risk the single exact-once launch; it produced no durable artifact and never wrote under /results"
+ },
+ "preflight": {
+  "command": "python3 runtime/preflight.py --attempt-dir <u1> --launch --json",
+  "result": "overall PASS, evaluated=10 failed=0 launch_gate=evaluated; P10 recomputed script sha 9f3f351d... match; round-spec parameter_contract 0 problems",
+  "evidence": "evidence/300_wasserstein_dro-r1-preflight-20260928.json",
+  "self_check_command": "container exec qlib-run /opt/venv/bin/python /scripts/tests/test_wasserstein_dro_engine.py",
+  "self_check_result": "13/13 passed (twice: pre-freeze and post-freeze)"
+ },
+ "launches": [
+  {
+   "attempt": "wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1",
+   "command": "container exec -d qlib-run sh -c \"nice -n 10 /opt/venv/bin/python /scripts/300_wasserstein_dro_run.py --run-spec /results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1/run-spec.json --attempt-dir /results/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02/rounds/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1/attempts/wasserstein-robust-portfolio-hyperplane-dual-lp-2026-09-02-r1-u1\"",
+   "container": "qlib-run",
+   "detached": true,
+   "launched_at_utc": "2026-09-28T09:56:17Z",
+   "verification": "read-back after launch: attempt state.json stage=RUNNING_QLIB, artifacts/progress.json case_evaluations=0 expected=11520, artifacts present=['funding_coverage.json', 'progress.json', 'raw_build.json'], logs/run.log present=True, terminal sentinels=[]",
+   "exact_once": "P9 confirmed no terminal sentinel before launch; this run_id is launched exactly once (INV-15)"
+  }
+ ],
+ "remediation": [],
+ "result_summary": "pending: compute launched and detached; this one-shot worker exits without waiting (contract 16 execution flow). Host-side disposition resumes on the existing n8n C4 cadence once the attempt reaches a terminal state.",
+ "claimability_evidence": {
+  "basis": "performance_claimable is decided in verdict.json under contract 9.6, not here",
+  "missing_conditions": [],
+  "status": "not evaluated at launch time"
+ },
+ "falsification_advice": {
+  "rule": "record falsification battery hit => cull or family REJECT (body FAILURE TAXONOMY)",
+  "battery_registered_before_compute": true,
+  "items": 4,
+  "registry_in_round_spec": true,
+  "status": "registered, evaluated by the run; results read from result.json at disposition"
+ },
+ "what_was_not_done": [
+  "no verdict.json written in this session (final verdict is the host-side disposition step, contract 10.7)",
+  "no Kanban card, board, task id or dispatcher of any kind; no kanban CLI subcommand invoked",
+  "no intake re-review and no second crypto/runnable suitability classification (backfill exactly-once rule)",
+  "no universe shrink or post-hoc cohort removal; no change to the registered hypothesis, DCA domain, split or falsification battery",
+  "no Paper/Live action, no second engine, no Manager/Service/Factory/Registry/Orchestrator/daemon/queue",
+  "no candidate-specific prerequisite checker, no host-wide scan, no synthetic fixtures in production evidence"
+ ],
+ "next_step": "n8n C4 cadence reads the terminal attempt (DONE/FAILED/INCOMPLETE), writes terminal evidence + checksums per contract 9.4/10/11, then default performs host-side disposition and verdict.json (10.7)."
+}
