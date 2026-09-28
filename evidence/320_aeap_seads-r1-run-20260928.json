@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "kind": "run",
+  "contract_section": "14.4 / 16 / 15",
+  "family_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03",
+  "round_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1",
+  "run_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1",
+  "ownership_mode": "direct_hermes",
+  "ownership_note": "direct family: family_id + round_id + run_id only. No Kanban card, board, dispatcher or task id exists for this family and none is referenced anywhere in this record.",
+  "written_at_utc": "2026-09-28T15:17:07Z",
+  "recorded_by": "Hermes default worker (one-shot production handoff execution)",
+  "attempt": "first attempt of round r1 (no remediation; no prior run_id in this round, so no INV-15 constraint applies)",
+  "prerequisite_gate_phase_2b": {
+    "catalog_only": [
+      "/data/raw/_meta/CONFIG.json",
+      "/data/raw/_meta/SCHEMA.md"
+    ],
+    "conclusion": "core signal inputs present on the complete local eligible universe: 4 USD-M perpetual contracts x 7 intervals (5m/15m/30m/1h/4h/1d/1w), 2022-01-01..2026-09-11, with the 1d bars the registered day-count lookbacks need -> requirement satisfied; funding/fee/slippage are execution-cost inputs only and are not core-signal prerequisites, so this is not a prerequisite-missing TECHNICAL_INCOMPLETE case",
+    "bounded_evidence": "round-spec.prerequisite_evidence_phase_2b (catalog reads + one bounded shard read-back; no new checker, no host-wide scan, no synthetic fixture)"
+  },
+  "validation_sequence": [
+    "self-check: container exec qlib-run /opt/venv/bin/python /scripts/tests/test_aeap_seads_engine.py -> 22 checks passed (exit 0)",
+    "non-registered smoke on the exact pinned bytes: ARTIFACT_READY cohorts=28 rows=40320 assertions=all_true runtime=206.0s (scratch path, discarded)",
+    "round-spec host validation: ok round_spec, parameter_contract valid",
+    "run-spec container validation: ok run_spec",
+    "preflight P1-P10 --launch: overall PASS (evidence/320_aeap_seads-r1-preflight-20260928.json)"
+  ],
+  "specs_frozen_before_compute": {
+    "round_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03/rounds/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1/round-spec.json",
+      "sha256": "sha256:0898189925c0f73cfc99534e4efffd217bebace2e99292197f4aa1624ca0ecb9",
+      "created_at_utc": "2026-09-28T15:13:53Z",
+      "bytes": 73521,
+      "immutable": "written once with O_EXCL before any compute; never rewritten (the run-spec pins this sha)"
+    },
+    "run_spec": {
+      "path": "/Volumes/ExpansionDrive/qlib-results/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03/rounds/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1/attempts/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1/run-spec.json",
+      "sha256": "sha256:2c0aaec52e04d0f06d5dca29ede47b7e1a99f607109b0d4bbd49c6e7da906959",
+      "created_at_utc": "2026-09-28T15:14:07Z",
+      "bytes": 17033,
+      "pins_script_sha256": "sha256:3bb7c938a770aa08a2bce2b10585f3a44bcd1eb7d751d369a08dd064ec2bf165",
+      "pins_round_spec_sha256": "sha256:0898189925c0f73cfc99534e4efffd217bebace2e99292197f4aa1624ca0ecb9",
+      "immutable": "written once with O_EXCL before launch"
+    }
+  },
+  "engine": {
+    "path": "/scripts/320_aeap_seads_run.py",
+    "sha256": "sha256:3bb7c938a770aa08a2bce2b10585f3a44bcd1eb7d751d369a08dd064ec2bf165",
+    "self_check": "/scripts/tests/test_aeap_seads_engine.py",
+    "self_check_sha256": "sha256:7ed45c1511e878471dfeb64aa2e1c7746b61c0c26bba8f8e73b653fec6cc33a7",
+    "repo_host_sha_match": "repo and /Users/hong/workspace/qlib-apple-container/scripts copies sha256-identical for engine and self-check (verified before launch)"
+  },
+  "launch": {
+    "command": "container exec -d qlib-run /opt/venv/bin/python /scripts/320_aeap_seads_run.py --run-spec /results/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03/rounds/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1/attempts/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1/run-spec.json --attempt-dir /results/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03/rounds/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1/attempts/aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1",
+    "exact_once": "single container exec -d; one process, no second launch for this run_id",
+    "read_back": {
+      "state": {
+        "schema_version": 1,
+        "family_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03",
+        "round_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1",
+        "run_id": "aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1",
+        "stage": "RUNNING_QLIB"
+      },
+      "progress": {
+        "stage": "RUNNING_QLIB",
+        "cohorts_done": 0,
+        "case_evaluations": 0,
+        "expected_case_evaluations": 40320,
+        "updated_at_utc": "2026-09-28T15:15:29Z",
+        "runtime_seconds": 0.007
+      },
+      "log_head": [
+        "[2026-09-28T15:15:29.642885+00:00] instrument metadata ok for BNBUSDT, BTCUSDT, ETHUSDT, SOLUSDT",
+        "[2026-09-28T15:15:32.250631+00:00] csv BNBUSDT/5m rows=493920",
+        "[2026-09-28T15:15:34.906230+00:00] csv BTCUSDT/5m rows=493920",
+        "[2026-09-28T15:15:37.572929+00:00] csv ETHUSDT/5m rows=493920",
+        "[2026-09-28T15:15:40.406003+00:00] csv SOLUSDT/5m rows=493920",
+        "[2026-09-28T15:15:49.878722+00:00] dump_bin 5min ok",
+        "[2026-09-28T15:15:50.759877+00:00] csv BNBUSDT/15m rows=164640",
+        "[2026-09-28T15:15:51.679933+00:00] csv BTCUSDT/15m rows=164640"
+      ]
+    },
+    "expected_runtime_estimate": "smoke scaled by the registered window (~6.3x bars): roughly 15-25 minutes",
+    "wait_policy": "one-shot session exits after launch; the run continues in the qlib-run container"
+  },
+  "git": {
+    "commit": "c993096",
+    "message": "feat(aeap-seads): direct-family cross-sectional rank-product engine, frozen r1 specs, P1-P10 PASS",
+    "pushed": "origin/main (read back after push)",
+    "files": [
+      "container/scripts/320_aeap_seads_run.py",
+      "container/scripts/tests/test_aeap_seads_engine.py",
+      "evidence/320_aeap_seads-r1-preflight-20260928.json"
+    ],
+    "unrelated_dirty_files_untouched": true
+  },
+  "what_was_not_done": [
+    "no verdict.json written (host-side disposition belongs to the n8n C4 cadence / contract 10.7 default writer)",
+    "no DONE/FAILED/INCOMPLETE terminal sentinel written (terminal evidence is produced by the host-side disposition step)",
+    "no survivor bundle, leaderboard, evidence package or forward-state change",
+    "no Paper/Live touched; raw under /data/raw never written",
+    "no next family appended (contract 14.4)",
+    "no Kanban task, board or task id created or queried for this family"
+  ],
+  "next_step": "n8n C4 cadence reads attempt aeap-seads-llm-agentic-factor-discovery-formulaic-alpha-2026-09-03-r1-u1 (current), writes terminal evidence and verdict.json per contract 9.6/10.7, then the frozen survivor bundle per 10.8"
+}
