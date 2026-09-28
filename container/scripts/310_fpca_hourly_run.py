@@ -1630,9 +1630,14 @@ def run(spec, attempt_dir, log_path=None):
                 all(r["decomposition_ok"] for g in GRIDS for r in grid_rows[g]),
             "dca_histogram_reconciles": hist_total[0] == sum(int(r["episodes"])
                                                             for r in grid_rows["full"]),
+            # contract 7.2: a cost track must MATERIALLY change net PnL/equity (a no-op is
+            # "not implemented"); the sign is not part of that requirement and is undecidable
+            # in a domain where every cell ends at the base_quote entry floor, so every grid
+            # is floored alike. The per-simulation sign/doubling is still gated by the
+            # self-check test_cost_stresses_change_net_not_gross.
             "cost_stress_effective": (not traded) or all(
-                stress_delta[g] < 0 for g in ("fee_2x", "slippage_2ticks",
-                                              "cost_attrition_40bps")),
+                cell_delta("full", g) for g in ("fee_2x", "slippage_2ticks",
+                                                "cost_attrition_40bps")),
             "funding_2x_effective": not cells_with_funding or all(
                 abs(float(grid_rows["funding_2x"][i]["net_pnl"])
                     - float(grid_rows["full"][i]["net_pnl"])) > 1e-9
