@@ -334,6 +334,28 @@ class TestAdvance(Base):
         self.assertEqual((res.action, res.outcome), ("noop", "running"))
         self.assertEqual(self.fake.calls, [])
 
+    def test_old_round_late_terminal_write_cannot_hide_live_follow_up_round(self):
+        # Live production race: r2 was materialized first, then host-side disposition closed r1.
+        # The r1 terminal/verdict write is newer by mtime, but round ordinal is the scheduling truth:
+        # r2 remains current and must keep the family from releasing the next candidate.
+        self._write_family(FRESH)
+        r2 = self._write_attempt(FRESH, round_id=FRESH + "-r2", age_minutes=5)
+        r1 = self._write_attempt(FRESH, round_id=FRESH + "-r1", terminal="INCOMPLETE",
+                                 age_minutes=1)
+        self._write_verdict(FRESH, "TECHNICAL_INCOMPLETE", round_id=FRESH + "-r1")
+        # Make the old r1 visibly newer on disk than r2 to reproduce the live bug.
+        now = time.time()
+        for path in [r1] + sorted(r1.rglob("*")):
+            os.utime(str(path), (now, now))
+        self.assertLess(h.attempt_activity(r2), h.attempt_activity(r1))
+
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(res.detail["active_family"], FRESH)
+        self.assertIn(FRESH + "-r2-u1", res.reason)
+        self.assertEqual(self.fake.calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
     def test_verdict_releases_a_family_whose_attempt_is_finished(self):
         # Closed = a terminal verdict AND a newest attempt that published its terminal sentinel: the
         # family owes the pipeline nothing, so the next candidate advances.

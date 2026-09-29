@@ -280,6 +280,21 @@ def family_attempts(results_root, family_id):
     return found
 
 
+def attempt_generation(attempt_dir):
+    """Canonical round/run generation tuple; ordinals define current work, never mtime.
+
+    A later round remains authoritative even when host-side disposition writes a terminal/verdict
+    into an older round afterward.  mtime is only liveness/stall evidence within the selected
+    generation.
+    """
+    attempt_dir = Path(attempt_dir)
+    round_match = re.search(r"-r([1-9][0-9]*)$", attempt_dir.parents[1].name)
+    run_match = re.search(r"-u([1-9][0-9]*)$", attempt_dir.name)
+    if not round_match or not run_match:
+        return (-1, -1)
+    return (int(round_match.group(1)), int(run_match.group(1)))
+
+
 def attempt_activity(attempt_dir):
     """Newest observed file write inside one attempt dir, as epoch seconds; None when unreadable.
 
@@ -350,7 +365,12 @@ def runtime_state(results_root, family_id, family_doc, now=None):
     activity = [(attempt_activity(a) or 0.0, a) for a in attempts]
     activity = [(stamp, a) for stamp, a in activity if stamp]
     if activity:
-        stamp, attempt = max(activity, key=lambda item: (item[0], str(item[1])))
+        # Round/run identity is the scheduling order.  A late host-side write to r1 must never
+        # make r1 "newer" than an already materialized r2.  Activity time only measures liveness
+        # of the selected generation.
+        stamp, attempt = max(
+            activity,
+            key=lambda item: (attempt_generation(item[1]), item[0], str(item[1])))
         state["attempt"] = str(attempt)
         state["activity"] = stamp
         age_minutes = (now - stamp) / 60.0
