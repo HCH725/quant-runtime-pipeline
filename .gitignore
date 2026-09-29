@@ -47,3 +47,4 @@ venv/
 homepage/kubernetes.yaml
 homepage/docker.yaml
 homepage/proxmox.yaml
+.worktrees/
