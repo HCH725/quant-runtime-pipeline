@@ -731,6 +731,8 @@ def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEF
 
 
 def preparation_prompt(cand, results_root, pool_path):
+    provenance = cand.get("provenance") if isinstance(cand.get("provenance"), dict) else {}
+    reviewed_locator = provenance.get("reviewed_wiki_path") or provenance.get("reviewed_source") or ""
     return (
         "JIT PREPARATION ONLY for reviewed quant candidate %s — %s.\n\n" %
         (cand["family_id"], cand["title"])
@@ -738,7 +740,9 @@ def preparation_prompt(cand, results_root, pool_path):
           "executor. Candidate pool: %s. Canonical results root: %s. Workspace: %s.\n" %
           (pool_path, results_root, cand.get("workspace_path") or DEFAULT_WORKSPACE)
         + "Frozen candidate fingerprint_input: %s\n" % cand["fingerprint_input"]
-        + "Read the exact existing candidate object, its card body, provenance.reviewed_source, and "
+        + "Canonical reviewed research locator: %s\n" % reviewed_locator
+        + "Read the exact existing candidate object, its card body, provenance.reviewed_wiki_path when "
+          "present (otherwise provenance.reviewed_source), and "
           "the deployed prepared-execution contract in runtime/production_handoff.py plus "
           "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md. Preserve family_id, fingerprint_input, "
           "candidate body, provenance, lineage and research decision exactly; do not re-review or "

@@ -612,13 +612,17 @@ class TestFailClosed(Base):
         self.assertFalse((self.root / FAMILY_B).exists())
 
     def test_preparation_prompt_forbids_compute_and_preserves_candidate_identity(self):
-        cand = candidate()
+        cand = candidate(provenance={"reviewed_source": "legacy:source",
+                                     "reviewed_wiki_path": "/wiki/quant/fam-b.md",
+                                     "review_status": "PASS"})
         prompt = h.preparation_prompt(cand, str(self.root), str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
         self.assertIn("JIT PREPARATION ONLY", prompt)
         self.assertIn("do NOT run container exec qlib-run", prompt)
         self.assertIn("do NOT create %s/%s" % (self.root, FAMILY_B), prompt)
         self.assertIn("adding ONLY its validated absolute execution_file", prompt)
         self.assertIn(cand["fingerprint_input"], prompt)
+        self.assertIn("Canonical reviewed research locator: /wiki/quant/fam-b.md", prompt)
+        self.assertIn("provenance.reviewed_wiki_path when present", prompt)
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()
