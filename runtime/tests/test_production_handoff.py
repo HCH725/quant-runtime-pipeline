@@ -238,6 +238,7 @@ class Base(unittest.TestCase):
 
 class TestAdvance(Base):
     def _pass_attempt(self, age_minutes=360):
+        self._write_pool([candidate("fam-passed-v1", "fam-passed|fp"), candidate()])
         self._write_family("fam-passed-v1", with_attempt=True, attempt_age_minutes=age_minutes,
                            terminal="DONE", verdict="PASS")
         return Path(self.root) / "fam-passed-v1" / "rounds" / "fam-passed-v1-r1" / \
@@ -264,6 +265,31 @@ class TestAdvance(Base):
         self.assertEqual(commands[0][commands[0].index("--attempt-dir") + 1], str(attempt))
         self.assertIn("leaderboard", commands[-1])
         self.assertNotIn("--check", commands[-1])
+
+    def test_historical_pass_does_not_block_when_queue_tail_is_reject(self):
+        old = "fam-old-pass-v1"
+        reject = "fam-queue-reject-v1"
+        self._write_pool([candidate(old, "old|fp"), candidate(reject, "reject|fp"),
+                          candidate(fingerprint_input="next|fp")])
+        self._write_family(old, with_attempt=True, attempt_age_minutes=360,
+                           terminal="BAD", verdict="PASS")
+        self._write_family(reject, with_attempt=True, attempt_age_minutes=360,
+                           terminal="DONE", verdict="REJECT")
+        calls = []
+        h.sh = lambda cmd, **_kwargs: (calls.append(cmd) or (1, "", "invalid old bundle"))
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        self.assertEqual(calls, [])
+
+    def test_exhausted_pool_finalizes_last_pass_before_idle(self):
+        passed = "fam-last-pass-v1"
+        self._write_pool([candidate(passed)])
+        self._write_family(passed, with_attempt=True, terminal="DONE", verdict="PASS")
+        calls = []
+        h.sh = lambda cmd, **_kwargs: (calls.append(cmd) or (0, "", ""))
+        res = self.run_round()
+        self.assertEqual((res.action, res.outcome), ("noop", "idle"))
+        self.assertTrue(calls)
 
     def test_pass_finalization_failure_finds_and_does_not_advance(self):
         self._pass_attempt()

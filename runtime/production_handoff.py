@@ -1524,12 +1524,6 @@ def _round_once(args):
               (s["in_flight"] or (s["attempt"] is not None and not s["round_verdict"] and
                                   prepared_attempt(s))) and
               (s["attempt"] is not None or not direct_family(families[s["family_id"]]))]
-    for state in states:
-        if not args.dry_run and state["round_verdict"] == "PASS" and state["attempt"]:
-            failure = finalize_post_survivor(state, args.results_root)
-            if failure:
-                return res.finding("post_survivor_finalize_failed", failure,
-                                   family_id=state["family_id"], attempt=state["attempt"])
     if active:
         return res.waiting(
             "active runtime evidence (%s: %s); next candidate waits"
@@ -1600,6 +1594,15 @@ def _round_once(args):
                 if c["family_id"] not in seen_ids
                 and not (root / c["family_id"]).exists()
                 and fingerprint(c["fingerprint_input"]) not in seen_fp]
+    tail = cands[cands.index(eligible[0]) - 1] if eligible and cands.index(eligible[0]) > 0 \
+        else (cands[-1] if not eligible and cands else None)
+    tail_state = by_family.get(tail["family_id"]) if tail else None
+    if tail_state and tail_state["round_verdict"] == "PASS" and tail_state["attempt"] and \
+            not args.dry_run:
+        failure = finalize_post_survivor(tail_state, args.results_root)
+        if failure:
+            return res.finding("post_survivor_finalize_failed", failure,
+                               family_id=tail_state["family_id"], attempt=tail_state["attempt"])
     if not eligible:
         return res.idle("pool %s has %d candidates, all already present in /results (contract 14.3)"
                         % (pool_path, len(cands)), pool=str(pool_path))
