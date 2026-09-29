@@ -339,15 +339,16 @@ def clean_terminal(attempt_dir):
 
 def finalize_post_survivor(state, results_root):
     attempt = Path(state["attempt"])
-    if not clean_terminal(attempt) or not (attempt / "DONE").is_file():
-        return "latest PASS attempt lacks a clean DONE terminal: %s" % attempt
     round_dir = attempt.parents[1]
+    bundle_path = round_dir / "survivor-bundle.json"
     bundle = [sys.executable, str(Path(__file__).with_name("survivor_bundle.py")),
               "--attempt-dir", str(attempt)]
-    if not os.path.lexists(str(round_dir / "survivor-bundle.json")):
-        bundle.append("--json")
-    else:
+    if os.path.lexists(str(bundle_path)):
         bundle.extend(("--check", "--json"))
+    else:
+        if not clean_terminal(attempt) or not (attempt / "DONE").is_file():
+            return "latest PASS attempt lacks a clean DONE terminal: %s" % attempt
+        bundle.append("--json")
     derived = [
         [sys.executable, str(Path(__file__).with_name("survivor_index.py")),
          "--results-root", str(results_root), "--check", "--json"],

@@ -309,6 +309,48 @@ class TestAdvance(Base):
         self.assertTrue(commands)
         self.assertTrue(all("--check" in cmd for cmd in commands))
 
+    def test_legacy_pass_with_existing_valid_bundle_advances(self):
+        attempt = self._pass_attempt()
+        (attempt / "DONE").write_text("legacy finalized sentinel\n")
+        (attempt.parents[1] / "survivor-bundle.json").write_text("frozen bundle")
+        commands = []
+        h.sh = lambda cmd, **_k: (commands.append(cmd) or (0, "", ""))
+
+        res = self.run_round()
+
+        self.assertEqual(res.action, "appended", res.reason)
+        self.assertIn("--check", commands[0])
+        self.assertEqual([Path(cmd[1]).name for cmd in commands],
+                         ["survivor_bundle.py", "survivor_index.py",
+                          "survivor_leaderboard.py"])
+
+    def test_missing_bundle_with_non_clean_done_fails_before_writer(self):
+        attempt = self._pass_attempt()
+        (attempt / "DONE").write_text("legacy finalized sentinel\n")
+        commands = []
+        h.sh = lambda cmd, **_k: (commands.append(cmd) or (0, "", ""))
+
+        res = self.run_round()
+
+        self.assertEqual(res.action, "finding")
+        self.assertEqual(res.finding_key, "post_survivor_finalize_failed")
+        self.assertEqual(commands, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_existing_invalid_bundle_fails_closed_without_advance(self):
+        attempt = self._pass_attempt()
+        (attempt.parents[1] / "survivor-bundle.json").write_text("invalid")
+        commands = []
+        h.sh = lambda cmd, **_k: (commands.append(cmd) or (1, "", "invalid bundle"))
+
+        res = self.run_round()
+
+        self.assertEqual(res.action, "finding")
+        self.assertEqual(res.finding_key, "post_survivor_finalize_failed")
+        self.assertEqual(len(commands), 1)
+        self.assertIn("--check", commands[0])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
     def test_dangling_survivor_bundle_symlink_fails_closed_without_replacement(self):
         attempt = self._pass_attempt()
         bundle_path = attempt.parents[1] / "survivor-bundle.json"
