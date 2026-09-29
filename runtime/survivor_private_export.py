@@ -34,6 +34,26 @@ def _warning(message):
     return "WARNING: " + message
 
 
+def _legacy_baseline_compatible(current, desired):
+    """Accept only the known additive full.avg_trades_per_year baseline change."""
+    try:
+        current_value = json.loads(current)
+        desired_value = json.loads(desired)
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(current_value, dict) or not isinstance(desired_value, dict):
+        return False
+    current_full = current_value.get("full")
+    desired_full = desired_value.get("full")
+    if not isinstance(current_full, dict) or not isinstance(desired_full, dict):
+        return False
+    if "avg_trades_per_year" in current_full or "avg_trades_per_year" not in desired_full:
+        return False
+    expected = json.loads(json.dumps(desired_value))
+    del expected["full"]["avg_trades_per_year"]
+    return current_value == expected
+
+
 def _result(ok, result, warnings=None, changed=None, commit_sha=None):
     return {
         "ok": bool(ok),
@@ -194,10 +214,15 @@ def _plan(target, files, immutable):
             continue
 
         current = _read(path) if os.path.isfile(path) else None
-        if relative in immutable and current is not None and current != body:
+        legacy_baseline = (relative.startswith("survivors/")
+                           and relative.endswith("/baseline.json"))
+        compatible_baseline = (legacy_baseline and current is not None
+                               and _legacy_baseline_compatible(current, body))
+        if relative in immutable and current is not None and current != body \
+                and not compatible_baseline:
             conflicts.append(_warning("immutable managed file conflict: %s" % relative))
             continue
-        if current != body:
+        if current != body and not compatible_baseline:
             changed.append(relative)
     return changed, warnings, conflicts
 
