@@ -144,6 +144,25 @@ class ExportTests(unittest.TestCase):
         with open(path) as fh:
             self.assertEqual(json.load(fh), {"human_or_conflicting": True})
 
+    def test_legacy_baseline_missing_avg_trades_is_compatible_noop(self):
+        fx = self.fixture()
+        repo = init_repo(self.tmp)
+        self.assertTrue(spe.export(self.root, repo)["ok"])
+        path = os.path.join(repo, "survivors", fx.entry["survivor_id"], "baseline.json")
+        with open(path, "rb") as fh:
+            baseline = json.load(fh)
+        baseline["full"].pop("avg_trades_per_year")
+        legacy_bytes = spe._json_bytes(baseline)
+        with open(path, "wb") as fh:
+            fh.write(legacy_bytes)
+
+        result = spe.export(self.root, repo)
+
+        self.assertTrue(result["ok"], result)
+        self.assertNotEqual(result["result"], "conflict")
+        with open(path, "rb") as fh:
+            self.assertEqual(fh.read(), legacy_bytes)
+
     def test_immutable_evidence_conflict_refuses_overwrite(self):
         fx = self.fixture(evidence=True)
         repo = init_repo(self.tmp)
