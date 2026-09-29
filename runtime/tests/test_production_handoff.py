@@ -865,6 +865,28 @@ class TestFailClosed(Base):
                 self.assertFalse((self.root / FAMILY_B).exists())
                 self.assertEqual(self.prep_calls, [])
 
+    def test_clear_absence_outcome_under_symlinked_preparing_fails_closed(self):
+        path, config, schema = self._clear_absence_outcome()
+        external = Path(tempfile.mkdtemp(prefix="qrp-external-preparing-"))
+        try:
+            external_lease = external / FAMILY_B
+            external_lease.mkdir()
+            (external_lease / h.PREPARATION_OUTCOME).write_bytes(path.read_bytes())
+            preparing = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME
+            shutil.rmtree(preparing)
+            preparing.symlink_to(external, target_is_directory=True)
+
+            with patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                    patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+                res = self.run_round(require_prepared_execution=True)
+
+            self.assertEqual(res.finding_key, "preparation_outcome_invalid")
+            self.assertFalse((self.root / FAMILY_B).exists())
+            self.assertEqual(self.prep_calls, [])
+            self.assertEqual(self.fake.calls, [])
+        finally:
+            shutil.rmtree(external, ignore_errors=True)
+
     def test_v2_frozen_prompt_ignores_legacy_prepare_task_file(self):
         lease = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / FAMILY_B
         lease.mkdir(parents=True)

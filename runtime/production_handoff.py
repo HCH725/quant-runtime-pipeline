@@ -1001,6 +1001,23 @@ def _sha256(raw):
 def _validate_preparation_outcome(path, cand):
     """Validate the single supported JIT clear-absence recommendation, fail-closed."""
     path = Path(path)
+    results_root = path.parents[3]
+    root = results_root.resolve(strict=True)
+    expected = (root / HANDOFF_DIRNAME / PREPARATION_DIRNAME /
+                cand["family_id"] / PREPARATION_OUTCOME)
+    if path.resolve(strict=False) != expected:
+        raise ValueError("preparation outcome path does not match its results-root lease")
+    current = root
+    for component in (HANDOFF_DIRNAME, PREPARATION_DIRNAME, cand["family_id"]):
+        current = current / component
+        if os.path.lexists(str(current)) and stat.S_ISLNK(os.lstat(str(current)).st_mode):
+            raise ValueError("preparation lease path components must not be symlinks")
+    lease = current
+    outcome = lease / PREPARATION_OUTCOME
+    if lease.resolve(strict=True) != lease or outcome.resolve(strict=True) != outcome or \
+            not outcome.resolve(strict=True).is_relative_to(root):
+        raise ValueError("preparation outcome path escapes results root")
+    path = outcome
     info = os.lstat(str(path))
     if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
         raise ValueError("preparation outcome must be a regular non-symlink file")
