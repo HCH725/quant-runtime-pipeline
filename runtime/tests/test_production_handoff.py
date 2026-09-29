@@ -623,6 +623,10 @@ class TestFailClosed(Base):
         self.assertIn(cand["fingerprint_input"], prompt)
         self.assertIn("Canonical reviewed research locator: /wiki/quant/fam-b.md", prompt)
         self.assertIn("provenance.reviewed_wiki_path when present", prompt)
+        self.assertIn("source venue, quote currency, named symbols and source-universe breadth", prompt)
+        self.assertIn("not an execution prerequisite", prompt)
+        self.assertIn("complete legal local eligible universe", prompt)
+        self.assertIn("core signal/model capability or required data type/field is absent", prompt)
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()

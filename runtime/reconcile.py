@@ -25,8 +25,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from production_handoff import (ACTIVE_WINDOW_MINUTES, attempt_activity,  # noqa: E402
-                                direct_family, disposition_prompt, launch_agent,
+from production_handoff import (ACTIVE_WINDOW_MINUTES, DISPOSITION_PROMPT_VERSION,  # noqa: E402
+                                attempt_activity, direct_family, disposition_prompt, launch_agent,
                                 round_verdict_token)
 from terminal_evidence import TERMINALS, host_boot_id, now_utc, sha256_file  # noqa: E402
 
@@ -321,9 +321,10 @@ def handle(res, results_root, dry_run, detector):
     if dry_run:
         res.action, res.reason = "would_launch", "%s; would wake default for disposition" % stage
         return res
-    pid, why, busy = launch_agent(results_root, res.family_id,
-                                  "disposition-%s-%s.md" % (res.round_id, res.run_id),
-                                  disposition_prompt(res.family_id, res.round_id, res.run_id, results_root))
+    pid, why, busy = launch_agent(
+        results_root, res.family_id,
+        "disposition-v%d-%s-%s.md" % (DISPOSITION_PROMPT_VERSION, res.round_id, res.run_id),
+        disposition_prompt(res.family_id, res.round_id, res.run_id, results_root))
     if busy:
         res.action, res.reason = "running", "default worker already owns this family"
     elif why:

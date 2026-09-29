@@ -118,8 +118,10 @@ class DirectStallDisposition(unittest.TestCase):
         self.assertEqual(report["results"][0]["action"], "launched")
         self.assertGreaterEqual(report["results"][0]["detail"]["stalled_minutes"], 90)
         self.assertEqual(len(self.calls), 1)
-        self.assertEqual(self.calls[0][2], "disposition-%s-%s.md" % (attempt.parents[1].name,
-                                                                     attempt.name))
+        self.assertEqual(
+            self.calls[0][2],
+            "disposition-v%d-%s-%s.md" % (r.DISPOSITION_PROMPT_VERSION,
+                                          attempt.parents[1].name, attempt.name))
         self.assertIn("No Kanban", self.calls[0][3])
         self.assertEqual(self.incident_lines(), [])
         # the family is still undecided -> the next candidate must not be consumed
@@ -202,7 +204,9 @@ class DirectStallDisposition(unittest.TestCase):
                 code, report = self.run_root()
                 self.assertEqual(code, 0)
                 self.assertEqual(report["results"][0]["action"], "launched")
-                frozen = self.root / "fam-dead" / "disposition-fam-dead-r1-fam-dead-r1-u1.md"
+                frozen = (self.root / "fam-dead" /
+                          ("disposition-v%d-fam-dead-r1-fam-dead-r1-u1.md"
+                           % r.DISPOSITION_PROMPT_VERSION))
                 self.assertTrue(frozen.is_file())
                 code, second = self.run_root()  # lease still held by the live session
                 self.assertEqual(second["results"][0]["action"], "running")
