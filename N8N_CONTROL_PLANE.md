@@ -1,21 +1,22 @@
 # N8N Control Plane — END-TO-END CANVAS + C3 PRODUCTION HANDOFF
 
-## Prepared-execution cutover — C3 HOLD pending independent audit
+## JIT preparation + prepared direct dispatch — C3 LIVE
 
-The deployment descriptions below are historical unless explicitly marked current. Live C3 is
-**HOLD pending audit**; this worktree change is not deployed, and this task does not touch live n8n.
-Normal prepared dispatch is deterministic and direct: the bridge invokes
-`runtime/production_handoff.py`, which validates the exact prepared manifest and mirrored staged
-round/run specs, runs existing P1–P10 against the staged attempt, materializes identical canonical
-specs, then invokes the fixed `/usr/local/bin/container exec -d qlib-run ...` command. The manifest
-contains no `argv` or runner path; no Hermes process or shell is used by normal C3. Hermes remains
-only in C4 exception/remediation and the explicit `--legacy-agent-dispatch` rollback path.
+The deployment descriptions below may contain historical sections, but this heading is the current production boundary.
+Live C3 is **ACTIVE**. The bridge invokes `runtime/production_handoff.py` on its existing cadence. A schema-complete
+queue-head candidate does not need `execution_file` at Intake time. If it is absent, C3 launches at most one detached
+Hermes `quant-preparation` session behind the kernel lease at `_handoff/preparing/<family_id>/`; that session may only
+implement/test/freeze the runner and staged specs/manifest and atomically add the validated `execution_file`. It must not
+create canonical `/results/<family_id>`, launch Qlib, write terminal/verdict evidence, or start a `quant-production` session.
+On a later cadence, prepared dispatch validates the exact manifest and mirrored staged round/run specs, runs P1–P10,
+materializes identical canonical specs, then invokes the fixed `/usr/local/bin/container exec -d qlib-run ...` command.
+That actual Qlib dispatch uses no Hermes production executor and no shell. The explicit `--legacy-agent-dispatch` path is
+rollback-only.
 
-The stable n8n workflow IDs, fixed request schema, allowlisted host bridge, and C4 cadence are not
-changed by this local remediation. The historical direct-Hermes C3 text below must not be used as
-instructions for new families.
+The stable n8n workflow IDs, fixed request schema, allowlisted host bridge, and cadence did not need new nodes or a new
+queue/DB/service for this cutover. Historical direct-Hermes C3 text below must not be used as instructions for new families.
 
-Proposed C4: the same fixed `runtime_reconcile_once` bridge invokes the repo reconciler. It ignores
+Current C4: the same fixed `runtime_reconcile_once` bridge invokes the repo reconciler. It ignores
 historical card-owned families and selects only the newest valid attempt in each direct round. A
 verified `ARTIFACT_READY`/`FAILED_SCRIPT` stage, a valid terminal sentinel still missing its own
 round verdict, or an attempt that wrote nothing for longer than the 90-minute stall window without a
@@ -28,13 +29,14 @@ never disturbed. A wake that cannot start is recorded as the fail-closed inciden
 invisibly. Missing/conflicting evidence remains fail-closed. `--dry-run` launches nothing.
 The installed wrapper now announces a successful direct `launched` action
 (`reconciler: launched default disposition for ...`) and reports incidents by `family=`/`run=`
-instead of `task=`; a legacy `unblocked` line remains only for a rolled-back board core. Pending
-independent audit.
+instead of `task=`; a legacy `unblocked` line remains only for a rolled-back board core. This compute-finished
+disposition path still launches Hermes `quant-production` sessions in current C4 and is a known follow-up separate from
+the Intake/backfill/C3 fix; this document must not imply C4 disposition is deterministic/no-agent today.
 
 Scope boundary: archived family/sentinel task IDs remain readable; historical records are not
 rewritten. The post-survivor index/evidence tooling now accepts direct PASS bundles by
 family/round/run ownership (no card ids; a leaked card id fails closed) while historical
-card-owned families keep the strict `kanban_task_id` checks. Pending independent audit.
+card-owned families keep the strict `kanban_task_id` checks. This direct/card-free provenance boundary is covered by the later v2.0 independent auditor run 222 PASS and the v1.10 post-survivor audit evidence; it is not a current pending gate.
 
 狀態：**Full Canvas AUDITED PASS / LIVE**；C3 production handoff 目前為 **LIVE**。2026-09-29 已部署 JIT preparation boundary：schema-complete candidate 可直接進 C3，缺 `execution_file` 時由 C3 啟動單一 prepare-only session，完成後下一個 cadence 才進 deterministic Qlib dispatch。
 Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 commits `9832b07`＋`fc44eb0` 已由 auditor run 445 PASS，並完成 live import／publish；2026-09-23 23:05 Asia/Taipei C3 execution 112 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦 `success`。

@@ -959,8 +959,8 @@ def _prepared_execution(cand, args):
     execution_file = cand.get("execution_file")
     if not isinstance(execution_file, str) or not execution_file.strip():
         return None, ("candidate_preparation_required",
-                      "candidate %s has no deterministic execution_file; Research/Intake must "
-                      "prepare frozen execution artifacts first" % cand["family_id"])
+                      "candidate %s has no deterministic execution_file; JIT preparation must "
+                      "freeze and validate execution artifacts before prepared dispatch" % cand["family_id"])
     try:
         family_id = cand["family_id"]
         if not FAMILY_ID.fullmatch(family_id):
@@ -1555,7 +1555,7 @@ def main():
     ap.set_defaults(require_prepared_execution=True)
     ap.add_argument("--require-prepared-execution", dest="require_prepared_execution",
                     action="store_true",
-                    help="require an upstream-prepared deterministic execution contract (default)")
+                    help="use JIT preparation when needed, then require deterministic prepared execution (default)")
     ap.add_argument("--legacy-agent-dispatch", dest="require_prepared_execution",
                     action="store_false",
                     help="rollback only: restore the historical Hermes worker dispatch path")
