@@ -59,6 +59,29 @@ class BitcoinFridayLocalRunnerTests(unittest.TestCase):
         self.assertEqual({row["invalidation_pct"] for row in grid}, {0.05, 0.10})
         self.assertEqual(runner.expected_counts()["case_evaluations_total"], 480)
 
+    def test_fixed_equity_and_reserved_tranche_are_enforced(self):
+        self.assertEqual(runner.START_EQUITY, 30000.0)
+        self.assertEqual(runner.MAX_ACTIVE_TRANCHES, 11)
+        self.assertEqual(runner.MAX_ADD_LEVELS, 10)
+        self.assertEqual(runner.EXECUTION_SEMANTICS["reserve_tranche"], 12)
+        self.assertEqual(runner.EXECUTION_SEMANTICS["max_add_levels"], 10)
+
+        episode = runner.simulate_episode(
+            [{"open": 100.0, "high": 100.0, "low": 89.0, "close": 90.0}],
+            {
+                "spacing_pct": 0.01,
+                "size_multiplier": 1.1,
+                "breakeven_tp_pct": 0.01,
+                "invalidation_pct": 0.10,
+            },
+            runner.cost_for("full"),
+        )
+        self.assertEqual(episode["adds"], 10)
+        self.assertEqual(episode["max_active_tranches"], 11)
+        metrics = runner._metric_summary([episode], "2022-01-01", "2022-01-07")
+        self.assertAlmostEqual(metrics["ending_equity"], 30000.0 + episode["net_pnl"])
+        self.assertEqual(metrics["max_active_tranches"], 11)
+
     def _row(self, when, open_, high, low, close):
         ms = int(when.timestamp() * 1000)
         return {
@@ -157,6 +180,7 @@ class BitcoinFridayLocalRunnerTests(unittest.TestCase):
                 "grid": runner.DCA_GRID,
                 "base_quote": runner.BASE_QUOTE,
             },
+            "execution_semantics": runner.EXECUTION_SEMANTICS,
             "gates": {
                 "min_episodes_is": runner.MIN_EPISODES_IS,
                 "min_episodes_oos": runner.MIN_EPISODES_OOS,
@@ -216,6 +240,7 @@ class BitcoinFridayLocalRunnerTests(unittest.TestCase):
             self.assertTrue(result["coverage_complete"], result.get("assertion_failures"))
             self.assertTrue(result["assertions_all_true"], result.get("assertion_failures"))
             self.assertEqual(result["cohort_count"], 1)
+            self.assertEqual(result["execution_semantics"], runner.EXECUTION_SEMANTICS)
             self.assertEqual(json.loads((attempt / "state.json").read_text())["stage"], "ARTIFACT_READY")
             self.assertTrue((attempt / "artifacts" / "cohort_results.json").is_file())
             self.assertTrue((attempt / "artifacts" / "cohort_survivors.json").is_file())

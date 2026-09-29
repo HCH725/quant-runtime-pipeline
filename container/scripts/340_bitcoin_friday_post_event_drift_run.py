@@ -54,8 +54,21 @@ DCA_AXES = {
     "invalidation_pct": (0.05, 0.10),
 }
 BASE_QUOTE = 1000.0
-MAX_ADD_LEVELS = 11
-START_EQUITY = 100000.0
+MAX_ACTIVE_TRANCHES = 11
+MAX_ADD_LEVELS = MAX_ACTIVE_TRANCHES - 1
+START_EQUITY = 30000.0
+EXECUTION_SEMANTICS = {
+    "execution_market": "BINANCE_SPOT",
+    "position_direction": "long_only",
+    "numeraire": "USDT",
+    "starting_equity_usdt": START_EQUITY,
+    "base_quote_usdt": BASE_QUOTE,
+    "routine_active_tranches_max": MAX_ACTIVE_TRANCHES,
+    "reserve_tranche": 12,
+    "initial_entry_counts_as_active_tranche": True,
+    "max_add_levels": MAX_ADD_LEVELS,
+    "same_bar_order": "adverse_before_favorable_tp",
+}
 BASE_FEE_BPS = 10.0
 BASE_SLIPPAGE_BPS = 1.0
 MIN_EPISODES_IS = 10
@@ -230,6 +243,8 @@ def validate_spec(spec, round_spec):
             raise ValueError("DCA axis changed: %s" % key)
     if dca.get("grid") != DCA_GRID or float(dca.get("base_quote", -1)) != BASE_QUOTE:
         raise ValueError("DCA grid/base quote changed")
+    if spec.get("execution_semantics") != EXECUTION_SEMANTICS:
+        raise ValueError("execution semantics differ from the reviewed candidate")
     gates = spec.get("gates") if isinstance(spec.get("gates"), dict) else {}
     expected_gates = {
         "min_episodes_is": MIN_EPISODES_IS,
@@ -415,6 +430,7 @@ def simulate_episode(bars, dca, cost):
         "net_pnl": net,
         "fills": fills,
         "adds": adds,
+        "max_active_tranches": 1 + adds,
         "turnover_usdt": turnover,
         "capital_committed": capital,
         "exit_reason": exit_reason,
@@ -459,6 +475,7 @@ def _metric_summary(episodes, phase_start, phase_end):
         "episodes": len(episodes),
         "fills": fills,
         "adds": adds,
+        "max_active_tranches": max((e["max_active_tranches"] for e in episodes), default=0),
         "turnover_usdt": turnover,
         "sharpe": sharpe,
         "max_dd_pct": (max_dd / peak * 100.0) if peak > 0 else 0.0,
@@ -839,6 +856,7 @@ def run(spec_path, attempt_dir, runner_path=__file__, kline_dir=None):
             "disposition_mapping_version": "v1.4.0",
             "grid_kinds": list(GRIDS),
             "local_universe": universe,
+            "execution_semantics": EXECUTION_SEMANTICS,
             "claim_scope": "canonical local Binance BTCUSDT spot 1h",
             "source_exact_reproduction": False,
             "runtime_seconds": time.monotonic() - started,
