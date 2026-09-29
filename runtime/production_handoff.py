@@ -337,6 +337,36 @@ def clean_terminal(attempt_dir):
     return True
 
 
+def finalize_post_survivor(state, results_root):
+    attempt = Path(state["attempt"])
+    if not clean_terminal(attempt) or not (attempt / "DONE").is_file():
+        return "latest PASS attempt lacks a clean DONE terminal: %s" % attempt
+    round_dir = attempt.parents[1]
+    bundle = [sys.executable, str(Path(__file__).with_name("survivor_bundle.py")),
+              "--attempt-dir", str(attempt)]
+    if not (round_dir / "survivor-bundle.json").exists():
+        bundle.append("--json")
+    else:
+        bundle.extend(("--check", "--json"))
+    derived = [
+        [sys.executable, str(Path(__file__).with_name("survivor_index.py")),
+         "--results-root", str(results_root), "--check", "--json"],
+        [sys.executable, str(Path(__file__).with_name("survivor_leaderboard.py")),
+         "leaderboard", "--results-root", str(results_root), "--check", "--json"],
+    ]
+    rc, _, err = sh(bundle)
+    if rc:
+        return "survivor bundle finalization failed (rc=%d): %s" % (rc, err)
+    for check in derived:
+        rc, _, err = sh(check)
+        if rc:
+            write = check[:-2] + ["--json"]
+            rc, _, err = sh(write)
+            if rc:
+                return "derived survivor artifact write failed (rc=%d): %s" % (rc, err)
+    return None
+
+
 def runtime_state(results_root, family_id, family_doc, now=None):
     """One family's runtime state from artifacts only -> dict(family_id, verdict, round_verdict,
     attempt, activity, in_flight, why).
@@ -1494,6 +1524,12 @@ def _round_once(args):
               (s["in_flight"] or (s["attempt"] is not None and not s["round_verdict"] and
                                   prepared_attempt(s))) and
               (s["attempt"] is not None or not direct_family(families[s["family_id"]]))]
+    for state in states:
+        if state["round_verdict"] == "PASS" and state["attempt"]:
+            failure = finalize_post_survivor(state, args.results_root)
+            if failure:
+                return res.finding("post_survivor_finalize_failed", failure,
+                                   family_id=state["family_id"], attempt=state["attempt"])
     if active:
         return res.waiting(
             "active runtime evidence (%s: %s); next candidate waits"

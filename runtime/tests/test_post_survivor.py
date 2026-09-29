@@ -356,6 +356,22 @@ class TestSurvivorIndex(Base):
         self.assertEqual(index["survivor_count"], 1)
         self.assertEqual(index["survivors"][0]["research_data_cutoff"], "2026-09-11")
 
+    def test_nested_phase_metrics_are_accepted_and_flat_metrics_take_precedence(self):
+        rec = survivor(A)
+        rec["metrics"]["phases"] = {"historical": rec["metrics"]["historical"],
+                                    "oos": {"sharpe": 2.0, "net_pnl": 20},
+                                    "full": {"sharpe": 3.0, "net_pnl": 30}}
+        rec["metrics"]["oos"] = {"sharpe": 4.0, "net_pnl": 40}
+        del rec["metrics"]["full"]
+        make_family(self.root, "fam-nested-metrics", [rec])
+        index, problems = si.build(self.root)
+        self.assertEqual(problems, [])
+        self.assertIsNotNone(index)
+        assert index is not None
+        entry = next(row for row in index["survivors"] if row["family_id"] == "fam-nested-metrics")
+        self.assertEqual(entry["oos"]["sharpe"], 4.0)
+        self.assertEqual(entry["full"]["sharpe"], 3.0)
+
     def test_duplicate_survivor_id_is_refused(self):
         path = make_family(self.root, "fam-a", a_v2_like_bundle())
         _, problems = si.build(self.root, bundle_list=[path, path])
