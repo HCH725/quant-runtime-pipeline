@@ -684,6 +684,29 @@ class TestAdvance(Base):
 
 
 class TestFailClosed(Base):
+    def _clear_absence_outcome(self, family=FAMILY_B):
+        config = self.root / "canonical-CONFIG.json"
+        schema = self.root / "canonical-SCHEMA.md"
+        config.write_bytes(b'{"datasets":[]}\n')
+        schema.write_bytes(b"# canonical schema\n")
+        evidence = {"config_sha256": h._sha256(config.read_bytes()),
+                    "schema_sha256": h._sha256(schema.read_bytes()),
+                    "summary": "Required dated-futures maturity series absent in bounded canonical readback."}
+        cand = next(c for c in h.read_pool(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME)[0]
+                    if c["family_id"] == family)
+        outcome = {"schema_version": 1, "document_kind": "jit_preparation_clear_absence",
+                   "family_id": family, "semantic_fingerprint": h.fingerprint(cand["fingerprint_input"]),
+                   "body_sha256": h.fingerprint(h.body_with_footer(cand)),
+                   "status": "TECHNICAL_INCOMPLETE", "detected_at_utc": "2026-09-29T00:00:00Z",
+                   "failure": {"layer": "card-local", "class": "data_window_invalid",
+                               "last_run_id": None, "detail": "Required data absent."},
+                   "attempts": {"launched": 0, "run_specs": 0, "terminal_sentinels": 0},
+                   "coverage": {"cells_computed": 0}, "evidence": evidence}
+        path = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / family / h.PREPARATION_OUTCOME
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(outcome) + "\n")
+        return path, config, schema
+
     def _prepared(self, family=FAMILY_B, fingerprint_input="fam-b|w=2,4|1h|long/short",
                   manifest_over=None, round_over=None, run_over=None):
         family_dir = self.root / h.HANDOFF_DIRNAME / "prepared" / family
@@ -785,6 +808,72 @@ class TestFailClosed(Base):
         self.assertIn("core signal/model capability or required data type/field is absent", prompt)
         self.assertIn("dedicated current-family runner", prompt)
         self.assertIn("do not modify unrelated strategy runners or generic/shared engines", prompt)
+        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v2.md")
+        self.assertIn("CLEAR-ABSENCE EXCEPTION", prompt)
+
+    def test_valid_clear_absence_publishes_one_terminal_family_and_next_tick_moves_on(self):
+        self._write_pool([candidate(), candidate(family="fam-c-v1", fingerprint_input="fam-c|1h")])
+        _path, config, schema = self._clear_absence_outcome()
+        with patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+            first = self.run_round(require_prepared_execution=True)
+            self.assertEqual((first.action, first.outcome), ("appended", "advanced"))
+            self.assertEqual(first.family_id, FAMILY_B)
+            self.assertEqual(self.prep_calls, [])
+            self.assertEqual(self.fake.calls, [])
+            round_dir = self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1")
+            self.assertTrue((self.root / FAMILY_B / "family.json").is_file())
+            self.assertTrue((round_dir / "round-spec.json").is_file())
+            verdict = json.loads((round_dir / "verdict.json").read_text())
+            self.assertEqual(verdict["verdict"], "TECHNICAL_INCOMPLETE")
+            self.assertIsNone(verdict["run_id"])
+            self.assertFalse((round_dir / "attempts").exists())
+            self.assertEqual(h.unresolved_incidents(str(self.root), h.read_families(str(self.root))), [])
+            second = self.run_round(require_prepared_execution=True)
+        self.assertEqual(second.family_id, "fam-c-v1")
+        self.assertEqual(second.outcome, "running")
+        self.assertEqual(len(self.prep_calls), 1)
+
+    def test_clear_absence_dry_run_is_read_only(self):
+        _path, config, schema = self._clear_absence_outcome()
+        before = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
+        with patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+            res = self.run_round(require_prepared_execution=True, dry_run=True)
+        after = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
+        self.assertEqual((res.action, res.outcome), ("would_append", "advanced"))
+        self.assertEqual(before, after)
+        self.assertEqual(self.prep_calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_clear_absence_tampering_fails_closed_without_launch(self):
+        for tamper in ("identity", "hash", "shape"):
+            with self.subTest(tamper=tamper):
+                path, config, schema = self._clear_absence_outcome()
+                outcome = json.loads(path.read_text())
+                if tamper == "identity":
+                    outcome["family_id"] = "other-family"
+                elif tamper == "hash":
+                    outcome["evidence"]["config_sha256"] = "sha256:" + "0" * 64
+                else:
+                    outcome["attempts"]["launched"] = 1
+                path.write_text(json.dumps(outcome))
+                with patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                        patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+                    res = self.run_round(require_prepared_execution=True)
+                self.assertEqual(res.finding_key, "preparation_outcome_invalid")
+                self.assertFalse((self.root / FAMILY_B).exists())
+                self.assertEqual(self.prep_calls, [])
+
+    def test_v2_frozen_prompt_ignores_legacy_prepare_task_file(self):
+        lease = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / FAMILY_B
+        lease.mkdir(parents=True)
+        (lease / "prepare-task.md").write_text("legacy frozen prompt\n")
+        with patch.object(h, "_launch_hermes_session", return_value=(12345, None, False)) as launch:
+            pid, why, busy = self._real_prepare(str(self.root), candidate(),
+                                                str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
+        self.assertEqual((pid, why, busy), (12345, None, False))
+        self.assertEqual(launch.call_args[0][1], "prepare-task-v2.md")
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()

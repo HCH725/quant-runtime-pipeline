@@ -50,9 +50,11 @@ import json
 import os
 import re
 import signal
+import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -78,7 +80,11 @@ ACTIVE_WINDOW_MINUTES = 90
 LAUNCH_GRACE_MINUTES = 90
 PREPARED_EXECUTION_KIND = "prepared_execution"
 PREPARATION_DIRNAME = "preparing"
-PREPARATION_PROMPT = "prepare-task.md"
+PREPARATION_PROMPT = "prepare-task-v2.md"
+PREPARATION_OUTCOME = "outcome.json"
+PREPARATION_OUTCOME_MAX_BYTES = 65536
+CANONICAL_CONFIG = "/Volumes/ExpansionDrive/market-data-raw/_meta/CONFIG.json"
+CANONICAL_SCHEMA = "/Volumes/ExpansionDrive/market-data-raw/_meta/SCHEMA.md"
 PREPARATION_LOG = "prepare.log"
 PREPARATION_SOURCE = "quant-preparation"
 DISPOSITION_PROMPT_VERSION = 3
@@ -854,8 +860,18 @@ def preparation_prompt(cand, results_root, pool_path):
           "Hermes session. This preparation session ends after the staged package passes P1-P10 and "
           "the existing candidate object is atomically updated by adding ONLY its validated absolute "
           "execution_file. Same candidate order and every other field/byte must remain semantically "
-          "unchanged. Re-read and validate after the write.\n\n"
-          % (results_root, cand["family_id"])
+          "unchanged. Re-read and validate after the write.\n"
+          "CLEAR-ABSENCE EXCEPTION: only when canonical CONFIG.json and SCHEMA.md plus any necessary "
+          "bounded read-back explicitly prove that a core-required data type/field/capability is absent "
+          "from every legal local universe, atomically write <results>/_handoff/preparing/%s/outcome.json. "
+          "It must be the exact schema implemented by C3 (schema_version=1, document_kind="
+          "jit_preparation_clear_absence, exact family_id, semantic_fingerprint, body_sha256, "
+          "status=TECHNICAL_INCOMPLETE, detected_at_utc, failure={layer:card-local, "
+          "class:data_window_invalid, last_run_id:null, detail}, attempts all zero, "
+          "coverage.cells_computed=0, evidence={config_sha256, schema_sha256, summary}). Hash the "
+          "canonical CONFIG.json and SCHEMA.md as sha256:<hex>. Do not write an outcome for ambiguity "
+          "or transient failure. No family/verdict/Qlib run may be created.\n\n"
+          % (results_root, cand["family_id"], cand["family_id"])
         + "Use existing runner/spec/test conventions; do not add a scheduler, manager, registry, queue, "
           "state machine, generic compiler or second data registry. Stage/commit only files belonging "
           "to this candidate; never clean, reset or absorb unrelated workspace dirt. If safe preparation "
@@ -980,6 +996,128 @@ def write_family_json(results_root, cand, prepared_identity=None):
 
 def _sha256(raw):
     return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _validate_preparation_outcome(path, cand):
+    """Validate the single supported JIT clear-absence recommendation, fail-closed."""
+    path = Path(path)
+    info = os.lstat(str(path))
+    if not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode):
+        raise ValueError("preparation outcome must be a regular non-symlink file")
+    if info.st_size > PREPARATION_OUTCOME_MAX_BYTES:
+        raise ValueError("preparation outcome exceeds size bound")
+    with open(path, "rb") as stream:
+        raw = stream.read(PREPARATION_OUTCOME_MAX_BYTES + 1)
+    if len(raw) > PREPARATION_OUTCOME_MAX_BYTES:
+        raise ValueError("preparation outcome exceeds size bound")
+    doc = json.loads(raw.decode("utf-8"))
+    if not isinstance(doc, dict):
+        raise ValueError("preparation outcome must be a JSON object")
+    if set(doc) != {"schema_version", "document_kind", "family_id", "semantic_fingerprint",
+                    "body_sha256", "status", "detected_at_utc", "failure", "attempts",
+                    "coverage", "evidence"}:
+        raise ValueError("preparation outcome shape mismatch")
+    expected = {
+        "schema_version": 1,
+        "document_kind": "jit_preparation_clear_absence",
+        "family_id": cand["family_id"],
+        "semantic_fingerprint": fingerprint(cand["fingerprint_input"]),
+        "body_sha256": fingerprint(body_with_footer(cand)),
+        "status": "TECHNICAL_INCOMPLETE",
+    }
+    for key, value in expected.items():
+        if type(doc.get(key)) is not type(value) or doc.get(key) != value:
+            raise ValueError("preparation outcome %s mismatch" % key)
+    detected_epoch = parse_utc(doc.get("detected_at_utc"))
+    if detected_epoch is None:
+        raise ValueError("preparation outcome detected_at_utc is invalid")
+    failure = doc.get("failure")
+    if not isinstance(failure, dict) or failure.get("layer") != "card-local" or \
+            failure.get("class") != "data_window_invalid" or \
+            "last_run_id" not in failure or failure.get("last_run_id") is not None or \
+            not isinstance(failure.get("detail"), str) or not failure["detail"].strip():
+        raise ValueError("preparation outcome failure shape mismatch")
+    if set(failure) != {"layer", "class", "last_run_id", "detail"}:
+        raise ValueError("preparation outcome failure shape mismatch")
+    attempts = doc.get("attempts")
+    if not isinstance(attempts, dict) or any(type(attempts.get(key)) is not int or attempts[key] != 0
+            for key in ("launched", "run_specs", "terminal_sentinels")) or \
+            set(attempts) != {"launched", "run_specs", "terminal_sentinels"}:
+        raise ValueError("preparation outcome attempts must all be zero")
+    coverage = doc.get("coverage")
+    if not isinstance(coverage, dict) or type(coverage.get("cells_computed")) is not int or \
+            coverage["cells_computed"] != 0 or set(coverage) != {"cells_computed"}:
+        raise ValueError("preparation outcome coverage must be zero")
+    evidence = doc.get("evidence")
+    if not isinstance(evidence, dict) or not isinstance(evidence.get("summary"), str) or \
+            not evidence["summary"].strip() or set(evidence) != {
+                "config_sha256", "schema_sha256", "summary"}:
+        raise ValueError("preparation outcome evidence is incomplete")
+    for key, canonical_path in (("config_sha256", CANONICAL_CONFIG),
+                                ("schema_sha256", CANONICAL_SCHEMA)):
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(evidence.get(key, ""))):
+            raise ValueError("preparation outcome %s format mismatch" % key)
+        canonical_info = os.lstat(canonical_path)
+        if not stat.S_ISREG(canonical_info.st_mode) or stat.S_ISLNK(canonical_info.st_mode):
+            raise ValueError("canonical %s must be a regular non-symlink file" % key)
+        with open(canonical_path, "rb") as stream:
+            if evidence[key] != _sha256(stream.read()):
+                raise ValueError("preparation outcome %s does not match canonical file" % key)
+    return doc
+
+
+def _publish_clear_absence_terminal(results_root, cand, outcome):
+    """Atomically register exactly one family with the existing strict no-compute contract."""
+    root = Path(results_root).resolve(strict=True)
+    target = root / cand["family_id"]
+    if os.path.lexists(str(target)):
+        raise ValueError("canonical family path already exists")
+    staging = Path(tempfile.mkdtemp(prefix=".clear-absence-", dir=str(root)))
+    staged_family = staging / cand["family_id"]
+    try:
+        write_family_json(staging, cand)
+        round_id = cand["family_id"] + "-r1"
+        round_dir = staged_family / "rounds" / round_id
+        round_dir.mkdir(parents=True)
+        detected = outcome["detected_at_utc"]
+        detected_epoch = parse_utc(detected)
+        if detected_epoch is None:
+            raise ValueError("validated outcome timestamp became invalid")
+        created_seconds = int(detected_epoch)
+        if created_seconds < detected_epoch:
+            created_seconds += 1
+        created = datetime.datetime.fromtimestamp(created_seconds, datetime.timezone.utc)
+        created_text = created.strftime("%Y-%m-%dT%H:%M:%SZ")
+        decided = max(time.time(), detected_epoch + 1)
+        decided_text = datetime.datetime.fromtimestamp(
+            decided, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        provenance = "clear-absence evidence: %s (CONFIG %s; SCHEMA %s)" % (
+            outcome["evidence"]["summary"], outcome["evidence"]["config_sha256"],
+            outcome["evidence"]["schema_sha256"])
+        spec = {"schema_version": 1, "family_id": cand["family_id"],
+                "round_id": round_id, "created_at_utc": created_text,
+                "attempts": {"launched": 0, "run_specs": 0, "terminal_sentinels": 0},
+                "prerequisite": provenance}
+        verdict = {"schema_version": 1, "family_id": cand["family_id"],
+                   "round_id": round_id, "run_id": None,
+                   "verdict": "TECHNICAL_INCOMPLETE", "performance_claimable": False,
+                   "decided_at_utc": decided_text,
+                   "attempts": {"launched": 0, "run_specs": 0, "terminal_sentinels": 0,
+                                "run_spec": None, "terminal_sentinel": None, "attempt_dir": None},
+                   "failure": {"layer": "card-local", "class": "data_window_invalid",
+                               "last_run_id": None, "detail": "%s; %s" %
+                               (outcome["failure"]["detail"], provenance)},
+                   "evidence_run_ids": [], "coverage": {"cells_computed": 0}}
+        for name, doc in (("round-spec.json", spec), ("verdict.json", verdict)):
+            with open(round_dir / name, "xb") as stream:
+                stream.write((json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode())
+                stream.flush()
+                os.fsync(stream.fileno())
+        if os.path.lexists(str(target)):
+            raise ValueError("canonical family path appeared before publish")
+        os.rename(str(staged_family), str(target))
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def _read_prepared_file(value, base, max_bytes, expected=None):
@@ -1160,6 +1298,26 @@ def prepared_execution_hold(cand, args, res, existing=None):
                                pool_entry=cand["family_id"])
         pool_path = Path(args.pool) if args.pool else Path(args.results_root) / HANDOFF_DIRNAME / POOL_FILENAME
         res.family_id = cand["family_id"]
+        outcome_path = Path(args.results_root) / HANDOFF_DIRNAME / PREPARATION_DIRNAME / cand["family_id"] / PREPARATION_OUTCOME
+        if os.path.lexists(str(outcome_path)):
+            try:
+                outcome = _validate_preparation_outcome(outcome_path, cand)
+            except (OSError, ValueError, TypeError, UnicodeError, RecursionError) as exc:
+                return res.finding("preparation_outcome_invalid", str(exc),
+                                   pool_entry=cand["family_id"], outcome=str(outcome_path))
+            res.detail["clear_absence"] = outcome["evidence"]
+            if args.dry_run:
+                res.action, res.outcome = "would_append", "advanced"
+                res.reason = "valid clear-absence outcome would terminalize family %s" % cand["family_id"]
+                return res
+            try:
+                _publish_clear_absence_terminal(args.results_root, cand, outcome)
+            except (OSError, ValueError) as exc:
+                return res.finding("preparation_outcome_publish_failed", str(exc),
+                                   pool_entry=cand["family_id"])
+            res.action, res.outcome = "appended", "advanced"
+            res.reason = "clear-absence terminal published for family %s" % cand["family_id"]
+            return res
         if args.dry_run:
             return res.waiting("candidate %s requires JIT preparation; dry-run launches nothing" %
                                cand["family_id"], preparation_required=True,
