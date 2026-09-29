@@ -89,9 +89,16 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp(prefix="qrp-handoff-test-"))
         self.fake = FakeLaunch()
+        self.prep_calls = []
+        self.prep_result = (23456, None, False)
         self._real_launch = h.launch_agent
+        self._real_prepare = h.launch_preparation_agent
         self._real_sh = h.sh
         h.launch_agent = self.fake
+        def fake_prepare(results_root, cand, pool_path):
+            self.prep_calls.append((results_root, dict(cand), pool_path))
+            return self.prep_result
+        h.launch_preparation_agent = fake_prepare
         h.sh = lambda *_a, **_k: self.fail("production must not call any CLI/board reader")
         self._write_family(FAMILY_A, "t_A")
         self._write_pool([candidate()])
@@ -99,6 +106,7 @@ class Base(unittest.TestCase):
     def tearDown(self):
         h.sh = self._real_sh
         h.launch_agent = self._real_launch
+        h.launch_preparation_agent = self._real_prepare
         shutil.rmtree(self.root, ignore_errors=True)
 
     # --- fixture helpers -------------------------------------------------
@@ -576,11 +584,41 @@ class TestFailClosed(Base):
 
         return calls, run
 
-    def test_prepared_execution_mode_holds_legacy_candidate_without_launch_or_mutation(self):
+    def test_prepared_execution_mode_jit_prepares_legacy_candidate_without_family_or_qlib(self):
         res = self.run_round(require_prepared_execution=True)
-        self.assertEqual(res.finding_key, "candidate_preparation_required")
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(res.family_id, FAMILY_B)
+        self.assertTrue(res.detail["preparation_required"])
+        self.assertEqual(res.detail["preparation_source"], h.PREPARATION_SOURCE)
+        self.assertEqual(res.detail["preparation_pid"], 23456)
+        self.assertEqual(len(self.prep_calls), 1)
+        self.assertEqual(self.prep_calls[0][1]["family_id"], FAMILY_B)
         self.assertEqual(self.fake.calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_jit_preparation_busy_waits_without_duplicate_launch_or_family_mutation(self):
+        self.prep_result = (None, None, True)
+        res = self.run_round(require_prepared_execution=True)
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertIn("still owns candidate", res.reason)
+        self.assertEqual(len(self.prep_calls), 1)
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_jit_preparation_dry_run_launches_nothing(self):
+        res = self.run_round(require_prepared_execution=True, dry_run=True)
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertTrue(res.detail["preparation_required"])
+        self.assertEqual(self.prep_calls, [])
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_preparation_prompt_forbids_compute_and_preserves_candidate_identity(self):
+        cand = candidate()
+        prompt = h.preparation_prompt(cand, str(self.root), str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
+        self.assertIn("JIT PREPARATION ONLY", prompt)
+        self.assertIn("do NOT run container exec qlib-run", prompt)
+        self.assertIn("do NOT create %s/%s" % (self.root, FAMILY_B), prompt)
+        self.assertIn("adding ONLY its validated absolute execution_file", prompt)
+        self.assertIn(cand["fingerprint_input"], prompt)
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()
@@ -709,9 +747,13 @@ class TestFailClosed(Base):
             after_c4 = self.run_round(require_prepared_execution=True)
         self.assertEqual(first.finding_key, "prepared_execution_failed")
         self.assertEqual((second.action, second.outcome), ("noop", "running"))
-        self.assertEqual(after_c4.finding_key, "candidate_preparation_required")
+        self.assertEqual((after_c4.action, after_c4.outcome), ("noop", "running"))
+        self.assertEqual(after_c4.family_id, "fam-next-v1")
+        self.assertEqual(after_c4.detail["preparation_source"], h.PREPARATION_SOURCE)
         self.assertEqual(len(calls), 2)
         self.assertFalse((self.root / "fam-next-v1").exists())
+        self.assertEqual(len(self.prep_calls), 1)
+        self.assertEqual(self.prep_calls[0][1]["family_id"], "fam-next-v1")
         self.assertEqual(self.fake.calls, [])
 
     def test_hash_identity_and_ownership_mismatches_fail_before_mutation(self):
@@ -829,7 +871,10 @@ class TestFailClosed(Base):
         args = self.args()
         vars(args).pop("require_prepared_execution")
         res = h.round_once(args)
-        self.assertEqual(res.finding_key, "candidate_preparation_required")
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(res.family_id, FAMILY_B)
+        self.assertEqual(res.detail["preparation_source"], h.PREPARATION_SOURCE)
+        self.assertEqual(len(self.prep_calls), 1)
         self.assertFalse((self.root / FAMILY_B).exists())
         self.assertEqual(self.fake.calls, [])
 
@@ -1246,11 +1291,14 @@ class TestDryRunAndReporting(Base):
         self.assertFalse((self.root / FAMILY_B).exists())
         self.assertFalse((self.root / h.HANDOFF_DIRNAME / h.LOG_FILENAME).exists())
 
-    def test_main_defaults_to_prepared_execution_and_never_launches_legacy_agent(self):
+    def test_main_defaults_to_jit_preparation_and_never_launches_legacy_production_agent(self):
         rc, out, err = self.run_main("--json")
         self.assertEqual(rc, 0)
         record = json.loads(out)
-        self.assertEqual(record["finding_key"], "candidate_preparation_required")
+        self.assertEqual((record["action"], record["outcome"]), ("noop", "running"))
+        self.assertEqual(record["family_id"], FAMILY_B)
+        self.assertEqual(record["detail"]["preparation_source"], h.PREPARATION_SOURCE)
+        self.assertEqual(len(self.prep_calls), 1)
         self.assertEqual(self.fake.calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
 

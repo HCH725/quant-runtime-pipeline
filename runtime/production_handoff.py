@@ -9,10 +9,14 @@ Every decision input is a read-only file contract under the results root:
   * `/results/_incidents/...`             = fail-closed incident ledger (contract 12.6)
   * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/retry/finding decisions
 
-Normal C3 validates immutable prepared execution artifacts, runs P1-P10 on the staged attempt,
-then invokes the fixed qlib-run container command directly; no Hermes process or candidate-supplied
-command is involved. Hermes dispatch remains available only through the explicit legacy rollback
-flag. No Kanban board, dispatcher, card status or task id participates.
+Normal C3 accepts the reviewed candidate schema directly. If the selected candidate has no
+execution_file yet, C3 launches at most one upstream JIT `quant-preparation` Hermes session behind a
+kernel lease under _handoff/preparing/<family>; that session may only build/test/freeze the deterministic
+runner/spec/manifest and atomically add execution_file. It may not create canonical /results/<family>,
+launch Qlib, or write a terminal verdict. On a later tick C3 validates the immutable prepared artifacts,
+runs P1-P10 on the staged attempt, and invokes the fixed qlib-run container command directly. The old
+Hermes production executor remains available only through the explicit legacy rollback flag. No Kanban
+board, dispatcher, card status or task id participates in the hot path.
 
 Legal action: register at most ONE new family per round. Prepared mode registers only after preflight;
 once its canonical attempt is materialized, C3 never relaunches it and holds for C4 disposition.
@@ -73,6 +77,10 @@ TERMINAL_VERDICTS = ("PASS", "REJECT", "FINALIST", "DEFERRED", "TECHNICAL_INCOMP
 ACTIVE_WINDOW_MINUTES = 90
 LAUNCH_GRACE_MINUTES = 90
 PREPARED_EXECUTION_KIND = "prepared_execution"
+PREPARATION_DIRNAME = "preparing"
+PREPARATION_PROMPT = "prepare-task.md"
+PREPARATION_LOG = "prepare.log"
+PREPARATION_SOURCE = "quant-preparation"
 PREPARED_EXECUTION_PYTHON = "/opt/homebrew/bin/python3"
 PREPARED_MANIFEST_MAX_BYTES = 65536
 PREPARED_ROUND_SPEC_MAX_BYTES = 1 << 20
@@ -676,19 +684,16 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
         % (family_id, round_id, run_id, results_root)
     )
 
-def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
-    """(pid, error, busy): detached Hermes CLI owns the family lease until it exits.
-
-    The lock fd is inherited through exec; n8n's bridge may close/timeout without killing this
-    independent session. A crashed/failed session releases the lease, so the next cadence retries
-    against the SAME family's durable artifacts. No PID file or new manager is needed.
-    """
-    family = Path(results_root) / family_id
-    fd = _lock(family / AGENT_LOCK)
+def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
+                           source="quant-production", log_name=AGENT_LOG):
+    """Launch one detached Hermes session behind a kernel flock lease."""
+    lease_dir = Path(lease_dir)
+    lease_dir.mkdir(parents=True, exist_ok=True)
+    fd = _lock(lease_dir / AGENT_LOCK)
     if fd is None:
         return None, None, True
     try:
-        task = family / name
+        task = lease_dir / name
         data = prompt.encode("utf-8")
         try:
             out = os.open(str(task), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -705,18 +710,71 @@ def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEF
         for skill in skills:
             cmd += ["--skills", skill]
         cmd += ["chat", "--query-file", str(task), "--in", workspace,
-                "--max-turns", "500", "--run-budget", "7200", "--source", "quant-production"]
+                "--max-turns", "500", "--run-budget", "7200", "--source", source]
         env = {"HOME": "/Users/hong", "PATH": "/Users/hong/.local/bin:/opt/homebrew/bin:/usr/bin:/bin",
                "LANG": "en_US.UTF-8"}
-        with open(family / AGENT_LOG, "ab") as log:
+        with open(lease_dir / log_name, "ab") as log:
             proc = subprocess.Popen(cmd, cwd=workspace, env=env, stdin=subprocess.DEVNULL,
                                     stdout=log, stderr=subprocess.STDOUT, pass_fds=(fd,),
                                     start_new_session=True)
         return proc.pid, None, False
     except (OSError, ValueError) as exc:
-        return None, "direct Hermes launch failed: %s" % exc, False
+        return None, "Hermes launch failed: %s" % exc, False
     finally:
         os.close(fd)
+
+
+def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
+    """Legacy production-agent launcher retained only for explicit rollback mode."""
+    return _launch_hermes_session(Path(results_root) / family_id, name, prompt, skills, workspace,
+                                  source="quant-production", log_name=AGENT_LOG)
+
+
+def preparation_prompt(cand, results_root, pool_path):
+    return (
+        "JIT PREPARATION ONLY for reviewed quant candidate %s — %s.\n\n" %
+        (cand["family_id"], cand["title"])
+        + "This session is upstream preparation owned by n8n C3. It is NOT a production/backtest "
+          "executor. Candidate pool: %s. Canonical results root: %s. Workspace: %s.\n" %
+          (pool_path, results_root, cand.get("workspace_path") or DEFAULT_WORKSPACE)
+        + "Frozen candidate fingerprint_input: %s\n" % cand["fingerprint_input"]
+        + "Read the exact existing candidate object, its card body, provenance.reviewed_source, and "
+          "the deployed prepared-execution contract in runtime/production_handoff.py plus "
+          "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md. Preserve family_id, fingerprint_input, "
+          "candidate body, provenance, lineage and research decision exactly; do not re-review or "
+          "re-rank the strategy.\n\n"
+        + "Produce the smallest source-faithful deterministic execution package required for n8n C3: "
+          "implement/reuse one strategy runner under container/scripts, add only focused tests, deploy "
+          "a byte-identical copy under /Users/hong/workspace/qlib-apple-container/scripts, and stage "
+          "immutable round-spec.json, run-spec.json and prepared-execution manifest under "
+          "%s/_handoff/prepared/%s/. Run focused tests and P1-P10 preflight. If source-required "
+          "data/model/assets are objectively absent, do not build new infrastructure or substitute "
+          "another market/model; make the runner emit bounded prerequisite evidence downstream.\n\n"
+          % (results_root, cand["family_id"])
+        + "HARD STOP BOUNDARY: do NOT create %s/%s, do NOT run container exec qlib-run, do NOT "
+          "write terminal sentinel/verdict/performance evidence, and do NOT launch any quant-production "
+          "Hermes session. This preparation session ends after the staged package passes P1-P10 and "
+          "the existing candidate object is atomically updated by adding ONLY its validated absolute "
+          "execution_file. Same candidate order and every other field/byte must remain semantically "
+          "unchanged. Re-read and validate after the write.\n\n"
+          % (results_root, cand["family_id"])
+        + "Use existing runner/spec/test conventions; do not add a scheduler, manager, registry, queue, "
+          "state machine, generic compiler or second data registry. Stage/commit only files belonging "
+          "to this candidate; never clean, reset or absorb unrelated workspace dirt. If safe preparation "
+          "cannot be completed, record the exact blocker in this preparation log and EXIT without "
+          "modifying execution_file.\n\n"
+        + REVIEWED_CANDIDATE_MARKER + body_with_footer(cand)
+    )
+
+
+def launch_preparation_agent(results_root, cand, pool_path):
+    """One JIT prepare-only Hermes session; its lease lives outside canonical /results/<family>."""
+    lease_dir = Path(results_root) / HANDOFF_DIRNAME / PREPARATION_DIRNAME / cand["family_id"]
+    return _launch_hermes_session(
+        lease_dir, PREPARATION_PROMPT,
+        preparation_prompt(cand, results_root, pool_path),
+        cand.get("skills") or (), cand.get("workspace_path") or DEFAULT_WORKSPACE,
+        source=PREPARATION_SOURCE, log_name=PREPARATION_LOG)
 
 
 class Round(object):
@@ -994,9 +1052,32 @@ def _prepared_execution(cand, args):
 
 
 def prepared_execution_hold(cand, args, res, existing=None):
-    """Normal mode requires valid upstream-prepared artifacts; rollback is explicit opt-out."""
+    """Validate prepared execution or launch one JIT prepare-only session when it is absent."""
     if not getattr(args, "require_prepared_execution", True):
         return None
+    if not isinstance(cand.get("execution_file"), str) or not cand.get("execution_file", "").strip():
+        if existing is not None:
+            return res.finding("registered_candidate_changed",
+                               "registered direct family lost its execution_file",
+                               pool_entry=cand["family_id"])
+        pool_path = Path(args.pool) if args.pool else Path(args.results_root) / HANDOFF_DIRNAME / POOL_FILENAME
+        res.family_id = cand["family_id"]
+        if args.dry_run:
+            return res.waiting("candidate %s requires JIT preparation; dry-run launches nothing" %
+                               cand["family_id"], preparation_required=True,
+                               preparation_source=PREPARATION_SOURCE)
+        pid, why, busy = launch_preparation_agent(args.results_root, cand, str(pool_path))
+        if busy:
+            return res.waiting("JIT preparation still owns candidate %s; C3 waits" % cand["family_id"],
+                               preparation_required=True, preparation_source=PREPARATION_SOURCE)
+        if why:
+            return res.finding("candidate_preparation_launch_failed",
+                               "%s; candidate remains retryable" % why,
+                               pool_entry=cand["family_id"])
+        return res.waiting("JIT preparation launched for candidate %s (pid=%s); next C3 tick will "
+                           "validate execution_file before Qlib" % (cand["family_id"], pid),
+                           preparation_required=True, preparation_pid=pid,
+                           preparation_source=PREPARATION_SOURCE)
     prepared, problem = _prepared_execution(cand, args)
     if problem:
         key, reason = problem
