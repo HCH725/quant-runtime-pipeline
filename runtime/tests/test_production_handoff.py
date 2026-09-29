@@ -237,6 +237,52 @@ class Base(unittest.TestCase):
 
 
 class TestAdvance(Base):
+    def _pass_attempt(self, age_minutes=360):
+        self._write_family("fam-passed-v1", with_attempt=True, attempt_age_minutes=age_minutes,
+                           terminal="DONE", verdict="PASS")
+        return Path(self.root) / "fam-passed-v1" / "rounds" / "fam-passed-v1-r1" / \
+            "attempts" / "fam-passed-v1-r1-u1"
+
+    def test_pass_finalizes_bundle_index_leaderboard_before_candidate_advance(self):
+        attempt = self._pass_attempt()
+        commands = []
+        def fake_sh(cmd, **_kwargs):
+            commands.append(cmd)
+            if "--check" in cmd and "survivor-bundle.json" not in " ".join(cmd):
+                if "survivor_leaderboard.py" in cmd and any(
+                        "survivor_leaderboard.py" in prior and "--check" not in prior
+                        for prior in commands[:-1]):
+                    return 0, "", ""
+                return 1, "", "stale"
+            return 0, "", ""
+        h.sh = fake_sh
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        self.assertEqual([Path(cmd[1]).name for cmd in commands if len(cmd) > 1],
+                         ["survivor_bundle.py", "survivor_index.py", "survivor_index.py",
+                          "survivor_leaderboard.py", "survivor_leaderboard.py"])
+        self.assertEqual(commands[0][commands[0].index("--attempt-dir") + 1], str(attempt))
+        self.assertIn("leaderboard", commands[-1])
+        self.assertNotIn("--check", commands[-1])
+
+    def test_pass_finalization_failure_finds_and_does_not_advance(self):
+        self._pass_attempt()
+        h.sh = lambda *_a, **_k: (1, "", "failed")
+        res = self.run_round()
+        self.assertEqual(res.action, "finding")
+        self.assertEqual(res.finding_key, "post_survivor_finalize_failed")
+        self.assertFalse((self.root / FAMILY_B).exists())
+
+    def test_clean_post_survivor_checks_do_not_write(self):
+        attempt = self._pass_attempt()
+        (attempt.parents[1] / "survivor-bundle.json").write_text("{}")
+        commands = []
+        h.sh = lambda cmd, **_k: (commands.append(cmd) or (0, "", ""))
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        self.assertTrue(commands)
+        self.assertTrue(all("--check" in cmd for cmd in commands))
+
     def _install_legacy_frozen_prompt(self, create_task=True):
         self.assertEqual(self.run_round().action, "appended")
         cand = candidate()

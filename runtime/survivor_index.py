@@ -275,8 +275,14 @@ def metrics_evidence(rec, label, problems):
     if not isinstance(metrics, dict):
         problems.append("%s: survivor record carries no metrics" % label)
         return None
-    for window in ("oos", "full"):
+    phases = metrics.get("phases")
+    def window_metrics(window):
         block = metrics.get(window)
+        if not isinstance(block, dict) and isinstance(phases, dict):
+            block = phases.get(window)
+        return block if isinstance(block, dict) else {}
+    for window in ("oos", "full"):
+        block = window_metrics(window)
         if not isinstance(block, dict) or not is_number(num(block.get("sharpe"))):
             problems.append("%s: metrics.%s.sharpe is missing or non-numeric" % (label, window))
     robustness = metrics.get("robustness")
@@ -301,9 +307,10 @@ def metrics_evidence(rec, label, problems):
     neighbourhood = metrics.get("neighbourhood") or rec.get("neighbourhood") or {}
     if not isinstance(neighbourhood, dict):
         neighbourhood = {}
-    oos = metrics["oos"]
-    full = metrics["full"]
-    historical = metrics.get("historical") if isinstance(metrics.get("historical"), dict) else {}
+    oos = window_metrics("oos")
+    full = window_metrics("full")
+    historical = window_metrics("historical")
+    historical = historical if isinstance(historical, dict) else {}
     return {
         "historical": {k: num(historical.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct")},
         "oos": {k: num(oos.get(k)) for k in ("net_pnl", "sharpe", "episodes", "max_dd_pct")},
