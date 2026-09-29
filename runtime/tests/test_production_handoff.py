@@ -1360,6 +1360,21 @@ class TestFailClosed(Base):
 
 
 class TestDryRunAndReporting(Base):
+    def test_dry_run_pass_does_not_finalize_survivor_artifacts(self):
+        self._write_family("fam-passed-v1", with_attempt=True, attempt_age_minutes=360,
+                           terminal="DONE", verdict="PASS")
+        attempt = (self.root / "fam-passed-v1" / "rounds" / "fam-passed-v1-r1"
+                   / "attempts" / "fam-passed-v1-r1-u1")
+        with patch.object(h, "sh") as finalize:
+            res = self.run_round(dry_run=True)
+
+        self.assertEqual((res.action, res.outcome), ("would_append", "advanced"))
+        finalize.assert_not_called()
+        round_dir = attempt.parents[2]
+        self.assertFalse((round_dir / "survivor-bundle.json").exists())
+        self.assertFalse((round_dir / "survivor-index.json").exists())
+        self.assertFalse((round_dir / "survivor-leaderboard.json").exists())
+
     def test_dry_run_mutates_nothing(self):
         res = self.run_round(dry_run=True)
         self.assertEqual((res.action, res.outcome), ("would_append", "advanced"))

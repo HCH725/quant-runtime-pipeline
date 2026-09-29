@@ -1505,7 +1505,7 @@ def _round_once(args):
                                   prepared_attempt(s))) and
               (s["attempt"] is not None or not direct_family(families[s["family_id"]]))]
     for state in states:
-        if state["round_verdict"] == "PASS" and state["attempt"]:
+        if not args.dry_run and state["round_verdict"] == "PASS" and state["attempt"]:
             failure = finalize_post_survivor(state, args.results_root)
             if failure:
                 return res.finding("post_survivor_finalize_failed", failure,
