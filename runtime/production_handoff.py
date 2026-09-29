@@ -749,10 +749,10 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
 
 
 def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
-    """Shared quant-production launcher: current C4 disposition plus explicit legacy C3 rollback.
+    """Shared quant-production launcher: intentional C4 research/disposition plus legacy C3 rollback.
 
-    Normal C3 prepared dispatch never calls this helper; C4 reconcile still uses it for
-    compute-finished host-side terminal/verdict disposition until that separate path is replaced.
+    Normal C3 prepared dispatch never calls this helper. C4 intentionally uses it at the family
+    boundary for compute-finished research/disposition and bounded same-family remediation.
     """
     return _launch_hermes_session(Path(results_root) / family_id, name, prompt, skills, workspace,
                                   source="quant-production", log_name=AGENT_LOG)

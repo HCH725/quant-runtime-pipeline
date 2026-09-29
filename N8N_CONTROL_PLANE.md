@@ -29,9 +29,8 @@ never disturbed. A wake that cannot start is recorded as the fail-closed inciden
 invisibly. Missing/conflicting evidence remains fail-closed. `--dry-run` launches nothing.
 The installed wrapper now announces a successful direct `launched` action
 (`reconciler: launched default disposition for ...`) and reports incidents by `family=`/`run=`
-instead of `task=`; a legacy `unblocked` line remains only for a rolled-back board core. This compute-finished
-disposition path still launches Hermes `quant-production` sessions in current C4 and is a known follow-up separate from
-the Intake/backfill/C3 fix; this document must not imply C4 disposition is deterministic/no-agent today.
+instead of `task=`; a legacy `unblocked` line remains only for a rolled-back board core. The compute-finished
+disposition path intentionally launches Hermes `quant-production` sessions in current C4 as the family-level research/disposition boundary; it is not C3 mechanical execution and must not be described as deterministic/no-agent today.
 
 Scope boundary: archived family/sentinel task IDs remain readable; historical records are not
 rewritten. The post-survivor index/evidence tooling now accepts direct PASS bundles by
