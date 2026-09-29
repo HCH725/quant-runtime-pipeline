@@ -344,7 +344,7 @@ def finalize_post_survivor(state, results_root):
     round_dir = attempt.parents[1]
     bundle = [sys.executable, str(Path(__file__).with_name("survivor_bundle.py")),
               "--attempt-dir", str(attempt)]
-    if not (round_dir / "survivor-bundle.json").exists():
+    if not os.path.lexists(str(round_dir / "survivor-bundle.json")):
         bundle.append("--json")
     else:
         bundle.extend(("--check", "--json"))

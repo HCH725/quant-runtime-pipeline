@@ -283,6 +283,26 @@ class TestAdvance(Base):
         self.assertTrue(commands)
         self.assertTrue(all("--check" in cmd for cmd in commands))
 
+    def test_dangling_survivor_bundle_symlink_fails_closed_without_replacement(self):
+        attempt = self._pass_attempt()
+        bundle_path = attempt.parents[1] / "survivor-bundle.json"
+        bundle_path.symlink_to("missing-survivor-bundle-target.json")
+        commands = []
+        h.sh = lambda cmd, **_k: (commands.append(cmd) or (1, "", "missing or invalid bundle"))
+
+        res = self.run_round()
+
+        self.assertTrue(commands)
+        self.assertIn("--check", commands[0])
+        self.assertIn("survivor_bundle.py", commands[0][1])
+        self.assertEqual(commands[0].count("--check"), 1)
+        self.assertEqual(commands[0].count("--attempt-dir"), 1)
+        self.assertEqual(res.action, "finding")
+        self.assertEqual(res.finding_key, "post_survivor_finalize_failed")
+        self.assertTrue(bundle_path.is_symlink())
+        self.assertFalse(bundle_path.exists())
+        self.assertEqual(os.readlink(str(bundle_path)), "missing-survivor-bundle-target.json")
+
     def _install_legacy_frozen_prompt(self, create_task=True):
         self.assertEqual(self.run_round().action, "appended")
         cand = candidate()
