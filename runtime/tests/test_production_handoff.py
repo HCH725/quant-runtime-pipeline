@@ -627,6 +627,8 @@ class TestFailClosed(Base):
         self.assertIn("not an execution prerequisite", prompt)
         self.assertIn("complete legal local eligible universe", prompt)
         self.assertIn("core signal/model capability or required data type/field is absent", prompt)
+        self.assertIn("dedicated current-family runner", prompt)
+        self.assertIn("do not modify unrelated strategy runners or generic/shared engines", prompt)
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()

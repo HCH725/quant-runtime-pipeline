@@ -76,11 +76,15 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["launched"], ["fam-a-r1-u1"])
         self.assertEqual(len(self.calls), 1)
-        self.assertEqual(self.calls[0][2], "disposition-v2-fam-a-r1-fam-a-r1-u1.md")
+        self.assertEqual(
+            self.calls[0][2],
+            "disposition-v%d-fam-a-r1-fam-a-r1-u1.md" % r.DISPOSITION_PROMPT_VERSION)
         self.assertIn("No Kanban", self.calls[0][3])
         self.assertIn("agent-task.md is OPTIONAL provenance only", self.calls[0][3])
         self.assertIn("source venue/quote/named-symbol mismatch is NOT sufficient", self.calls[0][3])
         self.assertIn("NEXT round of the SAME family", self.calls[0][3])
+        self.assertIn("edit only the current family runner", self.calls[0][3])
+        self.assertIn("do NOT modify another strategy runner", self.calls[0][3])
         self.assertFalse(any("task_id" in row for row in report["results"]))
 
     def test_failed_script_wakes_host_disposition_not_a_fake_verdict(self):
