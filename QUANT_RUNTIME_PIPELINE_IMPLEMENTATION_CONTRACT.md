@@ -169,25 +169,27 @@ Alternative.me FGI payload 的 official provenance、值域、單調唯一 times
 
 ## 5. System invariants
 
-- **INV-1 `[C]`** 一張 strategy card 恰對應一個 family；不得一卡一 experiment。
+- **INV-1 `[C]`** 一個 registered production candidate 恰對應一個 family identity；不得把多個獨立 hypothesis 混入同一 family。歷史 Kanban strategy card 只保留 provenance，不是 current production ownership。
 - **INV-2 `[C]`** round_id 與 run_id 分離；technical retry 不得遞增 round_id。
 - **INV-3 `[C]`** 同一時刻，一個 family 最多一個 active round；同一 round 最多一個 active run。
 - **INV-4 `[C]`** `/results` 的 `family.json`/spec/result/verdict/terminal evidence 一旦 publish 即 immutable；只有 `state.json` 可 atomic rewrite。
 - **INV-5 `[C]`** `/qlib/work` 永不是真值來源；刪掉它不得損失任何研究結論。
 - **INV-6 `[C]`** `/data/raw` 永不從 container 被寫入。
-- **INV-7 `[C]`** 卡在等 Qlib 時狀態必須是 `scheduled`；不得用 `blocked` 代表正常等待。
-- **INV-8 `[C]`** 完成橋只能是「durable sentinel + host deterministic no-agent reconciler + kanban unblock」；不得引入網路服務或 queue。
-- **INV-9 `[C]`** Kanban parent edge 只代表 scheduling/order；科學血緣一律記於 `/results/<family_id>/family.json` 的 `parent_family`（卡片不承載 metadata）。
+- **INV-7 `[C]`** 等待 JIT preparation、Qlib compute 或 C4 disposition 時，以 canonical `_handoff`／`/results` runtime evidence 表示；Kanban status 不得成為 current production gate。工程卡的 `blocked` 仍只代表真正需要介入，不代表正常 compute 等待。
+- **INV-8 `[C]`** current completion bridge 只能由「durable runtime evidence + n8n C4 fixed host bridge + host reconciler」驅動；現行 compute-finished terminal/verdict disposition 可由 lease-protected Hermes `quant-production` session 執行，且**不得經 Kanban unblock 作 production transport**。不得引入額外 HTTP/webhook/Redis/Celery/queue service。
+- **INV-9 `[C]`** 科學血緣一律記於 `/results/<family_id>/family.json` 的 `parent_family`；歷史 Kanban parent edge 若存在只保留 scheduling/provenance 意義，不參與 current production ordering 或 runtime ownership。
 - **INV-10 `[C]`** `done != PASS`；verdict 與 performance_claimable 另記於該 round 的 `/results/…/verdict.json`（immutable）。
 - **INV-11 `[C]`** NEW_FAMILY 永遠 append tail；不得插隊、不得 live rewiring。
-- **INV-12 `[C]`** card-local failure 不得 freeze 全鏈；只有 shared-layer（跨卡、系統性）failure 可 freeze。單一 work volume（`/qlib/work`）失敗屬 card-local（§12.5/§13）。
+- **INV-12 `[C]`** family-local failure 不得 freeze 全鏈；只有 shared-layer（跨 family、系統性）failure 可 freeze。單一 family 的 work-volume/runtime failure 屬 local failure（§12.5/§13），不得藉由工程卡狀態升格成全域 gate。
 - **INV-13 `[C]`** 同一 family 必須有客觀 stop/yield gate（§15），不得無限 REFINE。
 - **INV-14 `[C]`** 每次 launch/retry Qlib 前必須通過 deterministic preflight（§16）。
 - **INV-15 `[C]`** terminal evidence 已存在（DONE/FAILED/INCOMPLETE）時，**不得重跑**同一 run。
-- **INV-16 `[C]`** duplicate reconciliation 必須無害（idempotent）；任何 reconciliation 結果都必須由 DB 讀回驗證，不得只採信腳本自述。
-- **INV-17 `[C]`** comments 不是 state，卡片也不承載 machine-readable metadata（`[V]` kernel 無此欄）。Kanban card 只保存 lifecycle/status/ordering（DB 欄位 + events）；machine-readable runtime ownership、scientific lineage 與 verdict 只存在於 `/results` durable artifact。
+- **INV-16 `[C]`** duplicate reconciliation 必須無害（idempotent）；current direct-family reconciliation 必須由 canonical `/results` artifacts read-back 驗證，不得只採信 agent/腳本自述。只有 historical card-owned family 的相容路徑才可需要舊 Kanban DB identity。
+- **INV-17 `[C]`** comments 不是 state；Kanban 不是 current production machine-readable state owner。runtime ownership、scientific lineage、attempt evidence 與 verdict 只存在於 canonical `_handoff`／`/results` durable artifacts；Kanban 僅保留工程協作與歷史 provenance。
 
-## 6. 卡內狀態機（card-local）
+## 6. 歷史卡內狀態機（v1.x card-owned baseline；非 current production authority）
+
+> **HISTORICAL ONLY.** 本節保留 v1.x Kanban-owned pipeline 的 audited provenance（`scheduled → ready → running`、reconciler unblock 等）。2026-09-24 v2.0 Kanban-free override 與 2026-09-29 JIT-preparation amendment 已取代其 production authority。current C3/C4 不以本節的 card status／unblock 作 gate 或 transport；現行語意以文件開頭、§14.4 current `[C]` 與 `runtime/production_handoff.py`／`runtime/reconcile.py` 為準。
 
 ### 6.1 Kanban 狀態
 `[V]` kernel 既有狀態與 pipeline 語意對映：

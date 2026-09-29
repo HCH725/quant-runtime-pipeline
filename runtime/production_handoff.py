@@ -725,7 +725,11 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
 
 
 def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
-    """Legacy production-agent launcher retained only for explicit rollback mode."""
+    """Shared quant-production launcher: current C4 disposition plus explicit legacy C3 rollback.
+
+    Normal C3 prepared dispatch never calls this helper; C4 reconcile still uses it for
+    compute-finished host-side terminal/verdict disposition until that separate path is replaced.
+    """
     return _launch_hermes_session(Path(results_root) / family_id, name, prompt, skills, workspace,
                                   source="quant-production", log_name=AGENT_LOG)
 

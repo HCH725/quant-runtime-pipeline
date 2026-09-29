@@ -153,7 +153,7 @@ Vocabulary 只**顯示**，不驅動任何動作。可驗證來源者以來源 t
 
 | state | 判定依據（canonical artifacts） | canvas 顯示的 current stage |
 |---|---|---|
-| `preflight` | family 已註冊且在 90 分鐘 launch grace 內、尚無 attempt 目錄；**或** attempt 目錄已存在但 Qlib 尚未發佈 `state.json`（＝ direct Hermes worker 正在 adapt／preflight） | `Data Readiness / Preflight` |
+| `preflight` | canonical family 已註冊且在 90 分鐘 launch grace 內、尚無 attempt 目錄；**或** attempt 目錄已存在但 Qlib 尚未發佈 `state.json`。這描述 prepared-direct dispatch 的 canonical materialization／Qlib startup transition；JIT `quant-preparation` 發生在 `_handoff/preparing/<family_id>/`、早於 canonical family 註冊，因此不屬於此 runtime state。 | `Data Readiness / Preflight` |
 | `qlib_active` | 最新 attempt 在 90 分鐘窗內、無 terminal sentinel、且已發佈 runtime stage | stage 為 `RUNNING_QLIB` → `Qlib Full Backtest`；其他 stage token 不臆測 → `Attention / Unresolved` |
 | `disposition` | 最新 attempt 已發佈 terminal sentinel，但**該 attempt 自己所屬 round** 尚無 verdict | `ARTIFACT_READY` → `Result / Verdict`；`FAILED_SCRIPT` → `Failure Analysis / Result Validation` |
 | `terminal` | 該 round／family 的 terminal verdict 已發佈且是最新證據（90 分鐘窗內） | `PASS` → `Survivor / PASS`；`REJECT` → `REJECT`；其他 terminal token → `Result / Verdict` |

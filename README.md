@@ -243,20 +243,29 @@ RaQL 的既有 prerequisite-missing round 保持 immutable；以
 ## 3. Architecture boundary
 
 ```
-n8n + Hermes / Kanban (control plane)
-        │  卡片進 → 執行 → sentinel 落地
+Research Intake Review
+        │  Wiki Brain + schema-complete candidate
         ▼
+n8n C3 + fixed host bridge (control/orchestration)
+        │
+        ├── no execution_file → one lease-protected Hermes quant-preparation
+        │                       (prepare runner/spec/manifest only; no Qlib)
+        │
+        └── prepared → P1–P10 → fixed direct qlib-run launch
+                              ▼
 Apple Container / Qlib  (compute plane, 唯一計算面)
         │  單向：raw(ro) → 計算 → /results(rw)
         ▼
 durable /results  (authoritative research evidence)
         │
-        ├──→ host reconciler (deterministic, no-agent) → Kanban unblock → Hermes
+        ├──→ n8n C4 / runtime_reconcile_once
+        │     └── current compute-finished disposition still launches
+        │         Hermes quant-production (known separate follow-up)
         │
         └──→ formal survivor leaderboard → guarded compact mirror
              → HCH725/validated-survivor-research (downstream research only)
 
-Runtime truth/read-back (results + watchdog state + Kanban)
+Runtime truth/read-back (canonical /results + watchdog/runtime observation)
         │  read-only projection
         ▼
 candidate_snapshot.py → dashboard.json
@@ -268,8 +277,7 @@ Homepage + Detail → Cloudflare Tunnel + Access → operator
 - **Observability / Display Plane**：`homepage/` + `runtime/candidate_snapshot.py --dashboard-json` + `runtime/dashboard_serve.py` 只做唯讀投影；它不啟動、停止、重試、unblock 或回測，不自行重算 health／ranking／績效。Display Plane 掛掉不得影響 Qlib、reconciler、handoff 或任何 authoritative evidence。Production UI 為 `https://quant.vicchong1983.trade`（Cloudflare Access 保護）；現行快照 producer 每 300 秒更新一次，Homepage widget 每 60 秒讀取一次。詳細部署與驗收契約見 `homepage/README.md`。
 - container 對外的唯一 communication surface 是 `/results` 檔案系統；反方向只用 host 主動發起的 `container exec`。
 - **Secondary-engine boundary**：Lean／Nautilus／PyBroker 均已退役、non-participating。現行及已規劃的 production workflow 只有 Qlib；不得把 retired engine 當成 current/future gate、performance truth 或第二套 parameter-search/backtest path。任何日後重新導入第二引擎都必須由 operator 另走 Contract §26，不能從歷史文字自動復活。
-- 完成橋只能是「durable sentinel + host deterministic no-agent reconciler + kanban unblock」；
-  不得引入 HTTP server / webhook / Redis / Celery / queue manager。
+- Current completion/disposition bridge is「durable runtime evidence + n8n C4 fixed host bridge + host reconciler」；對 `ARTIFACT_READY`／`FAILED_SCRIPT` 的 terminal/verdict disposition 目前仍由 lease-protected Hermes `quant-production` session 處理（已知獨立 follow-up），**不經 Kanban unblock**。不得引入 HTTP server / webhook / Redis / Celery / queue manager。
 
 ## 4. 內容
 
