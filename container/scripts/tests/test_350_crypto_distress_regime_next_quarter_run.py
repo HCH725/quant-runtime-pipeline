@@ -467,6 +467,22 @@ class ExecutionTests(unittest.TestCase):
         delayed, delayed_day = runner.leg_bars(rows, formation_close, 1)
         self.assertEqual(delayed_day, date(2024, 4, 2))
 
+    def test_leg_bars_q4_entry_stops_at_calendar_year_end(self):
+        rows = {}
+        day = date(2024, 9, 1)
+        while day <= date(2025, 1, 10):
+            ms = int(datetime.combine(day, datetime.min.time(), tzinfo=timezone.utc).timestamp() * 1000)
+            rows[ms] = {"open": 100.0, "high": 100.0, "low": 100.0, "close": 100.0,
+                        "open_time_ms": ms, "close_time_ms": ms + MS_DAY - 1}
+            day += timedelta(days=1)
+        formation_day = date(2024, 9, 30)
+        formation_open = int(datetime.combine(
+            formation_day, datetime.min.time(), tzinfo=timezone.utc).timestamp() * 1000)
+        bars, entry_day = runner.leg_bars(rows, rows[formation_open]["close_time_ms"], 0)
+        last_day = datetime.fromtimestamp(bars[-1]["open_time_ms"] / 1000, timezone.utc).date()
+        self.assertEqual(entry_day, date(2024, 10, 1))
+        self.assertEqual(last_day, date(2024, 12, 31))
+
     def test_neighbourhood_uses_historical_sign_agreement(self):
         historical = []
         for dca in runner.DCA_GRID:

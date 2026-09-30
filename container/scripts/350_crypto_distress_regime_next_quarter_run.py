@@ -857,8 +857,8 @@ def leg_bars(rows, entry_from_ms, delay_bars):
     window = [rows[k] for k in keys[entry_idx:]]
     # Holding period is one calendar quarter from the executable entry bar.
     entry_day = _day_of(entry)
-    hold_until = dt.date(entry_day.year + (entry_day.month > 10),
-                         1 if entry_day.month > 10 else entry_day.month + 3, 1) - dt.timedelta(days=1)
+    hold_until = dt.date(entry_day.year + (entry_day.month > 9),
+                         1 if entry_day.month > 9 else entry_day.month + 3, 1) - dt.timedelta(days=1)
     trimmed = []
     for bar in window:
         if _day_of(bar["open_time_ms"]) > hold_until:
