@@ -1747,22 +1747,30 @@ class TestPreparationLaunchBounds(Base):
                 self.assertEqual(launch.call_args[1]["max_turns"], expected)
                 self.assertEqual(launch.call_args[1]["run_budget"], h.PREPARATION_RUN_BUDGET_S)
                 self.assertEqual(launch.call_args[1]["source"], h.PREPARATION_SOURCE)
+                self.assertEqual(launch.call_args[1]["session_name"],
+                                 h.PREPARATION_SOURCE + ":" + cand["family_id"])
         self.assertEqual(h.PREPARATION_RUN_BUDGET_S, 1800)
 
     def test_launch_hermes_session_command_carries_the_bounds(self):
         lease = Path(self.root) / "lease"
+        session_name = h.PREPARATION_SOURCE + ":" + FAMILY_B
         with patch.object(h.subprocess, "Popen") as popen:
             h._launch_hermes_session(lease, "prepare-task-v3.md", "prompt", max_turns=15,
-                                     run_budget=1800)
+                                     run_budget=1800, session_name=session_name)
         cmd = popen.call_args[0][0]
         self.assertEqual(cmd[cmd.index("--max-turns") + 1], "15")
         self.assertEqual(cmd[cmd.index("--run-budget") + 1], "1800")
-        # The production/disposition launcher keeps its long-standing session defaults.
+        self.assertEqual(cmd[cmd.index("--continue") + 1], session_name)
+        self.assertIn("--create-if-missing", cmd)
+        # The production/disposition launcher keeps its long-standing session defaults and stays
+        # unnamed, so only preparation receives continuation semantics.
         with patch.object(h.subprocess, "Popen") as popen:
             h._launch_hermes_session(lease, "agent-task-2.md", "prompt")
         cmd = popen.call_args[0][0]
         self.assertEqual(cmd[cmd.index("--max-turns") + 1], "500")
         self.assertEqual(cmd[cmd.index("--run-budget") + 1], "7200")
+        self.assertNotIn("--continue", cmd)
+        self.assertNotIn("--create-if-missing", cmd)
 
 
 class TestPoolOrdering(Base):
