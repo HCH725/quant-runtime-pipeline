@@ -785,7 +785,7 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
 
 def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
                            source="quant-production", log_name=AGENT_LOG,
-                           max_turns=500, run_budget=7200):
+                           max_turns=500, run_budget=7200, session_name=None):
     """Launch one detached Hermes session behind a kernel flock lease.
 
     `max_turns`/`run_budget` bound the session: preparation passes the candidate's whitelisted turn
@@ -814,7 +814,10 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
         cmd = ["hermes", "-p", "default", "--cli", "--accept-hooks"]
         for skill in skills:
             cmd += ["--skills", skill]
-        cmd += ["chat", "--query-file", str(task), "--in", workspace,
+        cmd += ["chat"]
+        if session_name:
+            cmd += ["--continue", session_name, "--create-if-missing"]
+        cmd += ["--query-file", str(task), "--in", workspace,
                 "--max-turns", str(max_turns), "--run-budget", str(run_budget),
                 "--source", source]
         env = {"HOME": "/Users/hong", "PATH": "/Users/hong/.local/bin:/opt/homebrew/bin:/usr/bin:/bin",
@@ -940,7 +943,8 @@ def launch_preparation_agent(results_root, cand, backlog_path):
         preparation_prompt(cand, results_root, backlog_path),
         cand.get("skills") or (), cand.get("workspace_path") or DEFAULT_WORKSPACE,
         source=PREPARATION_SOURCE, log_name=PREPARATION_LOG,
-        max_turns=preparation_max_turns(cand), run_budget=PREPARATION_RUN_BUDGET_S)
+        max_turns=preparation_max_turns(cand), run_budget=PREPARATION_RUN_BUDGET_S,
+        session_name=PREPARATION_SOURCE + ":" + cand["family_id"])
 
 
 class Round(object):
