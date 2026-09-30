@@ -303,6 +303,12 @@ def load_instruments(path):
     return out
 
 
+# Canonical-pack official funding rows carry millisecond receipt jitter (the SCHEMA.md
+# example row itself is 1789084800008; measured max on this universe is 26 ms). Snap
+# within this tolerance to the funding interval boundary, fail closed beyond it.
+FUNDING_TIME_JITTER_TOLERANCE_MS = 1000
+
+
 def load_funding(symbol, start_ms, end_ms, root=None):
     """Official funding observations only; a missing interval costs zero, never a modeled row."""
     base = Path(root) if root is not None else FUNDING_ROOT
@@ -312,6 +318,7 @@ def load_funding(symbol, start_ms, end_ms, root=None):
         "modeled_ignored": 0, "other_ignored": 0, "out_of_window": 0,
         "first_official_utc": None, "last_official_utc": None,
         "missing_intervals_are_zero_not_modeled": True,
+        "boundary_jitter_snapped": 0, "max_boundary_jitter_ms": 0,
     }
     events = []
     if not path.is_file():
@@ -323,8 +330,17 @@ def load_funding(symbol, start_ms, end_ms, root=None):
             row = json.loads(line)
             t = int(row["funding_time_ms"])
             status = row.get("truth_status")
-            if status == "official" and t % 300000 != 0:
-                raise RuntimeError("official funding timestamp is not on a 5m boundary for %s" % symbol)
+            if status == "official":
+                offset = t % 300000
+                if offset > 150000:
+                    offset -= 300000
+                if abs(offset) > FUNDING_TIME_JITTER_TOLERANCE_MS:
+                    raise RuntimeError("official funding timestamp is not on a 5m boundary for %s" % symbol)
+                if offset:
+                    # single choke point: normalization happens here, never in the simulator
+                    t -= offset
+                    report["boundary_jitter_snapped"] += 1
+                    report["max_boundary_jitter_ms"] = max(report["max_boundary_jitter_ms"], abs(offset))
             if not start_ms <= t <= end_ms:
                 report["out_of_window"] += 1
                 continue

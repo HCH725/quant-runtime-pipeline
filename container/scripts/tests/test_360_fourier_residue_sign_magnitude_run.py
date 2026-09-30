@@ -257,7 +257,43 @@ class ExecutionTests(unittest.TestCase):
             target = Path(tmp) / "AAAUSDT"
             target.mkdir()
             path = target / "AAAUSDT-funding.jsonl.gz"
-            row = {"funding_time_ms": 1640995200001, "funding_rate": 0.0001,
+            row = {"funding_time_ms": 1640995230000, "funding_rate": 0.0001,
+                   "mark_price": 100.0, "truth_status": "official"}
+            path.write_bytes(gzip.compress((json.dumps(row) + "\n").encode()))
+            with self.assertRaisesRegex(RuntimeError, "not on a 5m boundary"):
+                runner.load_funding("AAAUSDT", 0, 2**63 - 1, root=tmp)
+
+    def test_official_funding_receipt_jitter_snaps_to_funding_boundary(self):
+        # canonical pack stamps official funding times with ms receipt jitter
+        # (SCHEMA.md example row is ...0008; measured max on the family universe is 26 ms)
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "AAAUSDT"
+            target.mkdir()
+            path = target / "AAAUSDT-funding.jsonl.gz"
+            rows = [
+                {"funding_time_ms": 1640995200001, "funding_rate": 0.0001,
+                 "mark_price": 100.0, "truth_status": "official"},
+                {"funding_time_ms": 1640997600026, "funding_rate": 0.0002,
+                 "mark_price": 101.0, "truth_status": "official"},
+                {"funding_time_ms": 1641001200000, "funding_rate": 0.0003,
+                 "mark_price": 102.0, "truth_status": "official"},
+            ]
+            path.write_bytes(gzip.compress(
+                ("\n".join(json.dumps(r) for r in rows) + "\n").encode()))
+            events, report = runner.load_funding("AAAUSDT", 0, 2**63 - 1, root=tmp)
+            self.assertEqual([e["t"] for e in events],
+                             [1640995200000, 1640997600000, 1641001200000])
+            self.assertTrue(all(e["t"] % 300000 == 0 for e in events))
+            self.assertEqual(report["boundary_jitter_snapped"], 2)
+            self.assertEqual(report["max_boundary_jitter_ms"], 26)
+            self.assertEqual(report["official"], 3)
+
+    def test_official_funding_jitter_beyond_tolerance_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "AAAUSDT"
+            target.mkdir()
+            path = target / "AAAUSDT-funding.jsonl.gz"
+            row = {"funding_time_ms": 1640995201500, "funding_rate": 0.0001,
                    "mark_price": 100.0, "truth_status": "official"}
             path.write_bytes(gzip.compress((json.dumps(row) + "\n").encode()))
             with self.assertRaisesRegex(RuntimeError, "not on a 5m boundary"):
