@@ -6,8 +6,9 @@ Production quant decisions remain **Kanban-free**: n8n retains the existing C3/C
 and Qlib remains the only research/backtest runtime. Research Intake Review appends each eligible exact candidate to
 `_handoff/preparation_backlog.json`; default-profile no-agent Hermes cron `219d541661d5` runs
 `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` every 15 minutes at `:00/:15/:30/:45`, five minutes ahead of C3.
-The host runner processes one FIFO head, launches a bounded `quant-preparation` session only to stage the package, then
-performs tests/P1–P10 validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent
+The host runner processes one FIFO head and binds that family to one deterministic named `quant-preparation` session;
+later cadences resume the same session instead of starting preparation from zero. The session only stages the package, then
+the host runner performs tests/P1–P10 validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent
 nor Intake may write the backlog or production pool. Live C3 remains **ACTIVE** and unchanged: it consumes only
 execution-ready pool entries, validates P1–P10, and directly invokes the fixed Qlib container command; it never launches
 JIT preparation. The normal Qlib dispatch itself does not use a Hermes production executor. C4 is also live, but its current compute-finished
