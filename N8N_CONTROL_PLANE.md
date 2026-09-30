@@ -7,7 +7,9 @@ Live C3 is **ACTIVE**. The bridge invokes `runtime/production_handoff.py` on its
 queue-head candidate does not need `execution_file` at Intake time. If it is absent, C3 launches at most one detached
 Hermes `quant-preparation` session behind the kernel lease at `_handoff/preparing/<family_id>/`; that session may only
 implement/test/freeze the runner and staged specs/manifest and atomically add the validated `execution_file`. It must not
-create canonical `/results/<family_id>`, launch Qlib, write terminal/verdict evidence, or start a `quant-production` session.
+create canonical `/results/<family_id>`, launch any strategy runner or production/full backtest (`container exec qlib-run`
+is permitted only for bounded non-production P1–P10 environment probes like P2/P7/P8), write terminal/verdict evidence, or
+start a `quant-production` session.
 On a later cadence, prepared dispatch validates the exact manifest and mirrored staged round/run specs, runs P1–P10,
 materializes identical canonical specs, then invokes the fixed `/usr/local/bin/container exec -d qlib-run ...` command.
 That actual Qlib dispatch uses no Hermes production executor and no shell. The explicit `--legacy-agent-dispatch` path is
@@ -40,7 +42,7 @@ card-owned families keep the strict `kanban_task_id` checks. This direct/card-fr
 狀態：**Full Canvas AUDITED PASS / LIVE**；C3 production handoff 目前為 **LIVE**。2026-09-29 已部署 JIT preparation boundary：schema-complete candidate 可直接進 C3，缺 `execution_file` 時由 C3 啟動單一 prepare-only session，完成後下一個 cadence 才進 deterministic Qlib dispatch。
 Full Canvas implementation commits `46093ba`、`ca13752` 與 remediation `b29612f` 已完成同一卡 `t_fd62293f` 的獨立 auditor re-audit PASS，並已由 canonical `main` live import／publish。stable workflow `shadowQuantCp1` 保留原本 source/metrics refresh lane，新增 derived lifecycle view、Current Stage Router、Pipeline Counts Summary 與 17 個 lifecycle indicators；不改 Hermes default、Kanban、Qlib、`production_handoff.py`、既有 live C3 ownership 或任何 production mutation path。C3.1 commits `9832b07`＋`fc44eb0` 已由 auditor run 445 PASS，並完成 live import／publish；2026-09-23 23:05 Asia/Taipei C3 execution 112 `mode=trigger`／`status=success`，下一分鐘 C4 execution 113 亦 `success`。
 
-C3 handoff workflow `productionHandoffManualC2` 維持 `:05/:20/:35/:50` cadence 並已 live。Hermes handoff cron `624d0be5b23c` 保持 paused，僅作明確 rollback。C3 對已 prepared candidate 維持 direct Qlib dispatch；對未 prepared candidate 只啟動 `quant-preparation` session，不建立 canonical family、不跑 Qlib。
+C3 handoff workflow `productionHandoffManualC2` 維持 `:05/:20/:35/:50` cadence 並已 live。Hermes handoff cron `624d0be5b23c` 保持 paused，僅作明確 rollback。C3 對已 prepared candidate 維持 direct Qlib dispatch；對未 prepared candidate 只啟動 `quant-preparation` session，不建立 canonical family、不跑 Qlib 策略回測（僅容許 P1–P10 有界環境探針）。
 
 `shadow-1` 仍不做任何 pipeline mutation：不改候選、不改 Kanban、不改 leaderboard、不改 `/Volumes/ExpansionDrive/qlib-results`、
 不碰 private survivor repo、不 push GitHub、不動任何 cron。Shadow 的控制能力（launch / retry / resume / reorder / promote）仍未實作。
@@ -48,7 +50,7 @@ C3 handoff workflow `productionHandoffManualC2` 維持 `:05/:20/:35/:50` cadence
 ## C3 current state（production handoff）
 
 - **Live C3: ACTIVE.** n8n workflow `productionHandoffManualC2` 維持既有 cadence；repo export 的 `active=false` 只代表 export 檔本身不作 deployment source-of-truth，live instance 已 publish/activate。
-- normal C3 直接接受 Intake Review 的 schema-complete candidate。若已有 `execution_file`，`production_handoff.py` 驗證 staged package、執行 P1–P10，然後以固定 container command 啟動 Qlib。若缺 `execution_file`，C3 在 `<results>/_handoff/preparing/<family_id>/` 以 kernel flock 啟動至多一個 `quant-preparation` Hermes session；此 session 只可 implement/test/freeze runner/spec/manifest 並原子回填 `execution_file`，不得建立 canonical `/results/<family_id>`、不得啟動 Qlib、不得寫 terminal/verdict。下一個 C3 cadence 再走 deterministic prepared dispatch。
+- normal C3 直接接受 Intake Review 的 schema-complete candidate。若已有 `execution_file`，`production_handoff.py` 驗證 staged package、執行 P1–P10，然後以固定 container command 啟動 Qlib。若缺 `execution_file`，C3 在 `<results>/_handoff/preparing/<family_id>/` 以 kernel flock 啟動至多一個 `quant-preparation` Hermes session；此 session 只可 implement/test/freeze runner/spec/manifest 並原子回填 `execution_file`，不得建立 canonical `/results/<family_id>`、不得啟動 Qlib 策略回測（`container exec qlib-run` 僅限既有 P1–P10 所需之有界環境探針，如 P2/P7/P8；嚴禁 strategy runner）、不得寫 terminal/verdict。下一個 C3 cadence 再走 deterministic prepared dispatch。
 - Container rc 非零／timeout 後 canonical attempt 已存在，C3 不盲目重跑；既有 C3/C4 artifact guard 與 C4 exception/remediation 負責後續處置。`family.json.handoff.execution=direct_hermes` 僅為 P10/C4 沿用的 direct-family compatibility token，不表示 prepared C3 啟動 Hermes。
 - C4 保持 runtime reconciliation **與 family-level LLM research/disposition** 職責。這個 `quant-production` session 是刻意的 family boundary：同一 family 的 full-backtest／failure analysis／必要 technical retry／round verdict 完成後，C3 才可放下一個 candidate；它不是 C3 的 mechanical production executor。2026-09-29 disposition v2 只修 prepared/direct authority、local-universe precedence 與 immutable-round remediation，不新增 n8n node／queue／service，也不改 C3 cadence。
 
