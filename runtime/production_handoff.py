@@ -9,14 +9,16 @@ Every decision input is a read-only file contract under the results root:
   * `/results/_incidents/...`             = fail-closed incident ledger (contract 12.6)
   * `/results/_handoff/handoff_log.jsonl` = append-only record of advance/retry/finding decisions
 
-Normal C3 accepts the reviewed candidate schema directly. If the selected candidate has no
-execution_file yet, C3 launches at most one upstream JIT `quant-preparation` Hermes session behind a
-kernel lease under _handoff/preparing/<family>; that session may only build/test/freeze the deterministic
-runner/spec/manifest and atomically add execution_file. It may not create canonical /results/<family>,
-launch Qlib, or write a terminal verdict. On a later tick C3 validates the immutable prepared artifacts,
-runs P1-P10 on the staged attempt, and invokes the fixed qlib-run container command directly. The old
-Hermes production executor remains available only through the explicit legacy rollback flag. No Kanban
-board, dispatcher, card status or task id participates in the hot path.
+Normal C3 consumes execution-ready candidates only: a new candidate without a deterministic
+execution_file is a fail-closed finding (`production_candidate_not_execution_ready`), never a Hermes
+launch. Preparation runs upstream in `runtime/prepare_candidate.py` - one bounded `quant-preparation`
+Hermes session behind a kernel lease under _handoff/preparing/<family>; that session may only build the
+family runner + focused test, stage immutable round/run specs and the prepared-execution manifest, or
+write a clear-absence outcome. It can never write the pool, the backlog or a terminal verdict, and
+promotion into _handoff/candidates.json is agent-free host work. C3 then validates the immutable
+prepared artifacts, runs P1-P10 on the staged attempt, and invokes the fixed qlib-run container command
+directly. The old Hermes production executor remains available only through the explicit legacy
+rollback flag. No Kanban board, dispatcher, card status or task id participates in the hot path.
 
 Legal action: register at most ONE new family per round. Prepared mode registers only after preflight;
 once its canonical attempt is materialized, C3 never relaunches it and holds for C4 disposition.
@@ -80,7 +82,18 @@ ACTIVE_WINDOW_MINUTES = 90
 LAUNCH_GRACE_MINUTES = 90
 PREPARED_EXECUTION_KIND = "prepared_execution"
 PREPARATION_DIRNAME = "preparing"
-PREPARATION_PROMPT = "prepare-task-v2.md"
+# Versioned preparation prompt name: v3 is the deterministic-host promotion boundary (the session can
+# only stage artifacts or write the clear-absence outcome; the host promotes). The old v2 file inside an
+# existing lease stays an immutable historical artifact.
+PREPARATION_PROMPT = "prepare-task-v3.md"
+# Fixed staged manifest name under _handoff/prepared/<family>/; prepare_candidate.py locates it by this
+# name and the session is told to stage exactly it.
+PREPARED_MANIFEST_FILENAME = "prepared-execution.json"
+# A preparation session is bounded: turns 15/20/40 only (missing -> 20, anything else clamps to 40).
+PREPARATION_MAX_TURNS_ALLOWED = (15, 20, 40)
+PREPARATION_MAX_TURNS_DEFAULT = 20
+PREPARATION_MAX_TURNS_CEILING = 40
+PREPARATION_RUN_BUDGET_S = 1800
 PREPARATION_OUTCOME = "outcome.json"
 PREPARATION_OUTCOME_MAX_BYTES = 65536
 CANONICAL_CONFIG = "/Volumes/ExpansionDrive/market-data-raw/_meta/CONFIG.json"
@@ -771,8 +784,14 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
     )
 
 def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
-                           source="quant-production", log_name=AGENT_LOG):
-    """Launch one detached Hermes session behind a kernel flock lease."""
+                           source="quant-production", log_name=AGENT_LOG,
+                           max_turns=500, run_budget=7200):
+    """Launch one detached Hermes session behind a kernel flock lease.
+
+    `max_turns`/`run_budget` bound the session: preparation passes the candidate's whitelisted turn
+    budget and a ~30 min run budget, the production/disposition launcher keeps its long-standing
+    defaults.
+    """
     lease_dir = Path(lease_dir)
     lease_dir.mkdir(parents=True, exist_ok=True)
     fd = _lock(lease_dir / AGENT_LOCK)
@@ -796,7 +815,8 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
         for skill in skills:
             cmd += ["--skills", skill]
         cmd += ["chat", "--query-file", str(task), "--in", workspace,
-                "--max-turns", "500", "--run-budget", "7200", "--source", source]
+                "--max-turns", str(max_turns), "--run-budget", str(run_budget),
+                "--source", source]
         env = {"HOME": "/Users/hong", "PATH": "/Users/hong/.local/bin:/opt/homebrew/bin:/usr/bin:/bin",
                "LANG": "en_US.UTF-8"}
         with open(lease_dir / log_name, "ab") as log:
@@ -820,15 +840,16 @@ def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEF
                                   source="quant-production", log_name=AGENT_LOG)
 
 
-def preparation_prompt(cand, results_root, pool_path):
+def preparation_prompt(cand, results_root, backlog_path):
     provenance = cand.get("provenance") if isinstance(cand.get("provenance"), dict) else {}
     reviewed_locator = provenance.get("reviewed_wiki_path") or provenance.get("reviewed_source") or ""
     return (
         "JIT PREPARATION ONLY for reviewed quant candidate %s — %s.\n\n" %
         (cand["family_id"], cand["title"])
-        + "This session is upstream preparation owned by n8n C3. It is NOT a production/backtest "
-          "executor. Candidate pool: %s. Canonical results root: %s. Workspace: %s.\n" %
-          (pool_path, results_root, cand.get("workspace_path") or DEFAULT_WORKSPACE)
+        + "This session is upstream preparation owned by the deterministic host preparation runner "
+          "runtime/prepare_candidate.py (outside the n8n C3 hot path). It is NOT a production/backtest "
+          "executor. Reviewed preparation-backlog source: %s. Canonical results root: %s. Workspace: %s.\n" %
+          (backlog_path, results_root, cand.get("workspace_path") or DEFAULT_WORKSPACE)
         + "Frozen candidate fingerprint_input: %s\n" % cand["fingerprint_input"]
         + "Canonical reviewed research locator: %s\n" % reviewed_locator
         + "Read the exact existing candidate object, its card body, provenance.reviewed_wiki_path when "
@@ -837,14 +858,16 @@ def preparation_prompt(cand, results_root, pool_path):
           "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md. Preserve family_id, fingerprint_input, "
           "candidate body, provenance, lineage and research decision exactly; do not re-review or "
           "re-rank the strategy.\n\n"
-        + "Produce the smallest deterministic execution package required for n8n C3 while preserving "
+        + "Produce the smallest deterministic execution package required by the deterministic host "
+          "preparation runner while preserving "
           "the registered core hypothesis/mechanism. Use a dedicated current-family runner under "
           "container/scripts (or reuse an existing current-family runner), add only its focused tests, "
           "and do not modify unrelated strategy runners or generic/shared engines. Deploy a byte-identical "
           "copy under "
           "/Users/hong/workspace/qlib-apple-container/scripts, and stage immutable round-spec.json, "
-          "run-spec.json and prepared-execution manifest under %s/_handoff/prepared/%s/. Run focused "
-          "tests and P1-P10 preflight. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
+          "run-spec.json and prepared-execution manifest under %s/_handoff/prepared/%s/. Stage the "
+          "package only; the host preparation runner later runs the focused family test and "
+          "P1-P10 preflight before any promotion. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
           "named symbols and source-universe breadth are provenance/external-validity context, not an "
           "execution prerequisite when the registered core signal can be computed on canonical local "
           "raw. In that case you MUST register the complete legal local eligible universe, adapt only "
@@ -859,39 +882,65 @@ def preparation_prompt(cand, results_root, pool_path):
           "backtest, or canonical family launch (container exec qlib-run is permitted ONLY for "
           "bounded non-production environment probes required by existing P1-P10, including P2/P7/P8), "
           "do NOT write terminal sentinel/verdict/performance evidence, and do NOT launch any "
-          "quant-production Hermes session. This preparation session ends after the staged package "
-          "passes P1-P10 and "
-          "the existing candidate object is atomically updated by adding ONLY its validated absolute "
-          "execution_file. Same candidate order and every other field/byte must remain semantically "
-          "unchanged. Re-read and validate after the write.\n"
-          "CLEAR-ABSENCE EXCEPTION: only when canonical CONFIG.json and SCHEMA.md plus any necessary "
+          "quant-production Hermes session. Do NOT write or modify the production candidate pool at "
+          "%s/_handoff/%s or the reviewed preparation backlog at %s: promotion is done by the deterministic host "
+          "runner runtime/prepare_candidate.py, never by this session. This preparation session ends "
+          "after it has EITHER staged the complete immutable package under "
+          "%s/_handoff/prepared/%s/ - the dedicated family runner and its focused test, round-spec.json, "
+          "run-spec.json, and a prepared-execution manifest named exactly %s matching the schema the "
+          "deployed runtime/production_handoff.py validates (round_spec_file/run_spec_file name those "
+          "staged specs, both sha256 recorded) - OR written the clear-absence outcome below.\n"
+          % (results_root, cand["family_id"], results_root, POOL_FILENAME, backlog_path,
+             results_root, cand["family_id"],
+             PREPARED_MANIFEST_FILENAME)
+        + "CLEAR-ABSENCE EXCEPTION: only when canonical CONFIG.json and SCHEMA.md plus any necessary "
           "bounded read-back explicitly prove that a core-required data type/field/capability is absent "
-          "from every legal local universe, atomically write <results>/_handoff/preparing/%s/outcome.json. "
-          "It must be the exact schema implemented by C3 (schema_version=1, document_kind="
+          "from every legal local universe, atomically write %s/_handoff/preparing/%s/outcome.json. "
+          "It must use the exact schema validated and published by the host preparation runner "
+          "(schema_version=1, document_kind="
           "jit_preparation_clear_absence, exact family_id, semantic_fingerprint, body_sha256, "
           "status=TECHNICAL_INCOMPLETE, detected_at_utc, failure={layer:card-local, "
           "class:data_window_invalid, last_run_id:null, detail}, attempts all zero, "
           "coverage.cells_computed=0, evidence={config_sha256, schema_sha256, summary}). Hash the "
           "canonical CONFIG.json and SCHEMA.md as sha256:<hex>. Do not write an outcome for ambiguity "
           "or transient failure. No family/verdict/Qlib run may be created.\n\n"
-          % (results_root, cand["family_id"], cand["family_id"])
+          % (results_root, cand["family_id"])
         + "Use existing runner/spec/test conventions; do not add a scheduler, manager, registry, queue, "
           "state machine, generic compiler or second data registry. Stage/commit only files belonging "
           "to this candidate; never clean, reset or absorb unrelated workspace dirt. If safe preparation "
           "cannot be completed, record the exact blocker in this preparation log and EXIT without "
-          "modifying execution_file.\n\n"
+          "staging a package or writing an outcome.\n\n"
         + REVIEWED_CANDIDATE_MARKER + body_with_footer(cand)
     )
 
 
-def launch_preparation_agent(results_root, cand, pool_path):
-    """One JIT prepare-only Hermes session; its lease lives outside canonical /results/<family>."""
+def preparation_max_turns(cand):
+    """The bounded turn budget of one preparation session: 15/20/40, else 20 (missing) or 40 (clamp).
+
+    Whitelisted values are used verbatim; a missing `goal_max_turns` takes the conservative default and
+    anything else clamps to the ceiling, so no candidate can raise the session budget above 40 turns.
+    """
+    value = cand.get("goal_max_turns")
+    if value is None:
+        return PREPARATION_MAX_TURNS_DEFAULT
+    if type(value) is int and value in PREPARATION_MAX_TURNS_ALLOWED:
+        return value
+    return PREPARATION_MAX_TURNS_CEILING
+
+
+def launch_preparation_agent(results_root, cand, backlog_path):
+    """One bounded prepare-only Hermes session; its lease lives outside canonical /results/<family>.
+
+    Called only by the upstream preparation entrypoint (runtime/prepare_candidate.py); production C3
+    never prepares on its hot path.
+    """
     lease_dir = Path(results_root) / HANDOFF_DIRNAME / PREPARATION_DIRNAME / cand["family_id"]
     return _launch_hermes_session(
         lease_dir, PREPARATION_PROMPT,
-        preparation_prompt(cand, results_root, pool_path),
+        preparation_prompt(cand, results_root, backlog_path),
         cand.get("skills") or (), cand.get("workspace_path") or DEFAULT_WORKSPACE,
-        source=PREPARATION_SOURCE, log_name=PREPARATION_LOG)
+        source=PREPARATION_SOURCE, log_name=PREPARATION_LOG,
+        max_turns=preparation_max_turns(cand), run_budget=PREPARATION_RUN_BUDGET_S)
 
 
 class Round(object):
@@ -1321,7 +1370,12 @@ def _prepared_execution(cand, args):
 
 
 def prepared_execution_hold(cand, args, res, existing=None):
-    """Validate prepared execution or launch one JIT prepare-only session when it is absent."""
+    """Validate prepared execution; production C3 never prepares a candidate itself.
+
+    A new/unregistered candidate without a deterministic execution_file is not executable: preparation
+    and pool promotion are a separate upstream host step (runtime/prepare_candidate.py), so C3 fails
+    closed instead of launching a Hermes session on the hot path.
+    """
     if not getattr(args, "require_prepared_execution", True):
         return None
     if not isinstance(cand.get("execution_file"), str) or not cand.get("execution_file", "").strip():
@@ -1329,44 +1383,12 @@ def prepared_execution_hold(cand, args, res, existing=None):
             return res.finding("registered_candidate_changed",
                                "registered direct family lost its execution_file",
                                pool_entry=cand["family_id"])
-        pool_path = Path(args.pool) if args.pool else Path(args.results_root) / HANDOFF_DIRNAME / POOL_FILENAME
         res.family_id = cand["family_id"]
-        outcome_path = Path(args.results_root) / HANDOFF_DIRNAME / PREPARATION_DIRNAME / cand["family_id"] / PREPARATION_OUTCOME
-        if os.path.lexists(str(outcome_path)):
-            try:
-                outcome = _validate_preparation_outcome(outcome_path, cand)
-            except (OSError, ValueError, TypeError, UnicodeError, RecursionError) as exc:
-                return res.finding("preparation_outcome_invalid", str(exc),
-                                   pool_entry=cand["family_id"], outcome=str(outcome_path))
-            res.detail["clear_absence"] = outcome["evidence"]
-            if args.dry_run:
-                res.action, res.outcome = "would_append", "advanced"
-                res.reason = "valid clear-absence outcome would terminalize family %s" % cand["family_id"]
-                return res
-            try:
-                _publish_clear_absence_terminal(args.results_root, cand, outcome)
-            except (OSError, ValueError) as exc:
-                return res.finding("preparation_outcome_publish_failed", str(exc),
-                                   pool_entry=cand["family_id"])
-            res.action, res.outcome = "appended", "advanced"
-            res.reason = "clear-absence terminal published for family %s" % cand["family_id"]
-            return res
-        if args.dry_run:
-            return res.waiting("candidate %s requires JIT preparation; dry-run launches nothing" %
-                               cand["family_id"], preparation_required=True,
-                               preparation_source=PREPARATION_SOURCE)
-        pid, why, busy = launch_preparation_agent(args.results_root, cand, str(pool_path))
-        if busy:
-            return res.waiting("JIT preparation still owns candidate %s; C3 waits" % cand["family_id"],
-                               preparation_required=True, preparation_source=PREPARATION_SOURCE)
-        if why:
-            return res.finding("candidate_preparation_launch_failed",
-                               "%s; candidate remains retryable" % why,
-                               pool_entry=cand["family_id"])
-        return res.waiting("JIT preparation launched for candidate %s (pid=%s); next C3 tick will "
-                           "validate execution_file before Qlib" % (cand["family_id"], pid),
-                           preparation_required=True, preparation_pid=pid,
-                           preparation_source=PREPARATION_SOURCE)
+        return res.finding("production_candidate_not_execution_ready",
+                           "candidate %s carries no execution_file; production C3 consumes only "
+                           "execution-ready candidates, and preparation/promotion is an upstream "
+                           "deterministic host step (runtime/prepare_candidate.py)" % cand["family_id"],
+                           pool_entry=cand["family_id"])
     prepared, problem = _prepared_execution(cand, args)
     if problem:
         key, reason = problem

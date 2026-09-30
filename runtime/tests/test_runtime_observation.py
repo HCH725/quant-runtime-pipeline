@@ -149,6 +149,8 @@ class ObservationHarness(unittest.TestCase):
                                              "last_check_at_utc": "2026-09-24T00:00:00Z",
                                              "last_healthy_at_utc": "2026-09-24T00:00:00Z",
                                              "active_signatures": {}}) + "\n")
+        write(Path(self.root) / ph.HANDOFF_DIRNAME / "preparation_backlog.json",
+              json.dumps({"schema_version": 1, "candidates": []}) + "\n")
         # A board read-back must never happen while observing: fail loudly if anything tries.
         cs.card_status = self._forbidden("card_status")
         cs.board_counts = self._forbidden("board_counts")
@@ -167,6 +169,56 @@ class ObservationHarness(unittest.TestCase):
 
     def observe(self, root=None):
         return ro.observe(results_root=root or self.root, now=NOW)
+
+
+class PreparationBacklog(ObservationHarness):
+    def _queued(self):
+        path = Path(self.root) / ph.HANDOFF_DIRNAME / "preparation_backlog.json"
+        write(path, json.dumps({"schema_version": 1,
+                                "candidates": [{"family_id": "fam-queued"}]}) + "\n")
+        pool(self.root, [])
+        age(path, 120)
+        age(Path(self.root) / ph.HANDOFF_DIRNAME / ph.POOL_FILENAME, 120)
+        return path
+
+    def test_stale_positive_backlog_overlays_ok_watchdog_health(self):
+        self._queued()
+        observation = self.observe()
+        self.assertEqual(observation["counts"]["preparation_backlog_queued"], 1)
+        self.assertTrue(observation["preparation"]["stalled"])
+        self.assertEqual(observation["health"]["status"], "attention")
+        self.assertIn("preparation_backlog_stalled",
+                      [item["kind"] for item in observation["health"]["active"]])
+
+    def test_recent_qlib_attempt_activity_resets_backlog_stall_clock(self):
+        path = self._queued()
+        family(self.root, "fam-runtime", created_minutes_ago=180.0)
+        round_spec(self.root, "fam-runtime", "fam-runtime-r1")
+        attempt(self.root, "fam-runtime", "fam-runtime-r1", "run1", cs.RUNNING_STAGE, 5.0)
+        observation = self.observe()
+        self.assertEqual(observation["preparation"]["queued"], 1)
+        self.assertFalse(observation["preparation"]["stalled"])
+        self.assertLessEqual(observation["preparation"]["progress_age_minutes"], 5.1)
+        self.assertEqual(Path(observation["preparation"]["path"]), path)
+
+    def test_recent_fifo_head_preparation_write_resets_backlog_stall_clock(self):
+        self._queued()
+        log = Path(self.root) / ph.HANDOFF_DIRNAME / "preparing" / "fam-queued" / "prepare.log"
+        write(log, "active preparation output\n")
+        age(log, 5)
+        observation = self.observe()
+        self.assertFalse(observation["preparation"]["stalled"])
+        self.assertLessEqual(observation["preparation"]["progress_age_minutes"], 5.1)
+        self.assertEqual(observation["preparation"]["last_progress_source"],
+                         "preparation_artifact:prepare.log")
+
+    def test_unreadable_backlog_makes_health_unknown_not_ok(self):
+        path = Path(self.root) / ph.HANDOFF_DIRNAME / "preparation_backlog.json"
+        write(path, "{not json\n")
+        observation = self.observe()
+        self.assertIsNone(observation["preparation"])
+        self.assertEqual(observation["health"]["status"], "unknown")
+        self.assertIn("preparation_backlog", [gap["field"] for gap in observation["gaps"]])
 
 
 class LifecycleStates(ObservationHarness):

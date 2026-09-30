@@ -162,6 +162,13 @@ class Base(unittest.TestCase):
         d.mkdir(parents=True, exist_ok=True)
         (d / h.POOL_FILENAME).write_text(json.dumps({"schema_version": 1, "candidates": cands}))
 
+    def _pool_cand(self, family=FAMILY_B):
+        """A pool candidate with its card body loaded, shaped like the C3 selection would be."""
+        pool_path = Path(self.root) / h.HANDOFF_DIRNAME / h.POOL_FILENAME
+        cand = dict(next(c for c in h.read_pool(pool_path)[0] if c["family_id"] == family))
+        cand["_body"] = h.card_body(pool_path, cand)
+        return cand
+
     def _write_incident(self, rec):
         d = Path(self.root) / h.INCIDENT_DIRNAME
         d.mkdir(parents=True, exist_ok=True)
@@ -692,8 +699,7 @@ class TestFailClosed(Base):
         evidence = {"config_sha256": h._sha256(config.read_bytes()),
                     "schema_sha256": h._sha256(schema.read_bytes()),
                     "summary": "Required dated-futures maturity series absent in bounded canonical readback."}
-        cand = next(c for c in h.read_pool(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME)[0]
-                    if c["family_id"] == family)
+        cand = self._pool_cand(family)
         outcome = {"schema_version": 1, "document_kind": "jit_preparation_clear_absence",
                    "family_id": family, "semantic_fingerprint": h.fingerprint(cand["fingerprint_input"]),
                    "body_sha256": h.fingerprint(h.body_with_footer(cand)),
@@ -763,30 +769,36 @@ class TestFailClosed(Base):
 
         return calls, run
 
-    def test_prepared_execution_mode_jit_prepares_legacy_candidate_without_family_or_qlib(self):
+    def test_unprepared_candidate_is_a_fail_closed_finding_without_jit_or_family_write(self):
+        # Production C3 consumes execution-ready candidates only: a candidate without execution_file is
+        # reported, never launched. Preparation/promotion is an upstream deterministic host step
+        # (runtime/prepare_candidate.py), so no preparation lease may even appear here.
         res = self.run_round(require_prepared_execution=True)
-        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual((res.action, res.outcome, res.finding_key),
+                         ("finding", "finding", "production_candidate_not_execution_ready"))
         self.assertEqual(res.family_id, FAMILY_B)
-        self.assertTrue(res.detail["preparation_required"])
-        self.assertEqual(res.detail["preparation_source"], h.PREPARATION_SOURCE)
-        self.assertEqual(res.detail["preparation_pid"], 23456)
-        self.assertEqual(len(self.prep_calls), 1)
-        self.assertEqual(self.prep_calls[0][1]["family_id"], FAMILY_B)
+        self.assertEqual(self.prep_calls, [])
         self.assertEqual(self.fake.calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
+        self.assertFalse((self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME).exists())
 
-    def test_jit_preparation_busy_waits_without_duplicate_launch_or_family_mutation(self):
-        self.prep_result = (None, None, True)
-        res = self.run_round(require_prepared_execution=True)
-        self.assertEqual((res.action, res.outcome), ("noop", "running"))
-        self.assertIn("still owns candidate", res.reason)
-        self.assertEqual(len(self.prep_calls), 1)
+    def test_unprepared_candidate_dry_run_is_the_same_read_only_finding(self):
+        before = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
+        res = self.run_round(require_prepared_execution=True, dry_run=True)
+        after = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
+        self.assertEqual(res.finding_key, "production_candidate_not_execution_ready")
+        self.assertEqual(before, after)
+        self.assertEqual(self.prep_calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
 
-    def test_jit_preparation_dry_run_launches_nothing(self):
-        res = self.run_round(require_prepared_execution=True, dry_run=True)
-        self.assertEqual((res.action, res.outcome), ("noop", "running"))
-        self.assertTrue(res.detail["preparation_required"])
+    def test_valid_clear_absence_outcome_no_longer_publishes_inside_c3(self):
+        # The clear-absence validator/publisher survive as upstream helpers (runtime/prepare_candidate.py
+        # reuses them); C3 itself only reports the candidate as not execution-ready.
+        _path, config, schema = self._clear_absence_outcome()
+        with patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "production_candidate_not_execution_ready")
         self.assertEqual(self.prep_calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
 
@@ -794,12 +806,29 @@ class TestFailClosed(Base):
         cand = candidate(provenance={"reviewed_source": "legacy:source",
                                      "reviewed_wiki_path": "/wiki/quant/fam-b.md",
                                      "review_status": "PASS"})
-        prompt = h.preparation_prompt(cand, str(self.root), str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
+        pool_path = str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME)
+        backlog_path = str(self.root / h.HANDOFF_DIRNAME / "preparation_backlog.json")
+        prompt = h.preparation_prompt(cand, str(self.root), backlog_path)
         self.assertIn("JIT PREPARATION ONLY", prompt)
         self.assertIn("container exec qlib-run is permitted ONLY for bounded non-production environment probes required by existing P1-P10, including P2/P7/P8", prompt)
         self.assertIn("do NOT run any strategy runner, production/full backtest, or canonical family launch", prompt)
         self.assertIn("do NOT create %s/%s" % (self.root, FAMILY_B), prompt)
-        self.assertIn("adding ONLY its validated absolute execution_file", prompt)
+        # Deterministic-host promotion boundary: the session stages artifacts (or the outcome) and can
+        # never write the pool or the backlog itself.
+        self.assertIn("Do NOT write or modify the production candidate pool at %s/_handoff/%s" %
+                      (self.root, h.POOL_FILENAME), prompt)
+        self.assertIn("Reviewed preparation-backlog source: %s" % backlog_path, prompt)
+        self.assertNotIn("Candidate pool:", prompt)
+        self.assertIn("or the reviewed preparation backlog at %s" % backlog_path, prompt)
+        self.assertIn("Do NOT write or modify the production candidate pool", prompt)
+        self.assertIn("promotion is done by the deterministic host runner runtime/prepare_candidate.py",
+                      prompt)
+        self.assertIn("host preparation runner later runs the focused family test and P1-P10 preflight",
+                      prompt)
+        self.assertNotIn("schema implemented by C3", prompt)
+        self.assertIn("prepared-execution manifest named exactly prepared-execution.json", prompt)
+        self.assertIn("runtime/prepare_candidate.py", prompt)
+        self.assertNotIn("adding ONLY its validated absolute execution_file", prompt)
         self.assertIn(cand["fingerprint_input"], prompt)
         self.assertIn("Canonical reviewed research locator: /wiki/quant/fam-b.md", prompt)
         self.assertIn("provenance.reviewed_wiki_path when present", prompt)
@@ -809,45 +838,22 @@ class TestFailClosed(Base):
         self.assertIn("core signal/model capability or required data type/field is absent", prompt)
         self.assertIn("dedicated current-family runner", prompt)
         self.assertIn("do not modify unrelated strategy runners or generic/shared engines", prompt)
-        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v2.md")
+        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v3.md")
         self.assertIn("CLEAR-ABSENCE EXCEPTION", prompt)
 
-    def test_valid_clear_absence_publishes_one_terminal_family_and_next_tick_moves_on(self):
-        self._write_pool([candidate(), candidate(family="fam-c-v1", fingerprint_input="fam-c|1h")])
-        _path, config, schema = self._clear_absence_outcome()
+    def test_clear_absence_outcome_validates_against_the_candidate_identity(self):
+        # The clear-absence validator survives as an upstream helper (runtime/prepare_candidate.py
+        # reuses it): it accepts exactly the canonical shape bound to this candidate's bytes/fingerprint.
+        path, config, schema = self._clear_absence_outcome()
+        cand = self._pool_cand()
         with patch.object(h, "CANONICAL_CONFIG", str(config)), \
                 patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-            first = self.run_round(require_prepared_execution=True)
-            self.assertEqual((first.action, first.outcome), ("appended", "advanced"))
-            self.assertEqual(first.family_id, FAMILY_B)
-            self.assertEqual(self.prep_calls, [])
-            self.assertEqual(self.fake.calls, [])
-            round_dir = self.root / FAMILY_B / "rounds" / (FAMILY_B + "-r1")
-            self.assertTrue((self.root / FAMILY_B / "family.json").is_file())
-            self.assertTrue((round_dir / "round-spec.json").is_file())
-            verdict = json.loads((round_dir / "verdict.json").read_text())
-            self.assertEqual(verdict["verdict"], "TECHNICAL_INCOMPLETE")
-            self.assertIsNone(verdict["run_id"])
-            self.assertFalse((round_dir / "attempts").exists())
-            self.assertEqual(h.unresolved_incidents(str(self.root), h.read_families(str(self.root))), [])
-            second = self.run_round(require_prepared_execution=True)
-        self.assertEqual(second.family_id, "fam-c-v1")
-        self.assertEqual(second.outcome, "running")
-        self.assertEqual(len(self.prep_calls), 1)
+            outcome = h._validate_preparation_outcome(path, cand)
+        self.assertEqual(outcome["document_kind"], "jit_preparation_clear_absence")
+        self.assertEqual(outcome["family_id"], FAMILY_B)
+        self.assertEqual(outcome["semantic_fingerprint"], h.fingerprint(cand["fingerprint_input"]))
 
-    def test_clear_absence_dry_run_is_read_only(self):
-        _path, config, schema = self._clear_absence_outcome()
-        before = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
-        with patch.object(h, "CANONICAL_CONFIG", str(config)), \
-                patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-            res = self.run_round(require_prepared_execution=True, dry_run=True)
-        after = sorted(str(p.relative_to(self.root)) for p in self.root.rglob("*"))
-        self.assertEqual((res.action, res.outcome), ("would_append", "advanced"))
-        self.assertEqual(before, after)
-        self.assertEqual(self.prep_calls, [])
-        self.assertFalse((self.root / FAMILY_B).exists())
-
-    def test_clear_absence_tampering_fails_closed_without_launch(self):
+    def test_clear_absence_tampering_fails_closed(self):
         for tamper in ("identity", "hash", "shape"):
             with self.subTest(tamper=tamper):
                 path, config, schema = self._clear_absence_outcome()
@@ -861,12 +867,10 @@ class TestFailClosed(Base):
                 path.write_text(json.dumps(outcome))
                 with patch.object(h, "CANONICAL_CONFIG", str(config)), \
                         patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-                    res = self.run_round(require_prepared_execution=True)
-                self.assertEqual(res.finding_key, "preparation_outcome_invalid")
-                self.assertFalse((self.root / FAMILY_B).exists())
-                self.assertEqual(self.prep_calls, [])
+                    with self.assertRaises(ValueError):
+                        h._validate_preparation_outcome(path, self._pool_cand())
 
-    def test_clear_absence_outcome_under_symlinked_preparing_fails_closed(self):
+    def test_clear_absence_outcome_under_symlinked_preparing_is_rejected(self):
         path, config, schema = self._clear_absence_outcome()
         external = Path(tempfile.mkdtemp(prefix="qrp-external-preparing-"))
         try:
@@ -879,12 +883,8 @@ class TestFailClosed(Base):
 
             with patch.object(h, "CANONICAL_CONFIG", str(config)), \
                     patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-                res = self.run_round(require_prepared_execution=True)
-
-            self.assertEqual(res.finding_key, "preparation_outcome_invalid")
-            self.assertFalse((self.root / FAMILY_B).exists())
-            self.assertEqual(self.prep_calls, [])
-            self.assertEqual(self.fake.calls, [])
+                with self.assertRaises(ValueError):
+                    h._validate_preparation_outcome(path, self._pool_cand())
         finally:
             shutil.rmtree(external, ignore_errors=True)
 
@@ -895,12 +895,14 @@ class TestFailClosed(Base):
             outside = external / "outside.json"
             outside.write_text("not permitted to read")
             real_lstat = h.os.lstat
+            # macOS /var -> /private/var: the validator resolves the results root, so accept both forms.
+            targets = {str(path), str(path.resolve())}
             swapped = False
 
             def swap_after_outcome_lstat(target):
                 nonlocal swapped
                 result = real_lstat(target)
-                if str(target) == str(path) and not swapped:
+                if str(target) in targets and not swapped:
                     swapped = True
                     path.unlink()
                     path.symlink_to(outside)
@@ -909,13 +911,10 @@ class TestFailClosed(Base):
             with patch.object(h.os, "lstat", side_effect=swap_after_outcome_lstat), \
                     patch.object(h, "CANONICAL_CONFIG", str(config)), \
                     patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-                res = self.run_round(require_prepared_execution=True)
+                with self.assertRaises((OSError, ValueError)):
+                    h._validate_preparation_outcome(path, self._pool_cand())
 
             self.assertTrue(swapped)
-            self.assertEqual(res.finding_key, "preparation_outcome_invalid")
-            self.assertFalse((self.root / FAMILY_B).exists())
-            self.assertEqual(self.prep_calls, [])
-            self.assertEqual(self.fake.calls, [])
             self.assertEqual(outside.read_text(), "not permitted to read")
         finally:
             shutil.rmtree(external, ignore_errors=True)
@@ -939,23 +938,23 @@ class TestFailClosed(Base):
         with patch.object(h.os, "open", side_effect=replace_before_outcome_open), \
                 patch.object(h, "CANONICAL_CONFIG", str(config)), \
                 patch.object(h, "CANONICAL_SCHEMA", str(schema)):
-            res = self.run_round(require_prepared_execution=True)
+            with self.assertRaises(ValueError):
+                h._validate_preparation_outcome(path, self._pool_cand())
 
         self.assertTrue(replaced)
-        self.assertEqual(res.finding_key, "preparation_outcome_invalid")
-        self.assertFalse((self.root / FAMILY_B).exists())
-        self.assertEqual(self.prep_calls, [])
-        self.assertEqual(self.fake.calls, [])
 
-    def test_v2_frozen_prompt_ignores_legacy_prepare_task_file(self):
+    def test_v3_frozen_prompt_ignores_legacy_prepare_task_files(self):
         lease = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / FAMILY_B
         lease.mkdir(parents=True)
         (lease / "prepare-task.md").write_text("legacy frozen prompt\n")
+        (lease / "prepare-task-v2.md").write_text("previous generation prompt\n")
         with patch.object(h, "_launch_hermes_session", return_value=(12345, None, False)) as launch:
             pid, why, busy = self._real_prepare(str(self.root), candidate(),
                                                 str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
         self.assertEqual((pid, why, busy), (12345, None, False))
-        self.assertEqual(launch.call_args[0][1], "prepare-task-v2.md")
+        self.assertEqual(launch.call_args[0][1], "prepare-task-v3.md")
+        self.assertEqual(launch.call_args[1]["max_turns"], 20)
+        self.assertEqual(launch.call_args[1]["run_budget"], 1800)
 
     def test_prepared_execution_uses_fixed_container_command_and_freezes_identity(self):
         cand, _execution_file, _manifest = self._prepared()
@@ -1084,13 +1083,13 @@ class TestFailClosed(Base):
             after_c4 = self.run_round(require_prepared_execution=True)
         self.assertEqual(first.finding_key, "prepared_execution_failed")
         self.assertEqual((second.action, second.outcome), ("noop", "running"))
-        self.assertEqual((after_c4.action, after_c4.outcome), ("noop", "running"))
+        # The next pool candidate has no execution_file: C3 reports it instead of preparing it itself.
+        self.assertEqual((after_c4.action, after_c4.outcome), ("finding", "finding"))
         self.assertEqual(after_c4.family_id, "fam-next-v1")
-        self.assertEqual(after_c4.detail["preparation_source"], h.PREPARATION_SOURCE)
+        self.assertEqual(after_c4.finding_key, "production_candidate_not_execution_ready")
         self.assertEqual(len(calls), 2)
         self.assertFalse((self.root / "fam-next-v1").exists())
-        self.assertEqual(len(self.prep_calls), 1)
-        self.assertEqual(self.prep_calls[0][1]["family_id"], "fam-next-v1")
+        self.assertEqual(self.prep_calls, [])
         self.assertEqual(self.fake.calls, [])
 
     def test_hash_identity_and_ownership_mismatches_fail_before_mutation(self):
@@ -1208,10 +1207,10 @@ class TestFailClosed(Base):
         args = self.args()
         vars(args).pop("require_prepared_execution")
         res = h.round_once(args)
-        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual((res.action, res.outcome), ("finding", "finding"))
         self.assertEqual(res.family_id, FAMILY_B)
-        self.assertEqual(res.detail["preparation_source"], h.PREPARATION_SOURCE)
-        self.assertEqual(len(self.prep_calls), 1)
+        self.assertEqual(res.finding_key, "production_candidate_not_execution_ready")
+        self.assertEqual(self.prep_calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
         self.assertEqual(self.fake.calls, [])
 
@@ -1643,16 +1642,17 @@ class TestDryRunAndReporting(Base):
         self.assertFalse((self.root / FAMILY_B).exists())
         self.assertFalse((self.root / h.HANDOFF_DIRNAME / h.LOG_FILENAME).exists())
 
-    def test_main_defaults_to_jit_preparation_and_never_launches_legacy_production_agent(self):
+    def test_main_defaults_to_prepared_mode_and_never_prepares_or_launches_agents(self):
         rc, out, err = self.run_main("--json")
         self.assertEqual(rc, 0)
         record = json.loads(out)
-        self.assertEqual((record["action"], record["outcome"]), ("noop", "running"))
+        self.assertEqual((record["action"], record["outcome"]), ("finding", "finding"))
+        self.assertEqual(record["finding_key"], "production_candidate_not_execution_ready")
         self.assertEqual(record["family_id"], FAMILY_B)
-        self.assertEqual(record["detail"]["preparation_source"], h.PREPARATION_SOURCE)
-        self.assertEqual(len(self.prep_calls), 1)
+        self.assertEqual(self.prep_calls, [])
         self.assertEqual(self.fake.calls, [])
         self.assertFalse((self.root / FAMILY_B).exists())
+        self.assertIn("outcome=finding", err)
 
     def test_append_is_logged_by_main(self):
         rc, out, err = self.run_main("--legacy-agent-dispatch", "--json")
@@ -1714,6 +1714,55 @@ class TestDryRunAndReporting(Base):
         self.assertEqual(rc, 0)
         self.assertEqual(json.loads(out)["outcome"], "incident")
         self.assertIn("outcome=incident", err)
+
+
+class TestPreparationLaunchBounds(Base):
+    """One preparation session is bounded: turns 15/20/40 and a ~1800 s run budget (never 7200)."""
+
+    def test_preparation_max_turns_whitelist_default_and_clamp(self):
+        cases = ((None, 20), (15, 15), (20, 20), (40, 40), (7, 40), (500, 40), ("20", 40),
+                 (True, 40), (20.0, 40))
+        for value, expected in cases:
+            with self.subTest(value=value):
+                cand = candidate()
+                if value is not None:
+                    cand["goal_max_turns"] = value
+                self.assertEqual(h.preparation_max_turns(cand), expected)
+        missing = candidate()
+        missing.pop("goal_max_turns", None)
+        self.assertEqual(h.preparation_max_turns(missing), h.PREPARATION_MAX_TURNS_DEFAULT)
+
+    def test_launch_preparation_agent_passes_bounded_turns_and_run_budget(self):
+        pool = str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME)
+        for value, expected in ((None, 20), (15, 15), (40, 40), (7, 40)):
+            with self.subTest(value=value):
+                cand = candidate()
+                if value is not None:
+                    cand["goal_max_turns"] = value
+                with patch.object(h, "_launch_hermes_session",
+                                  return_value=(12345, None, False)) as launch:
+                    pid, why, busy = self._real_prepare(str(self.root), cand, pool)
+                self.assertEqual((pid, why, busy), (12345, None, False))
+                self.assertEqual(launch.call_args[0][1], h.PREPARATION_PROMPT)
+                self.assertEqual(launch.call_args[1]["max_turns"], expected)
+                self.assertEqual(launch.call_args[1]["run_budget"], h.PREPARATION_RUN_BUDGET_S)
+                self.assertEqual(launch.call_args[1]["source"], h.PREPARATION_SOURCE)
+        self.assertEqual(h.PREPARATION_RUN_BUDGET_S, 1800)
+
+    def test_launch_hermes_session_command_carries_the_bounds(self):
+        lease = Path(self.root) / "lease"
+        with patch.object(h.subprocess, "Popen") as popen:
+            h._launch_hermes_session(lease, "prepare-task-v3.md", "prompt", max_turns=15,
+                                     run_budget=1800)
+        cmd = popen.call_args[0][0]
+        self.assertEqual(cmd[cmd.index("--max-turns") + 1], "15")
+        self.assertEqual(cmd[cmd.index("--run-budget") + 1], "1800")
+        # The production/disposition launcher keeps its long-standing session defaults.
+        with patch.object(h.subprocess, "Popen") as popen:
+            h._launch_hermes_session(lease, "agent-task-2.md", "prompt")
+        cmd = popen.call_args[0][0]
+        self.assertEqual(cmd[cmd.index("--max-turns") + 1], "500")
+        self.assertEqual(cmd[cmd.index("--run-budget") + 1], "7200")
 
 
 class TestPoolOrdering(Base):

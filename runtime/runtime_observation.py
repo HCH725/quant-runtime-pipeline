@@ -45,6 +45,7 @@ import production_handoff as ph  # noqa: E402
 from terminal_evidence import TERMINALS  # noqa: E402
 
 SCHEMA = "quant-runtime-observation/v1"
+PREPARATION_STALL_MINUTES = 90
 # The complete lifecycle vocabulary of `current.state`; anything else would be a lie, so an
 # unprovable family reports null (the consumer routes it to attention instead of guessing).
 STATES = ("preflight", "qlib_active", "disposition", "terminal", "idle")
@@ -176,6 +177,82 @@ def pool_projection(results_root):
              "total": len(ids), "consumed": consumed, "queued": len(ids) - consumed,
              "rule": ("consumed = pool entry with a registered <results>/<family_id>/family.json; "
                       "queued = the remainder")}, None)
+
+
+def preparation_projection(results_root, states, now):
+    """(payload, reason) - backlog depth and progress from existing runtime artifacts only.
+
+    The file mtimes are evidence, not a second state store: the FIFO head's preparing/prepared files
+    cover preparation, backlog/pool writes cover intake/promotion, authoritative attempt activity
+    covers Qlib compute, and the handoff ledger/family artifacts cover terminal pipeline advancement.
+    A positive backlog with no such progress for the stall window is attention, even when the
+    watchdog's prior state says `ok`.
+    """
+    handoff = Path(results_root) / ph.HANDOFF_DIRNAME
+    backlog_path = handoff / "preparation_backlog.json"
+    doc = cs.load_json(backlog_path)
+    candidates = doc.get("candidates") if isinstance(doc, dict) else None
+    if not isinstance(candidates, list) or any(not isinstance(item, dict) for item in candidates):
+        return None, "preparation backlog unreadable or carries no candidate-object list: %s" % backlog_path
+
+    stamps = []
+    try:
+        stamps.append(("preparation_backlog", backlog_path.stat().st_mtime))
+    except OSError as exc:
+        return None, "preparation backlog mtime unreadable: %s" % exc
+    pool_path = handoff / ph.POOL_FILENAME
+    try:
+        stamps.append(("production_pool_promotion", pool_path.stat().st_mtime))
+    except OSError:
+        pass
+    head = candidates[0] if candidates else None
+    head_family_id = head.get("family_id") if isinstance(head, dict) else None
+    if isinstance(head_family_id, str) and ph.FAMILY_ID.fullmatch(head_family_id):
+        for area in ("preparing", "prepared"):
+            directory = handoff / area / head_family_id
+            try:
+                if directory.is_dir() and not directory.is_symlink():
+                    files = []
+                    for path in directory.rglob("*"):
+                        try:
+                            if path.is_file() and not path.is_symlink():
+                                files.append(path)
+                        except OSError:
+                            continue
+                    if files:
+                        for path in files:
+                            try:
+                                stamps.append(("preparation_artifact:%s" % path.name,
+                                               path.stat().st_mtime))
+                            except OSError:
+                                continue
+                    else:
+                        stamps.append(("preparation_artifact:%s" % area,
+                                       directory.stat().st_mtime))
+            except OSError:
+                pass
+    for family_id, _family_doc, state in states:
+        activity = state.get("activity")
+        if isinstance(activity, (int, float)) and not isinstance(activity, bool):
+            stamps.append(("qlib_attempt_activity:%s" % family_id, float(activity)))
+        family_write = family_last_write(results_root, family_id, state)
+        if family_write is not None:
+            stamps.append(("family_runtime_artifact:%s" % family_id, family_write))
+    advance, _reason = last_advance(results_root)
+    advance_at = ph.parse_utc(advance.get("at_utc")) if isinstance(advance, dict) else None
+    if advance_at is not None:
+        stamps.append(("terminal_pipeline_advance", advance_at))
+    source, stamp = max(stamps, key=lambda item: item[1])
+    age_minutes = round(max(0.0, now - stamp) / 60.0, 1)
+    queued = len(candidates)
+    return ({"available": True, "path": str(backlog_path), "queued": queued,
+             "stall_threshold_minutes": PREPARATION_STALL_MINUTES,
+             "last_progress_at_utc": cs.iso_utc(stamp), "last_progress_source": source,
+             "progress_age_minutes": age_minutes,
+             "stalled": queued > 0 and age_minutes >= PREPARATION_STALL_MINUTES,
+             "rule": ("positive preparation backlog is attention when no FIFO-head preparation "
+                      "artifact, backlog/pool write, authoritative Qlib attempt activity, or terminal "
+                      "pipeline advance has occurred for %d minutes" % PREPARATION_STALL_MINUTES)}, None)
 
 
 def unresolved_families(states):
@@ -370,9 +447,10 @@ def observe(results_root=None, now=None):
                     "workload_evaluations": None, "workload_grid_artifacts": None,
                     "survivors": None, "leaderboard_count": None, "leaderboard_shown": None,
                     "candidates_pool_total": None, "candidates_consumed": None,
-                    "candidates_queued": None, "last_pipeline_advance_utc": None,
+                    "candidates_queued": None, "preparation_backlog_queued": None,
+                    "last_pipeline_advance_utc": None,
                     "last_pipeline_advance_family_id": None}
-    pool, leaderboard_entries = None, None
+    pool, preparation, leaderboard_entries = None, None, None
     if root_present:
         backtested, registered = cs.backtested_counts(results_root)
         evaluations, artifacts = cs.cumulative_backtest_workload(results_root)
@@ -398,6 +476,11 @@ def observe(results_root=None, now=None):
         else:
             counts.update({"last_pipeline_advance_utc": advance["at_utc"],
                            "last_pipeline_advance_family_id": advance["family_id"]})
+        preparation, reason = preparation_projection(results_root, states, now)
+        if preparation is None:
+            _gap(gaps, "preparation_backlog", reason)
+        else:
+            counts["preparation_backlog_queued"] = preparation["queued"]
     else:
         _gap(gaps, "counts", "results root not readable; runtime counts stay null")
     if current["state"] is None:
@@ -433,6 +516,30 @@ def observe(results_root=None, now=None):
                 health["summary"] = "attention: %s" % "; ".join(
                     labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else []))
 
+    if preparation is None:
+        health["status"] = "attention" if health.get("status") == "attention" else "unknown"
+        health["available"] = False
+        health["active_count"] = None
+        health["summary"] = "unknown: preparation backlog is unreadable; " + health.get("summary", "")
+    elif preparation["stalled"]:
+        stall = {"incident_id": "preparation_backlog_stalled",
+                 "kind": "preparation_backlog_stalled", "family_id": None,
+                 "why": ("%d reviewed candidates queued; no pipeline progress for %.1f minutes "
+                         "(threshold %d)" % (preparation["queued"],
+                                               preparation["progress_age_minutes"],
+                                               preparation["stall_threshold_minutes"])),
+                 "label": "preparation backlog stalled (%d queued)" % preparation["queued"],
+                 "source": "runtime_observation.preparation_projection"}
+        health["active"] = (health.get("active") or []) + [stall]
+        health["active_count"] = len(health["active"])
+        health["status"] = "attention"
+        health["available"] = True
+        health["source"] += " + preparation backlog progress"
+        labels = [item.get("label", item.get("kind", "runtime finding"))
+                  for item in health["active"]]
+        health["summary"] = "attention: %s" % "; ".join(
+            labels[:3] + (["+%d more" % (len(labels) - 3)] if len(labels) > 3 else []))
+
     return {
         "schema": SCHEMA,
         "generated_at_utc": ph.now_utc(),
@@ -446,6 +553,7 @@ def observe(results_root=None, now=None):
         "funnel": funnel,
         "counts": counts,
         "pool": pool,
+        "preparation": preparation,
         "leaderboard": {"available": bool(leaderboard_entries), "count": counts["leaderboard_count"],
                         "shown": counts["leaderboard_shown"], "top_n": cs.DASHBOARD_TOP_N,
                         "entries": leaderboard_entries or []},
@@ -458,6 +566,10 @@ def observe(results_root=None, now=None):
              "readable": root_present, "note": CURRENT_RULE},
             {"id": "runtime_watchdog_state", "kind": "watchdog state pass-through (read-only)",
              "path": str(cs.WATCHDOG_STATE), "readable": None},
+            {"id": "preparation_backlog", "kind": "queued reviewed candidates + artifact-derived progress",
+             "path": str(Path(results_root) / ph.HANDOFF_DIRNAME / "preparation_backlog.json"),
+             "readable": preparation is not None,
+             "note": "no new state store; 90-minute stall rule"},
         ],
         "gaps": gaps,
     }
