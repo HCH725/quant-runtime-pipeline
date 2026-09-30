@@ -887,6 +887,65 @@ class TestFailClosed(Base):
         finally:
             shutil.rmtree(external, ignore_errors=True)
 
+    def test_clear_absence_outcome_rejects_symlink_swap_after_lstat(self):
+        path, config, schema = self._clear_absence_outcome()
+        external = Path(tempfile.mkdtemp(prefix="qrp-external-outcome-"))
+        try:
+            outside = external / "outside.json"
+            outside.write_text("not permitted to read")
+            real_lstat = h.os.lstat
+            swapped = False
+
+            def swap_after_outcome_lstat(target):
+                nonlocal swapped
+                result = real_lstat(target)
+                if str(target) == str(path) and not swapped:
+                    swapped = True
+                    path.unlink()
+                    path.symlink_to(outside)
+                return result
+
+            with patch.object(h.os, "lstat", side_effect=swap_after_outcome_lstat), \
+                    patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                    patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+                res = self.run_round(require_prepared_execution=True)
+
+            self.assertTrue(swapped)
+            self.assertEqual(res.finding_key, "preparation_outcome_invalid")
+            self.assertFalse((self.root / FAMILY_B).exists())
+            self.assertEqual(self.prep_calls, [])
+            self.assertEqual(self.fake.calls, [])
+            self.assertEqual(outside.read_text(), "not permitted to read")
+        finally:
+            shutil.rmtree(external, ignore_errors=True)
+
+    def test_clear_absence_outcome_rejects_inode_replacement_after_lstat(self):
+        path, config, schema = self._clear_absence_outcome()
+        original = path.read_bytes()
+        real_open = h.os.open
+        replaced = False
+
+        def replace_before_outcome_open(target, flags, *args):
+            nonlocal replaced
+            target_path = Path(target)
+            if target_path.name == h.PREPARATION_OUTCOME and not replaced:
+                replaced = True
+                replacement = target_path.with_suffix(".replacement")
+                replacement.write_bytes(original)
+                os.replace(replacement, target_path)
+            return real_open(target, flags, *args)
+
+        with patch.object(h.os, "open", side_effect=replace_before_outcome_open), \
+                patch.object(h, "CANONICAL_CONFIG", str(config)), \
+                patch.object(h, "CANONICAL_SCHEMA", str(schema)):
+            res = self.run_round(require_prepared_execution=True)
+
+        self.assertTrue(replaced)
+        self.assertEqual(res.finding_key, "preparation_outcome_invalid")
+        self.assertFalse((self.root / FAMILY_B).exists())
+        self.assertEqual(self.prep_calls, [])
+        self.assertEqual(self.fake.calls, [])
+
     def test_v2_frozen_prompt_ignores_legacy_prepare_task_file(self):
         lease = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / FAMILY_B
         lease.mkdir(parents=True)

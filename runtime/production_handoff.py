@@ -1023,8 +1023,21 @@ def _validate_preparation_outcome(path, cand):
         raise ValueError("preparation outcome must be a regular non-symlink file")
     if info.st_size > PREPARATION_OUTCOME_MAX_BYTES:
         raise ValueError("preparation outcome exceeds size bound")
-    with open(path, "rb") as stream:
-        raw = stream.read(PREPARATION_OUTCOME_MAX_BYTES + 1)
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(str(path), flags)
+    try:
+        opened = os.fstat(fd)
+        current = os.lstat(str(path))
+        if not stat.S_ISREG(opened.st_mode) or \
+                (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino) or \
+                (current.st_dev, current.st_ino) != (info.st_dev, info.st_ino):
+            raise ValueError("preparation outcome changed while opening")
+        with os.fdopen(fd, "rb") as stream:
+            fd = -1
+            raw = stream.read(PREPARATION_OUTCOME_MAX_BYTES + 1)
+    finally:
+        if fd != -1:
+            os.close(fd)
     if len(raw) > PREPARATION_OUTCOME_MAX_BYTES:
         raise ValueError("preparation outcome exceeds size bound")
     doc = json.loads(raw.decode("utf-8"))
