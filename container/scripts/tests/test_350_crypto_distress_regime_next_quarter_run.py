@@ -39,6 +39,19 @@ def instruments_meta():
 
 
 class LocalUniverseTests(unittest.TestCase):
+    def test_load_instruments_reads_canonical_envelope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "instruments.json"
+            path.write_text(json.dumps({
+                "schema_version": 1,
+                "instruments": [
+                    {"fields": fields} for fields in instruments_meta().values()
+                ],
+            }))
+            got = runner.load_instruments(path)
+        self.assertEqual(set(got), set(SYMBOLS))
+        self.assertEqual(got["AAAUSDT"]["raw_symbol"], "AAAUSDT")
+
     def test_local_perpetual_universe_is_legal_without_kraken_exact_match(self):
         got = runner.inspect_local_universe(catalog(), "no trade count here",
                                             symbols=SYMBOLS, instruments=instruments_meta())
@@ -662,9 +675,13 @@ class SyntheticRunTests(unittest.TestCase):
         (meta / "SCHEMA.md").write_text("Binance USD-M perpetual 1d schema; trade count absent")
         instruments = root / "binance" / "usdm" / "instruments"
         instruments.mkdir(parents=True)
-        (instruments / "usdm-perp-instruments.json").write_text(json.dumps(
-            [{"fields": dict(meta_, id=symbol + "-PERP.BINANCE")} for symbol, meta_
-             in instruments_meta().items()]))
+        (instruments / "usdm-perp-instruments.json").write_text(json.dumps({
+            "schema_version": 1,
+            "instruments": [
+                {"fields": dict(meta_, id=symbol + "-PERP.BINANCE")}
+                for symbol, meta_ in instruments_meta().items()
+            ],
+        }))
         return klines, funding_dir, meta, instruments / "usdm-perp-instruments.json"
 
     def test_end_to_end_run(self):

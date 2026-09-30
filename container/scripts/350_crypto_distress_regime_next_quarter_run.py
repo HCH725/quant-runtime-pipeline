@@ -343,7 +343,12 @@ def load_instruments(path=None):
         doc = json.loads(Path(p).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    items = doc if isinstance(doc, list) else [doc]
+    if isinstance(doc, list):
+        items = doc
+    elif isinstance(doc, dict) and isinstance(doc.get("instruments"), list):
+        items = doc["instruments"]
+    else:
+        items = [doc]
     out = {}
     for item in items:
         fields = item.get("fields") if isinstance(item, dict) else None
