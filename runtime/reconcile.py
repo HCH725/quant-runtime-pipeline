@@ -4,10 +4,9 @@
 Only the newest valid attempt of a round may wake the default agent. Historical
 Kanban-owned families remain immutable and are not operated by this path.
 
-Completion/wake conditions are derived from results-root evidence only. A narrowly validated
-`ARTIFACT_READY` zero-survivor REJECT is closed mechanically with the existing terminal writer plus
-an exclusive round verdict; other compute-finished states retain the existing Hermes disposition path.
-A validated terminal without its round verdict (including prior-boot recovery), and an attempt that stopped
+Wake conditions, all from results-root evidence only: a validated terminal without its round
+verdict (including a prior-boot terminal routed for artifact re-validation), a compute-finished stage
+(`ARTIFACT_READY` / `FAILED_SCRIPT`) with no terminal sentinel yet, and an attempt that stopped
 writing outside the 90-minute stall window while still carrying no terminal sentinel and no
 verdict of its own round (the agent died before Qlib started, or Qlib died mid-run). The stall
 condition keeps a dead attempt from holding the pipeline silently: inside the window the
@@ -22,15 +21,13 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from production_handoff import (ACTIVE_WINDOW_MINUTES, AGENT_LOCK, DISPOSITION_PROMPT_VERSION,  # noqa: E402
-                                _lock, attempt_activity, direct_family, disposition_prompt, launch_agent,
+from production_handoff import (ACTIVE_WINDOW_MINUTES, DISPOSITION_PROMPT_VERSION,  # noqa: E402
+                                attempt_activity, direct_family, disposition_prompt, launch_agent,
                                 round_verdict_token)
 from terminal_evidence import TERMINALS, host_boot_id, now_utc, sha256_file  # noqa: E402
 
@@ -38,7 +35,6 @@ DEFAULT_RESULTS = "/Volumes/ExpansionDrive/qlib-results"
 INCIDENT_FILE = "_incidents/reconciliation_incident.jsonl"
 COMPUTE_FINISHED_STAGES = ("ARTIFACT_READY", "FAILED_SCRIPT")
 ORDINAL = re.compile(r"u(\d+)$")
-MECHANICAL_REJECT_DISPOSITIONS = (None, "NO_SURVIVOR", "REJECT / NO_SURVIVOR")
 
 
 def load(path):
@@ -294,293 +290,6 @@ def validate_terminal(res, root, dry_run, detector):
     return None
 
 
-def _mechanical_reject_payload(res, results_root):
-    """Return validated deterministic REJECT evidence for one ARTIFACT_READY direct attempt.
-
-    This path is intentionally narrow: it only accepts a completed zero-survivor result whose
-    registered coverage and selector/disposition identities are internally consistent. Anything
-    incomplete, PASS-like, technical, malformed or scientifically ambiguous stays on the existing
-    Hermes disposition path.
-    """
-    attempt = Path(res.attempt_dir)
-    root = Path(results_root)
-    try:
-        root_real = root.resolve(strict=True)
-        relative_attempt = attempt.relative_to(root)
-    except (OSError, ValueError):
-        return None, "attempt path is outside/unresolvable from results root"
-    current = root
-    if current.is_symlink():
-        return None, "results root must not be a symlink"
-    for part in relative_attempt.parts:
-        current = current / part
-        if current.is_symlink():
-            return None, "attempt path contains symlink: %s" % current
-    try:
-        attempt_real = attempt.resolve(strict=True)
-        attempt_real.relative_to(root_real)
-    except (OSError, ValueError):
-        return None, "attempt path escapes results root"
-    run_spec = load(attempt / "run-spec.json")
-    result = load(attempt / "result.json")
-    if not isinstance(run_spec, dict) or not isinstance(result, dict):
-        return None, "run-spec/result missing or unreadable"
-    for key, want in (("family_id", res.family_id), ("round_id", res.round_id),
-                      ("run_id", res.run_id)):
-        if run_spec.get(key) != want or result.get(key) != want:
-            return None, "%s identity mismatch" % key
-    for key in ("container_id", "image_id"):
-        if not isinstance(run_spec.get(key), str) or not run_spec[key].strip():
-            return None, "run-spec %s missing/invalid" % key
-    if result.get("status") != "ARTIFACT_READY" or result.get("coverage_complete") is not True:
-        return None, "result is not completed coverage"
-    expected = result.get("expected_case_evaluations")
-    actual = result.get("case_evaluations_total")
-    registered = run_spec.get("expected") if isinstance(run_spec.get("expected"), dict) else {}
-    registered_expected = registered.get("expected_case_evaluations")
-    if registered_expected is None:
-        registered_expected = registered.get("case_evaluations_total")
-    if type(expected) is not int or expected <= 0 or actual != expected or registered_expected != expected:
-        return None, "coverage count mismatch"
-    if result.get("cohort_survivor_count") != 0 or result.get("cohort_survivors") != []:
-        return None, "result is not zero-survivor"
-    if result.get("verdict_recommendation") != "REJECT":
-        return None, "verdict recommendation is not REJECT"
-    if result.get("performance_claimable") is not False:
-        return None, "REJECT result must set performance_claimable=false"
-    if result.get("assertions_all_true") is not True:
-        return None, "assertions are not all true"
-    if result.get("disposition") not in MECHANICAL_REJECT_DISPOSITIONS:
-        return None, "disposition is not a recognized no-survivor form"
-    for key in ("selector_version", "disposition_version"):
-        value = result.get(key)
-        if not isinstance(value, str) or not value or run_spec.get(key) != value:
-            return None, "%s mismatch" % key
-    if isinstance(result.get("coverage_cell_problems"), list) and result["coverage_cell_problems"]:
-        return None, "coverage cell problems present"
-    outputs = run_spec.get("expected_outputs")
-    if not isinstance(outputs, list) or not outputs:
-        return None, "run-spec expected_outputs missing"
-    manifest = ["run-spec.json"]
-    for rel in outputs:
-        if not isinstance(rel, str) or not rel or os.path.isabs(rel):
-            return None, "invalid expected output path"
-        parts = Path(rel).parts
-        if ".." in parts or rel in TERMINALS:
-            return None, "unsafe expected output path"
-        current = attempt
-        for part in parts:
-            current = current / part
-            if current.is_symlink():
-                return None, "expected output path contains symlink: %s" % rel
-        full = attempt / rel
-        if not full.is_file():
-            return None, "required output missing/non-regular: %s" % rel
-        try:
-            full.resolve(strict=True).relative_to(attempt_real)
-        except (OSError, ValueError):
-            return None, "expected output escapes attempt tree: %s" % rel
-        if rel not in manifest:
-            manifest.append(rel)
-    for required in ("state.json", "result.json", "artifacts/cohort_survivors.json",
-                     "artifacts/cohort_results.json"):
-        if required not in manifest:
-            return None, "required output not registered: %s" % required
-    survivors = load(attempt / "artifacts" / "cohort_survivors.json")
-    cohort_results = load(attempt / "artifacts" / "cohort_results.json")
-    if survivors != []:
-        return None, "cohort_survivors artifact contradicts zero-survivor result"
-    if not isinstance(cohort_results, list):
-        return None, "cohort_results artifact is not a list"
-    seen_cohorts = set()
-    for index, row in enumerate(cohort_results):
-        if not isinstance(row, dict):
-            return None, "cohort_results row %d is not an object" % index
-        cohort = row.get("cohort")
-        if not isinstance(cohort, str) or not cohort.strip() or cohort in seen_cohorts:
-            return None, "cohort_results row %d has invalid/duplicate cohort" % index
-        seen_cohorts.add(cohort)
-        outcome_keys = [key for key in ("outcome", "status") if key in row]
-        if any(row.get(key) == "SURVIVOR" for key in outcome_keys):
-            return None, "cohort_results artifact reports survivors: %s" % [cohort]
-        if not outcome_keys or any(row.get(key) != "CULLED" for key in outcome_keys):
-            return None, "cohort_results row %d is not explicitly CULLED" % index
-    cohorts_evaluated = result.get("cohorts_evaluated")
-    registered_cohorts = registered.get("cohorts")
-    if type(cohorts_evaluated) is not int or cohorts_evaluated <= 0 or \
-            len(cohort_results) != cohorts_evaluated or registered_cohorts != cohorts_evaluated:
-        return None, "cohort coverage count mismatch"
-    return {"result": result, "run_spec": run_spec, "manifest": manifest}, None
-
-
-def _exclusive_json(path, doc):
-    """Durably stage JSON, then atomically publish without clobbering an existing immutable path."""
-    path = Path(path)
-    data = (json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode()
-    fd, temporary = tempfile.mkstemp(prefix=".%s.tmp-" % path.name, dir=str(path.parent))
-    try:
-        os.fchmod(fd, 0o644)
-        with os.fdopen(fd, "wb") as stream:
-            fd = -1
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.link(temporary, str(path))  # same filesystem; atomic and no-clobber
-        dir_fd = os.open(str(path.parent), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-        try:
-            os.fsync(dir_fd)
-        finally:
-            os.close(dir_fd)
-    finally:
-        if fd != -1:
-            os.close(fd)
-        try:
-            os.unlink(temporary)
-        except FileNotFoundError:
-            pass
-
-
-def _published_terminal_after_race(res, results_root, detector):
-    """Re-read a terminal that may have been published by an overlapping reconciler."""
-    attempt = Path(res.attempt_dir)
-    terminals = [name for name in TERMINALS if (attempt / name).exists()]
-    if not terminals:
-        return None
-    if len(terminals) != 1:
-        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                    [str(attempt / name) for name in terminals])
-    checked = validate_terminal(res, results_root, False, detector)
-    if checked:
-        return checked
-    family = load(Path(results_root) / res.family_id / "family.json")
-    existing = load(attempt.parents[1] / "verdict.json")
-    token = round_verdict_token(attempt.parents[1], res.family_id, family)
-    if token == "REJECT" and isinstance(existing, dict) and existing.get("run_id") == res.run_id:
-        res.action, res.reason = "finalized", "concurrent deterministic REJECT already published"
-        res.detail["mechanical_closeout"] = True
-    else:
-        res.action, res.reason = "running", "terminal published concurrently; awaiting round verdict"
-        res.detail["mechanical_closeout"] = True
-    return res
-
-
-def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
-    attempt = Path(res.attempt_dir)
-    round_dir = attempt.parents[1]
-    if dry_run:
-        res.action = "would_finalize"
-        res.reason = "ARTIFACT_READY deterministic zero-survivor REJECT"
-        res.detail["mechanical_closeout"] = True
-        return res
-    try:
-        lease_fd = _lock(Path(results_root) / res.family_id / AGENT_LOCK)
-    except OSError as exc:
-        res.detail["completion_lease_error"] = str(exc)
-        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                    [str(Path(results_root) / res.family_id / AGENT_LOCK)])
-    if lease_fd is None:
-        res.action, res.reason = "running", "family completion/disposition lease already owned"
-        res.detail["mechanical_closeout"] = True
-        return res
-    try:
-        recovered = _published_terminal_after_race(res, results_root, detector)
-        if recovered is not None:
-            return recovered
-        fresh_payload, recheck_problem = _mechanical_reject_payload(res, results_root)
-        if fresh_payload is None:
-            res.detail["mechanical_closeout_recheck_problem"] = recheck_problem
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt / "result.json")])
-        payload = fresh_payload
-        current_boot = host_boot_id()
-        if not isinstance(current_boot, str) or not current_boot.strip() or current_boot == "boot-unknown":
-            res.detail["completion_boot_id"] = current_boot
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt)])
-        cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
-               "publish", "--attempt-dir", str(attempt), "--status", "DONE",
-               "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
-               "--host-boot-id", current_boot,
-               "--container-id", payload["run_spec"]["container_id"],
-               "--image-id", payload["run_spec"]["image_id"],
-               "--verdict-hint", "CANDIDATE_REJECT"]
-        for rel in payload["manifest"]:
-            cmd.extend(["--manifest", rel])
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        except (subprocess.TimeoutExpired, OSError) as exc:
-            recovered = _published_terminal_after_race(res, results_root, detector)
-            if recovered is not None:
-                return recovered
-            res.detail["terminal_publish_error"] = "%s: %s" % (type(exc).__name__, exc)
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt)])
-        if proc.returncode != 0:
-            recovered = _published_terminal_after_race(res, results_root, detector)
-            if recovered is not None:
-                return recovered
-            res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt)])
-        checked = validate_terminal(res, results_root, False, detector)
-        if checked is not None:
-            return checked
-        bound_payload, bound_problem = _mechanical_reject_payload(res, results_root)
-        if bound_payload is None:
-            res.detail["mechanical_closeout_post_terminal_problem"] = bound_problem
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt / "DONE"), str(attempt / "result.json")])
-        sentinel = load(attempt / "DONE")
-        checksums = sentinel.get("artifact_checksums") if isinstance(sentinel, dict) else None
-        result_checksum = checksums.get("result.json") if isinstance(checksums, dict) else None
-        if not isinstance(result_checksum, str) or not result_checksum.startswith("sha256:") or \
-                sha256_file(str(attempt / "result.json")) != result_checksum:
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(attempt / "DONE"), str(attempt / "result.json")])
-        result = bound_payload["result"]
-        verdict = {
-            "schema_version": 1,
-            "kind": "round_verdict",
-            "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v3.0.0",
-            "authored_by": "runtime/reconcile.py deterministic zero-survivor closeout",
-            "ownership_mode": "direct_hermes",
-            "family_id": res.family_id,
-            "round_id": res.round_id,
-            "run_id": res.run_id,
-            "verdict": "REJECT",
-            "disposition": result.get("disposition") or "NO_SURVIVOR",
-            "selector_version": result.get("selector_version"),
-            "disposition_version": result.get("disposition_version"),
-            "performance_claimable": False,
-            "cohort_survivor_count": 0,
-            "cohort_survivors": [],
-            "coverage_complete": True,
-            "case_evaluations_total": result.get("case_evaluations_total"),
-            "expected_case_evaluations": result.get("expected_case_evaluations"),
-            "result_sha256": result_checksum,
-            "terminal": {"status": "DONE", "path": str(attempt / "DONE")},
-            "decided_at_utc": now_utc(),
-        }
-        try:
-            _exclusive_json(round_dir / "verdict.json", verdict)
-        except FileExistsError:
-            existing = load(round_dir / "verdict.json")
-            token = round_verdict_token(round_dir, res.family_id,
-                                        load(Path(results_root) / res.family_id / "family.json"))
-            if token != "REJECT" or not isinstance(existing, dict) or                     existing.get("run_id") != res.run_id:
-                return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                            [str(round_dir / "verdict.json")])
-        except OSError as exc:
-            res.detail["verdict_publish_error"] = str(exc)
-            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                        [str(round_dir / "verdict.json")])
-        res.action, res.reason = "finalized", "deterministic zero-survivor REJECT published"
-        res.detail["mechanical_closeout"] = True
-        return res
-    finally:
-        os.close(lease_fd)
-
-
 def handle(res, results_root, dry_run, detector):
     """Dispose of one authoritative direct attempt: verify it, then wake default once (or stay still).
 
@@ -625,11 +334,6 @@ def handle(res, results_root, dry_run, detector):
             res.detail["mapping_problems"] = problems
             return fail(res, results_root, "mapping_mismatch", detector, dry_run,
                         [str(attempt / "state.json")])
-        if stage == "ARTIFACT_READY":
-            payload, mechanical_problem = _mechanical_reject_payload(res, results_root)
-            if payload is not None:
-                return _finalize_mechanical_reject(res, results_root, payload, dry_run, detector)
-            res.detail["mechanical_closeout_not_applicable"] = mechanical_problem
         if stage not in COMPUTE_FINISHED_STAGES:
             # Stalled and still undecided: nothing host-side can ever decide this round, so the same
             # disposition session that handles a compute-finished stage takes it over and terminates
@@ -639,28 +343,10 @@ def handle(res, results_root, dry_run, detector):
     if dry_run:
         res.action, res.reason = "would_launch", "%s; would wake default for disposition" % stage
         return res
-    try:
-        lease_fd = _lock(Path(results_root) / res.family_id / AGENT_LOCK)
-    except OSError as exc:
-        res.detail["disposition_lease_error"] = str(exc)
-        return fail(res, results_root, "disposition_launch_failed", detector, False,
-                    [str(Path(results_root) / res.family_id / AGENT_LOCK)])
-    if lease_fd is None:
-        res.action, res.reason = "running", "default worker already owns this family"
-        return res
-    try:
-        fresh_family = load(Path(results_root) / res.family_id / "family.json")
-        fresh_verdict = round_verdict_token(attempt.parents[1], res.family_id, fresh_family)
-        if fresh_verdict:
-            res.action, res.reason = "consumed", "round became terminal before disposition launch: %s" % fresh_verdict
-            return res
-        pid, why, busy = launch_agent(
-            results_root, res.family_id,
-            "disposition-v%d-%s-%s.md" % (DISPOSITION_PROMPT_VERSION, res.round_id, res.run_id),
-            disposition_prompt(res.family_id, res.round_id, res.run_id, results_root),
-            lease_fd=lease_fd)
-    finally:
-        os.close(lease_fd)
+    pid, why, busy = launch_agent(
+        results_root, res.family_id,
+        "disposition-v%d-%s-%s.md" % (DISPOSITION_PROMPT_VERSION, res.round_id, res.run_id),
+        disposition_prompt(res.family_id, res.round_id, res.run_id, results_root))
     if busy:
         res.action, res.reason = "running", "default worker already owns this family"
     elif why:
@@ -713,8 +399,6 @@ def main():
               "attempts_scanned": len(results),
               "launched": [r.run_id for r in results if r.action == "launched"],
               "would_launch": [r.run_id for r in results if r.action == "would_launch"],
-              "finalized": [r.run_id for r in results if r.action == "finalized"],
-              "would_finalize": [r.run_id for r in results if r.action == "would_finalize"],
               "incidents": len(incidents), "results": [r.as_dict() for r in results]}
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))

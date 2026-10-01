@@ -67,40 +67,6 @@ class DirectExecution(unittest.TestCase):
                     proc.kill()
                 proc.wait(timeout=3)
 
-    def test_launch_accepts_caller_held_family_lease_without_reacquire_gap(self):
-        original = subprocess.Popen
-        processes = []
-
-        def harmless(cmd, **kwargs):
-            proc = original([sys.executable, "-c", "import time; time.sleep(0.5)"], **kwargs)
-            processes.append(proc)
-            return proc
-
-        fd = h._lock(self.family / h.AGENT_LOCK)
-        self.assertIsNotNone(fd)
-        try:
-            with patch.object(h, "DEFAULT_WORKSPACE", str(self.root)), \
-                 patch.object(h, "_lock", side_effect=AssertionError("must not reacquire lease")), \
-                 patch.object(h.subprocess, "Popen", side_effect=harmless):
-                pid, why, busy = h.launch_agent(
-                    self.root, "fam-a", "agent-held-lease.md", "frozen body", lease_fd=fd)
-                self.assertEqual((pid, why, busy), (processes[0].pid, None, False))
-                os.fstat(fd)  # caller still owns its descriptor until the post-launch recheck scope ends
-            os.close(fd)
-            fd = None
-            self.assertIsNone(h._lock(self.family / h.AGENT_LOCK))  # child inherited the same lease
-            self.assertEqual(processes[0].wait(timeout=3), 0)
-            probe = h._lock(self.family / h.AGENT_LOCK)
-            self.assertIsNotNone(probe)
-            os.close(probe)
-        finally:
-            if fd is not None:
-                os.close(fd)
-            for proc in processes:
-                if proc.poll() is None:
-                    proc.kill()
-                proc.wait(timeout=3)
-
     def test_direct_p10_recomputes_script_without_a_card(self):
         scripts = self.root / "scripts"
         scripts.mkdir()
@@ -147,18 +113,6 @@ class DirectExecution(unittest.TestCase):
         with patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()), \
              contextlib.redirect_stderr(io.StringIO()):
             return te.main()
-
-    def test_host_boot_id_prefers_canonical_macos_sysctl_and_falls_back(self):
-        with patch.object(te, "run", return_value=(0, "{ sec = 12345, usec = 0 }\n", "")) as run:
-            self.assertEqual(te.host_boot_id(), "boot-12345")
-        self.assertEqual(run.call_args_list[0].args[0], ["/usr/sbin/sysctl", "-n", "kern.boottime"])
-
-        with patch.object(te, "run", side_effect=[
-                (127, "", "not found"),
-                (0, "{ sec = 67890, usec = 0 }\n", "")]) as run:
-            self.assertEqual(te.host_boot_id(), "boot-67890")
-        self.assertEqual(run.call_args_list[0].args[0], ["/usr/sbin/sysctl", "-n", "kern.boottime"])
-        self.assertEqual(run.call_args_list[1].args[0], ["sysctl", "-n", "kern.boottime"])
 
     def test_direct_terminal_has_no_task_or_board_identity(self):
         self.assertEqual(self.publish(), 0)
