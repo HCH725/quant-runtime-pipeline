@@ -377,6 +377,21 @@ class TestPreparationLaunch(Base):
         status = json.loads(status_path.read_text())
         self.assertEqual(status["state"], "running")
 
+    def test_malformed_preparation_status_fails_closed_without_rotation(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        status_path = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A / p.PREPARATION_STATUS
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps({"schema_version": 99, "family_id": FAMILY_A,
+                                           "state": "running"}) + "\n")
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("finding", "finding"))
+        self.assertEqual(res.finding_key, "preparation_status_invalid")
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_A, FAMILY_B])
+        self.assertEqual(self.launch_calls, [])
+
     def test_concurrent_run_is_serialized_by_the_handoff_lease(self):
         self._write_backlog([backlog_candidate(FAMILY_A)])
         self._write_pool([])
