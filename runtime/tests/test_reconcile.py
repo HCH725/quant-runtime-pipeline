@@ -232,6 +232,15 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(report["results"][0]["reason"], "stale_sentinel")
         self.assertEqual(self.calls, [])
 
+    def test_both_unavailable_boot_identities_fail_closed(self):
+        with patch.object(r, "host_boot_id", return_value="boot-unknown"):
+            self.fixture(terminal="DONE")
+            code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["results"][0]["reason"], "stale_sentinel")
+        self.assertNotIn("boot_recovery", report["results"][0].get("detail", {}))
+        self.assertEqual(self.calls, [])
+
     def test_reboot_recovery_uses_existing_lease_and_launch_failure_incident(self):
         with patch.object(r, "host_boot_id", return_value="old-boot"):
             self.fixture(terminal="DONE")
