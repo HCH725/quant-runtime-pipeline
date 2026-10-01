@@ -4,9 +4,10 @@
 Only the newest valid attempt of a round may wake the default agent. Historical
 Kanban-owned families remain immutable and are not operated by this path.
 
-Wake conditions, all from results-root evidence only: a validated terminal without its round
-verdict (including a prior-boot terminal routed for artifact re-validation), a compute-finished stage
-(`ARTIFACT_READY` / `FAILED_SCRIPT`) with no terminal sentinel yet, and an attempt that stopped
+Completion/wake conditions are derived from results-root evidence only. A narrowly validated
+`ARTIFACT_READY` zero-survivor REJECT is closed mechanically with the existing terminal writer plus
+an exclusive round verdict; other compute-finished states retain the existing Hermes disposition path.
+A validated terminal without its round verdict (including prior-boot recovery), and an attempt that stopped
 writing outside the 90-minute stall window while still carrying no terminal sentinel and no
 verdict of its own round (the agent died before Qlib started, or Qlib died mid-run). The stall
 condition keeps a dead attempt from holding the pipeline silently: inside the window the
@@ -21,6 +22,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -35,6 +37,7 @@ DEFAULT_RESULTS = "/Volumes/ExpansionDrive/qlib-results"
 INCIDENT_FILE = "_incidents/reconciliation_incident.jsonl"
 COMPUTE_FINISHED_STAGES = ("ARTIFACT_READY", "FAILED_SCRIPT")
 ORDINAL = re.compile(r"u(\d+)$")
+MECHANICAL_REJECT_DISPOSITIONS = (None, "NO_SURVIVOR", "REJECT / NO_SURVIVOR")
 
 
 def load(path):
@@ -290,6 +293,140 @@ def validate_terminal(res, root, dry_run, detector):
     return None
 
 
+def _mechanical_reject_payload(res):
+    """Return validated deterministic REJECT evidence for one ARTIFACT_READY direct attempt.
+
+    This path is intentionally narrow: it only accepts a completed zero-survivor result whose
+    registered coverage and selector/disposition identities are internally consistent. Anything
+    incomplete, PASS-like, technical, malformed or scientifically ambiguous stays on the existing
+    Hermes disposition path.
+    """
+    attempt = Path(res.attempt_dir)
+    run_spec = load(attempt / "run-spec.json")
+    result = load(attempt / "result.json")
+    if not isinstance(run_spec, dict) or not isinstance(result, dict):
+        return None, "run-spec/result missing or unreadable"
+    for key, want in (("family_id", res.family_id), ("round_id", res.round_id),
+                      ("run_id", res.run_id)):
+        if run_spec.get(key) != want or result.get(key) != want:
+            return None, "%s identity mismatch" % key
+    if result.get("status") != "ARTIFACT_READY" or result.get("coverage_complete") is not True:
+        return None, "result is not completed coverage"
+    expected = result.get("expected_case_evaluations")
+    actual = result.get("case_evaluations_total")
+    registered = run_spec.get("expected") if isinstance(run_spec.get("expected"), dict) else {}
+    registered_expected = registered.get("expected_case_evaluations")
+    if registered_expected is None:
+        registered_expected = registered.get("case_evaluations_total")
+    if type(expected) is not int or expected <= 0 or actual != expected or registered_expected != expected:
+        return None, "coverage count mismatch"
+    if result.get("cohort_survivor_count") != 0 or result.get("cohort_survivors") != []:
+        return None, "result is not zero-survivor"
+    if result.get("verdict_recommendation") != "REJECT":
+        return None, "verdict recommendation is not REJECT"
+    if result.get("performance_claimable") is True:
+        return None, "REJECT result cannot be performance-claimable"
+    if result.get("assertions_all_true") is not True:
+        return None, "assertions are not all true"
+    if result.get("disposition") not in MECHANICAL_REJECT_DISPOSITIONS:
+        return None, "disposition is not a recognized no-survivor form"
+    for key in ("selector_version", "disposition_version"):
+        value = result.get(key)
+        if not isinstance(value, str) or not value or run_spec.get(key) != value:
+            return None, "%s mismatch" % key
+    if isinstance(result.get("coverage_cell_problems"), list) and result["coverage_cell_problems"]:
+        return None, "coverage cell problems present"
+    outputs = run_spec.get("expected_outputs")
+    if not isinstance(outputs, list) or not outputs:
+        return None, "run-spec expected_outputs missing"
+    manifest = ["run-spec.json"]
+    for rel in outputs:
+        if not isinstance(rel, str) or not rel or os.path.isabs(rel):
+            return None, "invalid expected output path"
+        parts = Path(rel).parts
+        if ".." in parts or rel in TERMINALS:
+            return None, "unsafe expected output path"
+        full = attempt / rel
+        if full.is_symlink() or not full.is_file():
+            return None, "required output missing/non-regular: %s" % rel
+        if rel not in manifest:
+            manifest.append(rel)
+    for required in ("state.json", "result.json"):
+        if required not in manifest:
+            return None, "required output not registered: %s" % required
+    return {"result": result, "run_spec": run_spec, "manifest": manifest}, None
+
+
+def _exclusive_json(path, doc):
+    data = (json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode()
+    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    with os.fdopen(fd, "wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
+    attempt = Path(res.attempt_dir)
+    round_dir = attempt.parents[1]
+    if dry_run:
+        res.action = "would_finalize"
+        res.reason = "ARTIFACT_READY deterministic zero-survivor REJECT"
+        res.detail["mechanical_closeout"] = True
+        return res
+    cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
+           "publish", "--attempt-dir", str(attempt), "--status", "DONE",
+           "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
+           "--verdict-hint", "CANDIDATE_REJECT"]
+    for rel in payload["manifest"]:
+        cmd.extend(["--manifest", rel])
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    if proc.returncode != 0:
+        res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
+        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                    [str(attempt)])
+    result = payload["result"]
+    verdict = {
+        "schema_version": 1,
+        "kind": "round_verdict",
+        "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v3.0.0",
+        "authored_by": "runtime/reconcile.py deterministic zero-survivor closeout",
+        "ownership_mode": "direct_hermes",
+        "family_id": res.family_id,
+        "round_id": res.round_id,
+        "run_id": res.run_id,
+        "verdict": "REJECT",
+        "disposition": result.get("disposition") or "NO_SURVIVOR",
+        "selector_version": result.get("selector_version"),
+        "disposition_version": result.get("disposition_version"),
+        "performance_claimable": False,
+        "cohort_survivor_count": 0,
+        "cohort_survivors": [],
+        "coverage_complete": True,
+        "case_evaluations_total": result.get("case_evaluations_total"),
+        "expected_case_evaluations": result.get("expected_case_evaluations"),
+        "result_sha256": sha256_file(str(attempt / "result.json")),
+        "terminal": {"status": "DONE", "path": str(attempt / "DONE")},
+        "decided_at_utc": now_utc(),
+    }
+    try:
+        _exclusive_json(round_dir / "verdict.json", verdict)
+    except FileExistsError:
+        existing = load(round_dir / "verdict.json")
+        token = round_verdict_token(round_dir, res.family_id,
+                                    load(Path(results_root) / res.family_id / "family.json"))
+        if token != "REJECT" or not isinstance(existing, dict) or existing.get("run_id") != res.run_id:
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(round_dir / "verdict.json")])
+    except OSError as exc:
+        res.detail["verdict_publish_error"] = str(exc)
+        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                    [str(round_dir / "verdict.json")])
+    res.action, res.reason = "finalized", "deterministic zero-survivor REJECT published"
+    res.detail["mechanical_closeout"] = True
+    return res
+
+
 def handle(res, results_root, dry_run, detector):
     """Dispose of one authoritative direct attempt: verify it, then wake default once (or stay still).
 
@@ -334,6 +471,11 @@ def handle(res, results_root, dry_run, detector):
             res.detail["mapping_problems"] = problems
             return fail(res, results_root, "mapping_mismatch", detector, dry_run,
                         [str(attempt / "state.json")])
+        if stage == "ARTIFACT_READY":
+            payload, mechanical_problem = _mechanical_reject_payload(res)
+            if payload is not None:
+                return _finalize_mechanical_reject(res, results_root, payload, dry_run, detector)
+            res.detail["mechanical_closeout_not_applicable"] = mechanical_problem
         if stage not in COMPUTE_FINISHED_STAGES:
             # Stalled and still undecided: nothing host-side can ever decide this round, so the same
             # disposition session that handles a compute-finished stage takes it over and terminates
@@ -399,6 +541,8 @@ def main():
               "attempts_scanned": len(results),
               "launched": [r.run_id for r in results if r.action == "launched"],
               "would_launch": [r.run_id for r in results if r.action == "would_launch"],
+              "finalized": [r.run_id for r in results if r.action == "finalized"],
+              "would_finalize": [r.run_id for r in results if r.action == "would_finalize"],
               "incidents": len(incidents), "results": [r.as_dict() for r in results]}
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))

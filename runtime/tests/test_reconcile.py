@@ -64,6 +64,32 @@ class Reconcile(unittest.TestCase):
                 "artifact_checksums": {"result.json": "sha256:" + hashlib.sha256(data).hexdigest()}}))
         return attempt
 
+    def deterministic_reject(self, attempt, disposition=None):
+        spec = json.loads((attempt / "run-spec.json").read_text())
+        spec.update({
+            "selector_version": "cohort-selector-v1",
+            "disposition_version": "cohort-disposition-v1",
+            "expected": {"expected_case_evaluations": 10},
+            "expected_outputs": ["state.json", "result.json", "artifacts/cohort_survivors.json"],
+        })
+        (attempt / "run-spec.json").write_text(json.dumps(spec))
+        (attempt / "artifacts").mkdir(exist_ok=True)
+        (attempt / "artifacts" / "cohort_survivors.json").write_text("[]\n")
+        result = {
+            "schema_version": 1,
+            "family_id": spec["family_id"], "round_id": spec["round_id"], "run_id": spec["run_id"],
+            "status": "ARTIFACT_READY", "coverage_complete": True,
+            "case_evaluations_total": 10, "expected_case_evaluations": 10,
+            "cohort_survivor_count": 0, "cohort_survivors": [],
+            "verdict_recommendation": "REJECT", "performance_claimable": False,
+            "assertions_all_true": True, "selector_version": "cohort-selector-v1",
+            "disposition_version": "cohort-disposition-v1",
+        }
+        if disposition is not None:
+            result["disposition"] = disposition
+        (attempt / "result.json").write_text(json.dumps(result))
+        return attempt
+
     def run_root(self, dry_run=False):
         argv = ["reconcile.py", "--results-root", str(self.root), "--board", "blocked-stale", "--json"]
         if dry_run:
@@ -77,6 +103,42 @@ class Reconcile(unittest.TestCase):
         finally:
             sys.argv = original
         return code, json.loads(out.getvalue())
+
+    def test_deterministic_zero_survivor_reject_finalizes_without_agent(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [attempt.name])
+        self.assertEqual(report["launched"], [])
+        self.assertEqual(self.calls, [])
+        self.assertTrue((attempt / "DONE").exists())
+        verdict = json.loads((attempt.parents[1] / "verdict.json").read_text())
+        self.assertEqual(verdict["verdict"], "REJECT")
+        self.assertEqual(verdict["cohort_survivor_count"], 0)
+        self.assertTrue(verdict["coverage_complete"])
+
+    def test_deterministic_reject_dry_run_writes_nothing(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"), "NO_SURVIVOR")
+        code, report = self.run_root(dry_run=True)
+        self.assertEqual(code, 0)
+        self.assertEqual(report["would_finalize"], [attempt.name])
+        self.assertEqual(report["would_launch"], [])
+        self.assertEqual(self.calls, [])
+        self.assertFalse((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+
+    def test_artifact_ready_with_pass_recommendation_still_wakes_agent(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        result = json.loads((attempt / "result.json").read_text())
+        result.update({"verdict_recommendation": "PASS", "cohort_survivor_count": 1,
+                       "cohort_survivors": ["BTCUSDT/1d"]})
+        (attempt / "result.json").write_text(json.dumps(result))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["launched"], [attempt.name])
+        self.assertEqual(report["finalized"], [])
+        self.assertEqual(len(self.calls), 1)
+        self.assertFalse((attempt / "DONE").exists())
 
     def test_compute_finished_wakes_default_without_a_card(self):
         self.fixture(stage="ARTIFACT_READY")
