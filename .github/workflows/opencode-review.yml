@@ -30,6 +30,7 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
+          OPENCODE_PERMISSION: '{"edit": "deny", "bash": "deny"}'
         with:
           model: opencode-go/muse-spark-1.3-contributor
           use_github_token: true
