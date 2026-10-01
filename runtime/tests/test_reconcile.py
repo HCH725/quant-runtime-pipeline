@@ -25,10 +25,13 @@ class Reconcile(unittest.TestCase):
         self.root = Path(tempfile.mkdtemp(prefix="qrp-direct-c4-"))
         self.calls = []
         self._launch = r.launch_agent
+        self._boot = r.host_boot_id
         r.launch_agent = self.launch
+        r.host_boot_id = lambda: "boot-test-current"
 
     def tearDown(self):
         r.launch_agent = self._launch
+        r.host_boot_id = self._boot
         shutil.rmtree(self.root)
 
     def launch(self, root, family, name, prompt, skills=()):
