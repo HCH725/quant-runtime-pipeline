@@ -4,11 +4,12 @@
 Only the newest valid attempt of a round may wake the default agent. Historical
 Kanban-owned families remain immutable and are not operated by this path.
 
-Two wake conditions, both from results-root evidence only: a compute-finished stage
+Wake conditions, all from results-root evidence only: a validated terminal without its round
+verdict (including a prior-boot terminal routed for artifact re-validation), a compute-finished stage
 (`ARTIFACT_READY` / `FAILED_SCRIPT`) with no terminal sentinel yet, and an attempt that stopped
 writing outside the 90-minute stall window while still carrying no terminal sentinel and no
-verdict of its own round (the agent died before Qlib started, or Qlib died mid-run). The second
-one is what keeps a dead attempt from holding the pipeline silently: inside the window the
+verdict of its own round (the agent died before Qlib started, or Qlib died mid-run). The stall
+condition keeps a dead attempt from holding the pipeline silently: inside the window the
 attempt is live compute and stays a descriptive `orphan_candidate`; outside it the same
 disposition agent decides the round - terminate it or retry it - so the family is released
 either way. A failed wake becomes a recorded fail-closed incident instead of retrying
@@ -266,15 +267,28 @@ def validate_terminal(res, root, dry_run, detector):
     if bad:
         res.detail["bad_artifacts"] = bad
         return fail(res, root, "checksum_mismatch", detector, dry_run, [str(attempt / name)])
-    if sentinel.get("host_boot_id") != host_boot_id():
+    boot = sentinel.get("host_boot_id")
+    current_boot = host_boot_id()
+    boot_valid = isinstance(boot, str) and bool(boot.strip()) and boot != "boot-unknown"
+    current_boot_valid = isinstance(current_boot, str) and bool(current_boot.strip()) and \
+        current_boot != "boot-unknown"
+    if not boot_valid or not current_boot_valid:
         return fail(res, root, "stale_sentinel", detector, dry_run, [str(attempt / name)])
+    if boot != current_boot:
+        fail(res, root, "stale_sentinel", detector, dry_run, [str(attempt / name)])
+        # Identity, unique terminal and artifact checks passed: retain the incident provenance,
+        # but let the existing disposition agent re-validate this prior-boot completion. C4 never
+        # rewrites the sentinel, concludes the round, or releases C3's prepared one-shot hold.
+        res.detail["boot_recovery"] = {"sentinel_host_boot_id": boot,
+                                       "current_host_boot_id": current_boot}
     return None
 
 
 def handle(res, results_root, dry_run, detector):
     """Dispose of one authoritative direct attempt: verify it, then wake default once (or stay still).
 
-    Wake conditions: a valid terminal sentinel still missing its own round verdict, a
+    Wake conditions: a validated terminal sentinel (same-boot or prior-boot recovery) still
+    missing its own round verdict, a
     compute-finished stage (`ARTIFACT_READY` / `FAILED_SCRIPT`), or an attempt that stopped writing
     outside the 90-minute stall window while still carrying no terminal sentinel - the agent died
     before Qlib started, or Qlib died mid-run. Everything else, including a fresh (live) attempt,
@@ -293,6 +307,8 @@ def handle(res, results_root, dry_run, detector):
         if problem:
             return problem
         stage = "terminal %s" % terminals[0]
+        if "boot_recovery" in res.detail:
+            stage += " (prior boot; artifact re-validation required)"
     else:
         state = load(attempt / "state.json")
         stage = state.get("stage") if isinstance(state, dict) else None

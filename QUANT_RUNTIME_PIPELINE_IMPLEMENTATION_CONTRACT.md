@@ -415,6 +415,16 @@ family F
   且不喚醒；喚醒失敗改記 fail-closed incident `disposition_launch_failed`（wrapper 以
   `family=`／`run=` 報出）而非靜默重試。有該 round verdict 時即 consumed。
   `--dry-run` 只回報 `would_launch`，不取得 lease、不寫檔、不啟動 agent。
+- `[C]` **prepared/direct reboot recovery**：authoritative terminal 尚無該 round verdict，且
+  唯一不相容處為有效非空字串 `host_boot_id` 與 current host boot 不同（兩者皆非
+  `boot-unknown`）時，C4 保留既有
+  append-only、per-attempt 去重的 `stale_sentinel` incident／immutable sentinel provenance，
+  並走上述既有 default disposition lease/prompt 路徑重新驗證 artifacts、由 default 決定
+  round verdict；report `detail.boot_recovery` 記錄 sentinel/current boot IDs，這是 recovery wake，
+  不是 C4 自動認可結果或重寫 sentinel。缺失／無效 boot identity、mapping／checksum 衝突、
+  sentinel 歧義或多 terminal 仍 fail-closed，不得以 reboot 繞過。C3 prepared one-shot hold
+  不得改成 90 分鐘逾時放行；僅由既有該 round verdict resolution 自然解除。
+  `--dry-run` 不寫 incident、不喚醒；lease busy／launch failure 仍沿用既有處置。
 
 ### 9.5 為何不用 HTTP / webhook / Redis / Celery / queue
 - `[C]` 這些都需要常駐服務或網路信任面，會引入：新 daemon、新 failure mode、新 secret、新 port、新 restart 邏輯；而本 pipeline 的 completion 訊號本質是一個「至少一次、可重讀」的檔案事件。
