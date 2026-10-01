@@ -31,8 +31,7 @@ jobs:
         run: |
           printf '%s\n' '/.opencode-pr.diff' >> .git/info/exclude
           git diff --no-ext-diff --unified=80 \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" \
             > .opencode-pr.diff
 
       - name: Review pull request with Muse Spark 1.3
