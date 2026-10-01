@@ -398,6 +398,8 @@ def _mechanical_reject_payload(res, results_root):
             return None, "cohort_results row %d has invalid/duplicate cohort" % index
         seen_cohorts.add(cohort)
         outcome_keys = [key for key in ("outcome", "status") if key in row]
+        if any(row.get(key) == "SURVIVOR" for key in outcome_keys):
+            return None, "cohort_results artifact reports survivors: %s" % [cohort]
         if not outcome_keys or any(row.get(key) != "CULLED" for key in outcome_keys):
             return None, "cohort_results row %d is not explicitly CULLED" % index
     cohorts_evaluated = result.get("cohorts_evaluated")

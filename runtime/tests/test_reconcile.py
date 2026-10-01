@@ -168,7 +168,7 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["finalized"], [])
         self.assertEqual(report["launched"], [attempt.name])
-        self.assertIn("not explicitly CULLED",
+        self.assertIn("cohort_results artifact reports survivors",
                       report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
         self.assertFalse((attempt / "DONE").exists())
 
