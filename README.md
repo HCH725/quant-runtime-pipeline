@@ -6,8 +6,10 @@ Production quant decisions remain **Kanban-free**: n8n retains the existing C3/C
 and Qlib remains the only research/backtest runtime. Research Intake Review appends each eligible exact candidate to
 `_handoff/preparation_backlog.json`; default-profile no-agent Hermes cron `219d541661d5` runs
 `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` every 15 minutes at `:00/:15/:30/:45`, five minutes ahead of C3.
-The host runner processes one FIFO head and binds that family to one deterministic named `quant-preparation` session;
-later cadences resume the same session instead of starting preparation from zero. Preparation keeps the Git checkout read-only:
+The host runner processes one ordered backlog candidate at a time and binds that family to one deterministic named
+`quant-preparation` session. A live family lease waits normally; if that preparation cannot launch or exits without a
+staged package/outcome, the exact candidate is retained and rotated to the backlog tail so unrelated candidates continue,
+then the same family-scoped session is retried when that candidate returns to the head. Preparation keeps the Git checkout read-only:
 candidate scratch lives only under `_handoff/preparing/<family>/work/` and is removed when staging/terminal preparation finishes,
 so preparation must not leave repo dirty state. The session only stages the package, then the host runner performs tests/P1–P10
 validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent
@@ -251,7 +253,7 @@ RaQL 的既有 prerequisite-missing round 保持 immutable；以
 ```
 Research Intake Review
         ├──→ Wiki Brain (research-only)
-        └──→ preparation_backlog.json (exact, idempotent; FIFO)
+        └──→ preparation_backlog.json (exact, idempotent; ordered fair-retry)
                     ↓
         no-agent Hermes cron 219d541661d5 (:00/:15/:30/:45)
                     ↓
