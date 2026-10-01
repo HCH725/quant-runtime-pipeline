@@ -82,10 +82,10 @@ ACTIVE_WINDOW_MINUTES = 90
 LAUNCH_GRACE_MINUTES = 90
 PREPARED_EXECUTION_KIND = "prepared_execution"
 PREPARATION_DIRNAME = "preparing"
-# Versioned preparation prompt name: v3 is the deterministic-host promotion boundary (the session can
-# only stage artifacts or write the clear-absence outcome; the host promotes). The old v2 file inside an
-# existing lease stays an immutable historical artifact.
-PREPARATION_PROMPT = "prepare-task-v3.md"
+# Versioned preparation prompt name: v4 keeps the repo checkout read-only and confines candidate scratch
+# work to the family preparation lease. Older prompt files stay immutable historical artifacts; using a
+# new filename lets an in-flight named preparation session adopt the hygiene rule on its next cadence.
+PREPARATION_PROMPT = "prepare-task-v4.md"
 # Fixed staged manifest name under _handoff/prepared/<family>/; prepare_candidate.py locates it by this
 # name and the session is told to stage exactly it.
 PREPARED_MANIFEST_FILENAME = "prepared-execution.json"
@@ -862,11 +862,15 @@ def preparation_prompt(cand, results_root, backlog_path):
           "candidate body, provenance, lineage and research decision exactly; do not re-review or "
           "re-rank the strategy.\n\n"
         + "Produce the smallest deterministic execution package required by the deterministic host "
-          "preparation runner while preserving "
-          "the registered core hypothesis/mechanism. Use a dedicated current-family runner under "
-          "container/scripts (or reuse an existing current-family runner), add only its focused tests, "
-          "and do not modify unrelated strategy runners or generic/shared engines. Deploy a byte-identical "
-          "copy under "
+          "preparation runner while preserving the registered core hypothesis/mechanism. REPOSITORY "
+          "HYGIENE: the Git checkout at the workspace path is read-only during preparation. Do not create, "
+          "modify, delete, git-add or commit candidate files in the repo. Put candidate-specific scratch "
+          "runner/test files only under %s/_handoff/preparing/%s/work/ (persistent across continuation "
+          "cadences), while existing tracked repo runners/tests may be read or reused as templates. If a "
+          "legacy v3 turn for THIS SAME family left candidate-owned untracked scratch files in the repo, "
+          "migrate only those exact ?? files into this work directory after byte-for-byte verification, "
+          "then remove only those migrated repo scratch files; never touch tracked/modified files or "
+          "unrelated dirt. Deploy the final runner and focused test as byte-identical copies under "
           "/Users/hong/workspace/qlib-apple-container/scripts, and stage immutable round-spec.json, "
           "run-spec.json and prepared-execution manifest under %s/_handoff/prepared/%s/. Stage the "
           "package only; the host preparation runner later runs the focused family test and "
@@ -880,7 +884,7 @@ def preparation_prompt(cand, results_root, backlog_path):
           "universe may the runner emit bounded prerequisite evidence for TECHNICAL_INCOMPLETE. Never "
           "create infrastructure or substitute a different signal/model/mechanism merely to make a "
           "candidate runnable.\n\n"
-          % (results_root, cand["family_id"])
+          % (results_root, cand["family_id"], results_root, cand["family_id"])
         + "HARD STOP BOUNDARY: do NOT create %s/%s, do NOT run any strategy runner, production/full "
           "backtest, or canonical family launch (container exec qlib-run is permitted ONLY for "
           "bounded non-production environment probes required by existing P1-P10, including P2/P7/P8), "
@@ -909,10 +913,14 @@ def preparation_prompt(cand, results_root, backlog_path):
           "or transient failure. No family/verdict/Qlib run may be created.\n\n"
           % (results_root, cand["family_id"])
         + "Use existing runner/spec/test conventions; do not add a scheduler, manager, registry, queue, "
-          "state machine, generic compiler or second data registry. Stage/commit only files belonging "
-          "to this candidate; never clean, reset or absorb unrelated workspace dirt. If safe preparation "
-          "cannot be completed, record the exact blocker in this preparation log and EXIT without "
-          "staging a package or writing an outcome.\n\n"
+          "state machine, generic compiler or second data registry. Stage only files belonging to this "
+          "candidate; never reset, clean or absorb unrelated workspace dirt. If safe preparation cannot "
+          "be completed yet, keep this family work directory for the next continuation cadence, record "
+          "the exact blocker in this preparation log, and EXIT without staging a package or writing an "
+          "outcome. If you successfully stage the complete package OR write a valid clear-absence outcome, "
+          "remove this family scratch work directory before EXIT and verify the Git repo status has no "
+          "candidate-created changes; pre-existing unrelated dirty state must remain byte-for-byte "
+          "untouched.\n\n"
         + REVIEWED_CANDIDATE_MARKER + body_with_footer(cand)
     )
 
