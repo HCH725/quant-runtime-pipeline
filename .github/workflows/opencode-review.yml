@@ -39,6 +39,7 @@ jobs:
           prompt: |
             Review this pull request as an independent code reviewer. Do not modify files.
             Review the current HEAD and diff; do not treat stale comments from earlier runs as proof of a current defect.
+            If this model is currently producing the review, treat that as evidence that the current model route authenticated and resolved; do not re-flag older model/auth failures unless reproduced in the current run.
             Prioritize correctness, regressions, edge cases, failure paths, state or pipeline stalls,
             security, test gaps, configuration drift, and documentation/implementation mismatches.
             Prefer the smallest necessary fix and explicitly flag overengineering.
