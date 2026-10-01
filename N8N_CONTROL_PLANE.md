@@ -5,8 +5,10 @@
 The current preparation boundary is outside n8n C3. Research Intake is the sole eligibility gate and appends each exact,
 eligible candidate idempotently to `/Volumes/ExpansionDrive/qlib-results/_handoff/preparation_backlog.json`. Default-profile
 no-agent Hermes cron `219d541661d5` runs `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` at `:00/:15/:30/:45`, offset five
-minutes from C3's existing `:05/:20/:35/:50` cadence. The deterministic host runner processes one FIFO head and may start
-one bounded `quant-preparation` session under the existing handoff lease. That agent only stages runner/test/spec/manifest
+minutes from C3's existing `:05/:20/:35/:50` cadence. The deterministic host runner processes one ordered backlog candidate
+per run and may start one bounded `quant-preparation` session under the existing handoff lease. A live family waits; a
+candidate-local launch failure or completed attempt with no staged package/outcome is recorded and the exact candidate is
+rotated to the backlog tail so unrelated candidates continue. That agent only stages runner/test/spec/manifest
 artifacts or a permitted clear-absence outcome; it must not write the backlog or production pool, run Qlib/strategy
 execution, or publish promotion. The host runner performs focused tests and P1–P10 validation and alone promotes a valid
 execution-ready candidate into `candidates.json`.
