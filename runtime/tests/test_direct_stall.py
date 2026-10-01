@@ -53,7 +53,7 @@ class DirectStallDisposition(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
 
-    def launch(self, root, family, name, prompt, skills=(), workspace=None):
+    def launch(self, root, family, name, prompt, skills=(), workspace=None, lease_fd=None):
         self.calls.append((root, family, name, prompt, skills))
         return 4242, None, False
 
