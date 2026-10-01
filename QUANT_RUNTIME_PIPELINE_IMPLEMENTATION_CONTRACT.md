@@ -1,6 +1,6 @@
 # QUANT RUNTIME PIPELINE — IMPLEMENTATION CONTRACT (SOP)
 
-文件狀態：**v2.1.0 DIRECT-RUNTIME OVERRIDE — AWAITING RE-AUDIT**（2026-10-01 attempt-ordering / producer-hygiene amendment；base v2.0.0 仍為 AUDITED PASS / LIVE，2026-09-24 cutover；2026-09-25 operational read-back）。**2026-09-30 backlog-preparation migration 與本次 v2.1.0 amendment 均屬既有 runtime 的 handoff amendment；v2.1.0 在獨立 re-audit PASS 前不得視為 audited live bytes。**
+文件狀態：**v2.0.0 DIRECT-RUNTIME OVERRIDE — base AUDITED PASS / LIVE**（2026-09-24 cutover；2026-09-25 operational read-back）。**2026-09-30 backlog-preparation migration 是既有 runtime 的 handoff amendment，不屬於 auditor run 222 受驗 bytes；本 migration 尚未經獨立 audit。**
 依 §26，completion bridge／信任邊界變更升 major 版。§9.4 與 §14.4 的 2026-09-24 direct-Hermes override 已完成獨立
 auditor run 222 PASS，final audited implementation commit 為 `caeffea`，並完成當時的 live cutover；其 execution transport
 已由本文件 §14.4 的 current `[C]` 條款覆寫。Research Intake 將 exact eligible candidate append 至
@@ -405,9 +405,7 @@ family F
 - `[C]` **v2.0 direct C4 override（AUDITED PASS / LIVE）**：固定 n8n C4 action 仍呼叫
   `runtime/reconcile.py`；它只處理 `family.json.handoff.execution=direct_hermes`，歷史
   card-owned family 不改動。每 round 僅有一個 identity 合法 attempt 時不需要 ordering metadata，
-  直接由該 attempt 驅動；只有同 round 存在多個 attempt 時才以 `(created_at_utc, uN)` 判定最新者。
-  為避免新資料日後進入 same-round retry 時失去排序能力，prepared execution producer 仍必須在 promotion／C3 launch 前
-  驗證新 staged `run-spec.json.created_at_utc` 為可解析 ISO-8601；這是 producer hygiene，不是 lone legacy attempt 的 selection prerequisite。
+  直接由該 attempt 驅動；只有同 round 存在多個 attempt 時才以 `(created_at_utc, uN)` 判定最新者，
   較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
   fail-closed 並記 canonical incident。`state.json.stage` 為 `ARTIFACT_READY`／
   `FAILED_SCRIPT` 且無 sentinel、有合法 terminal 但該 round 無 verdict、或 attempt 已超過
@@ -1691,7 +1689,6 @@ survivors/<survivor_id>/aggregate.csv            # same condition
 
 | 版本 | 日期 | 變更 | 理由 |
 |---|---|---|---|
-| v2.1.0（AWAITING RE-AUDIT） | 2026-10-01 | §9.4 authoritative-attempt ordering scope＋§14.4 prepared-execution producer hygiene：既有 round 僅一個 identity-valid attempt 時 `created_at_utc` 不再是 selection prerequisite；多 attempt 仍以 `(created_at_utc, uN)` fail-closed 排序；所有**新 staged** prepared run-spec 在 promotion／C3 launch 前仍必須具可解析 `created_at_utc`，preparation prompt 同步要求該欄位。 | Production incident 顯示 lone `r1-u1` 因缺 timestamp 被誤報 `attempt_selection_ambiguous`；PR #10 修正 consumer selection，PR #11 review 又指出若 producer 也放寬，未來 same-round `u2` 會因 immutable timestamp-less `u1` 再次失序。故採「legacy lone-attempt 相容 + new-producer 完整 metadata」最小修補。驗證：focused boundary 5/5、runtime 647/647 PASS；independent read-only auditor 對功能語意 PASS／0 blocking，GitHub review P2 僅要求本 §26 版本與 change-log 對齊；本列完成後需 re-audit。 |
 | v2.0.0（AUDITED PASS / LIVE） | 2026-09-24 | §9.4、§14.4 direct-Hermes execution/completion bridge override；§16 P10／terminal host publication 容許無卡 direct family，historical card-owned 要求不變 | initial execution-transport audit finding 經 remediation `t_54a7af2e` 收斂；independent auditor run 222 PASS，final audited implementation `caeffea`；隔離 direct/legacy、故障同 family 重試、lease 防重、runtime/n8n regression 與 real-root read-only dry-run 通過，之後完成 live cutover。 |
 | v1.0 | 2026-09-12 | 初版定版（本卡 t_5b5b38d6） | ChatGPT 規劃；新增 Family Yield（§15）與 Execution Preflight（§16）兩條正式護欄 |
 | v1.0.1 | 2026-09-12 | **B1**：廢除 task-level metadata 作為 durable state，ownership/lineage/verdict 改落 `/results`（新增 §10.6 `family.json`、§10.7 `verdict.json`；改寫 §9.4 reconciler 入口、§14、§18.1、INV-4/9/10/17）。**B2**：新增 §12.6 conflict/incident 流程（`scheduled` 不得直接 block），統一 §6.3/§7.1/§12.3/§12.4/§12.5。**B3**：`/qlib/work` 單一 volume 故障一律 card-local，統一 §12.5/§13/§16 | auditor t_a3dc355d 三個 blocking findings 的最小 remediation（本卡 t_bcedaf65） |
