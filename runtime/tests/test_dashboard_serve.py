@@ -149,6 +149,22 @@ class ServerChecks(unittest.TestCase):
         self.assertIn("已凍結證據", body)
         self.assertNotIn("0.1</strong>", body)
 
+    def test_detail_formats_new_percent_point_max_drawdown_without_double_scaling(self):
+        payload = {"leaderboard": {"count": 2, "shown": 2, "top_n": 10, "entries": [
+            {"rank": 1, "cohort": "LEGACY/1d", "sharpe": 1.0,
+             "annualized_return": 0.1, "max_dd_pct": -0.01,
+             "avg_trades_per_year": 10.0, "evidence_state": "FROZEN_ONLY"},
+            {"rank": 2, "cohort": "NEW/1d", "sharpe": 1.0,
+             "annualized_return": 0.1, "max_dd_pct": 9.367857976349695,
+             "avg_trades_per_year": 10.0, "evidence_state": "FROZEN_ONLY"},
+        ]}}
+        (self.dir / "dashboard.json").write_text(json.dumps(payload))
+        status, body, _ = self.request("/detail")
+        self.assertEqual(status, 200)
+        self.assertIn("-1.00%", body)
+        self.assertIn("-9.37%", body)
+        self.assertNotIn("936.79%", body)
+
     def test_detail_translates_operator_status_without_changing_payload(self):
         payload = {"current": {"stage": "not launched", "card_status": "blocked",
                                "progress_text": "unavailable (no round/attempt directory yet)",
