@@ -24,6 +24,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -293,7 +294,7 @@ def validate_terminal(res, root, dry_run, detector):
     return None
 
 
-def _mechanical_reject_payload(res):
+def _mechanical_reject_payload(res, results_root):
     """Return validated deterministic REJECT evidence for one ARTIFACT_READY direct attempt.
 
     This path is intentionally narrow: it only accepts a completed zero-survivor result whose
@@ -302,6 +303,24 @@ def _mechanical_reject_payload(res):
     Hermes disposition path.
     """
     attempt = Path(res.attempt_dir)
+    root = Path(results_root)
+    try:
+        root_real = root.resolve(strict=True)
+        relative_attempt = attempt.relative_to(root)
+    except (OSError, ValueError):
+        return None, "attempt path is outside/unresolvable from results root"
+    current = root
+    if current.is_symlink():
+        return None, "results root must not be a symlink"
+    for part in relative_attempt.parts:
+        current = current / part
+        if current.is_symlink():
+            return None, "attempt path contains symlink: %s" % current
+    try:
+        attempt_real = attempt.resolve(strict=True)
+        attempt_real.relative_to(root_real)
+    except (OSError, ValueError):
+        return None, "attempt path escapes results root"
     run_spec = load(attempt / "run-spec.json")
     result = load(attempt / "result.json")
     if not isinstance(run_spec, dict) or not isinstance(result, dict):
@@ -340,10 +359,6 @@ def _mechanical_reject_payload(res):
     if not isinstance(outputs, list) or not outputs:
         return None, "run-spec expected_outputs missing"
     manifest = ["run-spec.json"]
-    try:
-        attempt_real = attempt.resolve(strict=True)
-    except OSError:
-        return None, "attempt path is not resolvable"
     for rel in outputs:
         if not isinstance(rel, str) or not rel or os.path.isabs(rel):
             return None, "invalid expected output path"
@@ -374,11 +389,17 @@ def _mechanical_reject_payload(res):
         return None, "cohort_survivors artifact contradicts zero-survivor result"
     if not isinstance(cohort_results, list):
         return None, "cohort_results artifact is not a list"
-    measured_survivors = [row.get("cohort") for row in cohort_results
-                          if isinstance(row, dict) and
-                          (row.get("outcome") == "SURVIVOR" or row.get("status") == "SURVIVOR")]
-    if measured_survivors:
-        return None, "cohort_results artifact reports survivors: %s" % measured_survivors
+    seen_cohorts = set()
+    for index, row in enumerate(cohort_results):
+        if not isinstance(row, dict):
+            return None, "cohort_results row %d is not an object" % index
+        cohort = row.get("cohort")
+        if not isinstance(cohort, str) or not cohort.strip() or cohort in seen_cohorts:
+            return None, "cohort_results row %d has invalid/duplicate cohort" % index
+        seen_cohorts.add(cohort)
+        outcome_keys = [key for key in ("outcome", "status") if key in row]
+        if not outcome_keys or any(row.get(key) != "CULLED" for key in outcome_keys):
+            return None, "cohort_results row %d is not explicitly CULLED" % index
     cohorts_evaluated = result.get("cohorts_evaluated")
     registered_cohorts = registered.get("cohorts")
     if type(cohorts_evaluated) is not int or cohorts_evaluated <= 0 or \
@@ -388,12 +409,30 @@ def _mechanical_reject_payload(res):
 
 
 def _exclusive_json(path, doc):
+    """Durably stage JSON, then atomically publish without clobbering an existing immutable path."""
+    path = Path(path)
     data = (json.dumps(doc, indent=2, ensure_ascii=False) + "\n").encode()
-    fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    with os.fdopen(fd, "wb") as stream:
-        stream.write(data)
-        stream.flush()
-        os.fsync(stream.fileno())
+    fd, temporary = tempfile.mkstemp(prefix=".%s.tmp-" % path.name, dir=str(path.parent))
+    try:
+        os.fchmod(fd, 0o644)
+        with os.fdopen(fd, "wb") as stream:
+            fd = -1
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.link(temporary, str(path))  # same filesystem; atomic and no-clobber
+        dir_fd = os.open(str(path.parent), os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+    finally:
+        if fd != -1:
+            os.close(fd)
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
 
 
 def _published_terminal_after_race(res, results_root, detector):
@@ -439,6 +478,15 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
         res.detail["mechanical_closeout"] = True
         return res
     try:
+        recovered = _published_terminal_after_race(res, results_root, detector)
+        if recovered is not None:
+            return recovered
+        fresh_payload, recheck_problem = _mechanical_reject_payload(res, results_root)
+        if fresh_payload is None:
+            res.detail["mechanical_closeout_recheck_problem"] = recheck_problem
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt / "result.json")])
+        payload = fresh_payload
         cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
                "publish", "--attempt-dir", str(attempt), "--status", "DONE",
                "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
@@ -550,7 +598,7 @@ def handle(res, results_root, dry_run, detector):
             return fail(res, results_root, "mapping_mismatch", detector, dry_run,
                         [str(attempt / "state.json")])
         if stage == "ARTIFACT_READY":
-            payload, mechanical_problem = _mechanical_reject_payload(res)
+            payload, mechanical_problem = _mechanical_reject_payload(res, results_root)
             if payload is not None:
                 return _finalize_mechanical_reject(res, results_root, payload, dry_run, detector)
             res.detail["mechanical_closeout_not_applicable"] = mechanical_problem

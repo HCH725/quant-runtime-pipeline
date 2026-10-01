@@ -97,7 +97,7 @@ class Reconcile(unittest.TestCase):
 
     def publish_done_fixture(self, attempt):
         payload, problem = r._mechanical_reject_payload(r.Result(r.Attempt(
-            attempt, "fam-a", "fam-a-r1", require_timestamp=False)))
+            attempt, "fam-a", "fam-a-r1", require_timestamp=False)), self.root)
         self.assertIsNone(problem)
         checksums = {rel: r.sha256_file(str(attempt / rel)) for rel in payload["manifest"]}
         (attempt / "DONE").write_text(json.dumps({
@@ -168,9 +168,56 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["finalized"], [])
         self.assertEqual(report["launched"], [attempt.name])
-        self.assertIn("cohort_results artifact reports survivors",
+        self.assertIn("not explicitly CULLED",
                       report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
         self.assertFalse((attempt / "DONE").exists())
+
+    def test_malformed_cohort_result_row_never_mechanically_rejects(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        rows = json.loads((attempt / "artifacts" / "cohort_results.json").read_text())
+        rows[0] = {}
+        (attempt / "artifacts" / "cohort_results.json").write_text(json.dumps(rows))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [])
+        self.assertEqual(report["launched"], [attempt.name])
+        self.assertIn("invalid/duplicate cohort",
+                      report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+        self.assertFalse((attempt / "DONE").exists())
+
+    def test_unknown_cohort_outcome_never_mechanically_rejects(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        rows = json.loads((attempt / "artifacts" / "cohort_results.json").read_text())
+        rows[0]["outcome"] = "UNKNOWN"
+        (attempt / "artifacts" / "cohort_results.json").write_text(json.dumps(rows))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [])
+        self.assertEqual(report["launched"], [attempt.name])
+        self.assertIn("not explicitly CULLED",
+                      report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+        self.assertFalse((attempt / "DONE").exists())
+
+    def test_symlinked_family_attempt_tree_never_mechanically_closes(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        outside = Path(tempfile.mkdtemp(prefix="qrp-family-outside-"))
+        external_family = outside / "fam-a"
+        try:
+            shutil.move(str(self.root / "fam-a"), str(external_family))
+            os.symlink(str(external_family), str(self.root / "fam-a"))
+            external_attempt = external_family / "rounds" / "fam-a-r1" / "attempts" / attempt.name
+            code, report = self.run_root()
+            self.assertEqual(code, 0)
+            self.assertEqual(report["finalized"], [])
+            self.assertEqual(report["launched"], [attempt.name])
+            self.assertIn("attempt path contains symlink",
+                          report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+            self.assertFalse((external_attempt / "DONE").exists())
+            self.assertFalse((external_attempt.parents[1] / "verdict.json").exists())
+        finally:
+            if (self.root / "fam-a").is_symlink():
+                (self.root / "fam-a").unlink()
+            shutil.rmtree(outside)
 
     def test_parent_symlink_expected_output_never_mechanically_closes(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
@@ -188,6 +235,23 @@ class Reconcile(unittest.TestCase):
             self.assertFalse((attempt.parents[1] / "verdict.json").exists())
         finally:
             shutil.rmtree(outside)
+
+    def test_exclusive_json_interrupted_stage_never_reserves_final_verdict_path(self):
+        path = self.root / "verdict.json"
+        with patch.object(r.os, "fsync", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                r._exclusive_json(path, {"verdict": "REJECT"})
+        self.assertFalse(path.exists())
+        self.assertEqual(list(self.root.glob(".verdict.json.tmp-*")), [])
+
+    def test_exclusive_json_never_clobbers_existing_verdict(self):
+        path = self.root / "verdict.json"
+        path.write_text('{"verdict":"PASS"}\n')
+        before = path.read_bytes()
+        with self.assertRaises(FileExistsError):
+            r._exclusive_json(path, {"verdict": "REJECT"})
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(list(self.root.glob(".verdict.json.tmp-*")), [])
 
     def test_terminal_publish_timeout_is_fail_closed_incident_not_traceback(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
