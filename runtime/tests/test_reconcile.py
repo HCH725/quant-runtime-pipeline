@@ -127,6 +127,64 @@ class Reconcile(unittest.TestCase):
         self.assertFalse((attempt / "DONE").exists())
         self.assertFalse((attempt.parents[1] / "verdict.json").exists())
 
+    def test_parent_symlink_expected_output_never_mechanically_closes(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        outside = Path(tempfile.mkdtemp(prefix="qrp-outside-"))
+        try:
+            shutil.rmtree(attempt / "artifacts")
+            (outside / "cohort_survivors.json").write_text("[]\n")
+            os.symlink(str(outside), str(attempt / "artifacts"))
+            code, report = self.run_root()
+            self.assertEqual(code, 0)
+            self.assertEqual(report["finalized"], [])
+            self.assertEqual(report["launched"], [attempt.name])
+            self.assertIn("symlink", report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+            self.assertFalse((attempt / "DONE").exists())
+            self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        finally:
+            shutil.rmtree(outside)
+
+    def test_terminal_publish_timeout_is_fail_closed_incident_not_traceback(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        with patch.object(r.subprocess, "run", side_effect=r.subprocess.TimeoutExpired(
+                ["terminal_evidence.py"], 60)):
+            code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["incidents"], 1)
+        self.assertEqual(report["results"][0]["action"], "incident")
+        self.assertEqual(report["results"][0]["reason"], "mechanical_closeout_failed")
+        self.assertIn("TimeoutExpired", report["results"][0]["detail"]["terminal_publish_error"])
+        self.assertFalse((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        self.assertEqual(self.calls, [])
+
+    def test_concurrent_terminal_publish_is_idempotent_not_false_incident(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        payload, problem = r._mechanical_reject_payload(r.Result(r.Attempt(
+            attempt, "fam-a", "fam-a-r1", require_timestamp=False)))
+        self.assertIsNone(problem)
+
+        def publish_elsewhere(*_args, **_kwargs):
+            checksums = {rel: r.sha256_file(str(attempt / rel)) for rel in payload["manifest"]}
+            (attempt / "DONE").write_text(json.dumps({
+                "schema_version": 1, "status": "DONE", "family_id": "fam-a",
+                "round_id": "fam-a-r1", "run_id": "fam-a-r1-u1",
+                "host_boot_id": "boot-test-current", "container_id": "qlib-run",
+                "image_id": "img", "verdict_hint": "CANDIDATE_REJECT",
+                "artifact_manifest": payload["manifest"], "artifact_checksums": checksums,
+            }))
+            return r.subprocess.CompletedProcess(["terminal_evidence.py"], 1, "", "already exists")
+
+        with patch.object(r.subprocess, "run", side_effect=publish_elsewhere):
+            code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["incidents"], 0)
+        self.assertEqual(report["results"][0]["action"], "running")
+        self.assertIn("published concurrently", report["results"][0]["reason"])
+        self.assertTrue((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        self.assertEqual(self.calls, [])
+
     def test_artifact_ready_with_pass_recommendation_still_wakes_agent(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
         result = json.loads((attempt / "result.json").read_text())

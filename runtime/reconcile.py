@@ -340,15 +340,28 @@ def _mechanical_reject_payload(res):
     if not isinstance(outputs, list) or not outputs:
         return None, "run-spec expected_outputs missing"
     manifest = ["run-spec.json"]
+    try:
+        attempt_real = attempt.resolve(strict=True)
+    except OSError:
+        return None, "attempt path is not resolvable"
     for rel in outputs:
         if not isinstance(rel, str) or not rel or os.path.isabs(rel):
             return None, "invalid expected output path"
         parts = Path(rel).parts
         if ".." in parts or rel in TERMINALS:
             return None, "unsafe expected output path"
+        current = attempt
+        for part in parts:
+            current = current / part
+            if current.is_symlink():
+                return None, "expected output path contains symlink: %s" % rel
         full = attempt / rel
-        if full.is_symlink() or not full.is_file():
+        if not full.is_file():
             return None, "required output missing/non-regular: %s" % rel
+        try:
+            full.resolve(strict=True).relative_to(attempt_real)
+        except (OSError, ValueError):
+            return None, "expected output escapes attempt tree: %s" % rel
         if rel not in manifest:
             manifest.append(rel)
     for required in ("state.json", "result.json"):
@@ -366,6 +379,30 @@ def _exclusive_json(path, doc):
         os.fsync(stream.fileno())
 
 
+def _published_terminal_after_race(res, results_root, detector):
+    """Re-read a terminal that may have been published by an overlapping reconciler."""
+    attempt = Path(res.attempt_dir)
+    terminals = [name for name in TERMINALS if (attempt / name).exists()]
+    if not terminals:
+        return None
+    if len(terminals) != 1:
+        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                    [str(attempt / name) for name in terminals])
+    checked = validate_terminal(res, results_root, False, detector)
+    if checked:
+        return checked
+    family = load(Path(results_root) / res.family_id / "family.json")
+    existing = load(attempt.parents[1] / "verdict.json")
+    token = round_verdict_token(attempt.parents[1], res.family_id, family)
+    if token == "REJECT" and isinstance(existing, dict) and existing.get("run_id") == res.run_id:
+        res.action, res.reason = "finalized", "concurrent deterministic REJECT already published"
+        res.detail["mechanical_closeout"] = True
+    else:
+        res.action, res.reason = "running", "terminal published concurrently; awaiting round verdict"
+        res.detail["mechanical_closeout"] = True
+    return res
+
+
 def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
     attempt = Path(res.attempt_dir)
     round_dir = attempt.parents[1]
@@ -380,8 +417,19 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
            "--verdict-hint", "CANDIDATE_REJECT"]
     for rel in payload["manifest"]:
         cmd.extend(["--manifest", rel])
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        recovered = _published_terminal_after_race(res, results_root, detector)
+        if recovered is not None:
+            return recovered
+        res.detail["terminal_publish_error"] = "%s: %s" % (type(exc).__name__, exc)
+        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                    [str(attempt)])
     if proc.returncode != 0:
+        recovered = _published_terminal_after_race(res, results_root, detector)
+        if recovered is not None:
+            return recovered
         res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
         return fail(res, results_root, "mechanical_closeout_failed", detector, False,
                     [str(attempt)])
