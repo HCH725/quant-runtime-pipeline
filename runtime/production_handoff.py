@@ -785,7 +785,7 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
 
 def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
                            source="quant-production", log_name=AGENT_LOG,
-                           max_turns=500, run_budget=7200, session_name=None, lease_fd=None):
+                           max_turns=500, run_budget=7200, session_name=None):
     """Launch one detached Hermes session behind a kernel flock lease.
 
     `max_turns`/`run_budget` bound the session: preparation passes the candidate's whitelisted turn
@@ -794,8 +794,7 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
     """
     lease_dir = Path(lease_dir)
     lease_dir.mkdir(parents=True, exist_ok=True)
-    owns_lease_fd = lease_fd is None
-    fd = lease_fd if lease_fd is not None else _lock(lease_dir / AGENT_LOCK)
+    fd = _lock(lease_dir / AGENT_LOCK)
     if fd is None:
         return None, None, True
     try:
@@ -831,19 +830,17 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
     except (OSError, ValueError) as exc:
         return None, "Hermes launch failed: %s" % exc, False
     finally:
-        if owns_lease_fd:
-            os.close(fd)
+        os.close(fd)
 
 
-def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
-                 lease_fd=None):
+def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
     """Shared quant-production launcher: intentional C4 research/disposition plus legacy C3 rollback.
 
     Normal C3 prepared dispatch never calls this helper. C4 intentionally uses it at the family
     boundary for compute-finished research/disposition and bounded same-family remediation.
     """
     return _launch_hermes_session(Path(results_root) / family_id, name, prompt, skills, workspace,
-                                  source="quant-production", log_name=AGENT_LOG, lease_fd=lease_fd)
+                                  source="quant-production", log_name=AGENT_LOG)
 
 
 def preparation_prompt(cand, results_root, backlog_path):
@@ -878,9 +875,7 @@ def preparation_prompt(cand, results_root, backlog_path):
           "/Users/hong/workspace/qlib-apple-container/scripts, and stage immutable round-spec.json, "
           "run-spec.json and prepared-execution manifest under %s/_handoff/prepared/%s/. Stage the "
           "package only; the host preparation runner later runs the focused family test and "
-          "P1-P10 preflight before any promotion. Every newly staged run-spec.json MUST include a non-empty, "
-          "parseable ISO-8601 created_at_utc timestamp (prefer UTC Z form) so any later same-round retry remains "
-          "orderable without making that field a prerequisite for selecting a lone legacy attempt. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
+          "P1-P10 preflight before any promotion. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
           "named symbols and source-universe breadth are provenance/external-validity context, not an "
           "execution prerequisite when the registered core signal can be computed on canonical local "
           "raw. In that case you MUST register the complete legal local eligible universe, adapt only "
@@ -1352,8 +1347,6 @@ def _prepared_execution(cand, args):
                 run_spec.get("schema_version") != 1 or run_spec.get("family_id") != family_id or \
                 run_spec.get("round_id") != round_id or run_spec.get("run_id") != run_id:
             raise ValueError("run-spec family/round/run identity mismatch")
-        if parse_utc(run_spec.get("created_at_utc")) is None:
-            raise ValueError("run-spec created_at_utc missing/unparsable")
         round_ownership, run_ownership = (_nonempty_ownership(round_spec),
                                           _nonempty_ownership(run_spec))
         if round_ownership or run_ownership:
