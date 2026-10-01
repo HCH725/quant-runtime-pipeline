@@ -836,6 +836,8 @@ class TestFailClosed(Base):
                       prompt)
         self.assertNotIn("schema implemented by C3", prompt)
         self.assertIn("prepared-execution manifest named exactly prepared-execution.json", prompt)
+        self.assertIn("Every newly staged run-spec.json MUST include a non-empty, parseable ISO-8601 created_at_utc timestamp", prompt)
+        self.assertIn("without making that field a prerequisite for selecting a lone legacy attempt", prompt)
         self.assertIn("runtime/prepare_candidate.py", prompt)
         self.assertNotIn("adding ONLY its validated absolute execution_file", prompt)
         self.assertIn(cand["fingerprint_input"], prompt)
@@ -1129,6 +1131,16 @@ class TestFailClosed(Base):
                 self.assertEqual(res.finding_key, "prepared_execution_invalid")
                 run.assert_not_called()
                 self.assertFalse((self.root / family).exists())
+
+    def test_missing_created_at_is_rejected_before_mutation(self):
+        cand, _execution, _manifest = self._prepared(run_over={"created_at_utc": None})
+        self._write_pool([cand])
+        with patch.object(h, "_run_bounded_process") as run:
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "prepared_execution_invalid")
+        self.assertIn("created_at_utc", res.reason)
+        run.assert_not_called()
+        self.assertFalse((self.root / FAMILY_B).exists())
 
     def test_preflight_failure_is_before_family_write(self):
         cand, _execution, _manifest = self._prepared()
