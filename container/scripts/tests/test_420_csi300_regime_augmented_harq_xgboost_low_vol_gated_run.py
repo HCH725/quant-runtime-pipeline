@@ -351,6 +351,57 @@ class TestEvaluationPhaseWiring(unittest.TestCase):
         self.assertTrue(result["registered_battery_implemented"])
 
 
+class TestContractRecordSchema(unittest.TestCase):
+    """r1-u3 serialization correction: the cohort record and the result disposition band must
+    match the contract 10.8 schema read by the host-side runtime/survivor_bundle.py writer and
+    runtime/survivor_index.py consumer: `outcome`, `winner` (registered strategy + DCA axes
+    only) and `metrics` (phases + the four robustness grids).
+    """
+
+    def _grid_row(self, grid, symbol="BTCUSDT"):
+        row = {"symbol": symbol, "timeframe": R.TIMEFRAMES[0], "strategy_case": 0, "grid": grid,
+               "spacing_pct": 0.04, "size_multiplier": 1.0, "breakeven_tp_pct": 0.01,
+               "invalidation_pct": 0.1}
+        row.update({k: 0.0 for k in (
+            "gross_pnl", "fees", "funding", "net_pnl", "ending_equity", "sharpe", "max_dd_pct",
+            "max_dd_usdt", "annualized_return", "max_effective_leverage", "capital_utilization")})
+        row.update({"episodes": 12, "fills": 30, "adds": 10, "turnover_usdt": 1000.0,
+                    "tp_hits": 12, "stop_hits": 0, "family_exits": 0, "margin_calls": 0,
+                    "end_exits": 0, "open_at_end": 0, "long_episodes": 10, "short_episodes": 2})
+        return row
+
+    def test_cohort_record_matches_the_bundle_consumer_schema(self):
+        by_grid = {g: self._grid_row(g) for g in R.GRIDS}
+        hist = by_grid["historical"]
+        nb = {"neighbours": 4, "agreeing": 3, "same_sign_fraction": 0.75,
+              "axes": ["strategy_case", "spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                       "invalidation_pct"], "passed": True}
+        checks = {"historical_winner_found": True, "oos_economic": True, "full_economic": True,
+                  "robustness_economic": True, "robustness_failed_grids": [],
+                  "parameter_neighbourhood": True}
+        record = R.cohort_record("BTCUSDT/1d", hist, hist, by_grid, [], checks, nb)
+        self.assertEqual(record["outcome"], "SURVIVOR")
+        self.assertEqual(record["winner"], {"strategy_case": 0, "spacing_pct": 0.04,
+                                            "size_multiplier": 1.0, "breakeven_tp_pct": 0.01,
+                                            "invalidation_pct": 0.1})
+        self.assertEqual(set(record["metrics"]), {"phases", "robustness", "neighbourhood"})
+        self.assertEqual(set(record["metrics"]["phases"]), {"historical", "oos", "full"})
+        self.assertEqual(set(record["metrics"]["robustness"]),
+                         {"fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks"})
+        self.assertEqual(record["cull_reasons"], [])
+        self.assertEqual(record["best_historical_episodes"], 12)
+        # the frozen-bundle writer rule set: SURVIVOR rows carry winner+metrics and no culls
+        self.assertTrue(record["winner"] and record["metrics"] and not record["cull_reasons"])
+        culled = R.cohort_record("BTCUSDT/1d", hist, hist, by_grid, ["oos_economic"], checks, nb)
+        self.assertEqual(culled["outcome"], "CULLED")
+        self.assertEqual(culled["cull_reasons"], ["oos_economic"])
+
+    def test_disposition_band_mapping(self):
+        self.assertEqual(R.disposition_band(0), "NO_SURVIVOR")
+        self.assertEqual(R.disposition_band(1), "SURVIVOR_FOUND")
+        self.assertEqual(R.disposition_band(2), "MULTIPLE_SURVIVORS")
+
+
 class TestRegistryInvariants(unittest.TestCase):
     def test_dca_grid_matches_the_frozen_fingerprint_input(self):
         fingerprint = R.FINGERPRINT_INPUT

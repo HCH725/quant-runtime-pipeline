@@ -1893,6 +1893,51 @@ def metric_block(row):
     return {k: row[k] for k in keys}
 
 
+def disposition_band(survivor_count):
+    """Contract 7.3 v1.4.0 disposition band: a count only, never a verdict."""
+    if survivor_count > 1:
+        return "MULTIPLE_SURVIVORS"
+    return "SURVIVOR_FOUND" if survivor_count else "NO_SURVIVOR"
+
+
+def cohort_record(cohort_name, winner, hist_row, by_grid, culls, survivor_checks, nb):
+    """One cohort record in the contract 10.8 schema consumed by the host-side writers.
+
+    runtime/survivor_bundle.py and runtime/survivor_index.py read exactly `outcome`,
+    `winner` (the registered strategy + DCA axes only) and `metrics` (phases + the four
+    robustness grids), so the record is emitted in that shape rather than with the
+    legacy names (status / list winner / top-level *_metrics).
+    """
+    winner_params = {
+        "strategy_case": int(winner["strategy_case"]),
+        "spacing_pct": float(winner["spacing_pct"]),
+        "size_multiplier": float(winner["size_multiplier"]),
+        "breakeven_tp_pct": float(winner["breakeven_tp_pct"]),
+        "invalidation_pct": float(winner["invalidation_pct"]),
+    }
+    robustness_grids = ("fee_2x", "funding_2x", "entry_delay_1_bar", "slippage_2ticks")
+    return {
+        "cohort": cohort_name,
+        "outcome": "SURVIVOR" if not culls else "CULLED",
+        "winner": winner_params,
+        "winner_strategy_case": int(winner["strategy_case"]),
+        "winner_case_key": REGISTERED_CASES[int(winner["strategy_case"])]["key"],
+        "best_historical_episodes": int(hist_row["episodes"]),
+        "cull_reasons": culls,
+        "survivor_checks": survivor_checks,
+        "neighbourhood": nb,
+        "metrics": {
+            "phases": {
+                "historical": metric_block(hist_row),
+                "oos": metric_block(by_grid["oos"]),
+                "full": metric_block(by_grid["full"]),
+            },
+            "robustness": {g: metric_block(by_grid[g]) for g in robustness_grids},
+            "neighbourhood": nb,
+        },
+    }
+
+
 def write_grid(output_dir, grid, rows):
     path = Path(output_dir) / ("grid_%s.csv" % grid)
     fieldnames = [
@@ -2225,7 +2270,7 @@ def _run_impl(run_spec_path, attempt_dir, raw_root=None, qlib_version="unknown")
         winner, cull_reason, _candidates = select_cohort(cohort_rows)
         if winner is None:
             cohort_results.append({
-                "cohort": cohort_name, "status": "CULLED", "winner": None,
+                "cohort": cohort_name, "outcome": "CULLED", "winner": None,
                 "cull_reasons": [cull_reason], "survivor_checks": None, "neighbourhood": None,
             })
             continue
@@ -2255,27 +2300,16 @@ def _run_impl(run_spec_path, attempt_dir, raw_root=None, qlib_version="unknown")
             culls.append("robustness_economic:" + ",".join(failed_robustness))
         if not nb["passed"]:
             culls.append("parameter_neighbourhood")
-        record = {
-            "cohort": cohort_name,
-            "status": "SURVIVOR" if not culls else "CULLED",
-            "winner": w_key,
-            "winner_strategy_case": int(winner["strategy_case"]),
-            "winner_case_key": REGISTERED_CASES[int(winner["strategy_case"])]["key"],
-            "cull_reasons": culls,
-            "survivor_checks": {
-                "historical_winner_found": True,
-                "oos_economic": oos_ok,
-                "full_economic": full_ok,
-                "robustness_economic": not failed_robustness,
-                "robustness_failed_grids": failed_robustness,
-                "parameter_neighbourhood": nb["passed"],
-            },
-            "neighbourhood": nb,
-            "historical_metrics": metric_block(hist_row),
-            "oos_metrics": metric_block(by_grid["oos"]),
-            "full_metrics": metric_block(by_grid["full"]),
-            "stress_metrics": {g: metric_block(by_grid[g]) for g in robustness_grids},
+        survivor_checks = {
+            "historical_winner_found": True,
+            "oos_economic": oos_ok,
+            "full_economic": full_ok,
+            "robustness_economic": not failed_robustness,
+            "robustness_failed_grids": failed_robustness,
+            "parameter_neighbourhood": nb["passed"],
         }
+        record = cohort_record(cohort_name, winner, hist_row, by_grid, culls,
+                               survivor_checks, nb)
         cohort_results.append(record)
         if not culls:
             survivors.append(record)
@@ -2408,11 +2442,13 @@ def _run_impl(run_spec_path, attempt_dir, raw_root=None, qlib_version="unknown")
         "strategy_cases_evaluated": len(STRATEGY_CASES),
         "cohort_survivor_count": len(survivors),
         "cohort_survivors": [s["cohort"] for s in survivors],
-        "cohort_culled": [c["cohort"] for c in cohort_results if c["status"] == "CULLED"],
+        "cohort_culled": [c["cohort"] for c in cohort_results if c["outcome"] == "CULLED"],
         "falsification_negative_conclusion_falsified": falsification["negative_conclusion_falsified"],
         "dca_layer_histogram": layer_histogram,
         "verdict_recommendation": "PASS" if survivors else "REJECT",
+        "disposition": disposition_band(len(survivors)),
         "performance_claimable": bool(survivors),
+        "performance_claimable_recommendation": bool(survivors),
         "disposition_version": "cohort-disposition-v1",
         "selector_version": "cohort-selector-v1",
         "assertions_all_true": all(assertions.values()),
