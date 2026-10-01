@@ -394,6 +394,19 @@ class TestPreparedPromotion(Base):
         self.assertEqual(self._backlog()["candidates"][0]["family_id"], FAMILY_B)
         self.assertEqual(self._pool()["candidates"][-1], expected)
 
+    def test_promotion_transport_preserves_challenger_lineage(self):
+        # Preparation must append the exact candidate bytes: challenger_of is lineage, not a
+        # preparation detail, so it must reach the pool untouched (contract 27.4).
+        cand = backlog_candidate(FAMILY_A, challenger_of="sv-incumbent")
+        self._write_backlog([cand])
+        self._write_pool([])
+        _prepared_dir, manifest_path = self._prepared_package(cand)
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("promoted", "promoted"), res.reason)
+        entry = self._pool()["candidates"][-1]
+        self.assertEqual(entry, dict(cand, execution_file=str(manifest_path)))
+        self.assertEqual(entry["challenger_of"], "sv-incumbent")
+
     def test_idempotent_retry_only_drops_the_head_when_already_consumed(self):
         cand_a = backlog_candidate(FAMILY_A)
         self._write_backlog([cand_a, backlog_candidate(FAMILY_B)])

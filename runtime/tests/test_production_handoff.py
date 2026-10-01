@@ -413,6 +413,15 @@ class TestAdvance(Base):
         self.assertEqual(len(self.fake.launches()), 1)
         self.assertEqual(res.detail["semantic_fingerprint"], doc["semantic_fingerprint"])
 
+    def test_challenger_lineage_survives_the_handoff_into_family_json(self):
+        # Contract 27.4: a reviewed candidate carrying challenger_of must land that field in
+        # family.json, otherwise survivor_index can never run the challenger rules (27.4).
+        self._write_pool([candidate(challenger_of="sv-incumbent")])
+        res = self.run_round()
+        self.assertEqual(res.action, "appended", res.reason)
+        doc = json.loads((self.root / FAMILY_B / "family.json").read_text())
+        self.assertEqual(doc["challenger_of"], "sv-incumbent")
+
     def test_kanban_is_never_read(self):
         # The point of contract 14.4 v-next: no list/show/status read exists, so no board state
         # (blocked, stale, unreadable) can participate in the advance decision.

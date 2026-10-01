@@ -1037,6 +1037,9 @@ def write_family_json(results_root, cand, prepared_identity=None):
         "fingerprint_input": cand["fingerprint_input"],
         "parent_family": cand.get("parent_family"),
         "lineage_note": cand.get("lineage_note") or "",
+        # Contract 27.4 lineage: survivor_index reads this to enforce the challenger rules, so the
+        # reviewed candidate's field must survive the handoff verbatim (null for non-challengers).
+        "challenger_of": cand.get("challenger_of"),
         "created_at_utc": now_utc(),
         "handoff": {"source": "production_handoff", "contract_section": "14.4",
                     "execution": DIRECT_MODE, "body_sha256": fingerprint(body_with_footer(cand)),
