@@ -836,9 +836,16 @@ class TestFailClosed(Base):
         self.assertIn("not an execution prerequisite", prompt)
         self.assertIn("complete legal local eligible universe", prompt)
         self.assertIn("core signal/model capability or required data type/field is absent", prompt)
-        self.assertIn("dedicated current-family runner", prompt)
+        self.assertIn("REPOSITORY HYGIENE", prompt)
+        self.assertIn("Git checkout at the workspace path is read-only during preparation", prompt)
+        self.assertIn("_handoff/preparing/%s/work/" % FAMILY_B, prompt)
+        self.assertIn("legacy v3 turn for THIS SAME family", prompt)
+        self.assertIn("migrate only those exact ?? files", prompt)
+        self.assertIn("never touch tracked/modified files or unrelated dirt", prompt)
+        self.assertIn("remove this family scratch work directory before EXIT", prompt)
+        self.assertIn("pre-existing unrelated dirty state must remain byte-for-byte untouched", prompt)
         self.assertIn("do not modify unrelated strategy runners or generic/shared engines", prompt)
-        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v3.md")
+        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v4.md")
         self.assertIn("CLEAR-ABSENCE EXCEPTION", prompt)
 
     def test_clear_absence_outcome_validates_against_the_candidate_identity(self):
@@ -1755,7 +1762,7 @@ class TestPreparationLaunchBounds(Base):
         lease = Path(self.root) / "lease"
         session_name = h.PREPARATION_SOURCE + ":" + FAMILY_B
         with patch.object(h.subprocess, "Popen") as popen:
-            h._launch_hermes_session(lease, "prepare-task-v3.md", "prompt", max_turns=15,
+            h._launch_hermes_session(lease, "prepare-task-v4.md", "prompt", max_turns=15,
                                      run_budget=1800, session_name=session_name)
         cmd = popen.call_args[0][0]
         self.assertEqual(cmd[cmd.index("--max-turns") + 1], "15")
