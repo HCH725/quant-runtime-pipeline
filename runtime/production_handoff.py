@@ -875,9 +875,7 @@ def preparation_prompt(cand, results_root, backlog_path):
           "/Users/hong/workspace/qlib-apple-container/scripts, and stage immutable round-spec.json, "
           "run-spec.json and prepared-execution manifest under %s/_handoff/prepared/%s/. Stage the "
           "package only; the host preparation runner later runs the focused family test and "
-          "P1-P10 preflight before any promotion. Every staged run-spec.json MUST include a non-empty, "
-          "parseable ISO-8601 created_at_utc timestamp (prefer UTC Z form) because reconciler attempt ordering "
-          "uses that existing field as authoritative metadata. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
+          "P1-P10 preflight before any promotion. CURRENT LIFECYCLE PRECEDENCE: source venue, quote currency, "
           "named symbols and source-universe breadth are provenance/external-validity context, not an "
           "execution prerequisite when the registered core signal can be computed on canonical local "
           "raw. In that case you MUST register the complete legal local eligible universe, adapt only "
@@ -1349,8 +1347,6 @@ def _prepared_execution(cand, args):
                 run_spec.get("schema_version") != 1 or run_spec.get("family_id") != family_id or \
                 run_spec.get("round_id") != round_id or run_spec.get("run_id") != run_id:
             raise ValueError("run-spec family/round/run identity mismatch")
-        if parse_utc(run_spec.get("created_at_utc")) is None:
-            raise ValueError("run-spec created_at_utc missing/unparsable")
         round_ownership, run_ownership = (_nonempty_ownership(round_spec),
                                           _nonempty_ownership(run_spec))
         if round_ownership or run_ownership:

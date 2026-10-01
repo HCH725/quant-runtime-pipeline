@@ -404,8 +404,9 @@ family F
 
 - `[C]` **v2.0 direct C4 override（AUDITED PASS / LIVE）**：固定 n8n C4 action 仍呼叫
   `runtime/reconcile.py`；它只處理 `family.json.handoff.execution=direct_hermes`，歷史
-  card-owned family 不改動。每 round 只讓 `(created_at_utc, uN)` 最新、identity 合法的
-  attempt 驅動：較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
+  card-owned family 不改動。每 round 僅有一個 identity 合法 attempt 時不需要 ordering metadata，
+  直接由該 attempt 驅動；只有同 round 存在多個 attempt 時才以 `(created_at_utc, uN)` 判定最新者，
+  較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
   fail-closed 並記 canonical incident。`state.json.stage` 為 `ARTIFACT_READY`／
   `FAILED_SCRIPT` 且無 sentinel、有合法 terminal 但該 round 無 verdict、或 attempt 已超過
   90 分鐘 stall window（與 handoff／watchdog 同一窗口）未再寫入且仍無 sentinel 與該 round

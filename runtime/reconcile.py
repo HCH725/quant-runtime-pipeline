@@ -112,7 +112,7 @@ def attempt_metadata(path, family_id, round_id, run_id):
     both ids) - and non-empty `problems` still means the round is undecidable. No new state, no
     second registry.
     """
-    rec = Attempt(path, family_id, round_id)
+    rec = Attempt(path, family_id, round_id, require_timestamp=False)
     if rec.run_id != run_id:
         rec.problems.append("run_id %r does not match attempt dir %r" % (run_id, rec.run_id))
     return rec
@@ -134,6 +134,12 @@ def select_authoritative(records):
     broken = [r for r in records if r.problems]
     if broken:
         return None, [], "; ".join("%s: %s" % (r.run_id, ", ".join(r.problems)) for r in broken)
+    if len(records) > 1:
+        missing_order = [r for r in records if r.created_at is None]
+        if missing_order:
+            return None, [], "; ".join(
+                "%s: run-spec.json created_at_utc missing/unparsable" % r.run_id
+                for r in missing_order)
     oldest = datetime.datetime.min.replace(tzinfo=datetime.timezone.utc)
     ordered = sorted(records, key=lambda r: (r.created_at or oldest,
                                              -1 if r.ordinal is None else r.ordinal))
@@ -371,7 +377,7 @@ def main():
     for family_id, round_id, attempts in discover_rounds(args.results_root):
         if not direct_family(load(Path(args.results_root) / family_id / "family.json")):
             continue  # C4 never dispatches historical board-owned attempts
-        records = [Attempt(a, family_id, round_id) for a in attempts]
+        records = [Attempt(a, family_id, round_id, require_timestamp=False) for a in attempts]
         current, older, problem = select_authoritative(records)
         if problem:
             res = Result(next((r for r in records if r.problems), records[-1]))
