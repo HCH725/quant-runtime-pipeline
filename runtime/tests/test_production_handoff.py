@@ -731,7 +731,7 @@ class TestFailClosed(Base):
         round_spec = {"schema_version": 1, "family_id": family, "round_id": round_id}
         round_spec.update(round_over or {})
         run_spec = {"schema_version": 1, "family_id": family, "round_id": round_id,
-                    "run_id": run_id,
+                    "run_id": run_id, "created_at_utc": "2026-09-30T00:00:00Z",
                     "script": {"path": "/scripts/strategy.py", "sha256": "sha256:" + "1" * 64}}
         run_spec.update(run_over or {})
         round_bytes = json.dumps(round_spec, sort_keys=True, separators=(",", ":")).encode()
@@ -1129,6 +1129,16 @@ class TestFailClosed(Base):
                 self.assertEqual(res.finding_key, "prepared_execution_invalid")
                 run.assert_not_called()
                 self.assertFalse((self.root / family).exists())
+
+    def test_missing_created_at_is_rejected_before_mutation(self):
+        cand, _execution, _manifest = self._prepared(run_over={"created_at_utc": None})
+        self._write_pool([cand])
+        with patch.object(h, "_run_bounded_process") as run:
+            res = self.run_round(require_prepared_execution=True)
+        self.assertEqual(res.finding_key, "prepared_execution_invalid")
+        self.assertIn("created_at_utc", res.reason)
+        run.assert_not_called()
+        self.assertFalse((self.root / FAMILY_B).exists())
 
     def test_preflight_failure_is_before_family_write(self):
         cand, _execution, _manifest = self._prepared()
