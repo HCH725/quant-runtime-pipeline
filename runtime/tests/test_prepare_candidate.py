@@ -5,7 +5,8 @@ Each test owns a temp results root and a temp host-scripts mirror; the Hermes la
 P1-P10 preflight are the only substituted calls, so promotion decisions run against real files, a real
 kernel lease, a real atomic-rewrite path, and a real bounded unittest invocation:
 
-  * the backlog head only: one head per run, FIFO order preserved, head never skipped;
+  * one candidate per run; healthy ordering is preserved, while transient family-local preparation
+    failure rotates the exact candidate to the tail instead of blocking unrelated candidates;
   * nothing staged -> exactly one bounded quant-preparation session, pool and backlog untouched;
   * a busy preparation lease or a held handoff lease -> waiting, never a duplicate launch;
   * promotion is agent-free and exact: the candidate bytes (+ execution_file) land in the pool, the
@@ -303,15 +304,78 @@ class TestPreparationLaunch(Base):
         self.assertEqual(len(self._backlog()["candidates"]), 1)
         self.assertEqual(self._pool()["candidates"], [])
 
-    def test_launch_failure_is_a_finding_and_the_head_stays(self):
-        self._write_backlog([backlog_candidate(FAMILY_A)])
+    def test_launch_failure_defers_exact_candidate_and_advances_next_head(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
         self._write_pool([])
         self.launch_result = (None, "simulated launcher failure", False)
         res = self.run_prepare()
-        self.assertEqual((res.action, res.outcome), ("finding", "finding"))
-        self.assertEqual(res.finding_key, "preparation_launch_failed")
-        self.assertEqual(self._backlog()["candidates"][0]["family_id"], FAMILY_A)
+        self.assertEqual((res.action, res.outcome), ("deferred", "deferred"))
+        self.assertIsNone(res.finding_key)
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_B, FAMILY_A])
+        self.assertEqual(self._backlog()["candidates"][-1], cand_a)
+        status = json.loads((self.handoff / h.PREPARATION_DIRNAME / FAMILY_A /
+                             p.PREPARATION_STATUS).read_text())
+        self.assertEqual(status["state"], "deferred")
+        self.assertIn("simulated launcher failure", status["reason"])
+        self.assertEqual(res.detail["next_family"], FAMILY_B)
         self.assertEqual(self._pool()["candidates"], [])
+
+    def test_completed_attempt_without_output_defers_instead_of_monopolizing_queue(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        status_path = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A / p.PREPARATION_STATUS
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps({"schema_version": 1, "family_id": FAMILY_A,
+                                           "state": "running",
+                                           "updated_at_utc": "2026-10-01T00:00:00Z",
+                                           "reason": "previous attempt"}) + "\n")
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("deferred", "deferred"))
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_B, FAMILY_A])
+        self.assertEqual(self.launch_calls, [])
+        self.assertIn("exited without a staged package", res.reason)
+
+    def test_running_attempt_with_live_family_lease_waits_without_rotation(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        lease_dir = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A
+        lease_dir.mkdir(parents=True, exist_ok=True)
+        (lease_dir / p.PREPARATION_STATUS).write_text(
+            json.dumps({"schema_version": 1, "family_id": FAMILY_A, "state": "running",
+                        "updated_at_utc": "2026-10-01T00:00:00Z",
+                        "reason": "active"}) + "\n")
+        fd = h._lock(lease_dir / h.AGENT_LOCK)
+        self.assertIsNotNone(fd)
+        try:
+            res = self.run_prepare()
+        finally:
+            os.close(fd)
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_A, FAMILY_B])
+        self.assertEqual(self.launch_calls, [])
+
+    def test_deferred_candidate_retries_when_it_returns_to_head(self):
+        cand_a = backlog_candidate(FAMILY_A)
+        self._write_backlog([cand_a])
+        self._write_pool([])
+        status_path = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A / p.PREPARATION_STATUS
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps({"schema_version": 1, "family_id": FAMILY_A,
+                                           "state": "deferred",
+                                           "updated_at_utc": "2026-10-01T00:00:00Z",
+                                           "reason": "retry later"}) + "\n")
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertEqual(self.launch_calls[0][1]["family_id"], FAMILY_A)
+        status = json.loads(status_path.read_text())
+        self.assertEqual(status["state"], "running")
 
     def test_concurrent_run_is_serialized_by_the_handoff_lease(self):
         self._write_backlog([backlog_candidate(FAMILY_A)])
