@@ -28,8 +28,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from production_handoff import (ACTIVE_WINDOW_MINUTES, DISPOSITION_PROMPT_VERSION,  # noqa: E402
-                                attempt_activity, direct_family, disposition_prompt, launch_agent,
+from production_handoff import (ACTIVE_WINDOW_MINUTES, AGENT_LOCK, DISPOSITION_PROMPT_VERSION,  # noqa: E402
+                                _lock, attempt_activity, direct_family, disposition_prompt, launch_agent,
                                 round_verdict_token)
 from terminal_evidence import TERMINALS, host_boot_id, now_utc, sha256_file  # noqa: E402
 
@@ -364,9 +364,26 @@ def _mechanical_reject_payload(res):
             return None, "expected output escapes attempt tree: %s" % rel
         if rel not in manifest:
             manifest.append(rel)
-    for required in ("state.json", "result.json"):
+    for required in ("state.json", "result.json", "artifacts/cohort_survivors.json",
+                     "artifacts/cohort_results.json"):
         if required not in manifest:
             return None, "required output not registered: %s" % required
+    survivors = load(attempt / "artifacts" / "cohort_survivors.json")
+    cohort_results = load(attempt / "artifacts" / "cohort_results.json")
+    if survivors != []:
+        return None, "cohort_survivors artifact contradicts zero-survivor result"
+    if not isinstance(cohort_results, list):
+        return None, "cohort_results artifact is not a list"
+    measured_survivors = [row.get("cohort") for row in cohort_results
+                          if isinstance(row, dict) and
+                          (row.get("outcome") == "SURVIVOR" or row.get("status") == "SURVIVOR")]
+    if measured_survivors:
+        return None, "cohort_results artifact reports survivors: %s" % measured_survivors
+    cohorts_evaluated = result.get("cohorts_evaluated")
+    registered_cohorts = registered.get("cohorts")
+    if type(cohorts_evaluated) is not int or cohorts_evaluated <= 0 or \
+            len(cohort_results) != cohorts_evaluated or registered_cohorts != cohorts_evaluated:
+        return None, "cohort coverage count mismatch"
     return {"result": result, "run_spec": run_spec, "manifest": manifest}, None
 
 
@@ -411,68 +428,81 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
         res.reason = "ARTIFACT_READY deterministic zero-survivor REJECT"
         res.detail["mechanical_closeout"] = True
         return res
-    cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
-           "publish", "--attempt-dir", str(attempt), "--status", "DONE",
-           "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
-           "--verdict-hint", "CANDIDATE_REJECT"]
-    for rel in payload["manifest"]:
-        cmd.extend(["--manifest", rel])
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-    except (subprocess.TimeoutExpired, OSError) as exc:
-        recovered = _published_terminal_after_race(res, results_root, detector)
-        if recovered is not None:
-            return recovered
-        res.detail["terminal_publish_error"] = "%s: %s" % (type(exc).__name__, exc)
+        lease_fd = _lock(Path(results_root) / res.family_id / AGENT_LOCK)
+    except OSError as exc:
+        res.detail["completion_lease_error"] = str(exc)
         return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                    [str(attempt)])
-    if proc.returncode != 0:
-        recovered = _published_terminal_after_race(res, results_root, detector)
-        if recovered is not None:
-            return recovered
-        res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
-        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                    [str(attempt)])
-    result = payload["result"]
-    verdict = {
-        "schema_version": 1,
-        "kind": "round_verdict",
-        "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v3.0.0",
-        "authored_by": "runtime/reconcile.py deterministic zero-survivor closeout",
-        "ownership_mode": "direct_hermes",
-        "family_id": res.family_id,
-        "round_id": res.round_id,
-        "run_id": res.run_id,
-        "verdict": "REJECT",
-        "disposition": result.get("disposition") or "NO_SURVIVOR",
-        "selector_version": result.get("selector_version"),
-        "disposition_version": result.get("disposition_version"),
-        "performance_claimable": False,
-        "cohort_survivor_count": 0,
-        "cohort_survivors": [],
-        "coverage_complete": True,
-        "case_evaluations_total": result.get("case_evaluations_total"),
-        "expected_case_evaluations": result.get("expected_case_evaluations"),
-        "result_sha256": sha256_file(str(attempt / "result.json")),
-        "terminal": {"status": "DONE", "path": str(attempt / "DONE")},
-        "decided_at_utc": now_utc(),
-    }
+                    [str(Path(results_root) / res.family_id / AGENT_LOCK)])
+    if lease_fd is None:
+        res.action, res.reason = "running", "family completion/disposition lease already owned"
+        res.detail["mechanical_closeout"] = True
+        return res
     try:
-        _exclusive_json(round_dir / "verdict.json", verdict)
-    except FileExistsError:
-        existing = load(round_dir / "verdict.json")
-        token = round_verdict_token(round_dir, res.family_id,
-                                    load(Path(results_root) / res.family_id / "family.json"))
-        if token != "REJECT" or not isinstance(existing, dict) or existing.get("run_id") != res.run_id:
+        cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
+               "publish", "--attempt-dir", str(attempt), "--status", "DONE",
+               "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
+               "--verdict-hint", "CANDIDATE_REJECT"]
+        for rel in payload["manifest"]:
+            cmd.extend(["--manifest", rel])
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            recovered = _published_terminal_after_race(res, results_root, detector)
+            if recovered is not None:
+                return recovered
+            res.detail["terminal_publish_error"] = "%s: %s" % (type(exc).__name__, exc)
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt)])
+        if proc.returncode != 0:
+            recovered = _published_terminal_after_race(res, results_root, detector)
+            if recovered is not None:
+                return recovered
+            res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt)])
+        result = payload["result"]
+        verdict = {
+            "schema_version": 1,
+            "kind": "round_verdict",
+            "contract": "QUANT_RUNTIME_PIPELINE_IMPLEMENTATION_CONTRACT.md v3.0.0",
+            "authored_by": "runtime/reconcile.py deterministic zero-survivor closeout",
+            "ownership_mode": "direct_hermes",
+            "family_id": res.family_id,
+            "round_id": res.round_id,
+            "run_id": res.run_id,
+            "verdict": "REJECT",
+            "disposition": result.get("disposition") or "NO_SURVIVOR",
+            "selector_version": result.get("selector_version"),
+            "disposition_version": result.get("disposition_version"),
+            "performance_claimable": False,
+            "cohort_survivor_count": 0,
+            "cohort_survivors": [],
+            "coverage_complete": True,
+            "case_evaluations_total": result.get("case_evaluations_total"),
+            "expected_case_evaluations": result.get("expected_case_evaluations"),
+            "result_sha256": sha256_file(str(attempt / "result.json")),
+            "terminal": {"status": "DONE", "path": str(attempt / "DONE")},
+            "decided_at_utc": now_utc(),
+        }
+        try:
+            _exclusive_json(round_dir / "verdict.json", verdict)
+        except FileExistsError:
+            existing = load(round_dir / "verdict.json")
+            token = round_verdict_token(round_dir, res.family_id,
+                                        load(Path(results_root) / res.family_id / "family.json"))
+            if token != "REJECT" or not isinstance(existing, dict) or                     existing.get("run_id") != res.run_id:
+                return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                            [str(round_dir / "verdict.json")])
+        except OSError as exc:
+            res.detail["verdict_publish_error"] = str(exc)
             return fail(res, results_root, "mechanical_closeout_failed", detector, False,
                         [str(round_dir / "verdict.json")])
-    except OSError as exc:
-        res.detail["verdict_publish_error"] = str(exc)
-        return fail(res, results_root, "mechanical_closeout_failed", detector, False,
-                    [str(round_dir / "verdict.json")])
-    res.action, res.reason = "finalized", "deterministic zero-survivor REJECT published"
-    res.detail["mechanical_closeout"] = True
-    return res
+        res.action, res.reason = "finalized", "deterministic zero-survivor REJECT published"
+        res.detail["mechanical_closeout"] = True
+        return res
+    finally:
+        os.close(lease_fd)
 
 
 def handle(res, results_root, dry_run, detector):

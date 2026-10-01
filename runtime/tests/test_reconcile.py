@@ -69,18 +69,23 @@ class Reconcile(unittest.TestCase):
         spec.update({
             "selector_version": "cohort-selector-v1",
             "disposition_version": "cohort-disposition-v1",
-            "expected": {"expected_case_evaluations": 10},
-            "expected_outputs": ["state.json", "result.json", "artifacts/cohort_survivors.json"],
+            "expected": {"cohorts": 2, "expected_case_evaluations": 10},
+            "expected_outputs": ["state.json", "result.json", "artifacts/cohort_survivors.json",
+                                 "artifacts/cohort_results.json"],
         })
         (attempt / "run-spec.json").write_text(json.dumps(spec))
         (attempt / "artifacts").mkdir(exist_ok=True)
         (attempt / "artifacts" / "cohort_survivors.json").write_text("[]\n")
+        (attempt / "artifacts" / "cohort_results.json").write_text(json.dumps([
+            {"cohort": "BTCUSDT/1d", "outcome": "CULLED"},
+            {"cohort": "ETHUSDT/1d", "status": "CULLED"},
+        ]))
         result = {
             "schema_version": 1,
             "family_id": spec["family_id"], "round_id": spec["round_id"], "run_id": spec["run_id"],
             "status": "ARTIFACT_READY", "coverage_complete": True,
             "case_evaluations_total": 10, "expected_case_evaluations": 10,
-            "cohort_survivor_count": 0, "cohort_survivors": [],
+            "cohorts_evaluated": 2, "cohort_survivor_count": 0, "cohort_survivors": [],
             "verdict_recommendation": "REJECT", "performance_claimable": False,
             "assertions_all_true": True, "selector_version": "cohort-selector-v1",
             "disposition_version": "cohort-disposition-v1",
@@ -89,6 +94,20 @@ class Reconcile(unittest.TestCase):
             result["disposition"] = disposition
         (attempt / "result.json").write_text(json.dumps(result))
         return attempt
+
+    def publish_done_fixture(self, attempt):
+        payload, problem = r._mechanical_reject_payload(r.Result(r.Attempt(
+            attempt, "fam-a", "fam-a-r1", require_timestamp=False)))
+        self.assertIsNone(problem)
+        checksums = {rel: r.sha256_file(str(attempt / rel)) for rel in payload["manifest"]}
+        (attempt / "DONE").write_text(json.dumps({
+            "schema_version": 1, "status": "DONE", "family_id": "fam-a",
+            "round_id": "fam-a-r1", "run_id": "fam-a-r1-u1",
+            "host_boot_id": "boot-test-current", "container_id": "qlib-run",
+            "image_id": "img", "verdict_hint": "CANDIDATE_REJECT",
+            "artifact_manifest": payload["manifest"], "artifact_checksums": checksums,
+        }))
+        return payload
 
     def run_root(self, dry_run=False):
         argv = ["reconcile.py", "--results-root", str(self.root), "--board", "blocked-stale", "--json"]
@@ -127,6 +146,32 @@ class Reconcile(unittest.TestCase):
         self.assertFalse((attempt / "DONE").exists())
         self.assertFalse((attempt.parents[1] / "verdict.json").exists())
 
+    def test_survivor_artifact_conflict_never_mechanically_rejects(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        (attempt / "artifacts" / "cohort_survivors.json").write_text(json.dumps([
+            {"cohort": "BTCUSDT/1d", "outcome": "SURVIVOR"}
+        ]))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [])
+        self.assertEqual(report["launched"], [attempt.name])
+        self.assertIn("cohort_survivors artifact contradicts",
+                      report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+        self.assertFalse((attempt / "DONE").exists())
+
+    def test_cohort_results_survivor_conflict_never_mechanically_rejects(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        rows = json.loads((attempt / "artifacts" / "cohort_results.json").read_text())
+        rows[0]["outcome"] = "SURVIVOR"
+        (attempt / "artifacts" / "cohort_results.json").write_text(json.dumps(rows))
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [])
+        self.assertEqual(report["launched"], [attempt.name])
+        self.assertIn("cohort_results artifact reports survivors",
+                      report["results"][0]["detail"]["mechanical_closeout_not_applicable"])
+        self.assertFalse((attempt / "DONE").exists())
+
     def test_parent_symlink_expected_output_never_mechanically_closes(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
         outside = Path(tempfile.mkdtemp(prefix="qrp-outside-"))
@@ -160,19 +205,9 @@ class Reconcile(unittest.TestCase):
 
     def test_concurrent_terminal_publish_is_idempotent_not_false_incident(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
-        payload, problem = r._mechanical_reject_payload(r.Result(r.Attempt(
-            attempt, "fam-a", "fam-a-r1", require_timestamp=False)))
-        self.assertIsNone(problem)
 
         def publish_elsewhere(*_args, **_kwargs):
-            checksums = {rel: r.sha256_file(str(attempt / rel)) for rel in payload["manifest"]}
-            (attempt / "DONE").write_text(json.dumps({
-                "schema_version": 1, "status": "DONE", "family_id": "fam-a",
-                "round_id": "fam-a-r1", "run_id": "fam-a-r1-u1",
-                "host_boot_id": "boot-test-current", "container_id": "qlib-run",
-                "image_id": "img", "verdict_hint": "CANDIDATE_REJECT",
-                "artifact_manifest": payload["manifest"], "artifact_checksums": checksums,
-            }))
+            self.publish_done_fixture(attempt)
             return r.subprocess.CompletedProcess(["terminal_evidence.py"], 1, "", "already exists")
 
         with patch.object(r.subprocess, "run", side_effect=publish_elsewhere):
@@ -182,6 +217,45 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(report["results"][0]["action"], "running")
         self.assertIn("published concurrently", report["results"][0]["reason"])
         self.assertTrue((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        self.assertEqual(self.calls, [])
+
+    def test_mechanical_closeout_holds_family_lease_through_verdict_publish(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        original_exclusive = r._exclusive_json
+        lock_observations = []
+
+        def exclusive_while_locked(path, doc):
+            probe = h._lock(self.root / "fam-a" / h.AGENT_LOCK)
+            lock_observations.append(probe)
+            if probe is not None:
+                os.close(probe)
+            return original_exclusive(path, doc)
+
+        with patch.object(r, "_exclusive_json", side_effect=exclusive_while_locked):
+            code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["finalized"], [attempt.name])
+        self.assertEqual(lock_observations, [None])
+        self.assertTrue((attempt / "DONE").exists())
+        self.assertTrue((attempt.parents[1] / "verdict.json").exists())
+
+    def test_done_before_verdict_window_cannot_launch_agent_while_completion_lease_held(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        self.publish_done_fixture(attempt)
+        lease_fd = h._lock(self.root / "fam-a" / h.AGENT_LOCK)
+        self.assertIsNotNone(lease_fd)
+        previous_launch = r.launch_agent
+        r.launch_agent = h.launch_agent
+        try:
+            code, report = self.run_root()
+        finally:
+            r.launch_agent = previous_launch
+            os.close(lease_fd)
+        self.assertEqual(code, 0)
+        self.assertEqual(report["incidents"], 0)
+        self.assertEqual(report["results"][0]["action"], "running")
+        self.assertIn("already owns this family", report["results"][0]["reason"])
         self.assertFalse((attempt.parents[1] / "verdict.json").exists())
         self.assertEqual(self.calls, [])
 
