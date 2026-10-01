@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """Hermetic direct C4 checks; never touch the real board, agent, or results root."""
+import argparse
 import contextlib
 import hashlib
 import io
 import json
+import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 RUNTIME = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RUNTIME))
 import reconcile as r  # noqa: E402
+import production_handoff as h  # noqa: E402
 
 
 class Reconcile(unittest.TestCase):
@@ -112,6 +117,137 @@ class Reconcile(unittest.TestCase):
         self.fixture(terminal="DONE")
         self.assertEqual(self.run_root()[1]["launched"], ["fam-a-r1-u1"])
         self.assertEqual(len(self.calls), 1)
+        self.assertFalse((self.root / "_incidents").exists())
+
+    def test_reboot_terminal_disposition_releases_prepared_one_shot_hold(self):
+        with patch.object(r, "host_boot_id", return_value="boot-before-reboot"):
+            attempt = self.fixture(terminal="DONE")
+        family_path = self.root / "fam-a" / "family.json"
+        family = json.loads(family_path.read_text())
+        family["handoff"]["prepared_execution"] = {
+            "round_id": "fam-a-r1", "run_id": attempt.name}
+        family_path.write_text(json.dumps(family))
+        pool = self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME
+        pool.parent.mkdir()
+        pool.write_text(json.dumps({"schema_version": 1, "candidates": []}))
+        old = time.time() - (h.ACTIVE_WINDOW_MINUTES + 10) * 60
+        for path in [attempt] + list(attempt.rglob("*")):
+            os.utime(path, (old, old))
+        frozen = {path: path.read_bytes() for path in attempt.rglob("*") if path.is_file()}
+        args = argparse.Namespace(results_root=str(self.root), pool=str(pool),
+                                  require_prepared_execution=True, dry_run=False)
+        with patch.object(h, "sh", side_effect=AssertionError("no Qlib relaunch")), \
+                patch.object(h, "launch_agent", side_effect=AssertionError("no C3 agent relaunch")), \
+                patch.object(r, "host_boot_id", return_value="boot-after-reboot"):
+            self.assertFalse(h.runtime_state(self.root, "fam-a", family)["in_flight"])
+            held = h._round_once(args)
+            self.assertEqual(held.detail["active_family"], "fam-a")
+            self.assertIn("active runtime evidence", held.reason)
+            code, report = self.run_root()
+            self.assertEqual(code, 0)
+            self.assertEqual(report["launched"], [attempt.name])
+            self.assertEqual(len(self.calls), 1)
+            self.assertEqual(report["results"][0]["detail"]["boot_recovery"], {
+                "sentinel_host_boot_id": "boot-before-reboot",
+                "current_host_boot_id": "boot-after-reboot"})
+            self.assertIn("do not republish", self.calls[0][3])
+            self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+            self.assertEqual(h._round_once(args).detail["active_family"], "fam-a")
+            # The disposition agent, not C4, re-validates artifacts and concludes this round.
+            sentinel = json.loads((attempt / "DONE").read_text())
+            self.assertEqual(r.mapping_problems(r.Result(r.Attempt(attempt, "fam-a", "fam-a-r1")),
+                                               self.root, sentinel), [])
+            for rel in sentinel["artifact_manifest"]:
+                self.assertEqual(r.sha256_file(str(attempt / rel)), sentinel["artifact_checksums"][rel])
+            (attempt.parents[1] / "verdict.json").write_text(json.dumps(
+                {"family_id": "fam-a", "round_id": "fam-a-r1", "verdict": "REJECT"}))
+            self.assertEqual(self.run_root()[1]["results"][0]["action"], "consumed")
+            self.assertEqual(len(self.calls), 1)
+            released = h._round_once(args)
+            self.assertTrue(released.reason.startswith("no_eligible_candidate:"), released.reason)
+            self.assertEqual(h.unresolved_incidents(self.root, {"fam-a": family}), [])
+        self.assertEqual({path: path.read_bytes() for path in frozen}, frozen)
+        incidents = [json.loads(line) for line in (self.root / r.INCIDENT_FILE).read_text().splitlines()]
+        self.assertEqual(len(incidents), 1)
+        self.assertEqual(incidents[0]["kind"], "stale_sentinel")
+        self.assertEqual(incidents[0]["host_boot_id"], "boot-after-reboot")
+        self.assertEqual(incidents[0]["evidence_paths"], [str(attempt / "DONE")])
+
+    def test_reboot_terminal_dry_run_and_repeated_wake_preserve_evidence(self):
+        frozen = {}
+        for terminal in r.TERMINALS:
+            with self.subTest(terminal=terminal), \
+                    patch.object(r, "host_boot_id", return_value="previous-boot"):
+                attempt = self.fixture(family="fam-" + terminal.lower(), terminal=terminal)
+                frozen[attempt / terminal] = (attempt / terminal).read_bytes()
+            with patch.object(r, "host_boot_id", return_value="current-boot"):
+                code, report = self.run_root(dry_run=True)
+                self.assertEqual(code, 0)
+                self.assertIn(attempt.name, report["would_launch"])
+                self.assertEqual(self.calls, [])
+                self.assertFalse((self.root / "_incidents").exists())
+        with patch.object(r, "host_boot_id", return_value="current-boot"):
+            for _ in range(2):
+                self.assertEqual(self.run_root()[0], 0)
+        self.assertEqual(len((self.root / r.INCIDENT_FILE).read_text().splitlines()), len(r.TERMINALS))
+        self.assertEqual({path: path.read_bytes() for path in frozen}, frozen)
+
+    def test_reboot_cannot_bypass_terminal_validation(self):
+        for kind in ("checksum_mismatch", "mapping_mismatch", "multiple_terminal", "sentinel_ambiguous"):
+            with self.subTest(kind=kind), patch.object(r, "host_boot_id", return_value="old-boot"):
+                attempt = self.fixture(family="fam-" + kind.replace("_", "-"), terminal="DONE")
+            if kind == "checksum_mismatch":
+                (attempt / "result.json").write_text("tampered")
+            elif kind == "multiple_terminal":
+                (attempt / "FAILED").write_bytes((attempt / "DONE").read_bytes())
+            else:
+                sentinel = json.loads((attempt / "DONE").read_text())
+                sentinel["run_id" if kind == "mapping_mismatch" else "status"] = "foreign"
+                (attempt / "DONE").write_text(json.dumps(sentinel))
+            with patch.object(r, "host_boot_id", return_value="new-boot"):
+                rec = r.Attempt(attempt, attempt.parents[3].name, attempt.parents[1].name)
+                result = r.handle(r.Result(rec), self.root, False, "reconciler")
+                self.assertEqual((result.action, result.reason), ("incident", kind))
+                self.assertNotIn("boot_recovery", result.detail)
+        self.assertEqual(self.calls, [])
+
+    def test_missing_or_invalid_boot_identity_is_not_reboot_recovery(self):
+        for boot in (None, "", "   ", 123, [], "boot-unknown"):
+            with self.subTest(boot=boot):
+                attempt = self.fixture(terminal="DONE")
+                sentinel = json.loads((attempt / "DONE").read_text())
+                sentinel["host_boot_id"] = boot
+                (attempt / "DONE").write_text(json.dumps(sentinel))
+                code, report = self.run_root()
+                self.assertEqual(code, 3)
+                self.assertEqual(report["results"][0]["reason"], "stale_sentinel")
+                self.assertNotIn("boot_recovery", report["results"][0].get("detail", {}))
+        self.assertEqual(self.calls, [])
+
+    def test_unavailable_current_boot_is_not_reboot_recovery(self):
+        self.fixture(terminal="DONE")
+        with patch.object(r, "host_boot_id", return_value="boot-unknown"):
+            code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["results"][0]["reason"], "stale_sentinel")
+        self.assertEqual(self.calls, [])
+
+    def test_reboot_recovery_uses_existing_lease_and_launch_failure_incident(self):
+        with patch.object(r, "host_boot_id", return_value="old-boot"):
+            self.fixture(terminal="DONE")
+        with patch.object(r, "host_boot_id", return_value="new-boot"):
+            with patch.object(r, "launch_agent", return_value=(None, None, True)) as launch:
+                code, report = self.run_root()
+                self.assertEqual(code, 0)
+                self.assertEqual(report["results"][0]["action"], "running")
+                launch.assert_called_once()
+            with patch.object(r, "launch_agent", return_value=(None, "launch failed", False)):
+                code, report = self.run_root()
+                self.assertEqual(code, 3)
+                self.assertIn("disposition_launch_failed", report["results"][0]["reason"])
+        incidents = [json.loads(line) for line in (self.root / r.INCIDENT_FILE).read_text().splitlines()]
+        self.assertEqual([row["kind"] for row in incidents],
+                         ["stale_sentinel", "disposition_launch_failed"])
 
     def test_tampered_terminal_fails_closed_once(self):
         attempt = self.fixture(terminal="DONE")
