@@ -298,6 +298,22 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(report["attempts_scanned"], 0)
         self.assertEqual(self.calls, [])
 
+    def test_single_attempt_does_not_require_created_at_for_selection(self):
+        self.fixture(stage="ARTIFACT_READY", created=None)
+        code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["launched"], ["fam-a-r1-u1"])
+        self.assertNotEqual(report["results"][0]["reason"], "attempt_selection_ambiguous")
+
+    def test_multiple_attempts_still_require_ordering_timestamp(self):
+        self.fixture(run_id="fam-a-r1-u1", terminal="DONE")
+        self.fixture(run_id="fam-a-r1-u2", stage="ARTIFACT_READY", created=None)
+        code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["results"][0]["reason"], "attempt_selection_ambiguous")
+        self.assertIn("created_at_utc missing/unparsable", report["results"][0]["detail"]["ambiguity"])
+        self.assertEqual(self.calls, [])
+
     def test_superseded_terminal_never_wakes_against_running_current(self):
         self.fixture(run_id="fam-a-r1-u1", terminal="DONE")
         self.fixture(run_id="fam-a-r1-u2", stage="RUNNING_QLIB",
