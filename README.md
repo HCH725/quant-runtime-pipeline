@@ -405,6 +405,10 @@ market-data raw 內容、`/results` 實際 run artifacts、`/qlib/work`、parque
 
 ## 8. 刻意不做（避免過度工程）
 
+### Runtime 診斷原則（non-blocking heuristic）
+
+當 **Qlib compute plane、n8n cadence／bridge、canonical data／storage 都確認健康**，但 pipeline 仍沒有 forward progress 時，**優先檢查我們自己加入的 governance／handoff／guard 是否在阻塞**，不要先往 Qlib 或 n8n 再疊一層機制。處理順序以「找出實際阻塞 gate → 優先刪除或放寬非必要限制 → 避免用新的 workaround 包住舊 workaround」為原則。能監控的問題不必自動升格為 production gate；audit／warning 只有在它直接保護 scientific truth、identity／exact-once、immutable evidence，或已有明確 production failure evidence 時，才應考慮成為 blocking rule。**本段是可依真實 production evidence 滾動修正的操作準則，不是 runtime contract、不得自行成為新的 execution gate。**
+
 - 不加 GitHub Actions / CI / Dependabot / CodeQL / Pages / release automation / submodule / LFS。
 - 不新增 framework、service、daemon、registry、queue 或第二套 runtime。
 - 不新增任何**在 repo 內**可自動觸發的排程（無 CI、無 hook）；本 repo 只提供 deterministic 腳本與版本控管。C3 cadence 仍由 workflow `productionHandoffManualC2` 擁有；preparation 由 Hermes no-agent cron `219d541661d5` 呼叫 host runner，C3 僅消費 host-promoted execution-ready pool entries。Hermes handoff cron `624d0be5b23c` 保持 paused、只作 rollback；不新增 daemon/service/state store 或改 n8n topology。
