@@ -450,6 +450,19 @@ class Harness(unittest.TestCase):
         self.assertIn("5. SYM4m", out)
         self.assertNotIn("SYM5m", out)
 
+    def test_leaderboard_max_drawdown_display_supports_legacy_ratio_and_percent_points(self):
+        self.write("_survivors/leaderboard.json", {"entries": [
+            {"rank": 1, "cohort": "LEGACY/1d", "evidence_state": "FROZEN_ONLY",
+             "full": {"sharpe": 1.0, "max_dd_pct": -0.01}},
+            {"rank": 2, "cohort": "NEW/1d", "evidence_state": "FROZEN_ONLY",
+             "full": {"sharpe": 1.0, "max_dd_pct": 9.367857976349695}},
+        ]})
+        doc = self.dashboard()
+        summaries = [entry["summary"] for entry in doc["leaderboard"]["entries"]]
+        self.assertIn("最大回撤 -1.00%", summaries[0])
+        self.assertIn("最大回撤 -9.37%", summaries[1])
+        self.assertNotIn("936.79%", summaries[1])
+
     def test_no_leaderboard_entries_is_unavailable(self):
         out = self.snapshot()
         self.assertIn(snap.TROPHY + ": unavailable (no entries)", out)

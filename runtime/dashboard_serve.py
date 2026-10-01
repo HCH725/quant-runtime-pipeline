@@ -206,7 +206,7 @@ def _leaderboard_block(value):
         cohort = html.escape(str(entry.get("cohort") or "—"))
         sharpe = _format_decimal(entry.get("sharpe"))
         annualized = _format_percent(entry.get("annualized_return"))
-        max_dd = _format_percent(entry.get("max_dd_pct"))
+        max_dd = _format_max_dd(entry.get("max_dd_pct"))
         trade_frequency = _format_decimal(entry.get("avg_trades_per_year"))
         evidence = _translated_value(entry.get("evidence_state") or "unknown")
         rows.append(
@@ -239,6 +239,14 @@ def _format_decimal(value):
 def _format_percent(value):
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return "%.2f%%" % (value * 100.0)
+    return "—"
+
+
+def _format_max_dd(value):
+    """Display frozen max_dd_pct across legacy ratio and newer percent-point runners."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        signed_pct = value * 100.0 if value < 0 else -value
+        return "%.2f%%" % signed_pct
     return "—"
 
 
@@ -299,8 +307,10 @@ def _value_html(key, value):
         return "是"
     if value is False:
         return "否"
-    if key in {"annualized_return", "max_dd_pct"}:
+    if key == "annualized_return":
         return html.escape(_format_percent(value))
+    if key == "max_dd_pct":
+        return html.escape(_format_max_dd(value))
     if key in {"share_pct", "progress_pct"} and isinstance(value, (int, float)) and not isinstance(value, bool):
         return html.escape("%.1f%%" % value)
     if key == "sharpe":

@@ -406,6 +406,18 @@ def _num(value, digits=2, suffix=""):
     return "-" if not isinstance(value, (int, float)) else "%.*f%s" % (digits, value, suffix)
 
 
+def _display_max_dd_pct(value):
+    """Return signed percentage points for the two frozen max_dd_pct representations.
+
+    Legacy runners stored drawdown as a negative ratio (for example -0.01 == -1%).
+    Newer runners store a positive percentage-point magnitude (for example 9.37 == 9.37%).
+    This is display-only compatibility; the frozen leaderboard value remains untouched.
+    """
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    return value * 100.0 if value < 0 else -value
+
+
 def render(results_root):
     lines = [HEADER]
     if not Path(results_root).is_dir():
@@ -556,8 +568,8 @@ def top_entries(entries, limit=DASHBOARD_TOP_N):
                         _num(full.get("sharpe")),
                         _num(full.get("annualized_return") * 100.0, digits=2, suffix="%")
                         if isinstance(full.get("annualized_return"), (int, float)) else "—",
-                        _num(full.get("max_dd_pct") * 100.0, digits=2, suffix="%")
-                        if isinstance(full.get("max_dd_pct"), (int, float)) else "—",
+                        _num(_display_max_dd_pct(full.get("max_dd_pct")), digits=2, suffix="%")
+                        if _display_max_dd_pct(full.get("max_dd_pct")) is not None else "—",
                         _num(full.get("avg_trades_per_year"), digits=1, suffix=" 次/年")
                         if isinstance(full.get("avg_trades_per_year"), (int, float)) else "—")})
     return top
