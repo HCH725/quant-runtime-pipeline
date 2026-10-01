@@ -269,11 +269,13 @@ def validate_terminal(res, root, dry_run, detector):
         return fail(res, root, "checksum_mismatch", detector, dry_run, [str(attempt / name)])
     boot = sentinel.get("host_boot_id")
     current_boot = host_boot_id()
+    boot_valid = isinstance(boot, str) and bool(boot.strip()) and boot != "boot-unknown"
+    current_boot_valid = isinstance(current_boot, str) and bool(current_boot.strip()) and \
+        current_boot != "boot-unknown"
+    if not boot_valid or not current_boot_valid:
+        return fail(res, root, "stale_sentinel", detector, dry_run, [str(attempt / name)])
     if boot != current_boot:
-        incident = fail(res, root, "stale_sentinel", detector, dry_run, [str(attempt / name)])
-        if not isinstance(boot, str) or not boot.strip() or boot == "boot-unknown" or \
-                not isinstance(current_boot, str) or not current_boot.strip() or current_boot == "boot-unknown":
-            return incident
+        fail(res, root, "stale_sentinel", detector, dry_run, [str(attempt / name)])
         # Identity, unique terminal and artifact checks passed: retain the incident provenance,
         # but let the existing disposition agent re-validate this prior-boot completion. C4 never
         # rewrites the sentinel, concludes the round, or releases C3's prepared one-shot hold.
