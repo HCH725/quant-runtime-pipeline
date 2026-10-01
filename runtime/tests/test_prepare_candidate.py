@@ -454,6 +454,21 @@ class TestPreparedPromotion(Base):
         self.assertEqual(self.preflight_calls, [])
         self.assertEqual(self.launch_calls, [])
 
+    def test_missing_created_at_never_promotes(self):
+        cand_a = backlog_candidate(FAMILY_A)
+        self._write_backlog([cand_a])
+        self._write_pool([])
+        self._prepared_package(cand_a, run_over={"created_at_utc": None})
+        with patch.object(h, "_run_bounded_process") as bounded:
+            res = self.run_prepare()
+        self.assertEqual(res.finding_key, "prepared_execution_invalid")
+        self.assertIn("created_at_utc", res.reason)
+        bounded.assert_not_called()
+        self.assertEqual(self._pool()["candidates"], [])
+        self.assertEqual(len(self._backlog()["candidates"]), 1)
+        self.assertEqual(self.preflight_calls, [])
+        self.assertEqual(self.launch_calls, [])
+
     def test_missing_focused_test_never_promotes(self):
         cand_a = backlog_candidate(FAMILY_A)
         self._write_backlog([cand_a])

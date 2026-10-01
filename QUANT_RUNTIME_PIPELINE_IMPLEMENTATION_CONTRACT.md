@@ -405,7 +405,9 @@ family F
 - `[C]` **v2.0 direct C4 override（AUDITED PASS / LIVE）**：固定 n8n C4 action 仍呼叫
   `runtime/reconcile.py`；它只處理 `family.json.handoff.execution=direct_hermes`，歷史
   card-owned family 不改動。每 round 僅有一個 identity 合法 attempt 時不需要 ordering metadata，
-  直接由該 attempt 驅動；只有同 round 存在多個 attempt 時才以 `(created_at_utc, uN)` 判定最新者，
+  直接由該 attempt 驅動；只有同 round 存在多個 attempt 時才以 `(created_at_utc, uN)` 判定最新者。
+  為避免新資料日後進入 same-round retry 時失去排序能力，prepared execution producer 仍必須在 promotion／C3 launch 前
+  驗證新 staged `run-spec.json.created_at_utc` 為可解析 ISO-8601；這是 producer hygiene，不是 lone legacy attempt 的 selection prerequisite。
   較舊者 `superseded`；歧義、foreign identity、多 sentinel 或 checksum 衝突
   fail-closed 並記 canonical incident。`state.json.stage` 為 `ARTIFACT_READY`／
   `FAILED_SCRIPT` 且無 sentinel、有合法 terminal 但該 round 無 verdict、或 attempt 已超過
