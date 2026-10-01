@@ -836,9 +836,16 @@ class TestFailClosed(Base):
         self.assertIn("not an execution prerequisite", prompt)
         self.assertIn("complete legal local eligible universe", prompt)
         self.assertIn("core signal/model capability or required data type/field is absent", prompt)
-        self.assertIn("dedicated current-family runner", prompt)
+        self.assertIn("REPOSITORY HYGIENE", prompt)
+        self.assertIn("Git checkout at the workspace path is read-only during preparation", prompt)
+        self.assertIn("_handoff/preparing/%s/work/" % FAMILY_B, prompt)
+        self.assertIn("legacy v3 turn for THIS SAME family", prompt)
+        self.assertIn("migrate only those exact ?? files", prompt)
+        self.assertIn("never touch tracked/modified files or unrelated dirt", prompt)
+        self.assertIn("remove this family scratch work directory before EXIT", prompt)
+        self.assertIn("pre-existing unrelated dirty state must remain byte-for-byte untouched", prompt)
         self.assertIn("do not modify unrelated strategy runners or generic/shared engines", prompt)
-        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v3.md")
+        self.assertEqual(h.PREPARATION_PROMPT, "prepare-task-v4.md")
         self.assertIn("CLEAR-ABSENCE EXCEPTION", prompt)
 
     def test_clear_absence_outcome_validates_against_the_candidate_identity(self):
@@ -943,16 +950,17 @@ class TestFailClosed(Base):
 
         self.assertTrue(replaced)
 
-    def test_v3_frozen_prompt_ignores_legacy_prepare_task_files(self):
+    def test_v4_prompt_ignores_legacy_prepare_task_files(self):
         lease = self.root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / FAMILY_B
         lease.mkdir(parents=True)
         (lease / "prepare-task.md").write_text("legacy frozen prompt\n")
         (lease / "prepare-task-v2.md").write_text("previous generation prompt\n")
+        (lease / "prepare-task-v3.md").write_text("previous hygiene generation prompt\n")
         with patch.object(h, "_launch_hermes_session", return_value=(12345, None, False)) as launch:
             pid, why, busy = self._real_prepare(str(self.root), candidate(),
                                                 str(self.root / h.HANDOFF_DIRNAME / h.POOL_FILENAME))
         self.assertEqual((pid, why, busy), (12345, None, False))
-        self.assertEqual(launch.call_args[0][1], "prepare-task-v3.md")
+        self.assertEqual(launch.call_args[0][1], "prepare-task-v4.md")
         self.assertEqual(launch.call_args[1]["max_turns"], 20)
         self.assertEqual(launch.call_args[1]["run_budget"], 1800)
 
@@ -1755,7 +1763,7 @@ class TestPreparationLaunchBounds(Base):
         lease = Path(self.root) / "lease"
         session_name = h.PREPARATION_SOURCE + ":" + FAMILY_B
         with patch.object(h.subprocess, "Popen") as popen:
-            h._launch_hermes_session(lease, "prepare-task-v3.md", "prompt", max_turns=15,
+            h._launch_hermes_session(lease, "prepare-task-v4.md", "prompt", max_turns=15,
                                      run_budget=1800, session_name=session_name)
         cmd = popen.call_args[0][0]
         self.assertEqual(cmd[cmd.index("--max-turns") + 1], "15")

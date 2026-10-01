@@ -7,8 +7,10 @@ and Qlib remains the only research/backtest runtime. Research Intake Review appe
 `_handoff/preparation_backlog.json`; default-profile no-agent Hermes cron `219d541661d5` runs
 `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` every 15 minutes at `:00/:15/:30/:45`, five minutes ahead of C3.
 The host runner processes one FIFO head and binds that family to one deterministic named `quant-preparation` session;
-later cadences resume the same session instead of starting preparation from zero. The session only stages the package, then
-the host runner performs tests/P1–P10 validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent
+later cadences resume the same session instead of starting preparation from zero. Preparation keeps the Git checkout read-only:
+candidate scratch lives only under `_handoff/preparing/<family>/work/` and is removed when staging/terminal preparation finishes,
+so preparation must not leave repo dirty state. The session only stages the package, then the host runner performs tests/P1–P10
+validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent
 nor Intake may write the backlog or production pool. Live C3 remains **ACTIVE** and unchanged: it consumes only
 execution-ready pool entries, validates P1–P10, and directly invokes the fixed Qlib container command; it never launches
 JIT preparation. The normal Qlib dispatch itself does not use a Hermes production executor. C4 is also live, but its current compute-finished
