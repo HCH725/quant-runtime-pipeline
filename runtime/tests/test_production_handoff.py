@@ -836,6 +836,8 @@ class TestFailClosed(Base):
                       prompt)
         self.assertNotIn("schema implemented by C3", prompt)
         self.assertIn("prepared-execution manifest named exactly prepared-execution.json", prompt)
+        self.assertIn("Every staged run-spec.json MUST include a non-empty, parseable ISO-8601 created_at_utc timestamp", prompt)
+        self.assertIn("reconciler attempt ordering", prompt)
         self.assertIn("runtime/prepare_candidate.py", prompt)
         self.assertNotIn("adding ONLY its validated absolute execution_file", prompt)
         self.assertIn(cand["fingerprint_input"], prompt)
