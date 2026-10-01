@@ -1347,6 +1347,8 @@ def _prepared_execution(cand, args):
                 run_spec.get("schema_version") != 1 or run_spec.get("family_id") != family_id or \
                 run_spec.get("round_id") != round_id or run_spec.get("run_id") != run_id:
             raise ValueError("run-spec family/round/run identity mismatch")
+        if parse_utc(run_spec.get("created_at_utc")) is None:
+            raise ValueError("run-spec created_at_utc missing/unparsable")
         round_ownership, run_ownership = (_nonempty_ownership(round_spec),
                                           _nonempty_ownership(run_spec))
         if round_ownership or run_ownership:
