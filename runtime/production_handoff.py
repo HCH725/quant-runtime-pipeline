@@ -785,7 +785,7 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
 
 def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
                            source="quant-production", log_name=AGENT_LOG,
-                           max_turns=500, run_budget=7200, session_name=None):
+                           max_turns=500, run_budget=7200, session_name=None, lease_fd=None):
     """Launch one detached Hermes session behind a kernel flock lease.
 
     `max_turns`/`run_budget` bound the session: preparation passes the candidate's whitelisted turn
@@ -794,7 +794,8 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
     """
     lease_dir = Path(lease_dir)
     lease_dir.mkdir(parents=True, exist_ok=True)
-    fd = _lock(lease_dir / AGENT_LOCK)
+    owns_lease_fd = lease_fd is None
+    fd = lease_fd if lease_fd is not None else _lock(lease_dir / AGENT_LOCK)
     if fd is None:
         return None, None, True
     try:
@@ -830,17 +831,19 @@ def _launch_hermes_session(lease_dir, name, prompt, skills=(), workspace=DEFAULT
     except (OSError, ValueError) as exc:
         return None, "Hermes launch failed: %s" % exc, False
     finally:
-        os.close(fd)
+        if owns_lease_fd:
+            os.close(fd)
 
 
-def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE):
+def launch_agent(results_root, family_id, name, prompt, skills=(), workspace=DEFAULT_WORKSPACE,
+                 lease_fd=None):
     """Shared quant-production launcher: intentional C4 research/disposition plus legacy C3 rollback.
 
     Normal C3 prepared dispatch never calls this helper. C4 intentionally uses it at the family
     boundary for compute-finished research/disposition and bounded same-family remediation.
     """
     return _launch_hermes_session(Path(results_root) / family_id, name, prompt, skills, workspace,
-                                  source="quant-production", log_name=AGENT_LOG)
+                                  source="quant-production", log_name=AGENT_LOG, lease_fd=lease_fd)
 
 
 def preparation_prompt(cand, results_root, backlog_path):

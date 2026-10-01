@@ -329,6 +329,9 @@ def _mechanical_reject_payload(res, results_root):
                       ("run_id", res.run_id)):
         if run_spec.get(key) != want or result.get(key) != want:
             return None, "%s identity mismatch" % key
+    for key in ("container_id", "image_id"):
+        if not isinstance(run_spec.get(key), str) or not run_spec[key].strip():
+            return None, "run-spec %s missing/invalid" % key
     if result.get("status") != "ARTIFACT_READY" or result.get("coverage_complete") is not True:
         return None, "result is not completed coverage"
     expected = result.get("expected_case_evaluations")
@@ -343,8 +346,8 @@ def _mechanical_reject_payload(res, results_root):
         return None, "result is not zero-survivor"
     if result.get("verdict_recommendation") != "REJECT":
         return None, "verdict recommendation is not REJECT"
-    if result.get("performance_claimable") is True:
-        return None, "REJECT result cannot be performance-claimable"
+    if result.get("performance_claimable") is not False:
+        return None, "REJECT result must set performance_claimable=false"
     if result.get("assertions_all_true") is not True:
         return None, "assertions are not all true"
     if result.get("disposition") not in MECHANICAL_REJECT_DISPOSITIONS:
@@ -489,9 +492,17 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
             return fail(res, results_root, "mechanical_closeout_failed", detector, False,
                         [str(attempt / "result.json")])
         payload = fresh_payload
+        current_boot = host_boot_id()
+        if not isinstance(current_boot, str) or not current_boot.strip() or current_boot == "boot-unknown":
+            res.detail["completion_boot_id"] = current_boot
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt)])
         cmd = [sys.executable, str(Path(__file__).resolve().with_name("terminal_evidence.py")),
                "publish", "--attempt-dir", str(attempt), "--status", "DONE",
                "--family-id", res.family_id, "--round-id", res.round_id, "--run-id", res.run_id,
+               "--host-boot-id", current_boot,
+               "--container-id", payload["run_spec"]["container_id"],
+               "--image-id", payload["run_spec"]["image_id"],
                "--verdict-hint", "CANDIDATE_REJECT"]
         for rel in payload["manifest"]:
             cmd.extend(["--manifest", rel])
@@ -511,7 +522,22 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
             res.detail["terminal_publish_stderr"] = (proc.stderr or "")[-1000:]
             return fail(res, results_root, "mechanical_closeout_failed", detector, False,
                         [str(attempt)])
-        result = payload["result"]
+        checked = validate_terminal(res, results_root, False, detector)
+        if checked is not None:
+            return checked
+        bound_payload, bound_problem = _mechanical_reject_payload(res, results_root)
+        if bound_payload is None:
+            res.detail["mechanical_closeout_post_terminal_problem"] = bound_problem
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt / "DONE"), str(attempt / "result.json")])
+        sentinel = load(attempt / "DONE")
+        checksums = sentinel.get("artifact_checksums") if isinstance(sentinel, dict) else None
+        result_checksum = checksums.get("result.json") if isinstance(checksums, dict) else None
+        if not isinstance(result_checksum, str) or not result_checksum.startswith("sha256:") or \
+                sha256_file(str(attempt / "result.json")) != result_checksum:
+            return fail(res, results_root, "mechanical_closeout_failed", detector, False,
+                        [str(attempt / "DONE"), str(attempt / "result.json")])
+        result = bound_payload["result"]
         verdict = {
             "schema_version": 1,
             "kind": "round_verdict",
@@ -531,7 +557,7 @@ def _finalize_mechanical_reject(res, results_root, payload, dry_run, detector):
             "coverage_complete": True,
             "case_evaluations_total": result.get("case_evaluations_total"),
             "expected_case_evaluations": result.get("expected_case_evaluations"),
-            "result_sha256": sha256_file(str(attempt / "result.json")),
+            "result_sha256": result_checksum,
             "terminal": {"status": "DONE", "path": str(attempt / "DONE")},
             "decided_at_utc": now_utc(),
         }
@@ -613,10 +639,28 @@ def handle(res, results_root, dry_run, detector):
     if dry_run:
         res.action, res.reason = "would_launch", "%s; would wake default for disposition" % stage
         return res
-    pid, why, busy = launch_agent(
-        results_root, res.family_id,
-        "disposition-v%d-%s-%s.md" % (DISPOSITION_PROMPT_VERSION, res.round_id, res.run_id),
-        disposition_prompt(res.family_id, res.round_id, res.run_id, results_root))
+    try:
+        lease_fd = _lock(Path(results_root) / res.family_id / AGENT_LOCK)
+    except OSError as exc:
+        res.detail["disposition_lease_error"] = str(exc)
+        return fail(res, results_root, "disposition_launch_failed", detector, False,
+                    [str(Path(results_root) / res.family_id / AGENT_LOCK)])
+    if lease_fd is None:
+        res.action, res.reason = "running", "default worker already owns this family"
+        return res
+    try:
+        fresh_family = load(Path(results_root) / res.family_id / "family.json")
+        fresh_verdict = round_verdict_token(attempt.parents[1], res.family_id, fresh_family)
+        if fresh_verdict:
+            res.action, res.reason = "consumed", "round became terminal before disposition launch: %s" % fresh_verdict
+            return res
+        pid, why, busy = launch_agent(
+            results_root, res.family_id,
+            "disposition-v%d-%s-%s.md" % (DISPOSITION_PROMPT_VERSION, res.round_id, res.run_id),
+            disposition_prompt(res.family_id, res.round_id, res.run_id, results_root),
+            lease_fd=lease_fd)
+    finally:
+        os.close(lease_fd)
     if busy:
         res.action, res.reason = "running", "default worker already owns this family"
     elif why:

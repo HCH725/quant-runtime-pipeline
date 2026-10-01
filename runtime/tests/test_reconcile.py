@@ -34,8 +34,8 @@ class Reconcile(unittest.TestCase):
         r.host_boot_id = self._boot
         shutil.rmtree(self.root)
 
-    def launch(self, root, family, name, prompt, skills=()):
-        self.calls.append((root, family, name, prompt, skills))
+    def launch(self, root, family, name, prompt, skills=(), lease_fd=None):
+        self.calls.append((root, family, name, prompt, skills, lease_fd))
         return 1234, None, False
 
     def fixture(self, family="fam-a", round_id=None, run_id=None, stage=None, terminal=None,
@@ -135,6 +135,36 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(verdict["verdict"], "REJECT")
         self.assertEqual(verdict["cohort_survivor_count"], 0)
         self.assertTrue(verdict["coverage_complete"])
+        sentinel = json.loads((attempt / "DONE").read_text())
+        self.assertEqual(verdict["result_sha256"], sentinel["artifact_checksums"]["result.json"])
+
+    def test_non_boolean_performance_claimable_never_mechanically_rejects(self):
+        for value in (None, 0, 1, "false", "true", []):
+            with self.subTest(value=value):
+                attempt = self.deterministic_reject(self.fixture(
+                    family="fam-pc-%s" % str(value).replace(" ", "-").replace("[", "list").replace("]", ""),
+                    stage="ARTIFACT_READY"))
+                result = json.loads((attempt / "result.json").read_text())
+                result["performance_claimable"] = value
+                (attempt / "result.json").write_text(json.dumps(result))
+                code, report = self.run_root()
+                self.assertEqual(code, 0)
+                row = next(x for x in report["results"] if x.get("run_id") == attempt.name)
+                self.assertNotEqual(row["action"], "finalized")
+                self.assertIn("performance_claimable=false",
+                              row["detail"]["mechanical_closeout_not_applicable"])
+                self.assertFalse((attempt / "DONE").exists())
+
+    def test_mechanical_reject_without_valid_boot_id_writes_nothing(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+        with patch.object(r, "host_boot_id", return_value="boot-unknown"):
+            code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["results"][0]["reason"], "mechanical_closeout_failed")
+        self.assertEqual(report["results"][0]["detail"]["completion_boot_id"], "boot-unknown")
+        self.assertFalse((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        self.assertEqual(self.calls, [])
 
     def test_deterministic_reject_dry_run_writes_nothing(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"), "NO_SURVIVOR")
@@ -253,6 +283,25 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
         self.assertEqual(list(self.root.glob(".verdict.json.tmp-*")), [])
 
+    def test_result_mutation_after_terminal_publish_never_creates_verdict(self):
+        attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
+
+        def publish_then_mutate(*_args, **_kwargs):
+            self.publish_done_fixture(attempt)
+            result = json.loads((attempt / "result.json").read_text())
+            result["performance_claimable"] = True
+            (attempt / "result.json").write_text(json.dumps(result))
+            return r.subprocess.CompletedProcess(["terminal_evidence.py"], 0, "", "")
+
+        with patch.object(r.subprocess, "run", side_effect=publish_then_mutate):
+            code, report = self.run_root()
+        self.assertEqual(code, 3)
+        self.assertEqual(report["incidents"], 1)
+        self.assertEqual(report["results"][0]["reason"], "checksum_mismatch")
+        self.assertTrue((attempt / "DONE").exists())
+        self.assertFalse((attempt.parents[1] / "verdict.json").exists())
+        self.assertEqual(self.calls, [])
+
     def test_terminal_publish_timeout_is_fail_closed_incident_not_traceback(self):
         attempt = self.deterministic_reject(self.fixture(stage="ARTIFACT_READY"))
         with patch.object(r.subprocess, "run", side_effect=r.subprocess.TimeoutExpired(
@@ -335,6 +384,25 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(report["finalized"], [])
         self.assertEqual(len(self.calls), 1)
         self.assertFalse((attempt / "DONE").exists())
+
+    def test_disposition_rechecks_round_verdict_after_acquiring_family_lease(self):
+        attempt = self.fixture(stage="ARTIFACT_READY")
+        real_lock = h._lock
+
+        def acquire_then_publish(path):
+            fd = real_lock(path)
+            self.assertIsNotNone(fd)
+            (attempt.parents[1] / "verdict.json").write_text(json.dumps(
+                {"family_id": "fam-a", "round_id": "fam-a-r1", "run_id": attempt.name,
+                 "verdict": "REJECT"}))
+            return fd
+
+        with patch.object(r, "_lock", side_effect=acquire_then_publish):
+            code, report = self.run_root()
+        self.assertEqual(code, 0)
+        self.assertEqual(report["results"][0]["action"], "consumed")
+        self.assertIn("became terminal before disposition launch", report["results"][0]["reason"])
+        self.assertEqual(self.calls, [])
 
     def test_compute_finished_wakes_default_without_a_card(self):
         self.fixture(stage="ARTIFACT_READY")

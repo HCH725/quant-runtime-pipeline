@@ -43,9 +43,10 @@ def run(cmd, timeout=60):
 
 def host_boot_id():
     """Stable per-boot identifier. Single source of truth shared with preflight/reconcile."""
-    rc, out, _ = run(["sysctl", "-n", "kern.boottime"])
-    if rc == 0 and "sec" in out:
-        return "boot-%s" % out.split("sec =")[1].split(",")[0].strip()
+    for executable in ("/usr/sbin/sysctl", "sysctl"):
+        rc, out, _ = run([executable, "-n", "kern.boottime"])
+        if rc == 0 and "sec" in out:
+            return "boot-%s" % out.split("sec =")[1].split(",")[0].strip()
     return "boot-unknown"
 
 
@@ -132,7 +133,7 @@ def cmd_publish(args):
         "run_id": args.run_id,
 
         "created_at_utc": now_utc(),
-        "host_boot_id": host_boot_id(),
+        "host_boot_id": args.host_boot_id if args.host_boot_id is not None else host_boot_id(),
         "container_id": args.container_id,
         "image_id": args.image_id,
         "qlib_version": args.qlib_version,
@@ -228,6 +229,8 @@ def main():
     p.add_argument("--failure-class", default=None)
     p.add_argument("--failure-detail", default=None)
     p.add_argument("--verdict-hint", default="NONE", choices=HINTS)
+    p.add_argument("--host-boot-id", default=None,
+                   help="validated host boot id supplied by a trusted host reconciler")
     p.add_argument("--container-id", default="qlib-run")
     p.add_argument("--image-id", default="qlib:0.9.7-arm64")
     p.add_argument("--qlib-version", default="0.9.7")
