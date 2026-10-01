@@ -1,30 +1,34 @@
 #!/usr/bin/env python3
-"""Deterministic preparation entrypoint (contract 14.4) - consumes ONE backlog head per run.
+"""Deterministic preparation entrypoint (contract 14.4) - processes one backlog candidate per run.
 
-<results>/_handoff/preparation_backlog.json is the FIFO queue of reviewed candidates that are not yet
-execution-ready. This one-shot host runner owns the mechanical preparation loop that must not sit in
-the C3 hot path, and it is the only thing that ever promotes a candidate into
+<results>/_handoff/preparation_backlog.json is the ordered retry backlog of reviewed candidates that
+are not yet execution-ready. This one-shot host runner owns the mechanical preparation loop that must
+not sit in the C3 hot path, and it is the only thing that ever promotes a candidate into
 <results>/_handoff/candidates.json:
 
   * nothing staged yet -> launch at most ONE bounded quant-preparation Hermes session (existing
-    launcher: 15/20/40 turns, 1800 s run budget) behind its own lease -> waiting;
+    launcher: 15/20/40 turns, 1800 s run budget) behind its own family lease -> waiting;
+  * a family-local preparation attempt that cannot launch, or that exits without a staged package or
+    clear-absence outcome -> record the failure, keep the exact candidate, rotate it to the backlog
+    tail, and let the next candidate proceed on the next cadence;
   * valid clear-absence outcome (canonical CONFIG/SCHEMA prove the core-required data absent) ->
     publish the existing no-compute TECHNICAL_INCOMPLETE terminal, append the exact candidate to the
-    pool as consumed history, drop the backlog head;
+    pool as consumed history, drop that candidate from the backlog;
   * staged prepared package (prepared-execution.json + immutable round/run specs + the family runner's
     focused test) -> bounded focused unittest, then the existing P1-P10 staged preflight; only a full
-    PASS appends the exact candidate (+ absolute execution_file) and drops the backlog head.
+    PASS appends the exact candidate (+ absolute execution_file) and removes it from the backlog.
 
 Promotion is agent-free: the Hermes session may only stage artifacts under _handoff/prepared/<family>/
 or write the clear-absence outcome inside its preparing lease. Every mutation happens under the same
 kernel lease C3 uses (_handoff/.advance.lock), so a promotion can never race the C3 pool read. Each step
-is retry-idempotent: an already-consumed candidate only drops the backlog head without rewriting the
-pool; an identity mismatch fails closed. Nothing here launches a strategy runner or Qlib - the next C3
-cadence dispatches the promoted family.
+is retry-idempotent: an already-consumed candidate is removed without rewriting the pool; identity,
+backlog-shape, and pool-state inconsistencies still fail closed. Candidate-local transient preparation
+failure is failure-isolated and must not monopolize unrelated candidates. Nothing here launches a
+strategy runner or Qlib - the next C3 cadence dispatches the promoted family.
 
-Outcome tokens (record/`--json`, and one stderr line per run): promoted, consumed, waiting, idle,
-finding. Findings are reported only; this runner never appends to handoff_log.jsonl, whose last finding
-key C3 uses for its own dedup.
+Outcome tokens (record/`--json`, and one stderr line per run): promoted, consumed, deferred, waiting,
+idle, finding. Findings are reserved for integrity/system-state problems; a candidate-local transient
+preparation failure is reported as deferred.
 
 Exit codes: 0 = ok, 2 = usage error, 1 = unexpected.
 """
@@ -42,6 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import production_handoff as h  # noqa: E402
 
 BACKLOG_FILENAME = "preparation_backlog.json"
+PREPARATION_STATUS = "preparation-status.json"
 # Host source of the container's ro /scripts mount (the mapping preflight.py P10 resolves).
 CONTAINER_SCRIPTS_HOST = "/Users/hong/workspace/qlib-apple-container/scripts"
 FOCUSED_TEST_TIMEOUT_S = 300
@@ -81,6 +86,60 @@ def _head_problem(head):
     if not isinstance(head.get("title"), str) or not head["title"]:
         return "preparation backlog head %s has no title" % family_id
     return None
+
+
+def _status_path(root, family_id):
+    return (Path(root) / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / family_id /
+            PREPARATION_STATUS)
+
+
+def _load_preparation_status(root, family_id):
+    path = _status_path(root, family_id)
+    if not os.path.lexists(str(path)):
+        return None, None
+    doc = h._load_json(path)
+    if not isinstance(doc, dict) or doc.get("schema_version") != 1 or \
+            doc.get("family_id") != family_id or doc.get("state") not in ("running", "deferred"):
+        return None, "invalid family-local preparation status: %s" % path
+    return doc, None
+
+
+def _write_preparation_status(root, family_id, state, reason, pid=None):
+    path = _status_path(root, family_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc = {"schema_version": 1, "family_id": family_id, "state": state,
+           "updated_at_utc": h.now_utc(), "reason": reason}
+    if pid is not None:
+        doc["pid"] = pid
+    _write_json_atomic(path, doc)
+    return path
+
+
+def _defer_head(res, root, backlog_path, backlog_doc, family_id, reason):
+    """Preserve a transiently failed candidate and rotate it behind unrelated queued work."""
+    try:
+        status_path = _write_preparation_status(root, family_id, "deferred", reason)
+    except OSError as exc:
+        return res.finding("preparation_status_write_failed", str(exc), pool_entry=family_id)
+    queue = list(backlog_doc["candidates"])
+    rotated = queue[1:] + queue[:1]
+    try:
+        _write_json_atomic(backlog_path, dict(backlog_doc, candidates=rotated))
+    except OSError as exc:
+        return res.finding("backlog_write_failed", str(exc), pool_entry=family_id)
+    readback = h._load_json(backlog_path)
+    if not isinstance(readback, dict) or readback.get("candidates") != rotated:
+        return res.finding("backlog_readback_failed",
+                           "backlog read-back after preparation deferral does not match",
+                           pool_entry=family_id)
+    res.action, res.outcome = "deferred", "deferred"
+    res.reason = reason
+    res.detail["preparation_status"] = str(status_path)
+    res.detail["deferred_family"] = family_id
+    res.detail["backlog_depth"] = len(rotated)
+    if rotated and isinstance(rotated[0], dict):
+        res.detail["next_family"] = rotated[0].get("family_id")
+    return res
 
 
 def _run_focused_test(prepared):
@@ -299,13 +358,47 @@ def run_once(args):
                            "canonical family path exists for %s while the candidate is not in the pool; "
                            "refusing to launch preparation" % family_id, pool_entry=family_id)
 
+    status, problem = _load_preparation_status(root, family_id)
+    if problem:
+        return res.finding("preparation_status_invalid", problem, pool_entry=family_id)
+
+    lease_dir = root / h.HANDOFF_DIRNAME / h.PREPARATION_DIRNAME / family_id
+    if status is not None and status["state"] == "running":
+        try:
+            fd = h._lock(lease_dir / h.AGENT_LOCK)
+        except OSError as exc:
+            return res.finding("preparation_lease_probe_failed", str(exc), pool_entry=family_id)
+        if fd is None:
+            return res.waiting("quant-preparation still owns candidate %s; preparation waits" % family_id,
+                               preparation_source=h.PREPARATION_SOURCE)
+        os.close(fd)
+        return _defer_head(
+            res, root, backlog_path, backlog_doc, family_id,
+            "quant-preparation for candidate %s exited without a staged package or clear-absence "
+            "outcome; candidate preserved and deferred for fair retry" % family_id)
+
+    try:
+        _write_preparation_status(root, family_id, "running",
+                                  "candidate selected for quant-preparation retry")
+    except OSError as exc:
+        return res.finding("preparation_status_write_failed", str(exc), pool_entry=family_id)
+
     pid, why, busy = h.launch_preparation_agent(str(root), cand, str(backlog_path))
     if busy:
         return res.waiting("quant-preparation still owns candidate %s; preparation waits" % family_id,
                            preparation_source=h.PREPARATION_SOURCE)
     if why:
-        return res.finding("preparation_launch_failed", "%s; candidate stays retryable" % why,
-                           pool_entry=family_id)
+        return _defer_head(
+            res, root, backlog_path, backlog_doc, family_id,
+            "%s; candidate preserved and deferred for fair retry" % why)
+    try:
+        _write_preparation_status(root, family_id, "running",
+                                  "quant-preparation launched; awaiting staged package or outcome",
+                                  pid=pid)
+    except OSError as exc:
+        return res.finding("preparation_status_write_failed",
+                           "session launched but status update failed: %s" % exc,
+                           pool_entry=family_id, preparation_pid=pid)
     return res.waiting("quant-preparation launched for candidate %s (pid=%s); the next run validates "
                        "its staged package" % (family_id, pid),
                        preparation_required=True, preparation_pid=pid,
@@ -350,7 +443,7 @@ def main():
     record.update(res.as_dict())
     if args.json:
         print(json.dumps(record, indent=2, ensure_ascii=False))
-    elif res.action in ("promoted", "consumed"):
+    elif res.action in ("promoted", "consumed", "deferred"):
         print("prepare candidate: %s — %s" % (res.action, res.reason))
     sys.stderr.write("prepare candidate: outcome=%s action=%s — %s\n"
                      % (res.outcome, res.action, res.reason))
