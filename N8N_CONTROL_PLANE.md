@@ -69,6 +69,10 @@ C3 handoff workflow `productionHandoffManualC2` 維持 `:05/:20/:35/:50` cadence
 
 既有 C3 handoff workflow 沒有 webhook、AI node、credentials、host path 或 request 內任意 action；它只保留 C2 已稽核的固定 bridge request/response semantics。
 
+### Discord progress feed boundary（旁路、非 n8n production node）
+
+`runtime/pipeline_progress_feed.py` 提供 milestone-only 的 operator feed：**PREPARATION → QLIB START → COMPLETE**。它從既有 canonical artifacts 唯讀辨識 lifecycle 事件，唯一可變資料是 results root 外的 `~/.hermes/state/quant_pipeline_progress_feed.json` 去重游標；首次執行 baseline 既有事件且不輸出，後續只有新 milestone 才產生 stdout。預定由 Hermes no-agent cron 直接把 stdout 送到 `discord:1523786664613511299`。它不做 health／stall／warning 判讀（這仍屬 watchdog），不呼叫 LLM，不控制任何 production action，也**不接進 C3/C4 n8n topology**；Discord 或 progress feed 故障不得成為 preparation、Qlib、C4 disposition 或下一 family 的 failure mode。
+
 ---
 
 ## Full Canvas Completion current state（AUDITED PASS / LIVE）
