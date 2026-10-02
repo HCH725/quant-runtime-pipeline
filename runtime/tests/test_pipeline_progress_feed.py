@@ -7,6 +7,7 @@ hard boundary that the dedupe cursor can never be written under the results root
 """
 
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -109,7 +110,7 @@ class Harness(unittest.TestCase):
         self.bootstrap()
         self.preparation(updated="2026-10-02T01:00:00Z")
         state_path = self.qlib(planned=86400)
-        state_path.touch()
+        os.utime(state_path, (1790906400, 1790906400))  # 2026-10-02T02:00:00Z
         self.complete(planned=86400, executed=86400, survivors=3)
         events = feed.tick(self.root, self.state)
         self.assertEqual([event["kind"] for event in events],
@@ -117,19 +118,19 @@ class Harness(unittest.TestCase):
         text = feed.render(events[-1])
         self.assertIn("**PASS**", text)
         self.assertIn("86,400 / 86,400", text)
-        self.assertIn("Survivors: **3**", text)
+        self.assertIn("Formal promoted survivors: **3**", text)
 
-    def test_reject_completion_reports_zero_survivors(self):
+    def test_reject_completion_reports_zero_formal_promotions_even_with_cohort_survivors(self):
         self.bootstrap()
         self.qlib(planned=1920)
         feed.tick(self.root, self.state)
-        self.complete(verdict="REJECT", planned=1920, executed=1920, survivors=0)
+        self.complete(verdict="REJECT", planned=1920, executed=1920, survivors=3)
         events = feed.tick(self.root, self.state)
         self.assertEqual([event["kind"] for event in events], ["complete"])
         text = feed.render(events[0])
         self.assertIn("**REJECT**", text)
         self.assertIn("1,920 / 1,920", text)
-        self.assertIn("Survivors: **0**", text)
+        self.assertIn("Formal promoted survivors: **0**", text)
 
     def test_no_compute_terminal_is_completion_without_fake_survivor_count(self):
         self.bootstrap()
@@ -143,7 +144,7 @@ class Harness(unittest.TestCase):
         self.assertEqual([event["kind"] for event in events], ["complete"])
         text = feed.render(events[0])
         self.assertIn("0 (no Qlib compute)", text)
-        self.assertIn("Survivors: n/a", text)
+        self.assertIn("Formal promoted survivors: **0**", text)
 
     def test_invalid_verdict_is_not_a_milestone(self):
         self.bootstrap()

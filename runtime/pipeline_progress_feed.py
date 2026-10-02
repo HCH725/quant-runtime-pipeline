@@ -130,11 +130,13 @@ def _attempt_metrics(round_dir, verdict):
         if isinstance(records, list):
             survivors = len(records)
 
+    formal_promoted_survivors = survivors if verdict.get("verdict") == "PASS" else 0
+
     return {
         "run_id": run_id,
         "planned": planned,
         "executed": executed,
-        "survivors": survivors,
+        "formal_promoted_survivors": formal_promoted_survivors,
         "no_compute": no_compute,
     }
 
@@ -304,9 +306,9 @@ def render(event):
         execution_line = "Executed: **%s**" % f"{executed:,}"
     else:
         execution_line = "Executed: unavailable"
-    survivors = event.get("survivors")
-    survivor_line = ("Survivors: **%s**" % f"{survivors:,}"
-                     if survivors is not None else "Survivors: n/a")
+    survivors = event.get("formal_promoted_survivors")
+    survivor_line = ("Formal promoted survivors: **%s**" % f"{survivors:,}"
+                     if survivors is not None else "Formal promoted survivors: n/a")
     return "\n".join([
         "🏁 **COMPLETE**",
         "`%s` · %s · **%s**" % (family_id, generation, event.get("verdict")),
