@@ -580,19 +580,22 @@ class TestPreparedPromotion(Base):
         self.assertEqual(self.preflight_calls, [])
         self.assertEqual(self.launch_calls, [])
 
-    def test_missing_focused_test_never_promotes(self):
+    def test_missing_focused_test_resumes_preparation_without_promoting(self):
         cand_a = backlog_candidate(FAMILY_A)
         self._write_backlog([cand_a])
         self._write_pool([])
         self._prepared_package(cand_a, test_file=False)
         res = self.run_prepare()
-        self.assertEqual(res.finding_key, "focused_test_failed")
-        self.assertIn("missing", res.reason)
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertIsNone(res.finding_key)
+        self.assertIn("focused_test_failed", res.detail["validation_failure"])
+        self.assertIn("missing", res.detail["validation_failure"])
         self.assertEqual(self._pool()["candidates"], [])
         self.assertEqual(self.preflight_calls, [])
-        self.assertEqual(self.launch_calls, [])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertTrue(res.detail["preparation_resumed"])
 
-    def test_focused_test_failure_never_promotes(self):
+    def test_focused_test_failure_resumes_preparation_without_promoting(self):
         cand_a = backlog_candidate(FAMILY_A)
         self._write_backlog([cand_a])
         self._write_pool([])
@@ -600,25 +603,61 @@ class TestPreparedPromotion(Base):
             "import unittest\n\n\nclass Probe(unittest.TestCase):\n"
             "    def test_bad(self):\n        self.assertTrue(False)\n"))
         res = self.run_prepare()
-        self.assertEqual(res.finding_key, "focused_test_failed")
-        self.assertIn("did not pass", res.reason)
-        self.assertIn("Ran 1 test", res.reason)
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertIsNone(res.finding_key)
+        self.assertIn("focused_test_failed", res.detail["validation_failure"])
+        self.assertIn("did not pass", res.detail["validation_failure"])
+        self.assertIn("Ran 1 test", res.detail["validation_failure"])
         self.assertEqual(self._pool()["candidates"], [])
         self.assertEqual(self.preflight_calls, [])
-        self.assertEqual(self.launch_calls, [])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertTrue(res.detail["preparation_resumed"])
 
-    def test_preflight_failure_never_promotes(self):
+    def test_preflight_failure_resumes_preparation_without_promoting(self):
         cand_a = backlog_candidate(FAMILY_A)
         self._write_backlog([cand_a])
         self._write_pool([])
         self._prepared_package(cand_a)
         self.preflight_problem = "P1-P10 preflight failed (rc=1, overall=FAIL, P10=FAIL)"
         res = self.run_prepare()
-        self.assertEqual(res.finding_key, "prepared_execution_preflight_failed")
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertIsNone(res.finding_key)
+        self.assertIn("prepared_execution_preflight_failed", res.detail["validation_failure"])
         self.assertEqual(len(self.preflight_calls), 1)
         self.assertEqual(self._pool()["candidates"], [])
         self.assertEqual(len(self._backlog()["candidates"]), 1)
-        self.assertEqual(self.launch_calls, [])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertTrue(res.detail["preparation_resumed"])
+
+    def test_staged_validation_busy_session_waits_without_duplicate_launch(self):
+        cand_a = backlog_candidate(FAMILY_A)
+        self._write_backlog([cand_a])
+        self._write_pool([])
+        self._prepared_package(cand_a, test_file=False)
+        self.launch_result = (None, None, True)
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertIsNone(res.finding_key)
+        self.assertIn("remediation waits", res.reason)
+        self.assertEqual(self._pool()["candidates"], [])
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]], [FAMILY_A])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertNotIn("preparation_resumed", res.detail)
+
+    def test_staged_validation_launch_failure_defers_for_fair_retry(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        self._prepared_package(cand_a, test_file=False)
+        self.launch_result = (None, "Hermes launch failed: synthetic", False)
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("deferred", "deferred"))
+        self.assertIsNone(res.finding_key)
+        self.assertEqual(self._pool()["candidates"], [])
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_B, FAMILY_A])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertIn("fair retry", res.reason)
 
     def test_identity_drift_during_preflight_never_promotes(self):
         cand_a = backlog_candidate(FAMILY_A)

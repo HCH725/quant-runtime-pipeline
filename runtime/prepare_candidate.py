@@ -380,8 +380,46 @@ def run_once(args):
         return _promote_clear_absence(args, res, root, backlog_path, backlog_doc, pool_doc, pool_path,
                                       cand, outcome_path)
     if staged:
-        return _promote_prepared(args, res, root, backlog_path, backlog_doc, pool_doc, pool_path, cand,
-                                 manifest_path)
+        staged_result = _promote_prepared(
+            args, res, root, backlog_path, backlog_doc, pool_doc, pool_path, cand, manifest_path)
+        if staged_result.finding_key not in (
+                "focused_test_failed", "prepared_execution_preflight_failed"):
+            return staged_result
+
+        # Candidate-local validation failure is remediable by the same bounded preparation
+        # session.  Do not let an already-staged manifest permanently bypass continuation.
+        validation_failure = staged_result.reason
+        pid, why, busy = h.launch_preparation_agent(str(root), cand, str(backlog_path))
+        if busy:
+            staged_result.finding_key = None
+            return staged_result.waiting(
+                "quant-preparation still owns candidate %s; staged validation remediation waits"
+                % family_id,
+                preparation_source=h.PREPARATION_SOURCE,
+                validation_failure=validation_failure)
+        if why:
+            staged_result.finding_key = None
+            return _defer_head(
+                staged_result, root, backlog_path, backlog_doc, family_id,
+                "%s; staged validation failure preserved and candidate deferred for fair retry"
+                % why)
+        try:
+            _write_preparation_status(
+                root, family_id, "running",
+                "staged validation failed; preparation session resumed for remediation", pid=pid)
+        except OSError as exc:
+            return staged_result.finding(
+                "preparation_status_write_failed",
+                "remediation session resumed but status update failed: %s" % exc,
+                pool_entry=family_id, preparation_pid=pid,
+                validation_failure=validation_failure)
+        staged_result.finding_key = None
+        return staged_result.waiting(
+            "quant-preparation resumed staged validation remediation for candidate %s (pid=%s); "
+            "the next run revalidates the package" % (family_id, pid),
+            preparation_required=True, preparation_pid=pid,
+            preparation_source=h.PREPARATION_SOURCE, preparation_resumed=True,
+            validation_failure=validation_failure)
     if os.path.lexists(str(root / family_id)):
         return res.finding("promotion_state_inconsistent",
                            "canonical family path exists for %s while the candidate is not in the pool; "
