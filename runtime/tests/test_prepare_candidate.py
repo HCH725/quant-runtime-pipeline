@@ -73,10 +73,13 @@ class Base(unittest.TestCase):
         self.launch_result = (31337, None, False)
         self.preflight_calls = []
         self.preflight_problem = None
+        self.session_probe_result = (False, None)
         self._real_prepare = h.launch_preparation_agent
         self._real_preflight = h._run_staged_preflight
+        self._real_session_probe = p._preparation_session_exists
         h.launch_preparation_agent = self._fake_launch
         h._run_staged_preflight = self._fake_preflight
+        p._preparation_session_exists = self._fake_session_probe
         self._scripts_patch = patch.object(p, "CONTAINER_SCRIPTS_HOST", str(self.scripts))
         self._scripts_patch.start()
 
@@ -84,6 +87,7 @@ class Base(unittest.TestCase):
         self._scripts_patch.stop()
         h.launch_preparation_agent = self._real_prepare
         h._run_staged_preflight = self._real_preflight
+        p._preparation_session_exists = self._real_session_probe
         shutil.rmtree(self.root, ignore_errors=True)
         shutil.rmtree(self.scripts, ignore_errors=True)
 
@@ -94,6 +98,9 @@ class Base(unittest.TestCase):
     def _fake_preflight(self, prepared, family_id):
         self.preflight_calls.append(dict(prepared, identity=None))
         return self.preflight_problem
+
+    def _fake_session_probe(self, family_id):
+        return self.session_probe_result
 
     # --- fixtures ---------------------------------------------------------
     def _write_backlog(self, cands, doc_over=None):
@@ -322,7 +329,7 @@ class TestPreparationLaunch(Base):
         self.assertEqual(res.detail["next_family"], FAMILY_B)
         self.assertEqual(self._pool()["candidates"], [])
 
-    def test_completed_attempt_without_output_defers_instead_of_monopolizing_queue(self):
+    def test_completed_attempt_without_session_defers_instead_of_monopolizing_queue(self):
         cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
         self._write_backlog([cand_a, cand_b])
         self._write_pool([])
@@ -337,7 +344,47 @@ class TestPreparationLaunch(Base):
         self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
                          [FAMILY_B, FAMILY_A])
         self.assertEqual(self.launch_calls, [])
-        self.assertIn("exited without a staged package", res.reason)
+        self.assertIn("exited before creating a resumable Hermes session", res.reason)
+
+    def test_completed_bounded_turn_with_session_resumes_same_candidate(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        status_path = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A / p.PREPARATION_STATUS
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps({"schema_version": 1, "family_id": FAMILY_A,
+                                           "state": "running",
+                                           "updated_at_utc": "2026-10-01T00:00:00Z",
+                                           "reason": "previous bounded turn"}) + "\n")
+        self.session_probe_result = (True, None)
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("noop", "running"))
+        self.assertTrue(res.detail["preparation_resumed"])
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_A, FAMILY_B])
+        self.assertEqual(len(self.launch_calls), 1)
+        self.assertEqual(self.launch_calls[0][1]["family_id"], FAMILY_A)
+        status = json.loads(status_path.read_text())
+        self.assertEqual(status["state"], "running")
+        self.assertIn("resumed", status["reason"])
+
+    def test_session_probe_failure_is_fail_closed_without_rotation(self):
+        cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)
+        self._write_backlog([cand_a, cand_b])
+        self._write_pool([])
+        status_path = self.handoff / h.PREPARATION_DIRNAME / FAMILY_A / p.PREPARATION_STATUS
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps({"schema_version": 1, "family_id": FAMILY_A,
+                                           "state": "running",
+                                           "updated_at_utc": "2026-10-01T00:00:00Z",
+                                           "reason": "previous turn"}) + "\n")
+        self.session_probe_result = (None, "simulated session-store failure")
+        res = self.run_prepare()
+        self.assertEqual((res.action, res.outcome), ("finding", "finding"))
+        self.assertEqual(res.finding_key, "preparation_session_probe_failed")
+        self.assertEqual([c["family_id"] for c in self._backlog()["candidates"]],
+                         [FAMILY_A, FAMILY_B])
+        self.assertEqual(self.launch_calls, [])
 
     def test_running_attempt_with_live_family_lease_waits_without_rotation(self):
         cand_a, cand_b = backlog_candidate(FAMILY_A), backlog_candidate(FAMILY_B)

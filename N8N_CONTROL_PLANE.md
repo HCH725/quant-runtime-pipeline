@@ -7,8 +7,10 @@ eligible candidate idempotently to `/Volumes/ExpansionDrive/qlib-results/_handof
 no-agent Hermes cron `219d541661d5` runs `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` at `:00/:15/:30/:45`, offset five
 minutes from C3's existing `:05/:20/:35/:50` cadence. The deterministic host runner processes one ordered backlog candidate
 per run and may start one bounded `quant-preparation` session under the existing handoff lease. A live family waits; a
-candidate-local launch failure or completed attempt with no staged package/outcome is recorded and the exact candidate is
-rotated to the backlog tail so unrelated candidates continue. That agent only stages runner/test/spec/manifest
+candidate-local launch failure that never creates a resumable Hermes session is recorded and the exact candidate is
+rotated to the backlog tail so unrelated candidates continue. A bounded turn that ended without a staged package/outcome
+but has an existing family-scoped Hermes session stays on the same candidate and resumes on the next cadence. That agent
+only stages runner/test/spec/manifest
 artifacts or a permitted clear-absence outcome; it must not write the backlog or production pool, run Qlib/strategy
 execution, or publish promotion. The host runner performs focused tests and P1–P10 validation and alone promotes a valid
 execution-ready candidate into `candidates.json`.

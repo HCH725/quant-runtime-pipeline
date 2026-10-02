@@ -7,9 +7,10 @@ and Qlib remains the only research/backtest runtime. Research Intake Review appe
 `_handoff/preparation_backlog.json`; default-profile no-agent Hermes cron `219d541661d5` runs
 `/Users/hong/.hermes/scripts/quant_prepare_candidate.py` every 15 minutes at `:00/:15/:30/:45`, five minutes ahead of C3.
 The host runner processes one ordered backlog candidate at a time and binds that family to one deterministic named
-`quant-preparation` session. A live family lease waits normally; if that preparation cannot launch or exits without a
-staged package/outcome, the exact candidate is retained and rotated to the backlog tail so unrelated candidates continue,
-then the same family-scoped session is retried when that candidate returns to the head. Preparation keeps the Git checkout read-only:
+`quant-preparation` session. A live family lease waits normally; when a bounded turn ends, the host checks the existing
+Hermes session store. If the family-scoped session exists, the next cadence resumes that same candidate/session. Only a
+launch that never created a resumable session is treated as candidate-local failure: the exact candidate is retained and
+rotated to the backlog tail so unrelated candidates continue. Preparation keeps the Git checkout read-only:
 candidate scratch lives only under `_handoff/preparing/<family>/work/` and is removed when staging/terminal preparation finishes,
 so preparation must not leave repo dirty state. The session only stages the package, then the host runner performs tests/P1–P10
 validation and host-only promotion into `_handoff/candidates.json`. Neither the preparation agent

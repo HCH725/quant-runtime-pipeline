@@ -8,9 +8,10 @@ not sit in the C3 hot path, and it is the only thing that ever promotes a candid
 
   * nothing staged yet -> launch at most ONE bounded quant-preparation Hermes session (existing
     launcher: 15/20/40 turns, 1800 s run budget) behind its own family lease -> waiting;
-  * a family-local preparation attempt that cannot launch, or that exits without a staged package or
-    clear-absence outcome -> record the failure, keep the exact candidate, rotate it to the backlog
-    tail, and let the next candidate proceed on the next cadence;
+  * a family-local preparation attempt that cannot create a resumable Hermes session -> record the
+    failure, keep the exact candidate, rotate it to the backlog tail, and let the next candidate
+    proceed on the next cadence; a completed bounded turn with a resumable session is continued on the
+    same candidate instead of being treated as failure;
   * valid clear-absence outcome (canonical CONFIG/SCHEMA prove the core-required data absent) ->
     publish the existing no-compute TECHNICAL_INCOMPLETE terminal, append the exact candidate to the
     pool as consumed history, drop that candidate from the backlog;
@@ -50,6 +51,8 @@ PREPARATION_STATUS = "preparation-status.json"
 # Host source of the container's ro /scripts mount (the mapping preflight.py P10 resolves).
 CONTAINER_SCRIPTS_HOST = "/Users/hong/workspace/qlib-apple-container/scripts"
 FOCUSED_TEST_TIMEOUT_S = 300
+SESSION_PROBE_TIMEOUT_S = 30
+HERMES_BIN = "/Users/hong/.local/bin/hermes"
 BOUNDED_ENV = {"HOME": "/Users/hong", "PATH": "/opt/homebrew/bin:/usr/bin:/bin",
                "LANG": "en_US.UTF-8"}
 
@@ -113,6 +116,32 @@ def _write_preparation_status(root, family_id, state, reason, pid=None):
         doc["pid"] = pid
     _write_json_atomic(path, doc)
     return path
+
+
+def _preparation_session_exists(family_id):
+    """Read-only Hermes session-store probe: True/False, or a fail-closed problem string."""
+    session_name = h.PREPARATION_SOURCE + ":" + family_id
+    cmd = [HERMES_BIN, "sessions", "export", "-", "--format", "jsonl", "--dry-run",
+           "--title", session_name]
+    env = {"HOME": "/Users/hong", "PATH": "/Users/hong/.local/bin:/opt/homebrew/bin:/usr/bin:/bin",
+           "LANG": "en_US.UTF-8"}
+    try:
+        proc = subprocess.run(cmd, cwd=h.DEFAULT_WORKSPACE, env=env, stdin=subprocess.DEVNULL,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                              timeout=SESSION_PROBE_TIMEOUT_S, check=False)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, "Hermes session probe failed: %s" % exc
+    if proc.returncode != 0:
+        return None, "Hermes session probe rc=%s: %s" % (
+            proc.returncode, (proc.stderr or proc.stdout or "")[-1000:])
+    match = re.search(r"Would export (\d+) session\(s\)", (proc.stdout or "") + "\n" +
+                      (proc.stderr or ""))
+    if not match:
+        return None, "Hermes session probe returned unrecognized output"
+    count = int(match.group(1))
+    if count > 1:
+        return None, "Hermes session probe matched %s sessions for %s" % (count, session_name)
+    return count == 1, None
 
 
 def _defer_head(res, root, backlog_path, backlog_doc, family_id, reason):
@@ -372,10 +401,44 @@ def run_once(args):
             return res.waiting("quant-preparation still owns candidate %s; preparation waits" % family_id,
                                preparation_source=h.PREPARATION_SOURCE)
         os.close(fd)
-        return _defer_head(
-            res, root, backlog_path, backlog_doc, family_id,
-            "quant-preparation for candidate %s exited without a staged package or clear-absence "
-            "outcome; candidate preserved and deferred for fair retry" % family_id)
+
+        resumable, problem = _preparation_session_exists(family_id)
+        if problem:
+            return res.finding("preparation_session_probe_failed", problem, pool_entry=family_id)
+        if not resumable:
+            return _defer_head(
+                res, root, backlog_path, backlog_doc, family_id,
+                "quant-preparation for candidate %s exited before creating a resumable Hermes "
+                "session; candidate preserved and deferred for fair retry" % family_id)
+        try:
+            _write_preparation_status(
+                root, family_id, "running",
+                "bounded preparation turn completed; resuming existing family-scoped Hermes session")
+        except OSError as exc:
+            return res.finding("preparation_status_write_failed", str(exc), pool_entry=family_id)
+
+        pid, why, busy = h.launch_preparation_agent(str(root), cand, str(backlog_path))
+        if busy:
+            return res.waiting("quant-preparation still owns candidate %s; preparation waits" % family_id,
+                               preparation_source=h.PREPARATION_SOURCE)
+        if why:
+            return _defer_head(
+                res, root, backlog_path, backlog_doc, family_id,
+                "%s; candidate preserved and deferred for fair retry" % why)
+        try:
+            _write_preparation_status(
+                root, family_id, "running",
+                "existing family-scoped Hermes session resumed; awaiting staged package or outcome",
+                pid=pid)
+        except OSError as exc:
+            return res.finding("preparation_status_write_failed",
+                               "session resumed but status update failed: %s" % exc,
+                               pool_entry=family_id, preparation_pid=pid)
+        return res.waiting(
+            "quant-preparation resumed existing session for candidate %s (pid=%s); the next run "
+            "validates its staged package" % (family_id, pid),
+            preparation_required=True, preparation_pid=pid,
+            preparation_source=h.PREPARATION_SOURCE, preparation_resumed=True)
 
     try:
         _write_preparation_status(root, family_id, "running",
