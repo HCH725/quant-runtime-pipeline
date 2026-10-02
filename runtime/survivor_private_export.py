@@ -6,6 +6,7 @@ subset into the private validated-survivor research repository and never changes
 leaderboard or any pipeline verdict.
 """
 import argparse
+import datetime
 import json
 import os
 import subprocess
@@ -19,6 +20,10 @@ import survivor_index as si  # noqa: E402
 
 DEFAULT_REPO = os.path.expanduser("~/workspace/validated-survivor-research")
 COMMIT_MESSAGE = "feat: sync validated survivor artifacts"
+README_PATH = "README.md"
+README_START = "<!-- AUTO-SURVIVOR-STATS:START -->"
+README_END = "<!-- AUTO-SURVIVOR-STATS:END -->"
+UTC_PLUS_8 = datetime.timezone(datetime.timedelta(hours=8))
 
 
 def _json_bytes(value):
@@ -32,6 +37,70 @@ def _read(path):
 
 def _warning(message):
     return "WARNING: " + message
+
+
+def _readme_status_block(entries, board_bytes):
+    """Render one deterministic operator summary from the canonical leaderboard."""
+    try:
+        board = json.loads(board_bytes)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("canonical leaderboard JSON cannot render README status") from exc
+
+    families = set()
+    for entry in entries:
+        family_id = entry.get("family_id") if isinstance(entry, dict) else None
+        if not isinstance(family_id, str) or not family_id:
+            raise ValueError("canonical leaderboard entry has no usable family_id")
+        families.add(family_id)
+
+    generated = board.get("generated_at_utc") if isinstance(board, dict) else None
+    if not isinstance(generated, str) or not generated:
+        raise ValueError("canonical leaderboard has no generated_at_utc")
+    try:
+        generated_dt = datetime.datetime.fromisoformat(generated.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("canonical leaderboard generated_at_utc is invalid") from exc
+    if generated_dt.tzinfo is None:
+        raise ValueError("canonical leaderboard generated_at_utc must be timezone-aware")
+    local_sync = generated_dt.astimezone(UTC_PLUS_8).strftime("%Y-%m-%d %H:%M")
+
+    return "\n".join([
+        README_START,
+        "## 📊 Current Survivor Status",
+        "",
+        "**Promoted strategy families: %d**  " % len(families),
+        "Formal promoted survivors: **%d**  " % len(entries),
+        "Last sync: `%s (UTC+8)`" % local_sync,
+        README_END,
+    ])
+
+
+def _managed_readme(current, entries, board_bytes):
+    """Replace only the managed status block, or insert it directly below the H1."""
+    if current is None:
+        text = "# Validated Survivor Research\n"
+    else:
+        try:
+            text = current.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError("README.md is not valid UTF-8") from exc
+
+    start_count = text.count(README_START)
+    end_count = text.count(README_END)
+    block = _readme_status_block(entries, board_bytes)
+    if start_count or end_count:
+        if start_count != 1 or end_count != 1:
+            raise ValueError("README.md managed survivor status markers are malformed")
+        start = text.index(README_START)
+        end = text.index(README_END, start) + len(README_END)
+        return (text[:start] + block + text[end:]).encode("utf-8")
+
+    first_newline = text.find("\n")
+    if text.startswith("# ") and first_newline >= 0:
+        updated = text[:first_newline + 1] + "\n" + block + "\n" + text[first_newline + 1:]
+    else:
+        updated = block + "\n\n" + text
+    return updated.encode("utf-8")
 
 
 def _legacy_baseline_compatible(current, desired):
@@ -154,9 +223,12 @@ def _evidence_files(results_root, board_entry, index_entry, warnings):
     }
 
 
-def _desired_files(results_root, entries, index_by_id, board_bytes, warnings):
+def _desired_files(results_root, entries, index_by_id, board_bytes, warnings, readme_bytes):
     """Build the exact managed mirror layout without recomputing any ranking."""
-    files = {"leaderboard/leaderboard.json": board_bytes}
+    files = {
+        "leaderboard/leaderboard.json": board_bytes,
+        README_PATH: _managed_readme(readme_bytes, entries, board_bytes),
+    }
     immutable = set()
     for board_entry in entries:
         survivor_id = board_entry["survivor_id"]
@@ -248,12 +320,15 @@ def export(results_root, repo=None):
     try:
         root = os.path.abspath(os.fspath(results_root))
         entries, index_by_id, board_bytes = _load_sources(root)
-        files, immutable = _desired_files(root, entries, index_by_id, board_bytes, warnings)
 
         target, preflight_warning = _preflight(DEFAULT_REPO if repo is None else repo)
         if preflight_warning:
             return _result(False, "warning", warnings + [preflight_warning])
 
+        readme_path = os.path.join(target, README_PATH)
+        readme_bytes = _read(readme_path) if os.path.isfile(readme_path) else None
+        files, immutable = _desired_files(root, entries, index_by_id, board_bytes, warnings,
+                                          readme_bytes)
         changed, plan_warnings, conflicts = _plan(target, files, immutable)
         warnings.extend(plan_warnings)
         if conflicts:

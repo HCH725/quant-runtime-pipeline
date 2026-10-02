@@ -118,6 +118,46 @@ class ExportTests(unittest.TestCase):
                 repo, "survivors", entry["survivor_id"], "baseline.json")))
         self.assertTrue(os.path.isfile(os.path.join(
             repo, "survivors", outside[0]["survivor_id"], "baseline.json")))
+        with open(os.path.join(repo, "README.md")) as fh:
+            readme = fh.read()
+        self.assertIn("**Promoted strategy families: 11**", readme)
+        self.assertIn("Formal promoted survivors: **11**", readme)
+        self.assertIn("(UTC+8)", readme)
+
+    def test_readme_counts_unique_families_and_preserves_human_text(self):
+        make_family(self.root, "same-family", [
+            survivor("BTCUSDT/1h", oos=(1.0, 100.0, 40)),
+            survivor("SOLUSDT/4h", oos=(2.0, 100.0, 40)),
+        ])
+        self.assertEqual(run_leaderboard(self.root)[0], 0)
+        repo = init_repo(self.tmp)
+        with open(os.path.join(repo, "README.md"), "w") as fh:
+            fh.write("# Validated Survivor Research\n\nHuman-owned paragraph.\n")
+        git(repo, "add", "README.md")
+        git(repo, "commit", "-m", "docs: add human readme text")
+        git(repo, "push", "origin", "main")
+
+        result = spe.export(self.root, repo)
+
+        self.assertTrue(result["ok"], result)
+        with open(os.path.join(repo, "README.md")) as fh:
+            readme = fh.read()
+        self.assertIn("**Promoted strategy families: 1**", readme)
+        self.assertIn("Formal promoted survivors: **2**", readme)
+        self.assertIn("Human-owned paragraph.", readme)
+        self.assertEqual(readme.count(spe.README_START), 1)
+        self.assertEqual(readme.count(spe.README_END), 1)
+
+        make_family(self.root, "new-family", [survivor("BNBUSDT/1d", oos=(3.0, 100.0, 40))])
+        self.assertEqual(run_leaderboard(self.root)[0], 0)
+        self.assertTrue(spe.export(self.root, repo)["ok"])
+        with open(os.path.join(repo, "README.md")) as fh:
+            updated = fh.read()
+        self.assertIn("**Promoted strategy families: 2**", updated)
+        self.assertIn("Formal promoted survivors: **3**", updated)
+        self.assertIn("Human-owned paragraph.", updated)
+        self.assertEqual(updated.count(spe.README_START), 1)
+        self.assertEqual(updated.count(spe.README_END), 1)
 
     def test_second_export_is_idempotent(self):
         self.fixture()
