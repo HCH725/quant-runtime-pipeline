@@ -38,6 +38,9 @@ import os
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import parameter_contract as pc  # noqa: E402  (same directory; pure stdlib, the contract resolver)
+
 SCHEMA_VERSION = 1
 KIND = "frozen_survivor_bundle"
 CONTRACT_VERSION = "v1.5.0"
@@ -150,6 +153,47 @@ def find_terminal(attempt_dir):
     return found
 
 
+def winner_cell_problems(attempt_dir, survivors):
+    """The §27.2 consumer's own verdict on the survivor winner cells, computed BEFORE the freeze.
+
+    The frozen bundle is only ever written when the file-only survivor index would accept it.  The
+    live incident that motivates this check: a runner serialised every winner cell with an extra
+    non-parametric annotation key (`grid`), this writer froze the round's bundle anyway, and
+    `runtime/survivor_index.py` then refused that immutable bundle (param cell not exactly the
+    registered axes) - so the post-survivor lifecycle stayed fail-closed on a frozen artifact that
+    could never be re-frozen (contract 10.8 / INV-4).  The invalidity belongs at the freeze, not
+    after it.
+
+    Nothing is re-implemented here: the axes come from the frozen round-spec through the canonical
+    `parameter_contract` resolver - the same resolution `survivor_index.entries_for_bundle` applies
+    before it splits a frozen winner cell into its registered strategy + DCA params - so a bundle
+    this writer freezes is one that consumer can index.
+    """
+    round_spec_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(attempt_dir))), "round-spec.json")
+    try:
+        spec = load_json(round_spec_path)
+    except (OSError, ValueError):
+        spec = None
+    if not isinstance(spec, dict):
+        return ["round-spec.json is missing or unreadable at %s: the frozen round-spec is what "
+                "registers the parameter axes, and the survivor index refuses a bundle whose axes "
+                "it cannot resolve (contract 27.2)" % round_spec_path]
+    contract, contract_problems, _is_legacy = pc.load_contract_from_round_spec(spec)
+    if contract_problems:
+        # Fail closed exactly where the consumer would (a pre-schema A v2 round resolves through
+        # the in-code bridge, so only a genuinely unresolvable contract lands here).
+        return ["the survivor index would refuse this bundle, so it is never frozen: %s"
+                % "; ".join(contract_problems)]
+    problems = []
+    for rec in survivors:
+        label = ("survivor cohort %r" % rec.get("cohort")) if isinstance(rec, dict) \
+            else "survivor record"
+        pc.normalize_winner(contract, rec.get("winner") if isinstance(rec, dict) else None,
+                            label, problems)
+    return problems
+
+
 def build(attempt_dir, attempts_root=None):
     """Re-read the attempt and return (bundle, problems).  Pure function of the files."""
     problems = []
@@ -211,6 +255,13 @@ def build(attempt_dir, attempts_root=None):
     if measured_survivors != labels:
         problems.append("cohort_results.json reports survivors %r but the survivor file holds %r"
                         % (measured_survivors, labels))
+
+    # Freeze-order guard (2026-10-03): the §27.2 consumer's parameter-cell rule runs HERE, before
+    # an immutable bundle can be written, so a bundle the survivor index would refuse is never
+    # frozen in the first place (the live incident froze one and the whole post-survivor layer
+    # stayed fail-closed on it).  Nothing is silently skipped: an invalid survivor cell refuses the
+    # whole freeze, exactly like the consumer refuses the whole index.
+    problems.extend(winner_cell_problems(attempt_dir, survivors))
 
     count = len(survivors)
     if count == 0:

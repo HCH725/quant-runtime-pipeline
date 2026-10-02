@@ -46,6 +46,46 @@ _spec.loader.exec_module(sb)
 A = "BTCUSDT/1h"
 B = "SOLUSDT/4h"
 
+FAMILY = "fam"
+ROUND = "fam-r1"
+RUN = "fam-r1-u1"
+
+# The fixture round's frozen parameter contract: the registered strategy + DCA axes every survivor
+# winner cell must project EXACTLY (the writer freezes a bundle only when the §27.2 consumer would
+# accept it, so a fixture without one would be refused - as the live defect was).
+PARAMETER_CONTRACT = {
+    "parameter_contract_version": 1,
+    "family_id": FAMILY,
+    "contract_ref": "test fixture",
+    "research_axes_ordered": [
+        {"name": "window", "kind": "atomic", "members": ["window"],
+         "registered_values": [20, 50, 100, 200], "row_fields": ["window"]},
+        {"name": "discount", "kind": "atomic", "members": ["discount"],
+         "registered_values": [0.01, 0.02, 0.03], "row_fields": ["discount"]},
+        {"name": "spacing_pct", "kind": "atomic", "members": ["spacing_pct"],
+         "registered_values": [0.01, 0.02, 0.03, 0.04], "row_fields": ["spacing_pct"]},
+        {"name": "size_multiplier", "kind": "atomic", "members": ["size_multiplier"],
+         "registered_values": [1.0, 1.1], "row_fields": ["size_multiplier"]},
+        {"name": "breakeven_tp_pct", "kind": "atomic", "members": ["breakeven_tp_pct"],
+         "registered_values": [0.01, 0.02, 0.03], "row_fields": ["breakeven_tp_pct"]},
+        {"name": "invalidation_pct", "kind": "atomic", "members": ["invalidation_pct"],
+         "registered_values": [0.05, 0.10], "row_fields": ["invalidation_pct"]},
+    ],
+    "row_fields": ["window", "discount", "spacing_pct", "size_multiplier",
+                   "breakeven_tp_pct", "invalidation_pct"],
+    "composite_map": {},
+    "strategy_param_fields": ["window", "discount"],
+    "dca_param_fields": ["spacing_pct", "size_multiplier", "breakeven_tp_pct",
+                         "invalidation_pct"],
+    "canonical_recipe": {"sort_keys": True, "separators": (",", ":"), "ensure_ascii": False,
+                         "numeric_rule": "JSON number finite, bool excluded"},
+    "row_match_recipe": {"keys": ["symbol", "timeframe", "window", "discount", "spacing_pct",
+                                  "size_multiplier", "breakeven_tp_pct", "invalidation_pct"],
+                         "equality": "exact"},
+    "non_params": ["symbol", "timeframe", "metrics"],
+    "domain_cardinality": {"strategy": 12, "dca": 48, "per_cohort": 576},
+}
+
 # Independent, stdlib-only reimplementation of the contract 10.8 identity recipe.  It is
 # deliberately NOT sb.identity(): the point of the check is that a third party reproduces the
 # published value from the persisted file without using this repo's writer code.
@@ -75,9 +115,22 @@ def survivor(label):
 
 def make_attempt(root, survivors, count=None, coverage_complete=True, disposition=None,
                  verdict_recommendation=None, claimable=None, sentinel="DONE",
-                 assertions=None, extra_cohorts=None, direct=False):
-    attempt = os.path.join(root, "rounds", "fam-r1", "attempts", "fam-r1-u1")
+                 assertions=None, extra_cohorts=None, direct=False, round_spec="default"):
+    attempt = os.path.join(root, "rounds", ROUND, "attempts", RUN)
     os.makedirs(os.path.join(attempt, "artifacts"), exist_ok=True)
+    # The frozen round-spec is a required input of the freeze: it is where the registered parameter
+    # axes live (`spec.parameter_contract`).  `round_spec="none"` omits it (the refusal control),
+    # a dict replaces the fixture document.
+    if round_spec != "none":
+        spec_path = os.path.join(root, "rounds", ROUND, "round-spec.json")
+        os.makedirs(os.path.dirname(spec_path), exist_ok=True)
+        doc = round_spec if isinstance(round_spec, dict) else {
+            "schema_version": 1, "family_id": FAMILY, "round_id": ROUND,
+            "data": {"data_start": "2022-01-01", "end": "2026-09-10"},
+            "parameter_contract": dict(PARAMETER_CONTRACT),
+        }
+        with open(spec_path, "w") as fh:
+            json.dump(doc, fh)
     n = len(survivors) if count is None else count
     labels = [s["cohort"] for s in survivors]
     run_spec = {"schema_version": 1, "family_id": "fam", "round_id": "fam-r1", "run_id": "fam-r1-u1",
@@ -410,6 +463,69 @@ class TestSurvivorBundle(unittest.TestCase):
         os.remove(os.path.join(attempt, "artifacts", "cohort_survivors.json"))
         _, problems = sb.build(attempt)
         self.assertTrue(any("missing immutable source artifact" in p for p in problems), problems)
+
+    def test_winner_cell_outside_the_registered_axes_is_refused_before_the_freeze(self):
+        """Freeze-order pin (2026-10-03 live incident): the §27.2 consumer rule runs AT the freeze.
+
+        A runner serialised every winner cell with a non-parametric `grid` key, this writer froze the
+        round's bundle anyway, and `survivor_index.py` then refused that immutable bundle - so the
+        whole post-survivor layer stayed fail-closed on an artifact that can never be re-frozen.  The
+        invalidity must be caught before an immutable bundle exists.
+        """
+        rec = survivor(A)
+        rec["winner"]["grid"] = "historical"
+        attempt = make_attempt(self.root, [rec])
+        bundle, problems = sb.build(attempt)
+        self.assertIsNone(bundle)
+        self.assertTrue(any("outside the registered axes" in p for p in problems), problems)
+        proc = subprocess.run([sys.executable, BUNDLE, "--attempt-dir", attempt, "--json"],
+                              capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("outside the registered axes", proc.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.root, "rounds", ROUND,
+                                                     "survivor-bundle.json")),
+                         "a bundle the survivor index would refuse is never frozen")
+
+    def test_missing_or_non_numeric_registered_axes_are_refused_before_the_freeze(self):
+        dropped = survivor(A)
+        del dropped["winner"]["discount"]
+        _, problems = sb.build(make_attempt(os.path.join(self.root, "dropped"), [dropped]))
+        self.assertTrue(any("missing registered param axis" in p for p in problems), problems)
+
+        widened = survivor(B)
+        widened["winner"]["leverage"] = 3.0
+        _, problems = sb.build(make_attempt(os.path.join(self.root, "widened"), [widened]))
+        self.assertTrue(any("outside the registered axes" in p for p in problems), problems)
+
+        textual = survivor(B)
+        textual["winner"]["window"] = "20"
+        _, problems = sb.build(make_attempt(os.path.join(self.root, "textual"), [textual]))
+        self.assertTrue(any("is not numeric" in p for p in problems), problems)
+
+        # control: the untouched cells still freeze, and the bundle pins the round-spec checksum the
+        # consumer resolves its axes (and the research cutoff) from
+        bundle, problems = sb.build(make_attempt(os.path.join(self.root, "clean"), [survivor(A)]))
+        self.assertEqual(problems, [], problems)
+        self.assertIn("round-spec.json", bundle["source_artifacts"])
+
+    def test_round_spec_that_cannot_register_the_axes_refuses_to_freeze(self):
+        # (a) no round-spec at all: the consumer cannot resolve the axes, so nothing is frozen
+        _, problems = sb.build(make_attempt(os.path.join(self.root, "no-spec"), [survivor(A)],
+                                            round_spec="none"))
+        self.assertTrue(any("round-spec.json is missing or unreadable" in p for p in problems),
+                        problems)
+
+        # (b) a non-legacy round-spec without a valid parameter_contract fails closed in the consumer
+        spec = {"schema_version": 1, "family_id": FAMILY, "round_id": ROUND,
+                "parameter_contract": {k: v for k, v in PARAMETER_CONTRACT.items()
+                                       if k != "parameter_contract_version"}}
+        _, problems = sb.build(make_attempt(os.path.join(self.root, "bad-spec"), [survivor(A)],
+                                            round_spec=spec))
+        self.assertTrue(any("parameter_contract" in p for p in problems), problems)
+
+        for name in ("no-spec", "bad-spec"):
+            self.assertFalse(os.path.exists(os.path.join(self.root, name, "rounds", ROUND,
+                                                         "survivor-bundle.json")), name)
 
     def test_legacy_multi_survivor_attempt_is_frozen_with_disclosure(self):
         # the real Strategy A v2 attempt ran under contract < v1.4.0 and therefore recorded

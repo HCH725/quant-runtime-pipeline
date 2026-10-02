@@ -25,6 +25,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import parameter_contract as pc  # noqa: E402  (same directory; pure stdlib)
+# The contract-terminal round-verdict rule is NOT re-implemented here: the launch gate delegates to
+# the exact function the handoff scheduler and the reconciler release on, so "is this round
+# decided?" cannot drift between the launch gate and the pipeline that already reads it.
+from production_handoff import round_verdict_token  # noqa: E402  (same directory; pure stdlib)
 
 DEFAULT_EXPANSION = "/Volumes/ExpansionDrive"
 DEFAULT_CONTAINER = "qlib-run"
@@ -313,6 +317,24 @@ def round_spec_contract_problem(attempt_dir):
     return None
 
 
+def round_terminal_verdict(attempt_dir, family):
+    """The contract-terminal verdict token of the attempt's OWN round, else None (fail-closed).
+
+    Contract 7.3/9.4: `verdict.json` is per ROUND, so the launch decision about a round may only
+    read *that attempt's own* round - never an earlier round of the same family.  The token rule
+    itself is the handoff scheduler's own function (`production_handoff.round_verdict_token`):
+    `family_id` must match the family directory, `round_id` must be absent or name this round, a
+    card-free (direct) family can never be closed by card-owned evidence, both sides' ownership ids
+    must agree when present, and only the contract-terminal tokens count.
+
+    A malformed, foreign or partial verdict is therefore NOT terminal authority: it reads as
+    missing (exactly like the pipeline's release logic reads it), so it refuses nothing - and a
+    legitimate same-round technical retry before the round's verdict remains possible.
+    """
+    attempt = Path(attempt_dir).resolve()
+    return round_verdict_token(attempt.parents[1], attempt.parents[3].name, family)
+
+
 def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     if not attempt_dir:
         check(checks, "P9", "NA", "-", "no --attempt-dir; launch gate NOT evaluated")
@@ -404,6 +426,21 @@ def p9_p10(checks, attempt_dir, host_scripts=DEFAULT_HOST_SCRIPTS):
     detail = ("run-spec present; script.sha256=%s recomputed=%s (%s)%s"
               % (sha, got, resolved, "" if ok else " MISMATCH"))
     if ok:
+        # Terminal authority boundary (2026-10-03; contract 8/16.2): a round whose own verdict.json
+        # carries a contract-terminal verdict is a DECIDED, closed round.  A disposition/remediation
+        # session is not authorised to create, launch or retry any attempt in it - so the launch
+        # gate refuses a same-round attempt outright (in the live incident a corrected
+        # serialization retry u2 was materialised and launched in a round that had already
+        # published PASS, which is exactly the case this refuses).  A same-round technical retry
+        # remains legal BEFORE that verdict exists; a further iteration needs a new round_id.
+        closed = round_terminal_verdict(attempt_dir, family)
+        if closed:
+            ok = False
+            detail += (" | terminal authority boundary: round %s already carries contract-terminal "
+                       "verdict %s, so the round is closed and this launch/retry of another attempt "
+                       "in it is not authorised (a same-round retry is legal only before the round's "
+                       "verdict; a further iteration needs a new round_id)"
+                       % (Path(attempt_dir).resolve().parents[1].name, closed))
         # v1.8 launch gate (contract 26.1): the frozen round-spec must already carry a valid
         # generic parameter_contract - validated BEFORE any compute, not after it.
         contract_problem = round_spec_contract_problem(attempt_dir)
