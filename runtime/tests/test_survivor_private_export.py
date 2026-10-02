@@ -148,6 +148,17 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(readme.count(spe.README_START), 1)
         self.assertEqual(readme.count(spe.README_END), 1)
 
+        make_family(self.root, "new-family", [survivor("BNBUSDT/1d", oos=(3.0, 100.0, 40))])
+        self.assertEqual(run_leaderboard(self.root)[0], 0)
+        self.assertTrue(spe.export(self.root, repo)["ok"])
+        with open(os.path.join(repo, "README.md")) as fh:
+            updated = fh.read()
+        self.assertIn("**Promoted strategy families: 2**", updated)
+        self.assertIn("Formal promoted survivors: **3**", updated)
+        self.assertIn("Human-owned paragraph.", updated)
+        self.assertEqual(updated.count(spe.README_START), 1)
+        self.assertEqual(updated.count(spe.README_END), 1)
+
     def test_second_export_is_idempotent(self):
         self.fixture()
         repo = init_repo(self.tmp)
