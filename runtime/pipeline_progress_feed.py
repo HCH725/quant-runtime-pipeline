@@ -306,9 +306,9 @@ def render(event):
         execution_line = "Executed: **%s**" % f"{executed:,}"
     else:
         execution_line = "Executed: unavailable"
-    survivors = event.get("formal_promoted_survivors")
-    survivor_line = ("Formal promoted survivors: **%s**" % f"{survivors:,}"
-                     if survivors is not None else "Formal promoted survivors: n/a")
+    promoted_survivors = event.get("formal_promoted_survivors")
+    survivor_line = ("Formal promoted survivors: **%s**" % f"{promoted_survivors:,}"
+                     if promoted_survivors is not None else "Formal promoted survivors: n/a")
     return "\n".join([
         "🏁 **COMPLETE**",
         "`%s` · %s · **%s**" % (family_id, generation, event.get("verdict")),
