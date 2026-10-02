@@ -4,7 +4,10 @@
 P10 is the launch gate for "this spec points at this program", so it must never report PASS without
 an actual sha256 recomputation.  Since v1.8 (contract 26.1) P10 additionally refuses an attempt
 whose frozen round-spec carries no valid generic `parameter_contract`: such a family fails closed
-in every post-survivor consumer, i.e. after the whole compute.  These checks drive
+in every post-survivor consumer, i.e. after the whole compute.  Since the 2026-10-03 terminal
+authority boundary it also refuses a new attempt in a round whose own `verdict.json` already
+carries a contract-terminal verdict (a DECIDED round is closed; a same-round technical retry is
+legal only BEFORE that verdict exists).  These checks drive
 `preflight.p9_p10` on temp attempt dirs with the real results-tree shape
 (`<root>/<family>/rounds/<round>/attempts/<run>/`), with the host scripts dir injected through the
 existing `/scripts` mount mapping (no container needed).
@@ -26,13 +29,17 @@ import parameter_contract as pc  # noqa: E402
 
 SPEC_KEYS = {"schema_version": 1, "family_id": "fam-a", "round_id": "fam-a-r1", "run_id": "fam-a-r1-u1",
              "task_id": "t_SMOKE", "kanban_board": "quant-strategy-research"}
+FAMILY = "fam-a"
 B_V2_TEMPLATE = RUNTIME / "templates" / "strategy_b_v2_round_spec.template.json"
 
 
-class P10Case(unittest.TestCase):
+class P10Fixture(unittest.TestCase):
+    """Real results-tree shape + helpers.  No test methods of its own: subclasses add the checks,
+    so a new check class never re-runs another class's checks."""
+
     def setUp(self):
         self.root = tempfile.mkdtemp(prefix="qrp-p10-test-")
-        self.round = Path(self.root) / "family" / "rounds" / "fam-a-r1"
+        self.round = Path(self.root) / FAMILY / "rounds" / "fam-a-r1"
         self.attempt = self.round / "attempts" / "fam-a-r1-u1"
         self.attempt.mkdir(parents=True)
         self.host_scripts = Path(self.root) / "host-scripts"
@@ -46,8 +53,18 @@ class P10Case(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
 
-    def write_round_spec(self, doc):
-        (self.round / "round-spec.json").write_text(json.dumps(doc))
+    def write_round_spec(self, doc, round_dir=None):
+        round_dir = round_dir or self.round
+        round_dir.mkdir(parents=True, exist_ok=True)
+        (round_dir / "round-spec.json").write_text(json.dumps(doc))
+
+    def write_verdict(self, doc, round_dir=None):
+        round_dir = round_dir or self.round
+        round_dir.mkdir(parents=True, exist_ok=True)
+        (round_dir / "verdict.json").write_text(json.dumps(doc))
+
+    def write_family(self, doc):
+        (Path(self.root) / FAMILY / "family.json").write_text(json.dumps(doc))
 
     def run_p10(self, script=None, sha=None, drop_run_spec=False, terminals=()):
         if not drop_run_spec:
@@ -65,6 +82,8 @@ class P10Case(unittest.TestCase):
         by_id = self.run_p10(**kwargs)
         self.assertEqual(by_id["P10"]["status"], expected, by_id["P10"]["detail"])
         return by_id
+
+class P10Case(P10Fixture):
 
     # --- mapped / host-readable paths must actually be recomputed ---
     def test_container_scripts_path_resolved_via_host_mapping(self):
@@ -155,6 +174,82 @@ class P10Case(unittest.TestCase):
     def test_legacy_a_round_spec_still_passes_the_contract_gate(self):
         """Backward compatibility: the pre-schema A v2 bridge resolves without a contract."""
         self.assertEqual(preflight.round_spec_contract_problem(str(self.attempt)), None)
+
+
+class TerminalAuthorityCase(P10Fixture):
+    """Terminal authority boundary (2026-10-03): a DECIDED round is not launchable.
+
+    P10 is the sanctioned pre-launch gate every disposition/remediation session runs (contract 16),
+    so it is where "the round is already closed" is enforced: a new same-round attempt is refused
+    once the attempt's OWN `rounds/<round>/verdict.json` carries a contract-terminal verdict, while
+    a legitimate same-round technical retry BEFORE that verdict (contract 8 / 13 `script_bug`) is
+    untouched.  The live incident this pins: a corrected serialization retry (u2) was materialised
+    and launched in a round that had already published PASS, so nothing could ever consume u2.
+    """
+
+    def test_own_round_terminal_verdict_refuses_a_new_same_round_attempt(self):
+        self.write_verdict({"schema_version": 1, "family_id": FAMILY, "round_id": "fam-a-r1",
+                            "verdict": "PASS"})
+        by_id = self.assert_p10("FAIL")
+        self.assertEqual(by_id["P9"]["status"], "PASS")  # the refusal is the round's, not INV-15
+        self.assertIn("terminal authority boundary", by_id["P10"]["detail"])
+        self.assertIn("contract-terminal verdict PASS", by_id["P10"]["detail"])
+        self.assertIn("new round_id", by_id["P10"]["detail"])
+
+    def test_every_contract_terminal_token_closes_the_round(self):
+        for token in ("PASS", "REJECT", "FINALIST", "DEFERRED", "TECHNICAL_INCOMPLETE"):
+            self.write_verdict({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": token})
+            by_id = self.assert_p10("FAIL")
+            self.assertIn("contract-terminal verdict %s" % token, by_id["P10"]["detail"])
+
+    def test_undecided_round_still_launches_a_same_round_technical_retry(self):
+        # control: no verdict.json at all -> contract 8 / 13 same-round retry with a new run_id
+        by_id = self.assert_p10("PASS")
+        self.assertNotIn("terminal authority boundary", by_id["P10"]["detail"])
+
+    def test_verdict_that_is_not_terminal_authority_refuses_nothing(self):
+        # exactly the shapes production_handoff.round_verdict_token reads as MISSING (malformed,
+        # unknown token, foreign round, foreign family): they are not terminal authority, so a
+        # same-round retry stays legal - the gate must not invent a closure.
+        (self.round / "verdict.json").write_text("{not json")
+        self.assert_p10("PASS")
+        for doc in ({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": "CANDIDATE_PASS"},
+                    {"family_id": FAMILY, "round_id": "fam-a-r2", "verdict": "PASS"},
+                    {"family_id": "someone-else", "round_id": "fam-a-r1", "verdict": "PASS"}):
+            self.write_verdict(doc)
+            self.assert_p10("PASS")
+
+    def test_ownership_mismatch_is_not_terminal_authority(self):
+        self.write_family({"schema_version": 1, "family_id": FAMILY, "kanban_task_id": "t_x",
+                           "kanban_board": "quant-strategy-research"})
+        self.write_verdict({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": "PASS",
+                            "kanban_task_id": "t_other"})
+        self.assert_p10("PASS")
+        self.write_verdict({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": "PASS",
+                            "kanban_task_id": "t_x"})
+        by_id = self.assert_p10("FAIL")
+        self.assertIn("terminal authority boundary", by_id["P10"]["detail"])
+
+    def test_an_earlier_rounds_verdict_does_not_close_a_new_round(self):
+        # verdict.json is per ROUND: r1's PASS decides r1, never a fresh r2 attempt
+        self.write_verdict({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": "PASS"})
+        r2_round = Path(self.root) / FAMILY / "rounds" / "fam-a-r2"
+        r2_attempt = r2_round / "attempts" / "fam-a-r2-u1"
+        r2_attempt.mkdir(parents=True)
+        self.write_round_spec({"family_id": pc.LEGACY_A_FAMILY_ID}, round_dir=r2_round)
+        (r2_attempt / "run-spec.json").write_text(json.dumps(dict(
+            SPEC_KEYS, round_id="fam-a-r2", run_id="fam-a-r2-u1",
+            script={"path": "/scripts/strategy.py", "sha256": self.sha})))
+        checks = []
+        preflight.p9_p10(checks, str(r2_attempt), str(self.host_scripts))
+        by_id = {c["id"]: c for c in checks}
+        self.assertEqual(by_id["P10"]["status"], "PASS", by_id["P10"]["detail"])
+
+    def test_the_helper_reads_the_own_round_and_its_ownership(self):
+        # direct unit pin of the token rule the gate delegates to
+        self.assertIsNone(preflight.round_terminal_verdict(str(self.attempt), {}))
+        self.write_verdict({"family_id": FAMILY, "round_id": "fam-a-r1", "verdict": "PASS"})
+        self.assertEqual(preflight.round_terminal_verdict(str(self.attempt), {}), "PASS")
 
 
 if __name__ == "__main__":

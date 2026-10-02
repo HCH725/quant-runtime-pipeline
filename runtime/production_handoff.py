@@ -100,7 +100,7 @@ CANONICAL_CONFIG = "/Volumes/ExpansionDrive/market-data-raw/_meta/CONFIG.json"
 CANONICAL_SCHEMA = "/Volumes/ExpansionDrive/market-data-raw/_meta/SCHEMA.md"
 PREPARATION_LOG = "prepare.log"
 PREPARATION_SOURCE = "quant-preparation"
-DISPOSITION_PROMPT_VERSION = 3
+DISPOSITION_PROMPT_VERSION = 4
 PREPARED_EXECUTION_PYTHON = "/opt/homebrew/bin/python3"
 PREPARED_MANIFEST_MAX_BYTES = 65536
 PREPARED_ROUND_SPEC_MAX_BYTES = 1 << 20
@@ -774,6 +774,17 @@ def disposition_prompt(family_id, round_id, run_id, results_root):
         "retuning, not a new family, and not permission to change the hypothesis or cherry-pick symbols. "
         "If the current immutable round is already contract-valid, do not create a new round merely to "
         "improve results.\n\n"
+        "TERMINAL AUTHORITY BOUNDARY: a round whose own `rounds/<round_id>/verdict.json` carries a "
+        "contract-terminal verdict (PASS / REJECT / FINALIST / DEFERRED / TECHNICAL_INCOMPLETE) is a "
+        "DECIDED, closed round. Once that verdict exists you are no longer authorised to create, "
+        "launch or retry ANY attempt in that round - not another run_id, not a corrected "
+        "serialization retry, and not a re-freeze of the round's frozen survivor-bundle. "
+        "runtime/preflight.py --launch refuses such a same-round attempt at its P10 launch gate for "
+        "exactly this reason; do not work around it by launching Qlib directly. A same-round "
+        "technical retry is legal only BEFORE the round's verdict is published, and any further "
+        "iteration of the family is a NEW round of the SAME family. If a frozen survivor-bundle is "
+        "refused by a post-survivor consumer, that is never repaired by another same-round attempt: "
+        "record the exact unresolved fact and stop for an operator/ChatGPT decision.\n\n"
         "When a round passes with at least one cohort survivor, freeze them with "
         "runtime/survivor_bundle.py (a direct family's bundle carries no card ids) so the post-survivor "
         "index can pick the result up. Never rerun a terminal attempt. If evidence remains genuinely "
